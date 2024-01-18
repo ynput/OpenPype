@@ -25,6 +25,13 @@ def image_format_enum():
     ]
 
 
+def renderers_enum():
+    return [
+        {"value": "CYCLES", "label": "Cycles"},
+        {"value": "BLENDER_EEVEE", "label": "Eevee"},
+    ]
+
+
 def aov_list_enum():
     return [
         {"value": "empty", "label": "< none >"},
@@ -83,6 +90,11 @@ class RenderSettingsModel(BaseSettingsModel):
     multilayer_exr: bool = Field(
         title="Multilayer (EXR)"
     )
+    renderer: str = Field(
+        "CYCLES",
+        title="Renderer",
+        enum_resolver=renderers_enum
+    )
     aov_list: list[str] = Field(
         default_factory=list,
         enum_resolver=aov_list_enum,
@@ -104,6 +116,7 @@ DEFAULT_RENDER_SETTINGS = {
     "aov_separator": "underscore",
     "image_format": "exr",
     "multilayer_exr": True,
+    "renderer": "CYCLES",
     "aov_list": [],
     "custom_passes": []
 }

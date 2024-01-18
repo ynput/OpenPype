@@ -48,6 +48,14 @@ def get_multilayer(settings):
                     ["multilayer_exr"])
 
 
+def get_renderer(settings):
+    """Get renderer from blender settings."""
+
+    return (settings["blender"]
+                    ["RenderSettings"]
+                    ["renderer"])
+
+
 def get_render_product(output_path, name, aov_sep):
     """
     Generate the path to the render product. Blender interprets the `#`
@@ -254,9 +262,10 @@ def prepare_rendering(asset_group):
     aov_sep = get_aov_separator(settings)
     ext = get_image_format(settings)
     multilayer = get_multilayer(settings)
+    renderer = get_renderer(settings)
 
     set_render_format(ext, multilayer)
-    aov_list, custom_passes = set_render_passes(settings)
+    bpy.context.scene.render.engine = renderer
 
     output_path = Path.joinpath(dirpath, render_folder, file_name)
 
