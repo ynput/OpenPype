@@ -70,7 +70,7 @@ class IngestFile(object):
         print(msg)
         publish_data = dict()
         expected_representations = dict()
-        expected_representations[self.representation] = self.filepath
+        expected_representations[self.representation_name] = self.filepath
         publish.publish_version(
             self.ingest_settings.project,
             self.folder_path,

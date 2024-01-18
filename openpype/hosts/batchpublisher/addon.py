@@ -52,6 +52,7 @@ class BatchPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
         import openpype.hosts.batchpublisher.views.batch_publisher_view
         import openpype.hosts.batchpublisher.ui.window
 
+        # TODO: These lines are only for testing current branch
         reload(openpype.hosts.batchpublisher.controller)
         reload(openpype.hosts.batchpublisher.models.batch_publisher_model)
         reload(

@@ -3,8 +3,8 @@
 class BatchPublisherController(object):
 
     def __init__(self):
-        from openpype.hosts.batchpublisher.models.batch_publisher_model import \
-            BatchPublisherModel
+        from openpype.hosts.batchpublisher.models. \
+            batch_publisher_model import BatchPublisherModel
         self.model = BatchPublisherModel()
 
     @property
