@@ -490,11 +490,13 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     bulk_writes.append(write_project_to_op(project, dbcon))
 
     if project["project_status_name"] == "Closed":
-        update_project_state_in_db(
-            dbcon,
-            project_dict,
-            active=KitsuStateToBool[project["project_status_name"]]
-        )
+        active_state = KitsuStateToBool[project["project_status_name"]]
+        if project_dict['data']['active'] != active_state:
+            update_project_state_in_db(
+                dbcon,
+                project_dict,
+                active=active_state
+            )
         return
 
     # Try to find project document
