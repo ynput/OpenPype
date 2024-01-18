@@ -48,89 +48,43 @@ FILE_MAPPINGS = [
 
 class IngestFile(object):
 
-    def __init__(self):
-        self._enabled = True
-        self._filepath = str()
-        self._folder = str()
-        self._task = str()
-        self._product_type = str()
-        self._product_name = str()
-        self._variant = str()
-        self._representation = str()
-        self._version = None
+    def __init__(
+        self,
+        filepath,
+        product_type,
+        product_name,
+        representation_name,
+        version,
+        enabled=True,
+        folder_path=None,
+        task_name=None,
+    ):
+        self.enabled = enabled
+        self.filepath = filepath
+        self.product_type = product_type
+        self.product_name = product_name
+        self.representation_name = representation_name
+        self.version = version
+        self._folder_path = folder_path or ""
+        self._task_name = task_name or ""
+
         self._task_names = list()
 
     @property
-    def enabled(self):
-        return self._enabled
-
-    @enabled.setter
-    def enabled(self, enabled):
-        self._enabled = bool(enabled)
-
-    @property
-    def filepath(self):
-        return self._filepath
-
-    @filepath.setter
-    def filepath(self, filepath):
-        self._filepath = filepath
-
-    @property
-    def folder(self):
-        return self._folder
+    def folder_path(self):
+        return self._folder_path
 
     @folder.setter
-    def folder(self, folder):
-        self._folder = folder
+    def folder_path(self, folder_path):
+        self._folder_path = folder_path
 
     @property
-    def task(self):
-        return self._task
+    def task_name(self):
+        return self._task_name
 
     @task.setter
-    def task(self, task):
-        self._task = task
-
-    @property
-    def product_type(self):
-        return self._product_type
-
-    @product_type.setter
-    def product_type(self, product_type):
-        self._product_type = product_type
-
-    @property
-    def product_name(self):
-        return self._product_name
-
-    @product_name.setter
-    def product_name(self, product_name):
-        self._product_name = product_name
-
-    @property
-    def variant(self):
-        return self._variant
-
-    @variant.setter
-    def variant(self, variant):
-        self._variant = variant
-
-    @property
-    def representation(self):
-        return self._representation
-
-    @representation.setter
-    def representation(self, representation):
-        self._representation = representation
-
-    @property
-    def version(self):
-        return self._version
-
-    @version.setter
-    def version(self, version):
-        self._version = version
+    def task_name(self, task_name):
+        self._task_name = task_name
 
     @property
     def task_names(self):
@@ -139,13 +93,12 @@ class IngestFile(object):
     @property
     def defined(self):
         return all([
-            bool(self._filepath),
-            bool(self._folder),
-            bool(self._task),
-            bool(self._product_type),
-            bool(self._product_name),
-            bool(self._variant),
-            bool(self._representation)])
+            bool(self.filepath),
+            bool(self._folder_path),
+            bool(self._task_name),
+            bool(self.product_type),
+            bool(self.product_name),
+            bool(self.representation_name)])
 
     def publish(self):
         if not self._enabled:
@@ -196,28 +149,6 @@ class IngestFile(object):
             self._task = str()
             self._product_name = str()
             return
-        asset_doc = get_asset_by_name(MODEL.project, self._folder)
-        if not asset_doc:
-            print("No asset doc")
-            self._task = str()
-            self._product_name = str()
-            return
-        # Since we have the tasks available for the asset (folder) cache it now
-        self._task_names = list(asset_doc["data"]["tasks"].keys())
-        # Default to the first task available
-        if not self._task and self._task_names:
-            self._task = self._task_names[0]
-        product_name = subset_name.get_subset_name(
-            self._product_type,
-            self._variant,
-            self._task,
-            asset_doc,
-            project_name=MODEL.project,
-            host_name=None,
-            default_template=None,
-            dynamic_data=None,
-            project_settings=None,
-            family_filter=None)
         # Cache the auto calulated product name now.
         # The user can edit this value there after
         self._product_name = product_name
@@ -251,20 +182,17 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         self.beginResetModel()
         self._ingest_filepaths = list()
         for file_mapping in FILE_MAPPINGS:
+            product_type = file_mapping["product_type"]
             glob_full_path = directory + "/" + file_mapping["glob"]
             files = glob.glob(glob_full_path, recursive=False)
             for filepath in files:
-                ingest_filepath = IngestFile()
-                ingest_filepath.filepath = filepath
-                # ingest_filepath.folder = "asset"
-                # ingest_filepath.task = "task"
-                ingest_filepath.product_type = file_mapping["product_type"]
-                # ingest_filepath.product_name = str()
-                filename = os.path.basename(filepath)
-                ingest_filepath.variant = os.path.splitext(filename)[0]
-                ingest_filepath.representation = os.path.splitext(
-                    filename)[1].lstrip(".")
-                # ingest_filepath.version = 1
+                basename, ext = os.path.splitext(filename)
+                ingest_filepath = IngestFile(
+                    filepath,
+                    product_type,
+                    basename,
+                    ext.lstrip(".")
+                )
                 self._ingest_filepaths.append(ingest_filepath)
         self.endResetModel()
 
