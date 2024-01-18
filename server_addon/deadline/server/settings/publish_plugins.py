@@ -385,6 +385,7 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "department": "",
         "use_gpu": True,
         "workfile_dependency": True,
+        "use_published_workfile": True,
         "env_allowed_keys": [],
         "env_search_replace_values": [],
         "limit_groups": []
