@@ -9,11 +9,11 @@ class BatchPublisherController(object):
 
     @property
     def project(self):
-        return self.model.project
+        return self.model.ingest_settings.project
 
     @project.setter
     def project(self, project):
-        self.model.project = project
+        self.model.ingest_settings.project = project
 
     @property
     def ingest_settings(self):
