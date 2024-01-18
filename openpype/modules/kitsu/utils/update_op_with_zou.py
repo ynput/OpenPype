@@ -310,7 +310,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         UpdateOne: Update instance for the project
     """
     project_name = project["name"]
-    project_dict = get_project(project_name, inactive=True)
+    project_dict = get_project(project_name)
     if not project_dict:
         project_dict = create_project(project_name, project_name)
 
