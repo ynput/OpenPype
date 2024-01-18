@@ -724,105 +724,100 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("AYON Batch Publisher")
         self.resize(1850, 900)
 
-        vertical_layout = QtWidgets.QVBoxLayout()
-        vertical_layout.setContentsMargins(12, 12, 12, 12)
-        vertical_layout.setSpacing(12)
-        widget = QtWidgets.QWidget()
-        widget.setLayout(vertical_layout)
-        self.setCentralWidget(widget)
+        main_widget = QtWidgets.QWidget(self)
 
-        horizontal_layout = QtWidgets.QHBoxLayout()
-        vertical_layout.addLayout(horizontal_layout)
+        self.setCentralWidget(main_widget)
 
-        label = QtWidgets.QLabel("Choose project")
-        horizontal_layout.addWidget(label)
+        # --- Top inputs (project, directory) ---
+        top_inputs_widget = QtWidgets.QWidget(self)
 
-        self._combobox_project = QtWidgets.QComboBox()
-        self._combobox_project.setSizePolicy(
+        project_combobox = QtWidgets.QComboBox(top_inputs_widget)
+        project_combobox.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
             QtWidgets.QSizePolicy.Fixed)
-        horizontal_layout.addWidget(self._combobox_project)
 
-        projects = get_projects()
-        for project_dict in projects:
-            self._combobox_project.addItem(project_dict["name"])
+        dir_inputs_widget = QtWidgets.QWidget(top_inputs_widget)
+        dir_input = QtWidgets.QLineEdit(dir_inputs_widget)
+        dir_browse_btn = QtWidgets.QPushButton("Browse", dir_inputs_widget)
 
-        # from openpype.tools.utils.models import ProjectModel
-        # model = ProjectModel()
-        # self._combobox_project.setModel(model)
+        dir_inputs_layout = QtWidgets.QHBoxLayout(dir_inputs_widget)
+        dir_inputs_layout.setContentsMargins(0, 0, 0, 0)
+        dir_inputs_layout.addWidget(dir_input, 1)
+        dir_inputs_layout.addWidget(dir_browse_btn, 0)
 
-        # self._combobox_project.addItem("MyProjectA")
-        # self._combobox_project.addItem("MyProjectB")
+        top_inputs_layout = QtWidgets.QFormLayout(top_inputs_widget)
+        top_inputs_layout.setContentsMargins(0, 0, 0, 0)
+        top_inputs_layout.addRow("Choose project", project_combobox)
+        top_inputs_layout.addRow("Directory to ingest", dir_inputs_widget)
 
-        horizontal_layout = QtWidgets.QHBoxLayout()
-        vertical_layout.addLayout(horizontal_layout)
+        # --- Main view ---
+        table_view = BatchPublisherTableView(main_widget)
 
-        label = QtWidgets.QLabel("Directory to ingest")
-        horizontal_layout.addWidget(label)
+        # --- Footer ---
+        footer_widget = QtWidgets.QWidget(main_widget)
 
-        self._lineedit_directory = QtWidgets.QLineEdit()
-        self._lineedit_directory.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding,
-            QtWidgets.QSizePolicy.Fixed)
-        horizontal_layout.addWidget(self._lineedit_directory)
+        publish_btn = QtWidgets.QPushButton("Publish", footer_widget)
 
-        self._pushbutton_browse = QtWidgets.QPushButton()
-        self._pushbutton_browse.setText("Browse")
-        self._pushbutton_browse.setSizePolicy(
-            QtWidgets.QSizePolicy.Fixed,
-            QtWidgets.QSizePolicy.Fixed)
-        horizontal_layout.addWidget(self._pushbutton_browse)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(publish_btn, 0)
 
-        self._tableview = BatchPublisherTableView()
-
-        vertical_layout.addWidget(self._tableview)
-
-        horizontal_layout = QtWidgets.QHBoxLayout()
-        vertical_layout.addLayout(horizontal_layout)
-
-        horizontal_layout.addStretch(100)
-
-        self._pushbutton_publish = QtWidgets.QPushButton()
-        self._pushbutton_publish.setText("Publish")
-        horizontal_layout.addWidget(self._pushbutton_publish)
+        # --- Main layout ---
+        main_layout = QtWidgets.QVBoxLayout(main_widget)
+        main_layout.setContentsMargins(12, 12, 12, 12)
+        main_layout.setSpacing(12)
+        main_layout.addWidget(top_inputs_widget, 0)
+        main_layout.addWidget(table_view, 1)
+        main_layout.addWidget(footer_widget, 0)
 
         self.setStyleSheet(style.load_stylesheet())
 
-        self._combobox_project.currentIndexChanged.connect(
+        project_combobox.currentIndexChanged.connect(
             self._on_project_changed)
-        self._pushbutton_browse.clicked.connect(
-            self._on_browse_button_clicked)
-        self._pushbutton_publish.clicked.connect(
-            self._on_publish_button_clicked)
+        dir_browse_btn.clicked.connect(self._on_browse_button_clicked)
+        publish_btn.clicked.connect(self._on_publish_button_clicked)
 
+        # TODO do not use query in __init__
+        # - add QStandardItemModel that handles refresh, or implement refresh
+        #   on the window
+        projects = get_projects()
+        for project_dict in projects:
+            project_combobox.addItem(project_dict["name"])
+
+        # TODO remove from __init__
         self._on_project_changed()
 
-        self._delegate = BatchPublisherTableDelegate()
-        # self._tableview.setItemDelegate(self._delegate)
-        self._tableview.setItemDelegateForColumn(
-            COLUMN_OF_FOLDER,
-            self._delegate)
-        self._tableview.setItemDelegateForColumn(
-            COLUMN_OF_TASK,
-            self._delegate)
-        self._tableview.setItemDelegateForColumn(
-            COLUMN_OF_PRODUCT_TYPE,
-            self._delegate)
+        editors_delegate = BatchPublisherTableDelegate()
+        table_view.setItemDelegateForColumn(
+            COLUMN_OF_FOLDER, editors_delegate
+        )
+        table_view.setItemDelegateForColumn(
+            COLUMN_OF_TASK, editors_delegate
+        )
+        table_view.setItemDelegateForColumn(
+            COLUMN_OF_PRODUCT_TYPE, editors_delegate
+        )
+
+        self._project_combobox = project_combobox
+        self._table_view = table_view
+        self._editors_delegate = editors_delegate
+        self._pushbutton_publish = publish_btn
 
     def _on_project_changed(self):
-        project = str(self._combobox_project.currentText())
+        project = str(self._project_combobox.currentText())
         MODEL.project = project
 
     def _on_browse_button_clicked(self):
-        directory = self._lineedit_directory.text() or str()
+        directory = self._lineedit_directory.text()
         directory = QtWidgets.QFileDialog.getExistingDirectory(
             self,
             dir=directory)
         if not directory:
             return
         self._lineedit_directory.setText(directory)
-        model = self._tableview.model()
+        model = self._table_view.model()
         model.populate_from_directory(directory)
 
     def _on_publish_button_clicked(self):
-        self._tableview.publish()
+        self._table_view.publish()
