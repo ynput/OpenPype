@@ -98,7 +98,9 @@ class IngestFile(object):
             print("No folder set")
             self.task_name = str()
             return
-        asset_doc = get_asset_by_name(self.ingest_settings.project, self.folder_path)
+        asset_doc = get_asset_by_name(
+            self.ingest_settings.project,
+            self.folder_path)
         if not asset_doc:
             print("No asset doc")
             self.task_name = str()

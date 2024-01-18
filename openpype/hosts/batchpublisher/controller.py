@@ -1,6 +1,5 @@
 
 
-
 class BatchPublisherController(object):
 
     def __init__(self):

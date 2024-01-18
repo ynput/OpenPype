@@ -1,21 +1,10 @@
 
 
-from importlib import reload
 from openpype import style
 
 from openpype.client.entities import get_projects
 
 from qtpy import QtWidgets
-
-# import openpype.hosts.batchpublisher.controller
-# import openpype.hosts.batchpublisher.models.batch_publisher_model
-# import openpype.hosts.batchpublisher.delegates.batch_publisher_delegate
-# import openpype.hosts.batchpublisher.views.batch_publisher_view
-
-# reload(openpype.hosts.batchpublisher.controller)
-# reload(openpype.hosts.batchpublisher.models.batch_publisher_model)
-# reload(openpype.hosts.batchpublisher.delegates.batch_publisher_delegate)
-# reload(openpype.hosts.batchpublisher.views.batch_publisher_view)
 
 from openpype.hosts.batchpublisher import controller
 from openpype.hosts.batchpublisher.models import batch_publisher_model

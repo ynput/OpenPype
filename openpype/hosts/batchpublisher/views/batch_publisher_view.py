@@ -1,6 +1,5 @@
 
 
-
 from openpype.hosts.batchpublisher.models.batch_publisher_model import \
     BatchPublisherModel
 
@@ -33,7 +32,9 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         self.setWordWrap(False)
 
         header = self.horizontalHeader()
-        header.setSectionResizeMode(BatchPublisherModel.COLUMN_OF_DIRECTORY, header.Stretch)
+        header.setSectionResizeMode(
+            BatchPublisherModel.COLUMN_OF_DIRECTORY,
+            header.Stretch)
         self.verticalHeader().hide()
 
     def commitData(self, editor):
@@ -51,8 +52,11 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         # When changing folder we need to propagate
         # the chosen task value to every other row
         if current_index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
+            qmodelindex_task = model.index(
+                current_index.row(),
+                BatchPublisherModel.COLUMN_OF_TASK)
             value_task = model.data(
-                model.index(current_index.row(), BatchPublisherModel.COLUMN_OF_TASK),
+                qmodelindex_task,
                 QtCore.Qt.DisplayRole)
             for qmodelindex in self.selectedIndexes():
                 qmodelindex_task = model.index(

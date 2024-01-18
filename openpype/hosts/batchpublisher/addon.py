@@ -54,7 +54,8 @@ class BatchPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
 
         reload(openpype.hosts.batchpublisher.controller)
         reload(openpype.hosts.batchpublisher.models.batch_publisher_model)
-        reload(openpype.hosts.batchpublisher.delegates.batch_publisher_delegate)
+        reload(
+            openpype.hosts.batchpublisher.delegates.batch_publisher_delegate)
         reload(openpype.hosts.batchpublisher.views.batch_publisher_view)
         reload(openpype.hosts.batchpublisher.ui.window)
 
