@@ -122,7 +122,7 @@ class IngestSettings(object):
         return self._project
 
     @property
-    def folder_names (self):
+    def folder_names(self):
         return self._folder_names
 
     @project.setter
