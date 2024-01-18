@@ -23,6 +23,11 @@ log = Logger.get_logger(__name__)
 # Accepted namin pattern for OP
 naming_pattern = re.compile("^[a-zA-Z0-9_.]*$")
 
+KitsuStateToBool = {
+    'Closed': False,
+    'Open': True
+}
+
 
 def create_op_asset(gazu_entity: dict) -> dict:
     """Create OP asset dict from gazu entity.
@@ -305,7 +310,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         UpdateOne: Update instance for the project
     """
     project_name = project["name"]
-    project_dict = get_project(project_name)
+    project_dict = get_project(project_name, inactive=True)
     if not project_dict:
         project_dict = create_project(project_name, project_name)
 
@@ -385,9 +390,9 @@ def sync_all_projects(
     all_projects = gazu.project.all_projects()
 
     project_to_sync = []
+    all_kitsu_projects = {p["name"]: p for p in all_projects}
 
     if filter_projects:
-        all_kitsu_projects = {p["name"]: p for p in all_projects}
         for proj_name in filter_projects:
             if proj_name in all_kitsu_projects:
                 project_to_sync.append(all_kitsu_projects[proj_name])
@@ -400,10 +405,32 @@ def sync_all_projects(
         # all project
         project_to_sync = all_projects
 
+    for project in dbcon.projects():
+        if project['name'] in all_kitsu_projects:
+            continue
+        update_project_state_in_db(dbcon, project, active=False)
+
     for project in project_to_sync:
         if ignore_projects and project["name"] in ignore_projects:
             continue
         sync_project_from_kitsu(dbcon, project)
+
+
+def update_project_state_in_db(dbcon: AvalonMongoDB, project: dict, active: bool):
+    bulk_writes = []
+    project['data']['active'] = active
+    dbcon.Session["AVALON_PROJECT"] = project["name"]
+    bulk_writes.append(
+            UpdateOne(
+            {"_id": project["_id"]},
+            {
+                "$set": {
+                    "data": project['data']
+                }
+            }
+        )
+    )
+    dbcon.bulk_write(bulk_writes)
 
 
 def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
@@ -463,6 +490,11 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     bulk_writes.append(write_project_to_op(project, dbcon))
 
     if project["project_status_name"] == "Closed":
+        update_project_state_in_db(
+            dbcon,
+            project_dict,
+            active=KitsuStateToBool[project["project_status_name"]]
+        )
         return
 
     # Try to find project document
