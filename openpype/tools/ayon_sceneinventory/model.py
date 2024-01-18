@@ -23,6 +23,7 @@ from openpype.pipeline import (
 )
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
+from openpype.tools.ayon_utils.widgets import get_qt_icon
 
 
 def walk_hierarchy(node):
@@ -71,8 +72,8 @@ class InventoryModel(TreeModel):
         site_icons = self._controller.get_site_provider_icons()
 
         self._site_icons = {
-            provider: QtGui.QIcon(icon_path)
-            for provider, icon_path in site_icons.items()
+            provider: get_qt_icon(icon_def)
+            for provider, icon_def in site_icons.items()
         }
 
     def outdated(self, item):
