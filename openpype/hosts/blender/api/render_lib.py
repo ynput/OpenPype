@@ -186,12 +186,17 @@ def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
 
     comp_layer_type = "CompositorNodeRLayers"
     output_type = "CompositorNodeOutputFile"
+    compositor_type = "CompositorNodeComposite"
 
-    # Get the Render Layers node
+    # Get the Render Layer and Composite nodes
     rl_node = None
+    comp_node = None
     for node in tree.nodes:
         if node.bl_idname == comp_layer_type:
             rl_node = node
+        elif node.bl_idname == compositor_type:
+            comp_node = node
+        if rl_node and comp_node:
             break
 
     # If there's not a Render Layers node, we create it
@@ -242,17 +247,23 @@ def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
             pass_name = "rgba" if multi_exr else "beauty"
         else:
             pass_name = rpass.name
-        filepath = f"{name}{aov_sep}{pass_name}.####"
+        filename = f"{name}{aov_sep}{pass_name}.####"
 
-        slots.new(pass_name if multi_exr else filepath)
+        slots.new(pass_name if multi_exr else filename)
 
-        filename = str(output_path / filepath.lstrip("/"))
+        filepath = str(output_path / filename.lstrip("/"))
 
-        aov_file_products.append((rpass.name, filename))
+        aov_file_products.append((rpass.name, filepath))
 
         if not old_output:
             node_input = output.inputs[-1]
             tree.links.new(rpass, node_input)
+
+    # Create a new socket for the composite output
+    pass_name = "composite"
+    filename = f"{name}{aov_sep}{pass_name}.####"
+    comp_socket = slots.new(pass_name if multi_exr else filename)
+    aov_file_products.append(("Composite", filepath))
 
     for link in tree.links:
         if link.to_node == old_output:
@@ -260,11 +271,14 @@ def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
             new_socket = output.inputs.get(socket_name)
             if new_socket:
                 tree.links.new(link.from_socket, new_socket)
+        elif comp_node and link.to_node == comp_node:
+            tree.links.new(link.from_socket, comp_socket)
 
     if old_output:
         output.location = old_output.location
         tree.nodes.remove(old_output)
     output.name = "AYON File Output"
+    output.label = "AYON File Output"
 
     return [] if multi_exr else aov_file_products
 
