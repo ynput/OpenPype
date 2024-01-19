@@ -19,7 +19,7 @@ class CollectWorkfile(pyblish.api.InstancePlugin):
         if not current_file:
             self.log.error("No current filepath detected. "
                            "Make sure to save your OpenRV session")
-            current_file = ""
+            return
 
         folder, file = os.path.split(current_file)
         filename, ext = os.path.splitext(file)
