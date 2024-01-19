@@ -108,7 +108,7 @@ host_tools.show_experimental_tools_dialog(parent)
         <separatorItem/>
 
         <scriptItem id="ayon_server">
-            <label>Open Ayon server in browser</label>
+            <label>Open AYON server in browser</label>
             <scriptCode><![CDATA[import os; __import__("webbrowser").open(os.getenv("AYON_SERVER_URL"))]]></scriptCode>
         </scriptItem>
 
