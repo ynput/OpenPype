@@ -74,14 +74,6 @@ class ValidateSaverResolution(
             tuple: width, height as 2-tuple of integers
 
         """
-        if tool["Comments"][frame] is None:
-            raise PublishValidationError(
-                "Cannot get resolution info for frame '{}'.\n\n "
-                "Please check that saver has connected input.".format(
-                    frame
-                )
-            )
-
         comp = tool.Composition
 
         # False undo removes the undo-stack from the undo list
@@ -90,7 +82,7 @@ class ValidateSaverResolution(
             old_comment = ""
             has_expression = False
 
-            if tool["Comments"][frame] != "":
+            if tool["Comments"][frame] not in ["", None]:
                 if tool["Comments"].GetExpression() is not None:
                     has_expression = True
                     old_comment = tool["Comments"].GetExpression()
@@ -98,9 +90,16 @@ class ValidateSaverResolution(
                 else:
                     old_comment = tool["Comments"][frame]
                     tool["Comments"][frame] = ""
-
             # Get input width
             tool["Comments"].SetExpression("self.Input.OriginalWidth")
+            if tool["Comments"][frame] is None:
+                raise PublishValidationError(
+                    "Cannot get resolution info for frame '{}'.\n\n "
+                    "Please check that saver has connected input.".format(
+                        frame
+                    )
+                )
+
             width = int(tool["Comments"][frame])
 
             # Get input height
