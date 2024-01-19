@@ -9,6 +9,7 @@ import sys
 import six
 from pathlib import Path
 
+from ftrack_api.exception import NoResultFoundError
 import pyblish.api
 
 from openpype.settings import get_current_project_settings
@@ -26,54 +27,60 @@ class IntegrateFtrackSourceWorkfile(pyblish.api.InstancePlugin):
     def process(self, instance):
         task = instance.data.get("ftrackTask")
         name = instance.data.get("name")
-        asset_version = None
-        version = 0
         session = instance.context.data["ftrackSession"]
 
-        asset_versions = session.query(f"AssetVersion where task_id is \"{task['id']}\"").all()
-        for asset in asset_versions:
-            if asset['asset']['name'] == name:
-                if asset['version'] > version:
-                    version = asset['version']
-                    asset_version = asset
-
-        if asset_version:
-            self.log.debug(f"ASSET VERSION: {asset_version['asset']['name']}, VERSION: {asset_version['version']}")
-
         # Check if there are any integrated AssetVersion entities
-        # asset_versions_key = "ftrackIntegratedAssetVersionsData"
-        # asset_versions_data_by_id = instance.data.get(asset_versions_key)
-        # if not asset_versions_data_by_id:
-        #     # for asset in instance.data["ftrackEntity"].get("assets"):
-        #     #     self.log.debug(f"ASSET: {asset['name']}")
-        #     asset_versions_key = "ftrackIntegratedAssetVersions"
-        #     asset_versions_data_by_id = instance.data.get(asset_versions_key)
-        #     if not asset_versions_data_by_id:
-        #         self.log.info("There are any integrated AssetVersions")
-        #         return
-        #     else:
-        #         self.log.debug("Using old key: {}".format(asset_versions_data_by_id))
+        asset_versions_key = "ftrackIntegratedAssetVersionsData"
+        asset_versions_key_backwards_compatible = "ftrackIntegratedAssetVersionsData"  # noqa
+        asset_version_data = instance.data.get(
+            asset_versions_key
+        ) or instance.data.get(asset_versions_key_backwards_compatible)
+        if not asset_version_data:
+            asset_version_data = self.get_asset_version_by_task_id(
+                session,
+                task['id'],
+                name
+            )
+        else:
+            for asset_version in asset_version_data.values():
+                asset_version_data = asset_version["asset_version"]
 
-        # context = instance.context
-        # filename = context.data["currentFile"]
-        # is_full_path = get_current_project_settings()["ftrack"]["publish"]["IntegrateFtrackSourceWorkfile"]["full_path"]
-        # if is_full_path:
-        #     filename = str(Path(filename).resolve())
-        # else:
-        #     filename = Path(filename).name
+        if not asset_version_data:
+            self.log.debug("No AssetVersion found")
+            return
 
-        # session = instance.context.data["ftrackSession"]
-        # for asset_version_data in asset_versions_data_by_id.values():
-        #     asset_version = asset_version_data["asset_version"]
-        #     asset_version["custom_attributes"]["fix_fromworkfile"] = filename
+        context = instance.context
+        filename = context.data["currentFile"]
+        is_full_path = get_current_project_settings()["ftrack"]["publish"]["IntegrateFtrackSourceWorkfile"]["full_path"]  # noqa
+        if is_full_path:
+            filename = str(Path(filename).resolve())
+        else:
+            filename = Path(filename).name
 
-        #     try:
-        #         session.commit()
-        #         self.log.debug("Source workfile: {} added to AssetVersion \"{}\"".format(
-        #             filename, str(asset_version)
-        #         ))
-        #     except Exception:
-        #         tp, value, tb = sys.exc_info()
-        #         session.rollback()
-        #         session._configure_locations()
-        #         six.reraise(tp, value, tb)
+        asset_version_data["custom_attributes"]["fix_fromworkfile"] = filename
+
+        try:
+            session.commit()
+            self.log.debug(
+                "Source workfile: {} added to AssetVersion \"{}\"".format(
+                    filename, str(asset_version_data)
+                )
+            )
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            session.rollback()
+            session._configure_locations()
+            six.reraise(tp, value, tb)
+
+    def get_asset_version_by_task_id(self, session, task_id, name):
+        try:
+            asset_version = session.query(
+                f"AssetVersion where task_id is {task_id}"
+                " and is_latest_version is True"
+                f" and asset has (name is {name})"
+            ).one()
+        except NoResultFoundError:
+            self.log.debug("No AssetVersion found")
+            return None
+
+        return asset_version
