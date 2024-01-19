@@ -478,15 +478,6 @@ def _convert_maya_project_settings(ayon_settings, output):
         for item in ayon_maya["ext_mapping"]
     }
 
-    # Publish UI filters
-    new_filters = {}
-    for item in ayon_maya["filters"]:
-        new_filters[item["name"]] = {
-            subitem["name"]: subitem["value"]
-            for subitem in item["value"]
-        }
-    ayon_maya["filters"] = new_filters
-
     # Maya dirmap
     ayon_maya_dirmap = ayon_maya.pop("maya_dirmap")
     ayon_maya_dirmap_path = ayon_maya_dirmap["paths"]
@@ -743,16 +734,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
         dirmap["paths"][dst_key] = dirmap["paths"].pop(src_key)
     ayon_nuke["nuke-dirmap"] = dirmap
 
-    # --- Filters ---
-    new_gui_filters = {}
-    for item in ayon_nuke.pop("filters"):
-        subvalue = {}
-        key = item["name"]
-        for subitem in item["value"]:
-            subvalue[subitem["name"]] = subitem["value"]
-        new_gui_filters[key] = subvalue
-    ayon_nuke["filters"] = new_gui_filters
-
     # --- Load ---
     ayon_load = ayon_nuke["load"]
     ayon_load["LoadClip"]["_representations"] = (
@@ -896,7 +877,7 @@ def _convert_hiero_project_settings(ayon_settings, output):
     _convert_host_imageio(ayon_hiero)
 
     new_gui_filters = {}
-    for item in ayon_hiero.pop("filters"):
+    for item in ayon_hiero.pop("filters", []):
         subvalue = {}
         key = item["name"]
         for subitem in item["value"]:
@@ -962,17 +943,6 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
     ayon_tvpaint = ayon_settings["tvpaint"]
 
     _convert_host_imageio(ayon_tvpaint)
-
-    filters = {}
-    for item in ayon_tvpaint["filters"]:
-        value = item["value"]
-        try:
-            value = json.loads(value)
-
-        except ValueError:
-            value = {}
-        filters[item["name"]] = value
-    ayon_tvpaint["filters"] = filters
 
     ayon_publish_settings = ayon_tvpaint["publish"]
     for plugin_name in (
@@ -1320,12 +1290,6 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             extract_burnin_def.pop("name"): extract_burnin_def
             for extract_burnin_def in extract_burnin_defs
         }
-
-    ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
-    for profile in ayon_integrate_hero["template_name_profiles"]:
-        if "product_types" not in profile:
-            break
-        profile["families"] = profile.pop("product_types")
 
     if "IntegrateProductGroup" in ayon_publish:
         subset_group = ayon_publish.pop("IntegrateProductGroup")
