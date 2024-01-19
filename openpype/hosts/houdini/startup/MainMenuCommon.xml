@@ -130,11 +130,6 @@ host_tools.show_experimental_tools_dialog(parent)
                 <scriptCode><![CDATA[__import__("webbrowser").open("https://community.ynput.io/")]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="about_ynput">
-                <label>About Ynput</label>
-                <scriptCode><![CDATA[__import__("webbrowser").open("https://ynput.io/company/")]]></scriptCode>
-            </scriptItem>
-
         </subMenu>
 
         </subMenu>
