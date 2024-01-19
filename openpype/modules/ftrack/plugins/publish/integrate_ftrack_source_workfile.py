@@ -9,10 +9,10 @@ import sys
 import six
 from pathlib import Path
 
-from ftrack_api.exception import NoResultFoundError
 import pyblish.api
 
 from openpype.settings import get_current_project_settings
+from openpype.modules.ftrack import get_asset_version_by_task_id
 
 
 class IntegrateFtrackSourceWorkfile(pyblish.api.InstancePlugin):
@@ -36,7 +36,7 @@ class IntegrateFtrackSourceWorkfile(pyblish.api.InstancePlugin):
             asset_versions_key
         ) or instance.data.get(asset_versions_key_backwards_compatible)
         if not asset_version_data:
-            asset_version_data = self.get_asset_version_by_task_id(
+            asset_version_data = get_asset_version_by_task_id(
                 session,
                 task['id'],
                 name
@@ -71,16 +71,3 @@ class IntegrateFtrackSourceWorkfile(pyblish.api.InstancePlugin):
             session.rollback()
             session._configure_locations()
             six.reraise(tp, value, tb)
-
-    def get_asset_version_by_task_id(self, session, task_id, name):
-        try:
-            asset_version = session.query(
-                f"AssetVersion where task_id is {task_id}"
-                " and is_latest_version is True"
-                f" and asset has (name is {name})"
-            ).one()
-        except NoResultFoundError:
-            self.log.debug("No AssetVersion found")
-            return None
-
-        return asset_version
