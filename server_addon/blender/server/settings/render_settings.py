@@ -151,6 +151,6 @@ DEFAULT_RENDER_SETTINGS = {
     "image_format": "exr",
     "multilayer_exr": True,
     "renderer": "CYCLES",
-    "aov_list": [],
+    "aov_list": ["combined"],
     "custom_passes": []
 }
