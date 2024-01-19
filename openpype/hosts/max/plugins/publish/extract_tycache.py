@@ -14,11 +14,12 @@ class ExtractTyCache(publish.Extractor):
         - TyCache only works for TyFlow Pro Plugin.
 
     Methods:
-        self.get_export_particles_job_args(): sets up all job arguments
-            for attributes to be exported in MAXscript
+        self._extract_tyflow_particles: sets the necessary
+            attributes and export tyCache with the export
+            particle operator(s)
 
         self.get_tyflow_export_particle_operators(): get the
-            export_particle operator
+            export_particle operator(s)
 
         self.get_files(): get the files with tyFlow naming convention
             before publishing
@@ -41,36 +42,37 @@ class ExtractTyCache(publish.Extractor):
         tyc_fnames = []
         tyc_mesh_fnames = []
         with maintained_selection():
+            self.log.debug(get_tyflow_export_particle_operators(members))
             for operators in get_tyflow_export_particle_operators(members):
                 operator, start_frame, end_frame, name = operators
                 filename = f"{instance.name}_{name}.tyc"
                 path = os.path.join(stagingdir, filename)
                 filenames = self.get_files(
                     instance, name, start_frame, end_frame)
-                job_args = self.get_export_particles_job_args(
-                    operator, path, export_mode)
+                self._extract_tyflow_particles(operator, path, export_mode)
                 mesh_filename = f"{instance.name}_{name}__tyMesh.tyc"
                 tyc_fnames.extend(filenames)
                 tyc_mesh_fnames.append(mesh_filename)
-                for job in job_args:
-                    rt.Execute(job)
-
         representation = {
             "name": "tyc",
             "ext": "tyc",
-            "files": tyc_fnames,
+            "files": (
+                tyc_fnames if len(tyc_fnames) > 1
+                else tyc_fnames[0]),
             "stagingDir": stagingdir
         }
         representations.append(representation)
         mesh_repres = {
             'name': 'tyMesh',
             'ext': 'tyc',
-            'files': tyc_mesh_fnames,
+            'files': (
+                tyc_mesh_fnames if len(tyc_mesh_fnames) > 1
+                else tyc_mesh_fnames[0]),
             "stagingDir": stagingdir
         }
         representations.append(mesh_repres)
         self.log.debug(
-            f"Extracted instance '{instance.name}' to: {tyc_fnames}")
+            f"Extracted instance '{instance.name}' to: {stagingdir}")
 
     def get_files(self, instance, operator, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
@@ -96,37 +98,26 @@ class ExtractTyCache(publish.Extractor):
             filenames.append(filename)
         return filenames
 
-    def get_export_particles_job_args(self, operator, filepath,
-                                      export_mode):
-        """Sets up all job arguments for attributes.
-
-        Those attributes are to be exported in MAX Script.
+    def _extract_tyflow_particles(self, operator, filepath, export_mode):
+        """Exports tyCache particle with the necessary export settings
 
         Args:
-            members (list): Member nodes of the instance.
+            operators (list): List of Export Particle operator
             start (int): Start frame.
             end (int): End frame.
             filepath (str): Output path of the TyCache file.
             export_mode (int): Export Mode for the TyCache Output.
 
-        Returns:
-            list of arguments for MAX Script.
-
         """
-        if rt.Execute(f"{operator}.exportMode") != export_mode:
+        if rt.getProperty(operator, "exportMode") != export_mode:
             return
-        settings = {
+        export_settings = {
             "tycacheCreateObject": False,
             "tycacheCreateObjectIfNotCreated": False,
-            "tyCacheFilename": filepath.replace("\\", "/")
+            "tyCacheFilename": filepath.replace("\\", "/"),
         }
 
-        job_args = []
-        for key, value in settings.items():
-            if isinstance(value, str):
-                # embed in quotes
-                value = f'"{value}"'
-
-            job_args.append(f"{operator}.{key}={value}")
-        job_args.append(f"{operator}.exportTyCache()")
-        return job_args
+        for key, value in export_settings.items():
+            rt.setProperty(operator, key, value)
+        # export tyCache
+        operator.ExportTyCache()

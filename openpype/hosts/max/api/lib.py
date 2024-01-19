@@ -556,6 +556,7 @@ def get_tyflow_export_particle_operators(members):
 
     """
     opt_list = []
+    event_filter = {}
     for member in members:
         obj = member.baseobject
         anim_names = rt.GetSubAnimNames(obj)
@@ -567,14 +568,20 @@ def get_tyflow_export_particle_operators(members):
 
             # Look through all the nodes in the events
             node_names = rt.GetSubAnimNames(sub_anim)
+            event_filter[str(sub_anim)] = []
             for node_name in node_names:
                 node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
                 if rt.hasProperty(node_sub_anim, "exportMode"):
-                    opt = f"${member.Name}.{sub_anim.Name}.{node_name}"
-                    opt_list.append((opt,
+                    element_sets = [(node_sub_anim,
                                      node_sub_anim.frameStart,
                                      node_sub_anim.frameEnd,
-                                     node_name))
+                                     node_name)]
+                    # Only the first export particle oeprator
+                    # selected when there are multiple operators
+                    # in the same tyEvent
+                    if not event_filter.get(str(sub_anim), None):
+                        event_filter[str(sub_anim)] = element_sets
+            opt_list.extend(event_filter[str(sub_anim)])
     return opt_list
 
 
