@@ -44,17 +44,17 @@ XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
 
 IMAGE_EXTENSIONS = {
-    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
-    ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
-    ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
-    ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
-    ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
-    ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
-    ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-    ".pictor", ".png", ".psd", ".psb", ".psp", ".qtvr", ".ras",
-    ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
-    ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
-    ".xpm", ".xwd"
+    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave",
+    ".cal", ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr",
+    ".fits", ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc",
+    ".icer", ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
+    ".jng", ".jpeg", ".jpeg-ls", ".jpeg-hdr", ".2000", ".jpg",
+    ".kra", ".logluv", ".mng", ".miff", ".nrrd", ".ora",
+    ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+    ".pictor", ".png", ".psd", ".psb", ".psp", ".qtvr",
+    ".ras", ".rgbe", ".sgi", ".tga",
+    ".tif", ".tiff", ".tiff/ep", ".tiff/it", ".ufo", ".ufp",
+    ".wbmp", ".webp", ".xr", ".xt", ".xbm", ".xcf", ".xpm", ".xwd"
 }
 
 VIDEO_EXTENSIONS = {
