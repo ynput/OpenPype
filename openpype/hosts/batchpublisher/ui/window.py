@@ -43,6 +43,8 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         top_inputs_layout = QtWidgets.QFormLayout(top_inputs_widget)
         top_inputs_layout.setContentsMargins(0, 0, 0, 0)
         top_inputs_layout.addRow("Choose project", self._project_combobox)
+        # pushbutton_change_project = QtWidgets.QPushButton("Change project")
+        # top_inputs_layout.addRow(pushbutton_change_project)
         top_inputs_layout.addRow("Directory to ingest", dir_inputs_widget)
 
         self._controller = controller.BatchPublisherController()
@@ -74,6 +76,7 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
 
         self._project_combobox.currentIndexChanged.connect(
             self._on_project_changed)
+        # pushbutton_change_project.clicked.connect(self._on_project_changed)
         dir_browse_btn.clicked.connect(self._on_browse_button_clicked)
         publish_btn.clicked.connect(self._on_publish_button_clicked)
 
@@ -103,8 +106,8 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         self._pushbutton_publish = publish_btn
 
     def _on_project_changed(self):
-        project = str(self._project_combobox.currentText())
-        self._controller.project = project
+        project_name = str(self._project_combobox.currentText())
+        self._controller.project_name = project_name
 
     def _on_browse_button_clicked(self):
         directory = self._dir_input.text()

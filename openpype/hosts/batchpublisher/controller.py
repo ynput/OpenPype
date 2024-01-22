@@ -9,32 +9,34 @@ from openpype.hosts.batchpublisher import publish
 class BatchPublisherController(object):
 
     def __init__(self):
-        self._project = list()
+        self._project_name = list()
         self._folder_names = []
         from openpype.hosts.batchpublisher.models. \
             batch_publisher_model import BatchPublisherModel
         self.model = BatchPublisherModel(self)
 
     @property
-    def project(self):
-        return self._project
+    def project_name(self):
+        return self._project_name
 
-    @project.setter
-    def project(self, project):
-        msg = "Project name changed to: {}".format(project)
+    @project_name.setter
+    def project_name(self, project_name):
+        msg = "Project name changed to: {}".format(project_name)
         print(msg)
-        self._project = project
+        self._project_name = project_name
         # Update cache of asset names for project
         # self._folder_names = [
         #     "assets",
         #     "assets/myasset",
         #     "assets/myasset/mytest"]
         self._folder_names = list()
-        assets = get_assets(project)
+        assets = get_assets(project_name)
         for asset in assets:
             asset_name = "/".join(asset["data"]["parents"])
             asset_name += "/" + asset["name"]
             self._folder_names.append(asset_name)
+        # Clear the existing picked folder names, since project changed
+        self.model._change_project(project_name)
 
     @property
     def folder_names(self):
@@ -93,7 +95,7 @@ Project: {self._project}"""
             ingest_file.task_name = str()
             return
         asset_doc = get_asset_by_name(
-            self._project,
+            self._project_name,
             ingest_file.folder_path)
         if not asset_doc:
             ingest_file.task_name = str()
