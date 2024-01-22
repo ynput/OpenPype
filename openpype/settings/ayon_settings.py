@@ -1291,12 +1291,6 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             for extract_burnin_def in extract_burnin_defs
         }
 
-    ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
-    for profile in ayon_integrate_hero["template_name_profiles"]:
-        if "product_types" not in profile:
-            break
-        profile["families"] = profile.pop("product_types")
-
     if "IntegrateProductGroup" in ayon_publish:
         subset_group = ayon_publish.pop("IntegrateProductGroup")
         subset_group_profiles = subset_group.pop("product_grouping_profiles")
