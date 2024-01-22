@@ -58,6 +58,11 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         return ungrouped_nodes, nodes_by_name, parents
 
     def process(self, instance):
+
+        if "ass.legacy" in instance.data.get("families", []):
+            self.log.info("Skipping, using legacy workflow.")
+            return
+
         ungrouped_nodes = []
 
         nodes, content_nodes_by_name, content_parents = (

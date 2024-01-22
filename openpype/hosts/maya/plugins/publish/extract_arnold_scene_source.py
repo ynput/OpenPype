@@ -18,6 +18,10 @@ class ExtractArnoldSceneSource(publish.Extractor):
     asciiAss = False
 
     def process(self, instance):
+        if "ass.legacy" in instance.data["families"]:
+            self.log.info("Skipping on behalf of legacy extractor.")
+            return
+
         staging_dir = self.staging_dir(instance)
         file_path = os.path.join(staging_dir, "{}.ass".format(instance.name))
 
