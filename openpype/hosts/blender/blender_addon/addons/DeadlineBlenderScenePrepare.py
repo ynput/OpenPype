@@ -99,6 +99,10 @@ def generate_enums_from_render_selectors(self, context):
     return items
 
 
+def get_render_layers_names():
+    return [render_layer.name for render_layer in bpy.context.scene.view_layers]
+
+
 @bpy.app.handlers.persistent
 def populate_render_properties(dummy=None):
         def _set_common_infos(item, render_property):
@@ -117,6 +121,17 @@ def populate_render_properties(dummy=None):
             _set_common_infos(item, render_property)
 
 
+def collect_render_layers():
+        for render_layer_name in get_render_layers_names():
+            item = bpy.context.window_manager.render_layers_to_use.add()
+            item.name = render_layer_name
+            item.value = bpy.context.scene.view_layers[render_layer_name].use
+
+
+def render_layers_needs_update():
+    return len(bpy.context.window_manager.render_layers_to_use) != len(get_render_layers_names())
+
+
 class RenderBoolProperty(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property name")
     path: bpy.props.StringProperty(name="Path to access property")
@@ -127,6 +142,11 @@ class RenderListProperty(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(name="Property name")
     path: bpy.props.StringProperty(name="Path to access property")
     items: bpy.props.EnumProperty(name="Selectable values", items=generate_enums_from_render_selectors)
+
+
+class RenderLayerProperty(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Render layer name")
+    value: bpy.props.BoolProperty(name="Default value", default=True)
 
 
 class PrepareAndRenderScene(bpy.types.Panel):
@@ -145,8 +165,15 @@ class PrepareAndRenderScene(bpy.types.Panel):
         for render_property in bpy.context.window_manager.render_list_properties:
             col.prop(render_property, 'items', text=render_property.name)
 
-        col.separator()
-        col.operator("deadline.execute_macro", icon="MESH_CUBE")
+        col = layout.box()
+        col.label(text="Render layers to activate")
+        if render_layers_needs_update():
+            collect_render_layers()
+
+        for render_layer in bpy.context.window_manager.render_layers_to_use:
+            col.prop(render_layer, 'value', text=render_layer.name)
+
+        layout.operator("deadline.execute_macro", icon="MESH_CUBE")
 
 
 class PrepareTemporaryFile(bpy.types.Operator):
@@ -157,6 +184,7 @@ class PrepareTemporaryFile(bpy.types.Operator):
     def execute(self, context):
         log.info("Preparing temporary scene for Deadline's render")
         set_scene_render_properties()
+        update_render_layers_state()
         convert_cache_files_windows_path_to_linux()
         convert_modifiers_windows_path_to_linux()
         set_engine('CYCLES')
@@ -190,6 +218,12 @@ def set_attribute(path, value):
         return functools.reduce(_getattr, [obj] + attr.split('.'))
 
     rsetattr(bpy.context.scene, path, value)
+
+
+def update_render_layers_state():
+    for render_layer in bpy.context.window_manager.render_layers_to_use:
+        bpy.context.scene.view_layers[render_layer.name].use = render_layer.value
+        log.info(f"Render layer {render_layer.name} has been set to {render_layer.value}")
 
 
 def save_as_temporary_scene():
@@ -317,10 +351,23 @@ def register():
     bpy.utils.register_class(PrepareAndRenderScene)
     bpy.utils.register_class(RenderBoolProperty)
     bpy.utils.register_class(RenderListProperty)
+    bpy.utils.register_class(RenderLayerProperty)
 
     bpy.types.WindowManager.scene_filepath = bpy.props.StringProperty('')
     bpy.types.WindowManager.render_bool_properties = bpy.props.CollectionProperty(type=RenderBoolProperty)
     bpy.types.WindowManager.render_list_properties = bpy.props.CollectionProperty(type=RenderListProperty)
+    bpy.types.WindowManager.render_layers_to_use = bpy.props.CollectionProperty(type=RenderLayerProperty)
+    # bpy.types.WindowManager.render_layers = bpy.props.EnumProperty(
+    #     name = "Render layers",
+    #     description ="Render layers to ",
+    #     items = ('Test', 'Test', 'Test')#get_render_layers_names
+    # )
+    #))
+
+        # name="Render layers",
+        # description="Render layers",
+        # items=get_render_layers_names
+    #)
 
     ExecutionOrder.define("DEADLINE_OT_prepare_temporary_scene")
     ExecutionOrder.define("OPS_OT_submit_blender_to_deadline")
@@ -338,9 +385,11 @@ def unregister():
     bpy.utils.unregister_class(PrepareAndRenderScene)
     bpy.utils.unregister_class(RenderBoolProperty)
     bpy.utils.unregister_class(RenderListProperty)
+    bpy.utils.unregister_class(RenderLayerProperty)
 
     del bpy.types.WindowManager.scene_filepath
     del bpy.types.WindowManager.render_bool_properties
     del bpy.types.WindowManager.render_list_properties
+    del bpy.types.WindowManager.render_layers_to_use
 
     bpy.app.handlers.load_post.remove(populate_render_properties)
