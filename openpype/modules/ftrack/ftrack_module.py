@@ -3,8 +3,8 @@ import json
 import collections
 import platform
 
-from openpype import click_wrap
 from openpype.modules import (
+    click_wrap,
     OpenPypeModule,
     ITrayModule,
     IPluginPaths,
