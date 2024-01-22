@@ -9,10 +9,10 @@ from openpype.hosts.batchpublisher import publish
 class BatchPublisherController(object):
 
     def __init__(self):
-        from openpype.hosts.batchpublisher.models. \
-            batch_publisher_model import BatchPublisherModel
         self._project = list()
         self._folder_names = []
+        from openpype.hosts.batchpublisher.models. \
+            batch_publisher_model import BatchPublisherModel
         self.model = BatchPublisherModel(self)
 
     @property
