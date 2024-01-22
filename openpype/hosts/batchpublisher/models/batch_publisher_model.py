@@ -227,9 +227,9 @@ Enabled: <b>{ingest_file.enabled}</b>
                 # IngestFile(
                 #     filepath,
                 #     product_type,
+                #     product_name,
                 #     representation_name,
                 #     version=None,
-                #     product_name=None,
                 #     enabled=True,
                 #     folder_path=None,
                 #     task_name=None)
