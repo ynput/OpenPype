@@ -55,7 +55,7 @@ class BatchPublisherController(object):
             print("Skipping publish, not enabled: " + ingest_file.filepath)
             return
         if not ingest_file.defined:
-            print("Skipping publish, not defined properly: " + ingest_file.filepath)
+            print("Skipping publish, not defined: " + ingest_file.filepath)
             return
         msg = f"""
 Publishing (ingesting): {ingest_file.filepath}
@@ -69,7 +69,8 @@ Project: {self._project}"""
         print(msg)
         publish_data = dict()
         expected_representations = dict()
-        expected_representations[ingest_file.representation_name] = ingest_file.filepath
+        expected_representations[ingest_file.representation_name] = \
+            ingest_file.filepath
         publish.publish_version(
             self._project,
             ingest_file.folder_path,

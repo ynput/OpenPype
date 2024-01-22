@@ -110,7 +110,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         self.endResetModel()
 
     def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self._ingest_files )
+        return len(self._ingest_files)
 
     def columnCount(self, parent=QtCore.QModelIndex()):
         return len(BatchPublisherModel.HEADER_LABELS)
@@ -124,7 +124,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     def setData(self, index, value, role=None):
         column = index.column()
         row = index.row()
-        ingest_file = self._ingest_files [row]
+        ingest_file = self._ingest_files[row]
         if role == QtCore.Qt.EditRole:
             if column == BatchPublisherModel.COLUMN_OF_DIRECTORY:
                 ingest_file.filepath = value
@@ -170,7 +170,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     def data(self, index, role=QtCore.Qt.DisplayRole):
         column = index.column()
         row = index.row()
-        ingest_file = self._ingest_files [row]
+        ingest_file = self._ingest_files[row]
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             if column == BatchPublisherModel.COLUMN_OF_DIRECTORY:
                 return ingest_file.filepath
@@ -241,6 +241,6 @@ Enabled: <b>{ingest_file.enabled}</b>
     def publish(self):
         print("Publishing enabled and defined products...")
         for row in range(self.rowCount()):
-            ingest_file = self._ingest_files [row]
+            ingest_file = self._ingest_files[row]
             if ingest_file.enabled and ingest_file.defined:
                 self.controller.publish_ingest_file(ingest_file)
