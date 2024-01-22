@@ -217,7 +217,7 @@ class GenericCreateSaver(Creator):
             for replace_str in [product_info["name"], context["asset"],
                                 context["task"]["name"]]:
                 variant = re.sub(replace_str, "",
-                                 variant, flags=re.I)
+                                 variant, flags=re.IGNORECASE)
             variants.append(variant)
 
         return list(set(variants))
