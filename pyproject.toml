@@ -131,10 +131,10 @@ version = "5.15.2"
 opencolorio = "2.2.1"
 opentimelineio = "0.14.1"
 Click = "7.1.2"
-Pillow = "^9.0"
-pysftp = "^0.2.9"
-google-api-python-client = "^1.12.8" # sync server google support
-dropbox = "^11.20.0"
+Pillow = "9.5.0"
+pysftp = "0.2.9" # sync server sftp support
+google-api-python-client = "1.12.11" # sync server google support
+dropbox = "11.36.0" # sync server dropbox support
 
 # TODO: we will need to handle different linux flavours here and
 #       also different macos versions too.
