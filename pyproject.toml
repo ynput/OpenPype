@@ -48,7 +48,6 @@ pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not n
 pyblish-base = "^1.8.11"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
-"Qt.py" = "^1.3.3"
 QtPy = "^2.3.0"
 qtawesome = "0.7.3"
 speedcopy = "^2.1"
