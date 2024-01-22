@@ -74,32 +74,32 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
             x["name"]: x["effect_classes"] for x in self.effect_categories
         }
 
-        category_by_effect = {}
+        category_by_effect = {"": ""}
         for key, values in effect_categories.items():
             for cls in values:
                 category_by_effect[cls] = key
 
         effects_categorized = {k: {} for k in effect_categories.keys()}
+        effects_categorized[""] = {}
         for key, value in effects.items():
             if key == "assignTo":
                 continue
 
             # Some classes can have a number in them. Like Text2.
-            found_cls = None
+            found_cls = ""
             for cls in category_by_effect.keys():
                 if value["class"].startswith(cls):
                     found_cls = cls
 
-            if found_cls is None:
-                continue
-
             effects_categorized[category_by_effect[found_cls]][key] = value
 
-        if effects_categorized:
-            for key in effects_categorized.keys():
-                effects_categorized[key]["assignTo"] = effects["assignTo"]
-        else:
-            effects_categorized[""] = effects
+        categories = list(effects_categorized.keys())
+        for category in categories:
+            if not effects_categorized[category]:
+                effects_categorized.pop(category)
+                continue
+
+            effects_categorized[category]["assignTo"] = effects["assignTo"]
 
         for category, effects in effects_categorized.items():
             name = "".join(subset_split)
