@@ -193,7 +193,10 @@ class GenericCreateSaver(Creator):
     def get_default_variants(self):
         """Calculate variants from Settings and loaded containers.
 
-        Tries to parse out variant from loaded containers.
+        This is customer specific use case which is trying to parse out
+        variants from loaded containers.
+        Parsing is based on some assumptions which might be not completely
+        reliable.
         """
         variants = super().get_default_variants()
 
@@ -217,7 +220,7 @@ class GenericCreateSaver(Creator):
                                  variant, flags=re.I)
             variants.append(variant)
 
-        return variants
+        return list(set(variants))
 
     def pass_pre_attributes_to_instance(self, instance_data, pre_create_data):
         creator_attrs = instance_data["creator_attributes"] = {}
