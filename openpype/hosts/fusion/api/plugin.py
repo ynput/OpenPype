@@ -214,7 +214,7 @@ class GenericCreateSaver(Creator):
             product_info = context["product"]
             variant = product_info["name"]
             # try to get "clean" variant from loaded product name
-            for replace_str in [product_info["name"], context["asset"],
+            for replace_str in [product_info["type"], context["asset"],
                                 context["task"]["name"]]:
                 variant = re.sub(replace_str, "",
                                  variant, flags=re.IGNORECASE)
