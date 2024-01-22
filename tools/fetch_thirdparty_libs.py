@@ -86,7 +86,7 @@ def _pip_install(openpype_root, package, version=None):
             [
                 sys.executable,
                 "-m", "pip", "install", "--upgrade", arg,
-                "-t", str(python_vendor_dir)
+                "--prefix", str(python_vendor_dir)
             ],
             check=True,
             stdout=subprocess.DEVNULL
