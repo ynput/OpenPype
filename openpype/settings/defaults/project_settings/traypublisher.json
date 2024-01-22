@@ -332,6 +332,7 @@
             ]
         },
         "IngestCSV": {
+            "enabled": true,
             "columns_config": {
                 "csv_delimiter": ",",
                 "columns": {
