@@ -14,7 +14,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         model = index.model()
-        ingest_filepath = model.ingest_filepaths[index.row()]
+        ingest_file = model.ingest_files[index.row()]
 
         if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
             # clear the folder
@@ -55,12 +55,12 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
         elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
             # editor = QtWidgets.QLineEdit(parent)
             # completer = QtWidgets.QCompleter(
-            #     ingest_filepath.task_names,
+            #     ingest_file.task_names,
             #     self)
             # completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
             # editor.setCompleter(completer)
             editor = QtWidgets.QComboBox(parent)
-            editor.addItems(ingest_filepath.task_names)
+            editor.addItems(ingest_file.task_names)
             return editor
 
         elif index.column() == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:

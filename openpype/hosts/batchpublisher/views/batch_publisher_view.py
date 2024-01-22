@@ -46,7 +46,7 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         value = model.data(current_index, QtCore.Qt.EditRole)
         for qmodelindex in self.selectedIndexes():
             # row = qmodelindex.row()
-            # ingest_filepath = model.ingest_filepaths[row]
+            # ingest_file = model.ingest_files[row]
             model.setData(qmodelindex, value, role=QtCore.Qt.EditRole)
 
         # When changing folder we need to propagate
@@ -73,12 +73,12 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         enabled_count = 0
         defined_count = 0
         for row in range(model.rowCount()):
-            ingest_filepath = model.ingest_filepaths[row]
-            if ingest_filepath.enabled and ingest_filepath.defined:
+            ingest_file = model.ingest_files[row]
+            if ingest_file.enabled and ingest_file.defined:
                 publish_count += 1
-            if ingest_filepath.enabled:
+            if ingest_file.enabled:
                 enabled_count += 1
-            if ingest_filepath.defined:
+            if ingest_file.defined:
                 defined_count += 1
         if publish_count == 0:
             msg = "You must provide asset, task, family, "
