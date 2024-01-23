@@ -273,7 +273,8 @@ def _independent_window():
     current_windows = set(bpy.context.window_manager.windows)
     with bpy.context.temp_override(**context):
         bpy.ops.wm.window_new()
-        window = list(set(bpy.context.window_manager.windows) - current_windows)[0]
+        window = list(
+            set(bpy.context.window_manager.windows) - current_windows)[0]
         context["window"] = window
         try:
             yield window
