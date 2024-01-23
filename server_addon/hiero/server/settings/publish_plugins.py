@@ -74,5 +74,8 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
         "tags_addition": [
             "review"
         ]
+    },
+    "CollectClipEffectsModel": {
+        "effect_categories": []
     }
 }
