@@ -270,6 +270,8 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
 
         3.15.7-nightly.2 >> 3.157
         """
+        if not version:
+            return
         VERSION_REGEX = re.compile(
             r"(?P<major>0|[1-9]\d*)"
             r"\.(?P<minor>0|[1-9]\d*)"
