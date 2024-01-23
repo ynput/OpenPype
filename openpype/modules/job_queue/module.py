@@ -236,6 +236,8 @@ def cli_start_server(port, host):
     )
 )
 @click_wrap.argument("app_name")
-@click_wrap.option("--server_url", help="Server url which handle workers and jobs.")
+@click_wrap.option(
+    "--server_url",
+    help="Server url which handle workers and jobs.")
 def cli_start_worker(app_name, server_url):
     JobQueueModule.start_worker(app_name, server_url)

@@ -118,7 +118,9 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
         click_group.add_command(cli_main.to_click_obj())
 
 
-@click_wrap.group(ExampleAddon.name, help="Example addon dynamic cli commands.")
+@click_wrap.group(
+    ExampleAddon.name,
+    help="Example addon dynamic cli commands.")
 def cli_main():
     pass
 
