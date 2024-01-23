@@ -20,6 +20,7 @@ from openpype.lib import (
 from openpype.lib.transcoding import (
     IMAGE_EXTENSIONS,
     get_ffprobe_streams,
+    get_video_metadata,
     should_convert_for_ffmpeg,
     get_review_layer_name,
     convert_input_paths_for_ffmpeg,
@@ -1199,7 +1200,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return output
 
     def rescaling_filters(self, temp_data, output_def, new_repre):
-        """Prepare vieo filters based on tags in new representation.
+        """Prepare video filters based on tags in new representation.
 
         It is possible to add letterboxes to output video or rescale to
         different resolution.
@@ -1238,18 +1239,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Try to find first stream with defined 'width' and 'height'
         # - this is to avoid order of streams where audio can be as first
         # - there may be a better way (checking `codec_type`?)
-        input_width = None
-        input_height = None
+
+        # Get video metadata
+        (
+            input_width,
+            input_height,
+            input_timecode,
+            input_frame_rate,
+            input_pixel_aspect
+        ) = get_video_metadata(streams, self.log)
+
         output_width = None
         output_height = None
-        for stream in streams:
-            if "width" in stream and "height" in stream:
-                input_width = int(stream["width"])
-                input_height = int(stream["height"])
-                break
 
         # Get instance data
         pixel_aspect = temp_data["pixel_aspect"]
+        if input_pixel_aspect:
+            pixel_aspect = input_pixel_aspect
+
         if reformat_in_baking:
             self.log.debug((
                 "Using resolution from input. It is already "
@@ -1265,7 +1272,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "FFprobe couldn't read resolution from input file: \"{}\""
             ).format(full_input_path_single_file))
 
-        # NOTE Setting only one of `width` or `heigth` is not allowed
+        # NOTE Setting only one of `width` or `height` is not allowed
         # - settings value can't have None but has value of 0
         output_width = output_def.get("width") or output_width or None
         output_height = output_def.get("height") or output_height or None
