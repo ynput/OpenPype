@@ -1,4 +1,4 @@
-from pydantic import Field, validator
+from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
     ensure_unique_names,
@@ -12,23 +12,6 @@ from .publish_plugins import (
     LoadPluginsModel,
     DEFAULT_PUBLISH_SETTINGS,
 )
-
-
-class PublishGUIFilterItemModel(BaseSettingsModel):
-    _layout = "compact"
-    name: str = Field(title="Name")
-    value: bool = Field(True, title="Active")
-
-
-class PublishGUIFiltersModel(BaseSettingsModel):
-    _layout = "compact"
-    name: str = Field(title="Name")
-    value: list[PublishGUIFilterItemModel] = Field(default_factory=list)
-
-    @validator("value")
-    def validate_unique_outputs(cls, value):
-        ensure_unique_names(value)
-        return value
 
 
 class TvpaintSettings(BaseSettingsModel):
@@ -52,14 +35,6 @@ class TvpaintSettings(BaseSettingsModel):
         default_factory=WorkfileBuilderPlugin,
         title="Workfile Builder"
     )
-    filters: list[PublishGUIFiltersModel] = Field(
-        default_factory=list,
-        title="Publish GUI Filters")
-
-    @validator("filters")
-    def validate_unique_outputs(cls, value):
-        ensure_unique_names(value)
-        return value
 
 
 DEFAULT_VALUES = {
