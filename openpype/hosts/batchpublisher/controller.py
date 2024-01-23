@@ -1,9 +1,22 @@
 
 
+import glob
+import os
+
 from openpype.client.entities import (
     get_assets,
     get_asset_by_name)
 from openpype.hosts.batchpublisher import publish
+
+
+# TODO: add to OpenPype settings so other studios can change
+FILE_MAPPINGS = [
+    {
+        "glob": "*/fbx/*.fbx",
+        "is_sequence": False,
+        "product_type": "model",
+    }
+]
 
 
 class BatchPublisherController(object):
@@ -43,14 +56,53 @@ class BatchPublisherController(object):
         return self._folder_names
 
     @property
-    def ingest_filepaths(self):
-        return self.model.ingest_filepaths
+    def ingest_files(self):
+        return self.model.ingest_files
+
+    def get_ingest_file_items_for_dir(self, directory):
+        ingest_files = list()
+        for ingest_file in self.model.ingest_files:
+            if directory == os.path.dirname(ingest_file.filepath):
+                ingest_files.append(ingest_file)
+        return ingest_files
 
     def populate_from_directory(self, directory):
-        self.model.populate_from_directory(directory)
+        from openpype.hosts.batchpublisher.models import \
+            batch_publisher_model
+        self.model.beginResetModel()
+        self.model.ingest_files = list()
+        for file_mapping in FILE_MAPPINGS:
+            product_type = file_mapping["product_type"]
+            glob_full_path = directory + "/" + file_mapping["glob"]
+            files = glob.glob(glob_full_path, recursive=False)
+            for filepath in files:
+                filename = os.path.basename(filepath)
+                representation_name = os.path.splitext(
+                    filename)[1].lstrip(".")
+                product_name = os.path.splitext(filename)[0]
+                ingest_file = batch_publisher_model.IngestFile(
+                    filepath,
+                    product_type,
+                    product_name,
+                    representation_name)
+                # IngestFile(
+                #     filepath,
+                #     product_type,
+                #     product_name,
+                #     representation_name,
+                #     version=None,
+                #     enabled=True,
+                #     folder_path=None,
+                #     task_name=None)
+                self.model.ingest_files .append(ingest_file)
+        self.model.endResetModel()
 
     def publish(self):
-        self.model.publish()
+        print("Publishing enabled and defined products...")
+        for row in range(self.model.rowCount()):
+            ingest_file = self.model.ingest_files[row]
+            if ingest_file.enabled and ingest_file.defined:
+                self.publish_ingest_file(ingest_file)
 
     def publish_ingest_file(self, ingest_file):
         if not ingest_file.enabled:
@@ -67,14 +119,14 @@ Product Type (Family): {ingest_file.product_type}
 Product Name (Subset): {ingest_file.product_name}
 Representation: {ingest_file.representation_name}
 Version: {ingest_file.version}"
-Project: {self._project}"""
+Project: {self._project_name}"""
         print(msg)
         publish_data = dict()
         expected_representations = dict()
         expected_representations[ingest_file.representation_name] = \
             ingest_file.filepath
         publish.publish_version(
-            self._project,
+            self._project_name,
             ingest_file.folder_path,
             ingest_file.task_name,
             ingest_file.product_type,

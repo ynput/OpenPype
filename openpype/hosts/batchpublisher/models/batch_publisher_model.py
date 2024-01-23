@@ -5,15 +5,6 @@ import os
 
 from qtpy import QtCore, QtGui
 
-# TODO: add to OpenPype settings so other studios can change
-FILE_MAPPINGS = [
-    {
-        "glob": "*/fbx/*.fbx",
-        "is_sequence": False,
-        "product_type": "model",
-    }
-]
-
 
 class IngestFile(object):
 
@@ -77,6 +68,10 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     @property
     def ingest_files(self):
         return self._ingest_files
+
+    @ingest_files.setter
+    def ingest_files(self, ingest_files):
+        self._ingest_files = ingest_files
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self._ingest_files)
@@ -207,35 +202,6 @@ Enabled: <b>{ingest_file.enabled}</b>
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 
-    def populate_from_directory(self, directory):
-        self.beginResetModel()
-        self._ingest_files = list()
-        for file_mapping in FILE_MAPPINGS:
-            product_type = file_mapping["product_type"]
-            glob_full_path = directory + "/" + file_mapping["glob"]
-            files = glob.glob(glob_full_path, recursive=False)
-            for filepath in files:
-                filename = os.path.basename(filepath)
-                representation_name = os.path.splitext(
-                    filename)[1].lstrip(".")
-                product_name = os.path.splitext(filename)[0]
-                ingest_file = IngestFile(
-                    filepath,
-                    product_type,
-                    product_name,
-                    representation_name)
-                # IngestFile(
-                #     filepath,
-                #     product_type,
-                #     product_name,
-                #     representation_name,
-                #     version=None,
-                #     enabled=True,
-                #     folder_path=None,
-                #     task_name=None)
-                self._ingest_files .append(ingest_file)
-        self.endResetModel()
-
     def _change_project(self, project_name):
         """Clear the existing picked folder names, since project changed"""
         for row in range(self.rowCount()):
@@ -246,10 +212,3 @@ Enabled: <b>{ingest_file.enabled}</b>
                 self.index(row, self.COLUMN_OF_CHECKBOX),
                 self.index(row, self.COLUMN_OF_VERSION),
                 roles)
-
-    def publish(self):
-        print("Publishing enabled and defined products...")
-        for row in range(self.rowCount()):
-            ingest_file = self._ingest_files[row]
-            if ingest_file.enabled and ingest_file.defined:
-                self.controller.publish_ingest_file(ingest_file)
