@@ -2,6 +2,9 @@
     "deadline_servers": [],
     "deadline_batch_name": "{asset}_{task[name]}_{version}_{subversion}.{ext}",
     "deadline_job_name": "{asset}_{task[name]}_{version}_{subversion}.{ext} - {inst_name}",
+    "DefaultJobSettings": {
+        "profiles": []
+    },
     "publish": {
         "CollectDefaultDeadlineServer": {
             "pass_mongo_url": true
