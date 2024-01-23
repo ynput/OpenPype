@@ -23,7 +23,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     def __init__(self, controller):
         super(BatchPublisherModel, self).__init__()
 
-        self.controller = controller
+        self._controller = controller
         self._ingest_files = []
 
     def set_current_directory(self, directory):
@@ -67,11 +67,11 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
             elif column == BatchPublisherModel.COLUMN_OF_TASK:
                 ingest_file.task_name = value
                 # # Update product name
-                # self.controller._cache_task_names(ingest_file)
+                # self._controller._cache_task_names(ingest_file)
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:
                 ingest_file.product_type = value
                 # # Update product name
-                # self.controller._cache_task_names(ingest_file)
+                # self._controller._cache_task_names(ingest_file)
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
                 ingest_file.product_name = value
             elif column == BatchPublisherModel.COLUMN_OF_REPRESENTATION:
@@ -127,7 +127,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         # elif role == QtCore.Qt.TextAlignmentRole:
         #     return QtCore.Qt.AlignRight
         elif role == QtCore.Qt.ToolTipRole:
-            project_name = self.controller.get_selected_project()
+            project_name = self._controller.get_selected_project()
             tooltip = f"""
 Enabled: <b>{ingest_file.enabled}</b>
 <br>Filepath: <b>{ingest_file.filepath}</b>
@@ -167,7 +167,7 @@ Enabled: <b>{ingest_file.enabled}</b>
 
     def _populate_from_directory(self, directory):
         self.beginResetModel()
-        self._ingest_files = self.controller.get_ingest_file_items_for_dir(
+        self._ingest_files = self._controller.get_ingest_files(
             directory
         )
         self.endResetModel()

@@ -15,7 +15,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         model = index.model()
-        ingest_file = model.ingest_files[index.row()]
+        ingest_file = model.get_ingest_files()[index.row()]
 
         if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
             # clear the folder
