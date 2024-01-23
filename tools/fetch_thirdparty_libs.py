@@ -8,12 +8,8 @@ import os
 import sys
 import toml
 import shutil
-from pathlib import Path
-from urllib.parse import urlparse
-import requests
-import enlighten
+import copy
 import platform
-import blessed
 import tempfile
 import math
 import hashlib
@@ -21,7 +17,12 @@ import tarfile
 import zipfile
 import time
 import subprocess
+from pathlib import Path
+from urllib.parse import urlparse
 
+import requests
+import blessed
+import enlighten
 
 term = blessed.Terminal()
 manager = enlighten.get_manager()
@@ -67,61 +68,68 @@ def _print(msg: str, message_type: int = 0) -> None:
     print(f"{header}{msg}")
 
 
-def _pip_install(openpype_root, package, version=None):
-    arg = None
-    if package and version:
-        arg = f"{package}=={version}"
-    elif package:
-        arg = package
-
-    if not arg:
-        _print("Couldn't find package to install")
-        sys.exit(1)
-
-    _print(f"We'll install {arg}")
-
-    python_vendor_dir = openpype_root / "vendor" / "python"
+def _pip_install(python_vendor_dir, requirements_path):
     try:
         subprocess.run(
             [
                 sys.executable,
-                "-m", "pip", "install", "--upgrade", arg,
-                "--prefix", str(python_vendor_dir)
+                "-m", "pip", "install", "--upgrade",
+                "--prefix", str(python_vendor_dir), "-r", requirements_path
             ],
             check=True,
             stdout=subprocess.DEVNULL
         )
     except subprocess.CalledProcessError as e:
-        _print(f"Error during {package} installation.", 1)
+        _print(f"Error during installation.", 1)
         _print(str(e), 1)
         sys.exit(1)
 
 
-def install_qtbinding(pyproject, openpype_root, platform_name):
-    _print("Handling Qt binding framework ...")
+def install_runtime_dependencies(pyproject, openpype_root, platform_name):
+    _print("Installing Runtime Dependencies ...")
+    runtime_deps = copy.deepcopy(pyproject["openpype"]["runtime-deps"])
+
     qtbinding_def = pyproject["openpype"]["qtbinding"][platform_name]
-    package = qtbinding_def["package"]
-    version = qtbinding_def.get("version")
-    _pip_install(openpype_root, package, version)
+    qtbinding_package = qtbinding_def["package"]
+    qtbinding_version = qtbinding_def.get("version")
+    runtime_deps[qtbinding_package] = qtbinding_version
+
+    requirements_lines = []
+    for package, version in runtime_deps.items():
+        version_str = ""
+        if version:
+            version_str = f"=={version}"
+        requirements_lines.append(f"{package}{version_str}")
+    requirements_content = "\n".join(requirements_lines)
+
+    runtime_deps[qtbinding_package] = qtbinding_version
+    with tempfile.NamedTemporaryFile(suffix=".txt.", delete=False) as tmp:
+        requirements_path = tmp.name
+
+    with open(requirements_path, "w") as stream:
+        stream.write(requirements_content)
 
     python_vendor_dir = openpype_root / "vendor" / "python"
+    _print(f"We'll install\n{requirements_content}")
+    try:
+        _pip_install(python_vendor_dir, requirements_path)
+    finally:
+        os.remove(requirements_path)
 
     # Remove libraries for QtSql which don't have available libraries
     #   by default and Postgre library would require to modify rpath of
     #   dependency
-    if platform_name == "darwin":
+    if platform_name != "darwin":
+        return
+
+    libdir = python_vendor_dir / "lib"
+    for subdir in libdir.iterdir():
         sqldrivers_dir = (
-            python_vendor_dir / package / "Qt" / "plugins" / "sqldrivers"
+            subdir / qtbinding_package / "Qt" / "plugins" / "sqldrivers"
         )
-        for filepath in sqldrivers_dir.iterdir():
-            os.remove(str(filepath))
-
-
-def install_runtime_dependencies(pyproject, openpype_root):
-    _print("Installing Runtime Dependencies ...")
-    runtime_deps = pyproject["openpype"]["runtime-deps"]
-    for package, version in runtime_deps.items():
-        _pip_install(openpype_root, package, version)
+        if sqldrivers_dir.exists():
+            for filepath in sqldrivers_dir.iterdir():
+                os.remove(str(filepath))
 
 
 def install_thirdparty(pyproject, openpype_root, platform_name):
@@ -232,8 +240,7 @@ def main():
     openpype_root = Path(os.path.dirname(__file__)).parent
     pyproject = toml.load(openpype_root / "pyproject.toml")
     platform_name = platform.system().lower()
-    install_qtbinding(pyproject, openpype_root, platform_name)
-    install_runtime_dependencies(pyproject, openpype_root)
+    install_runtime_dependencies(pyproject, openpype_root, platform_name)
     install_thirdparty(pyproject, openpype_root, platform_name)
     end_time = time.time_ns()
     total_time = (end_time - start_time) / 1000000000
