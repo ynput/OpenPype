@@ -127,7 +127,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         # elif role == QtCore.Qt.TextAlignmentRole:
         #     return QtCore.Qt.AlignRight
         elif role == QtCore.Qt.ToolTipRole:
-            project_name = self._controller.get_selected_project()
+            project_name = self._controller.get_selected_project_name()
             tooltip = f"""
 Enabled: <b>{ingest_file.enabled}</b>
 <br>Filepath: <b>{ingest_file.filepath}</b>

@@ -117,7 +117,7 @@ class BatchPublisherController(object):
         output = []
         for folder_path, asset_doc in asset_docs.items():
             folder_name = asset_doc["name"]
-            folder_id = asset_doc["id"]
+            folder_id = asset_doc["_id"]
             parent_id = asset_doc["data"]["parents"][-1]
             hierarchy_item = HierarchyItem(
                 folder_name, folder_path, folder_id, parent_id)
