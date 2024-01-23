@@ -9,6 +9,8 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
     label = "Collect Clip Effects Instances"
     families = ["clip"]
 
+    effect_categories = []
+
     def process(self, instance):
         family = "effect"
         effects = {}
