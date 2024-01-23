@@ -1,15 +1,11 @@
-
-
 from openpype import style
-
-from openpype.client.entities import get_projects
 
 from qtpy import QtWidgets
 
 from openpype.hosts.batchpublisher import controller
-from openpype.hosts.batchpublisher.models import batch_publisher_model
-from openpype.hosts.batchpublisher.delegates import batch_publisher_delegate
-from openpype.hosts.batchpublisher.views import batch_publisher_view
+from .batch_publisher_model import BatchPublisherModel
+from .batch_publisher_delegate import BatchPublisherTableDelegate
+from .batch_publisher_view import BatchPublisherTableView
 
 
 class BatchPublisherWindow(QtWidgets.QMainWindow):
@@ -50,9 +46,7 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         self._controller = controller.BatchPublisherController()
 
         # --- Main view ---
-        table_view = batch_publisher_view.BatchPublisherTableView(
-            self._controller,
-            main_widget)
+        table_view = BatchPublisherTableView(self._controller, main_widget)
 
         # --- Footer ---
         footer_widget = QtWidgets.QWidget(main_widget)
@@ -80,24 +74,17 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         dir_browse_btn.clicked.connect(self._on_browse_button_clicked)
         publish_btn.clicked.connect(self._on_publish_button_clicked)
 
-        # TODO do not use query in __init__
-        # - add QStandardItemModel that handles refresh, or implement refresh
-        #   on the window
-        projects = get_projects()
-        for project_dict in projects:
-            self._project_combobox.addItem(project_dict["name"])
-
-        editors_delegate = batch_publisher_delegate. \
-            BatchPublisherTableDelegate(self._controller)
+        editors_delegate = BatchPublisherTableDelegate(self._controller)
         table_view.setItemDelegateForColumn(
-            batch_publisher_model.BatchPublisherModel.COLUMN_OF_FOLDER,
+            BatchPublisherModel.COLUMN_OF_FOLDER,
             editors_delegate)
         table_view.setItemDelegateForColumn(
-            batch_publisher_model.BatchPublisherModel.COLUMN_OF_TASK,
+            BatchPublisherModel.COLUMN_OF_TASK,
             editors_delegate)
         table_view.setItemDelegateForColumn(
-            batch_publisher_model.BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE,
+            BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE,
             editors_delegate)
+        dir_input.textChanged.connect(self._on_dir_change)
 
         # self._project_combobox = project_combobox
         self._dir_input = dir_input
@@ -105,9 +92,22 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         self._editors_delegate = editors_delegate
         self._pushbutton_publish = publish_btn
 
+        self._first_show = True
+
+    def showEvent(self, event):
+        super(BatchPublisherWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self._on_first_show()
+
+    def _on_first_show(self):
+        project_names = sorted(self._controller.get_project_names())
+        for project_name in project_names:
+            self._project_combobox.addItem(project_name)
+
     def _on_project_changed(self):
         project_name = str(self._project_combobox.currentText())
-        self._controller.project_name = project_name
+        self._controller.set_selected_project_name(project_name)
 
     def _on_browse_button_clicked(self):
         directory = self._dir_input.text()
@@ -117,10 +117,56 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         if not directory:
             return
         self._dir_input.setText(directory)
-        self._controller.populate_from_directory(directory)
+
+    def _on_dir_change(self, directory):
+        self._table_view.set_current_directory(directory)
 
     def _on_publish_button_clicked(self):
-        self._table_view.publish()
+        ingest_files = self._table_view.get_ingest_files()
+        publish_count = 0
+        enabled_count = 0
+        defined_count = 0
+        for ingest_file in ingest_files:
+            if ingest_file.enabled and ingest_file.defined:
+                publish_count += 1
+            if ingest_file.enabled:
+                enabled_count += 1
+            if ingest_file.defined:
+                defined_count += 1
+
+        if publish_count == 0:
+            msg = "You must provide asset, task, family, "
+            msg += "subset etc and they must be enabled"
+            QtWidgets.QMessageBox.warning(
+                None,
+                "No enabled and defined ingest items!",
+                msg)
+            return
+        elif publish_count > 0:
+            msg = "Are you sure you want to publish "
+            msg += "{} products".format(publish_count)
+            result = QtWidgets.QMessageBox.question(
+                None,
+                "Okay to publish?",
+                msg,
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if result == QtWidgets.QMessageBox.No:
+                print("User cancelled publishing")
+                return
+        elif enabled_count == 0:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "Nothing enabled for publish!",
+                "There is no items enabled for publish")
+            return
+        elif defined_count == 0:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "No defined ingest items!",
+                "You must provide asset, task, family, subset etc")
+            return
+
+        self._controller.publish_ingest_files(ingest_files)
 
 
 def main():

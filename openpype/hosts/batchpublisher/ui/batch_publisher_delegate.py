@@ -1,9 +1,10 @@
-
-
-from openpype.hosts.batchpublisher.models.batch_publisher_model import \
-    BatchPublisherModel
+import collections
 
 from qtpy import QtWidgets, QtCore, QtGui
+
+from .batch_publisher_model import BatchPublisherModel
+
+FOLDER_PATH_ROLE = QtCore.Qt.UserRole + 1
 
 
 class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
@@ -36,14 +37,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             editor.setView(treeview)
             model = QtGui.QStandardItemModel()
             editor.setModel(model)
-            assets_map = dict()
-            for asset in self.controller.folder_names:
-                asset_split = asset.split("/")
-                self._populate_assets(
-                    asset_split,
-                    assets_map,
-                    model,
-                    depth=asset_split.count("/"))
+            self._fill_model_with_hierarchy(model)
             editor.view().expandAll()
             # editor.showPopup()
             # editor = QtWidgets.QLineEdit(parent)
@@ -60,7 +54,10 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             # completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
             # editor.setCompleter(completer)
             editor = QtWidgets.QComboBox(parent)
-            editor.addItems(ingest_file.task_names)
+            task_names = self.controller.get_task_names(
+                ingest_file.folder_path
+            )
+            editor.addItems(task_names)
             return editor
 
         elif index.column() == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:
@@ -102,7 +99,8 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
         if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
             value = editor.model().data(
                 editor.view().currentIndex(),
-                QtCore.Qt.UserRole)
+                FOLDER_PATH_ROLE
+            )
             model.setData(index, value, QtCore.Qt.EditRole)
         elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
             value = editor.currentText()
@@ -111,66 +109,33 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             value = editor.currentText()
             model.setData(index, value, QtCore.Qt.EditRole)
 
-    def _populate_assets(self, asset_split, assets_map, model, depth=0):
-        # where asset_split is for example ["assets", "myasset"]
-        try:
-            # asset_part at depth 1 is "myasset"
-            asset_part = asset_split[depth]
-        except Exception:
-            return
-        if not asset_part:
-            return
-        # path to current asset path being populated
-        asset_path_so_far = "/".join(asset_split[0:depth + 1])
-        # path to previous asset path being populated
-        asset_path_previous = "/".join(asset_split[0:depth])
-        # Check if a QStandardItem has already been generated for this part
-        qstandarditem = assets_map.get(asset_path_so_far)
-        # Get the last QStandardItem that is the parent for this level
-        qstandarditem_previous = assets_map.get(asset_path_previous)
-        if not qstandarditem:
-            qstandarditem = QtGui.QStandardItem(asset_part)
-            qstandarditem.setFlags(
-                QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-            qstandarditem.setData(asset_path_so_far, QtCore.Qt.UserRole)
-            qstandarditem.setData(depth, QtCore.Qt.UserRole + 1)
-            qstandarditem.setData(
-                asset_path_so_far + "<br>Depth: " + str(depth),
-                QtCore.Qt.ToolTipRole)
-            # Add top level standard item to model
-            if depth == 0:
-                model.appendRow(qstandarditem)
-                assets_map[asset_path_so_far] = qstandarditem
-            # Add child standard item based on previous standard item
-            elif qstandarditem_previous:
-                qstandarditem_previous.setFlags(QtCore.Qt.ItemIsEnabled)
-                qstandarditem_previous.appendRow(qstandarditem)
-                assets_map[asset_path_so_far] = qstandarditem
-        self._populate_assets(asset_split, assets_map, model, depth=depth + 1)
+    def _fill_model_with_hierarchy(self, model):
+        hierarchy_items = self.controller.get_hierarchy_items()
+        hierarchy_items_by_parent_id = collections.defaultdict(list)
+        for hierarchy_item in hierarchy_items:
+            hierarchy_items_by_parent_id[hierarchy_item.parent_id].append(
+                hierarchy_item
+            )
 
-    # def _apply_asset_path_to_combo_box(
-    #         self,
-    #         editor,
-    #         asset_path,
-    #         parent=QtCore.QModelIndex()):
-    #     model = editor.model()
-    #     found_qmodelindex = None
-    #     for row in range(model.rowCount(parent)):
-    #         qmodelindex = model.index(row, 0, parent);
-    #         _asset_path = model.data(qmodelindex, QtCore.Qt.UserRole)
-    #         if asset_path == _asset_path:
-    #             editor.view().scrollTo(qmodelindex)
-    #             editor.setRootModelIndex(qmodelindex.parent())
-    #             editor.setCurrentIndex(qmodelindex.row())
-    #             return qmodelindex
-    #         if model.hasChildren(qmodelindex):
-    #             found_qmodelindex = self._apply_asset_path_to_combo_box(
-    #                 editor,
-    #                 asset_path,
-    #                 qmodelindex)
-    #             if found_qmodelindex:
-    #                 return found_qmodelindex
-    #     return found_qmodelindex
+        root_item = model.invisibleRootItem()
+
+        hierarchy_queue = collections.deque()
+        hierarchy_queue.append((root_item, None))
+
+        while hierarchy_queue:
+            (parent_item, parent_id) = hierarchy_queue.popleft()
+            new_rows = []
+            for hierarchy_item in hierarchy_items_by_parent_id[parent_id]:
+                new_row = QtGui.QStandardItem(hierarchy_item.folder_name)
+                new_row.setData(hierarchy_item.folder_path, FOLDER_PATH_ROLE)
+                new_row.setData(
+                    hierarchy_item.path, QtCore.Qt.ToolTipRole
+                )
+                new_rows.append(new_row)
+                hierarchy_queue.append((new_row, hierarchy_item.id))
+
+            if new_rows:
+                parent_item.appendRows(new_rows)
 
 
 class ComboBox(QtWidgets.QComboBox):

@@ -1,11 +1,11 @@
-
-
 import glob
 import os
 
+from openpype.settings import get_project_settings
 from openpype.client.entities import (
+    get_projects,
     get_assets,
-    get_asset_by_name)
+)
 from openpype.hosts.batchpublisher import publish
 
 
@@ -19,59 +19,146 @@ FILE_MAPPINGS = [
 ]
 
 
+class IngestFile(object):
+    def __init__(
+        self,
+        filepath,
+        product_type,
+        product_name,
+        representation_name,
+        version=None,
+        enabled=True,
+        folder_path=None,
+        task_name=None
+    ):
+        self.enabled = enabled
+        self.filepath = filepath
+        self.product_type = product_type
+        self.product_name = product_name or ""
+        self.representation_name = representation_name
+        self.version = version
+        self.folder_path = folder_path or ""
+        self.task_name = task_name or ""
+        self.task_names = []
+
+    @property
+    def defined(self):
+        return all([
+            bool(self.filepath),
+            bool(self.folder_path),
+            bool(self.task_name),
+            bool(self.product_type),
+            bool(self.product_name),
+            bool(self.representation_name)])
+
+
+class HierarchyItem:
+    def __init__(self, folder_name, folder_path, folder_id, parent_id):
+        self.folder_name = folder_name
+        self.folder_path = folder_path
+        self.folder_id = folder_id
+        self.parent_id = parent_id
+
+
 class BatchPublisherController(object):
 
     def __init__(self):
-        self._project_name = list()
-        self._folder_names = []
-        from openpype.hosts.batchpublisher.models. \
-            batch_publisher_model import BatchPublisherModel
-        self.model = BatchPublisherModel(self)
+        self._selected_project_name = None
+        self._project_names = None
+        self._asset_docs_by_project = {}
+        self._asset_docs_by_path = {}
 
-    @property
-    def project_name(self):
-        return self._project_name
+    def get_project_names(self):
+        if self._project_names is None:
+            projects = get_projects(fields={"name"})
+            project_names = []
+            for project in projects:
+                project_names.append(project["name"])
+            self._project_names = project_names
+        return self._project_names
 
-    @project_name.setter
-    def project_name(self, project_name):
-        msg = "Project name changed to: {}".format(project_name)
-        print(msg)
-        self._project_name = project_name
-        # Update cache of asset names for project
-        # self._folder_names = [
-        #     "assets",
-        #     "assets/myasset",
-        #     "assets/myasset/mytest"]
-        self._folder_names = list()
-        assets = get_assets(project_name)
-        for asset in assets:
-            asset_name = "/".join(asset["data"]["parents"])
-            asset_name += "/" + asset["name"]
-            self._folder_names.append(asset_name)
-        # Clear the existing picked folder names, since project changed
-        self.model._change_project(project_name)
+    def get_selected_project_name(self):
+        return self._selected_project_name
 
-    @property
-    def folder_names(self):
-        return self._folder_names
+    def set_selected_project_name(self, project_name):
+        self._selected_project_name = project_name
 
-    @property
-    def ingest_files(self):
-        return self.model.ingest_files
+    def _get_asset_docs(self):
+        """
 
-    def get_ingest_file_items_for_dir(self, directory):
-        ingest_files = list()
-        for ingest_file in self.model.ingest_files:
-            if directory == os.path.dirname(ingest_file.filepath):
-                ingest_files.append(ingest_file)
-        return ingest_files
+        Returns:
+            dict[str, dict]: Dictionary of asset documents by path.
+        """
 
-    def populate_from_directory(self, directory):
-        from openpype.hosts.batchpublisher.models import \
-            batch_publisher_model
-        self.model.beginResetModel()
-        self.model.ingest_files = list()
-        for file_mapping in FILE_MAPPINGS:
+        project_name = self._selected_project_name
+        if not project_name:
+            return {}
+
+        asset_docs = self._asset_docs_by_project.get(project_name)
+        if asset_docs is None:
+            asset_docs = list(get_assets(
+                project_name, fields={"name", "data.parents", "data.tasks"}
+            ))
+            asset_docs_by_path = self._prepare_assets_by_path(asset_docs)
+            self._asset_docs_by_project[project_name] = asset_docs_by_path
+        return self._asset_docs_by_project[project_name]
+
+    def get_hierarchy_items(self):
+        """
+
+        Returns:
+            list[HierarchyItem]: List of hierarchy items.
+        """
+
+        asset_docs = self._get_asset_docs()
+        if not asset_docs:
+            return []
+
+        output = []
+        for folder_path, asset_doc in asset_docs.items():
+            folder_name = asset_doc["name"]
+            folder_id = asset_doc["id"]
+            parent_id = asset_doc["data"]["parents"][-1]
+            hierarchy_item = HierarchyItem(
+                folder_name, folder_path, folder_id, parent_id)
+            output.append(hierarchy_item)
+        return output
+
+    def get_task_names(self, folder_path):
+        asset_docs_by_path = self._get_asset_docs()
+        if not asset_docs_by_path:
+            return []
+
+        asset_doc = asset_docs_by_path.get(folder_path)
+        return list(asset_doc["data"]["tasks"].keys())
+
+    def _prepare_assets_by_path(self, asset_docs):
+        output = {}
+        for asset_doc in asset_docs:
+            folder_path = (
+                "/" + "/".join(
+                    asset_doc["data"]["parents"] + [asset_doc["name"]]
+                )
+            )
+            output[folder_path] = asset_doc
+        return output
+
+    def get_ingest_files(self, directory):
+        """
+
+        Returns:
+            list[IngestFile]: List of ingest files for the given directory
+        """
+
+        output = []
+        if not directory or not os.path.exists(directory):
+            return output
+
+        # project_name = self._selected_project_name
+        # project_settings = get_project_settings(project_name)
+        # file_mappings = project_settings["batchpublisher"].get("file_mappings", [])
+        file_mappings = FILE_MAPPINGS
+        for file_mapping in file_mappings:
             product_type = file_mapping["product_type"]
             glob_full_path = directory + "/" + file_mapping["glob"]
             files = glob.glob(glob_full_path, recursive=False)
@@ -80,37 +167,26 @@ class BatchPublisherController(object):
                 representation_name = os.path.splitext(
                     filename)[1].lstrip(".")
                 product_name = os.path.splitext(filename)[0]
-                ingest_file = batch_publisher_model.IngestFile(
+                ingest_file = IngestFile(
                     filepath,
                     product_type,
                     product_name,
                     representation_name)
-                # IngestFile(
-                #     filepath,
-                #     product_type,
-                #     product_name,
-                #     representation_name,
-                #     version=None,
-                #     enabled=True,
-                #     folder_path=None,
-                #     task_name=None)
-                self.model.ingest_files .append(ingest_file)
-        self.model.endResetModel()
+                output.append(ingest_file)
+        return output
 
-    def publish(self):
-        print("Publishing enabled and defined products...")
-        for row in range(self.model.rowCount()):
-            ingest_file = self.model.ingest_files[row]
+    def publish_ingest_files(self, ingest_files):
+        """
+
+        Args:
+            ingest_files (list[IngestFile]): List of ingest files to publish.
+        """
+
+        for ingest_file in ingest_files:
             if ingest_file.enabled and ingest_file.defined:
-                self.publish_ingest_file(ingest_file)
+                self._publish_ingest_file(ingest_file)
 
-    def publish_ingest_file(self, ingest_file):
-        if not ingest_file.enabled:
-            print("Skipping publish, not enabled: " + ingest_file.filepath)
-            return
-        if not ingest_file.defined:
-            print("Skipping publish, not defined: " + ingest_file.filepath)
-            return
+    def _publish_ingest_file(self, ingest_file):
         msg = f"""
 Publishing (ingesting): {ingest_file.filepath}
 As Folder (Asset): {ingest_file.folder_path}
@@ -119,14 +195,14 @@ Product Type (Family): {ingest_file.product_type}
 Product Name (Subset): {ingest_file.product_name}
 Representation: {ingest_file.representation_name}
 Version: {ingest_file.version}"
-Project: {self._project_name}"""
+Project: {self._selected_project_name}"""
         print(msg)
         publish_data = dict()
         expected_representations = dict()
         expected_representations[ingest_file.representation_name] = \
             ingest_file.filepath
         publish.publish_version(
-            self._project_name,
+            self._selected_project_name,
             ingest_file.folder_path,
             ingest_file.task_name,
             ingest_file.product_type,
@@ -141,19 +217,3 @@ Project: {self._project_name}"""
         #     subset_name,
         #     expected_representations,
         #     publish_data,
-
-    def _cache_task_names(self, ingest_file):
-        if not ingest_file.folder_path:
-            ingest_file.task_name = str()
-            return
-        asset_doc = get_asset_by_name(
-            self._project_name,
-            ingest_file.folder_path)
-        if not asset_doc:
-            ingest_file.task_name = str()
-            return
-        # Since we have the tasks available for the asset (folder) cache it now
-        ingest_file.task_names = list(asset_doc["data"]["tasks"].keys())
-        # Default to the first task available
-        if not ingest_file.task_name and ingest_file.task_names:
-            ingest_file.task_name = ingest_file.task_names[0]

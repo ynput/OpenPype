@@ -1,46 +1,7 @@
-
-
-import glob
-import os
-
 from qtpy import QtCore, QtGui
 
 
-class IngestFile(object):
-
-    def __init__(
-            self,
-            filepath,
-            product_type,
-            product_name,
-            representation_name,
-            version=None,
-            enabled=True,
-            folder_path=None,
-            task_name=None):
-        self.enabled = enabled
-        self.filepath = filepath
-        self.product_type = product_type
-        self.product_name = product_name or ""
-        self.representation_name = representation_name
-        self.version = version
-        self.folder_path = folder_path or ""
-        self.task_name = task_name or ""
-        self.task_names = []
-
-    @property
-    def defined(self):
-        return all([
-            bool(self.filepath),
-            bool(self.folder_path),
-            bool(self.task_name),
-            bool(self.product_type),
-            bool(self.product_name),
-            bool(self.representation_name)])
-
-
 class BatchPublisherModel(QtCore.QAbstractTableModel):
-
     HEADER_LABELS = [
         str(),
         "Filepath",
@@ -59,19 +20,17 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     COLUMN_OF_REPRESENTATION = 6
     COLUMN_OF_VERSION = 7
 
-    def __init__(self, controller, data=None):
+    def __init__(self, controller):
         super(BatchPublisherModel, self).__init__()
 
         self.controller = controller
-        self._ingest_files = list()
+        self._ingest_files = []
 
-    @property
-    def ingest_files(self):
-        return self._ingest_files
+    def set_current_directory(self, directory):
+        self._populate_from_directory(directory)
 
-    @ingest_files.setter
-    def ingest_files(self, ingest_files):
-        self._ingest_files = ingest_files
+    def get_ingest_files(self):
+        return list(self._ingest_files)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
         return len(self._ingest_files)
@@ -79,7 +38,10 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     def columnCount(self, parent=QtCore.QModelIndex()):
         return len(BatchPublisherModel.HEADER_LABELS)
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section, orientation, role=None):
+        if role is None:
+            role = QtCore.Qt.DisplayRole
+
         if role != QtCore.Qt.DisplayRole:
             return None
         if orientation == QtCore.Qt.Horizontal:
@@ -96,7 +58,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                 # Update product name
                 ingest_file.folder_path = value
                 # Update product name
-                self.controller._cache_task_names(ingest_file)
+                ingest_file.task_name = None
                 # roles = [QtCore.Qt.UserRole]
                 # self.dataChanged.emit(
                 #     self.index(row, column),
@@ -165,6 +127,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         # elif role == QtCore.Qt.TextAlignmentRole:
         #     return QtCore.Qt.AlignRight
         elif role == QtCore.Qt.ToolTipRole:
+            project_name = self.controller.get_selected_project()
             tooltip = f"""
 Enabled: <b>{ingest_file.enabled}</b>
 <br>Filepath: <b>{ingest_file.filepath}</b>
@@ -174,7 +137,7 @@ Enabled: <b>{ingest_file.enabled}</b>
 <br>Product Name (Subset): <b>{ingest_file.product_name}</b>
 <br>Representation: <b>{ingest_file.representation_name}</b>
 <br>Version: <b>{ingest_file.version}</b>
-<br>Project: <b>{self.controller.project_name}</b>
+<br>Project: <b>{project_name}</b>
 <br>Defined: <b>{ingest_file.defined}</b>
 <br>Task Names: <b>{ingest_file.task_names}</b>"""
             return tooltip
@@ -201,6 +164,13 @@ Enabled: <b>{ingest_file.enabled}</b>
         elif index.column() > BatchPublisherModel.COLUMN_OF_DIRECTORY:
             flags |= QtCore.Qt.ItemIsEditable
         return flags
+
+    def _populate_from_directory(self, directory):
+        self.beginResetModel()
+        self._ingest_files = self.controller.get_ingest_file_items_for_dir(
+            directory
+        )
+        self.endResetModel()
 
     def _change_project(self, project_name):
         """Clear the existing picked folder names, since project changed"""
