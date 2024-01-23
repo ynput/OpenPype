@@ -90,7 +90,7 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
             # Some classes can have a number in them. Like Text2.
             found_cls = ""
             for cls in category_by_effect.keys():
-                if value["class"].startswith(cls):
+                if cls in value["class"]:
                     found_cls = cls
 
             effects_categorized[category_by_effect[found_cls]][key] = value
