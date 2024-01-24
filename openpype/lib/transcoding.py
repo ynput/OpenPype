@@ -876,6 +876,56 @@ def get_ffprobe_streams(path_to_file, logger=None):
     """
     return get_ffprobe_data(path_to_file, logger)["streams"]
 
+def get_video_metadata(streams, logger=None):
+    if not logger:
+        logger = logging.getLogger(__name__)
+
+    input_timecode = ""
+    input_width = None
+    input_height = None
+    input_frame_rate = None
+    input_pixel_aspect = None
+    for stream in streams:
+        if stream.get("codec_type") != "video":
+            continue
+        logger.debug("FFprobe Video: {}".format(stream))
+
+        if "width" not in stream or "height" not in stream:
+            continue
+        width = int(stream["width"])
+        height = int(stream["height"])
+        if not width or not height:
+            continue
+
+        # Make sure that width and height are captured even if frame rate
+        #    is not available
+        input_width = width
+        input_height = height
+
+        input_pixel_aspect = stream.get("sample_aspect_ratio")
+        if input_pixel_aspect is not None:
+            try:
+                input_pixel_aspect = float(
+                    eval(str(input_pixel_aspect).replace(':', '/')))
+            except Exception:
+                logger.debug(
+                    "__Converting pixel aspect to float failed: {}".format(
+                        input_pixel_aspect))
+
+        tags = stream.get("tags") or {}
+        input_timecode = tags.get("timecode") or ""
+
+        input_frame_rate = stream.get("r_frame_rate")
+        if input_frame_rate is not None:
+            break
+    return (
+        input_width,
+        input_height,
+        input_timecode,
+        input_frame_rate,
+        input_pixel_aspect
+    )
+
 
 def get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd=None):
     """Copy format from input metadata for output.
