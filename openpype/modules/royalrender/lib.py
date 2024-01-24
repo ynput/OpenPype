@@ -110,7 +110,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         if not self._rr_root:
             raise KnownPublishError(
                 ("Missing RoyalRender root. "
-                 "You need to configure RoyalRender module."))
+                 "Admin needs to configure RoyalRender module in Settings ."))
 
         self.rr_api = rrApi(self._rr_root)
 
