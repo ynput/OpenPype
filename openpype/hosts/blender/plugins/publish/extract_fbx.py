@@ -57,15 +57,15 @@ class ExtractFBX(publish.Extractor, publish.OptionalPyblishPluginMixin):
         scale_length = bpy.context.scene.unit_settings.scale_length
         bpy.context.scene.unit_settings.scale_length = 0.01
 
-        # We export the fbx
-        bpy.ops.export_scene.fbx(
-            context,
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            mesh_smooth_type='FACE',
-            add_leaf_bones=False
-        )
+        with bpy.context.temp_override(**context):
+            # We export the fbx
+            bpy.ops.export_scene.fbx(
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                mesh_smooth_type='FACE',
+                add_leaf_bones=False
+            )
 
         bpy.context.scene.unit_settings.scale_length = scale_length
 
