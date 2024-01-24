@@ -771,13 +771,6 @@ class Loader(LoaderPlugin):
 
         replace_datablocks(old_datablocks, datablocks)
 
-        # Update override library operations from asset objects if available.
-        for obj in datablocks:
-            if isinstance(obj, bpy.types.Object) and getattr(
-                obj.override_library, "operations_update", None
-            ):
-                obj.override_library.operations_update()
-
         return container, datablocks
 
     @exec_process
