@@ -63,10 +63,9 @@
                                 "label": "Machine Limit"
                             },
                             {
-                                "type": "list",
+                                "type": "deadline-plugin-limit-enum",
                                 "key": "limit_plugins",
-                                "label": "Plugins Limit",
-                                "object_type": "text"
+                                "label": "Plugins Limit"
                             }
                         ]
                     }
