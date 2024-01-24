@@ -18,6 +18,7 @@ from openpype.modules.royalrender.rr_job import (
     RRJob,
     RREnvList,
     get_rr_platform,
+    SubmitterParameter
 )
 from openpype.pipeline import OpenPypePyblishPluginMixin
 from openpype.pipeline.publish import KnownPublishError
@@ -176,7 +177,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         instance.data["expectedFiles"].extend(expected_files)
 
         submitter_parameters = [
-            rrApi.SubmitterParameter("OSperjob_ayon_inject_envvar", "1~1")
+            SubmitterParameter("OSperjob_ayon_inject_envvar", "1~1")
         ]
 
         job = RRJob(
