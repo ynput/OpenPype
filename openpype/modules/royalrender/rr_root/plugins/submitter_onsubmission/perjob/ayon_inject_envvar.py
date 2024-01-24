@@ -21,6 +21,7 @@ class InjectEnvironment:
     by RR.
 
     Expected set environments on RR worker:
+    - AYON_SERVER_URL
     - AYON_API_KEY - API key to Ayon server, most likely from service account
     - AYON_EXECUTABLE_PATH - locally accessible path for `ayon_console`
     (could be removed if it would be possible to have it in renderApps config
@@ -151,7 +152,7 @@ class InjectEnvironment:
         """ Enhances environemnt with required for Ayon to be launched."""
         job_envs = self._get_job_environments(metadata_content)
         ayon_environment = {
-            "AYON_SERVER_URL": job_envs["AYON_SERVER_URL"],
+            "AYON_SERVER_URL": os.environ["AYON_SERVER_URL"],
             "AYON_API_KEY": os.environ["AYON_API_KEY"],
             "AYON_BUNDLE_NAME": job_envs["AYON_BUNDLE_NAME"],
         }
@@ -200,6 +201,7 @@ class InjectEnvironment:
 if __name__ == "__main__":
     os.environ["AYON_API_KEY"] = "d84bde8c757540ec907e96edb58455bd"   # TEMP
     os.environ["AYON_EXECUTABLE_PATH"] = "c:/Users/petrk/Documents/ayon/ayon-launcher/build/output/ayon_console.exe"    # TEMP
+    os.environ["AYON_SERVER_URL"] = "http://localhost:5000"    # TEMP
 
     try:
         injector = InjectEnvironment()
