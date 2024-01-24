@@ -175,6 +175,10 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             instance, render_path, start_frame, end_frame)
         instance.data["expectedFiles"].extend(expected_files)
 
+        submitter_parameters = [
+            rrApi.SubmitterParameter("OSperjob_ayon_inject_envvar", "1~1")
+        ]
+
         job = RRJob(
             Software="",
             Renderer="",
@@ -197,7 +201,8 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             CompanyProjectName=instance.context.data["projectName"],
             ImageWidth=instance.data["resolutionWidth"],
             ImageHeight=instance.data["resolutionHeight"],
-            CustomAttributes=custom_attributes
+            CustomAttributes=custom_attributes,
+            SubmitterParameters=submitter_parameters
         )
 
         return job
