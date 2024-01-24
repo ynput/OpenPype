@@ -70,7 +70,6 @@ class InjectEnvironment:
         image_dir = job.imageDir
         logs.append(f"_get_metadata_dir::{image_dir}")
 
-        # return "C:/projects_local/ayon_test/assets/characters/characterA/work/lookdev/renders/maya/at_characterA_lookdev_v019/Main"
         return image_dir
 
     def _get_metadata(self, meta_dir):
@@ -85,7 +84,8 @@ class InjectEnvironment:
 
     def _is_required_environment(self):
         if (not os.environ.get("AYON_API_KEY") or
-                not os.path.exists(os.environ.get("AYON_EXECUTABLE_PATH", ""))):
+                not os.path.exists(os.environ.get("AYON_EXECUTABLE_PATH", ""))
+        ):
             msg = ("AYON_API_KEY and AYON_EXECUTABLE_PATHenv var must be set "
                    "for Ayon jobs!")
             logs.append(msg)
@@ -195,7 +195,6 @@ class InjectEnvironment:
 
         job.customDataSet_Str("rrEnvFile", rrEnv_path)
         rr.setJob(job)
-
 
 
 if __name__ == "__main__":
