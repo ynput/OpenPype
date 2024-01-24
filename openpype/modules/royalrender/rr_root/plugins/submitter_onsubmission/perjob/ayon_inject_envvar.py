@@ -199,9 +199,6 @@ class InjectEnvironment:
 
 
 if __name__ == "__main__":
-    os.environ["AYON_API_KEY"] = "d84bde8c757540ec907e96edb58455bd"   # TEMP
-    os.environ["AYON_EXECUTABLE_PATH"] = "c:/Users/petrk/Documents/ayon/ayon-launcher/build/output/ayon_console.exe"    # TEMP
-    os.environ["AYON_SERVER_URL"] = "http://localhost:5000"    # TEMP
 
     try:
         injector = InjectEnvironment()
