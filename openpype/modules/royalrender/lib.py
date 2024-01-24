@@ -180,6 +180,14 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             SubmitterParameter("OSperjob_ayon_inject_envvar", "1~1")
         ]
 
+        anatomy_data = instance.context.data["anatomyData"]
+        environment = RREnvList({
+            "AVALON_PROJECT": anatomy_data["project"]["name"],
+            "AVALON_ASSET": instance.context.data["asset"],
+            "AVALON_TASK": anatomy_data["task"]["name"],
+            "AVALON_APP": instance.context.data.get("appName")
+        })
+
         job = RRJob(
             Software="",
             Renderer="",
@@ -203,7 +211,8 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             ImageWidth=instance.data["resolutionWidth"],
             ImageHeight=instance.data["resolutionHeight"],
             CustomAttributes=custom_attributes,
-            SubmitterParameters=submitter_parameters
+            SubmitterParameters=submitter_parameters,
+            rrEnvList=environment.serialize(),
         )
 
         return job
