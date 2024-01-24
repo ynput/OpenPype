@@ -449,9 +449,9 @@
             "children": [
                 {
                     "type": "dict",
-                    "key": "application_launch_statuses",
+                    "key": "change_task_status",
                     "is_group": true,
-                    "label": "Application - Status change on launch",
+                    "label": "Status change",
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -461,20 +461,23 @@
                         },
                         {
                             "type": "label",
-                            "label": "<b>Do not change status if current status is:</b>"
-                        },
-                        {
-                            "type": "list",
-                            "key": "ignored_statuses",
-                            "object_type": "text"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Change task's status to <b>left side</b> if current task status is in list on <b>right side</b>."
+                            "label": "<b>On Open</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
                         },
                         {
                             "type": "dict-modifiable",
-                            "key": "status_change",
+                            "key": "status_change_on_open",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>On Save</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "status_change_on_save",
                             "object_type": {
                                 "type": "list",
                                 "object_type": "text"

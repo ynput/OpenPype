@@ -130,16 +130,19 @@
         }
     },
     "user_handlers": {
-        "application_launch_statuses": {
+        "change_task_status": {
             "enabled": true,
-            "ignored_statuses": [
-                "In Progress",
-                "Omitted",
-                "On hold",
-                "Approved"
-            ],
-            "status_change": {
-                "In Progress": []
+            "status_change_on_open": {
+                "role_list": [
+                    "Pypeclub",
+                    "Administrator"
+                ]
+            },
+            "status_change_on_save": {
+                "role_list": [
+                    "Pypeclub",
+                    "Administrator"
+                ]
             }
         },
         "create_update_attributes": {
