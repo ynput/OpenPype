@@ -132,7 +132,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
                     hierarchy_item.folder_path, QtCore.Qt.ToolTipRole
                 )
                 new_rows.append(new_row)
-                hierarchy_queue.append((new_row, hierarchy_item.parent_id))
+                hierarchy_queue.append((new_row, hierarchy_item.folder_id))
 
             if new_rows:
                 parent_item.appendRows(new_rows)
