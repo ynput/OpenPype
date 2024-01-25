@@ -38,6 +38,20 @@ class FamilyMappingItemModel(BaseSettingsModel):
     )
 
 
+class ValidateModelName(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    optional: bool = Field(title="Optional")
+    active: bool = Field(title="Active")
+    regex: str = Field(
+        "(?P<subset>.*)_(GEO)",
+        title="Validation regex",
+        description=(
+            "Regex for validating model name. You can use named "
+            " capturing groups:(?P<asset>.*) for Asset name"
+        )
+    )
+
+
 class ValidateLoadedPluginModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
@@ -100,6 +114,12 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ValidateAttributes": {
         "enabled": False,
         "attributes": "{}"
+    },
+    "ValidateModelName": {
+        "enabled": True,
+        "optional": True,
+        "active": False,
+        "regex": "(?P<subset>.*)_(GEO)"
     },
     "ValidateLoadedPlugin": {
         "enabled": False,

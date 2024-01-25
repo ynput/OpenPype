@@ -51,6 +51,30 @@
       {
         "type": "dict",
         "collapsible": true,
+        "key": "ValidateModelName",
+        "label": "Validate Model Name",
+        "checkbox_key": "enabled",
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "text",
+                "key": "regex",
+                "label": "validation regex"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
         "key": "ValidateLoadedPlugin",
         "label": "Validate Loaded Plugin",
         "checkbox_key": "enabled",

@@ -56,6 +56,12 @@
             "enabled": false,
             "attributes": {}
         },
+        "ValidateModelName": {
+            "enabled": true,
+            "optional": true,
+            "active": false,
+            "regex": "(?P<subset>.*)_(GEO)"
+        },
         "ValidateLoadedPlugin": {
             "enabled": false,
             "optional": true,
