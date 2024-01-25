@@ -17,9 +17,7 @@ class OpenRVWorkfileCreator(AutoCreator):
     label = "Workfile"
 
     default_variant = "Main"
-
     create_allow_context_change = False
-
     data_store_node = "root"
     data_store_prefix = "openpype_workfile."
 

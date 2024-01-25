@@ -1,5 +1,5 @@
 import copy
-
+import os
 import clique
 
 from openpype.pipeline import (
@@ -9,7 +9,7 @@ from openpype.pipeline import (
 from openpype.pipeline.load import get_representation_path_from_context
 from openpype.lib.transcoding import IMAGE_EXTENSIONS
 
-from openpype.hosts.openrv.api.pipeline import imprint_container
+from openpype.hosts.openrv.api.lib import clean_rv_sources
 from openpype.hosts.openrv.api.ocio import (
     set_group_ocio_active_state,
     set_group_ocio_colorspace
@@ -36,22 +36,15 @@ class FramesLoader(load.LoaderPlugin):
         # Command fails on unicode so we must force it to be strings
         filepath = str(filepath)
 
-        # node_name = "{}_{}".format(namespace, name) if namespace else name
-        namespace = namespace if namespace else context["asset"]["name"]
-
-        loaded_node = rv.commands.addSourceVerbose([filepath])
-
-        # update colorspace
-        self.set_representation_colorspace(loaded_node,
-                                           context["representation"])
-
-        imprint_container(
-            loaded_node,
-            name=name,
-            namespace=namespace,
-            context=context,
-            loader=self.__class__.__name__
-        )
+        clean_rv_sources()
+        rv.commands.addSourceVerbose([filepath])
+        view_node = rv.commands.viewNodes()[-1]
+        rv.commands.setViewNode(view_node)
+        # Force new context
+        os.environ["AVALON_PROJECT"] = context["project"]["name"]
+        os.environ["AVALON_ASSET"] = context["asset"]["name"]
+        os.environ["AVALON_TASK"] = context["representation"]["context"]["task"]["name"]
+        rv.commands.addSourceVerbose([filepath])
 
     def update(self, container, representation):
         node = container["node"]

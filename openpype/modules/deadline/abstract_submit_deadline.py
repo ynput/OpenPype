@@ -457,6 +457,10 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
         self.log.info("Using {} for render/export.".format(file_path))
 
         self.job_info = self.get_job_info()
+
+        # Apply some info globally (usable for all annexes jobs)
+        self.set_instance_global_info(instance)
+
         self.plugin_info = self.get_plugin_info()
         self.aux_files = self.get_aux_files()
 
@@ -489,6 +493,10 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
 
         """
         pass
+
+    def set_instance_global_info(self, instance):
+        """Set global info from the submitter into the instance"""
+        instance.data["priority"] = self.job_info.Priority
 
     @abstractmethod
     def get_plugin_info(self):

@@ -162,6 +162,7 @@ from .openpype_version import (
     get_expected_version,
     is_running_from_build,
     is_running_staging,
+    is_version_checking_popup_enabled,
     is_current_version_studio_latest,
     is_current_version_higher_than_expected
 )
@@ -290,6 +291,7 @@ __all__ = [
     "get_expected_version",
     "is_running_from_build",
     "is_running_staging",
+    "is_version_checking_popup_enabled",
     "is_current_version_studio_latest",
 
     "requests_get",
