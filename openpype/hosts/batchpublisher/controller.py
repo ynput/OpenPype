@@ -98,7 +98,12 @@ class BatchPublisherController(object):
         if asset_docs is None:
             asset_docs = list(get_assets(
                 project_name,
-                fields={"name", "data.parents", "data.tasks", "data.visualParent"}
+                fields={
+                    "name",
+                    "data.visualParent",
+                    "data.parents",
+                    "data.tasks",
+                }
             ))
             asset_docs_by_path = self._prepare_assets_by_path(asset_docs)
             self._asset_docs_by_project[project_name] = asset_docs_by_path
@@ -136,11 +141,9 @@ class BatchPublisherController(object):
     def _prepare_assets_by_path(self, asset_docs):
         output = {}
         for asset_doc in asset_docs:
-            folder_path = (
-                "/" + "/".join(
-                    asset_doc["data"]["parents"] + [asset_doc["name"]]
-                )
-            )
+            parents = list(asset_doc["data"]["parents"])
+            parents.append(asset_doc["name"])
+            folder_path = "/" + "/".join(parents)
             output[folder_path] = asset_doc
         return output
 
@@ -165,9 +168,8 @@ class BatchPublisherController(object):
             files = glob.glob(glob_full_path, recursive=False)
             for filepath in files:
                 filename = os.path.basename(filepath)
-                representation_name = os.path.splitext(
-                    filename)[1].lstrip(".")
-                product_name = os.path.splitext(filename)[0]
+                product_name, ext = os.path.splitext(filename)
+                representation_name = ext.lstrip(".")
                 ingest_file = IngestFile(
                     filepath,
                     product_type,
