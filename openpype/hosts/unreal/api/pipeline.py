@@ -11,14 +11,14 @@ import pyblish.api
 
 from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
+    AYON_CONTAINER_ID,
     register_loader_plugin_path,
     register_creator_plugin_path,
     register_inventory_action_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     deregister_inventory_action_path,
-    AYON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
@@ -590,21 +590,21 @@ def set_sequence_hierarchy(
         hid_section.set_level_names(maps)
 
 
-def generate_sequence(h, h_dir):
+def generate_sequence(name, hierarchy_dir):
     tools = unreal.AssetToolsHelpers().get_asset_tools()
 
     sequence = tools.create_asset(
-        asset_name=h,
-        package_path=h_dir,
+        asset_name=name,
+        package_path=hierarchy_dir,
         asset_class=unreal.LevelSequence,
         factory=unreal.LevelSequenceFactoryNew()
     )
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     asset_data = get_asset_by_name(
         project_name,
-        h_dir.split('/')[-1],
-        fields=["_id", "data.fps"]
+        name,
+        fields=["_id", "data.fps", "data.clipIn", "data.clipOut"]
     )
 
     start_frames = []
@@ -625,8 +625,12 @@ def generate_sequence(h, h_dir):
             fields=["_id", "data.clipIn", "data.clipOut"]
         ))
 
-    min_frame = min(start_frames)
-    max_frame = max(end_frames)
+    if elements:
+        min_frame = min(start_frames)
+        max_frame = max(end_frames)
+    else:
+        min_frame = asset_data.get('data').get("clipIn")
+        max_frame = asset_data.get('data').get("clipOut")
 
     fps = asset_data.get('data').get("fps")
 
