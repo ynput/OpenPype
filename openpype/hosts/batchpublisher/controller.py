@@ -96,9 +96,10 @@ class BatchPublisherController(object):
 
         asset_docs = self._asset_docs_by_project.get(project_name)
         if asset_docs is None:
-            asset_docs = get_assets(
-                project_name
-            )
+            asset_docs = list(get_assets(
+                project_name,
+                fields={"name", "data.parents", "data.tasks", "data.visualParent"}
+            ))
             asset_docs_by_path = self._prepare_assets_by_path(asset_docs)
             self._asset_docs_by_project[project_name] = asset_docs_by_path
         return self._asset_docs_by_project[project_name]
