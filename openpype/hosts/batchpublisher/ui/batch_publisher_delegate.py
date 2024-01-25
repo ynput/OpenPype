@@ -19,11 +19,11 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
         if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
             # clear the folder
-            model.setData(index, str(), QtCore.Qt.EditRole)
+            model.setData(index, "", QtCore.Qt.EditRole)
             # clear the task
             model.setData(
                 model.index(index.row(), BatchPublisherModel.COLUMN_OF_TASK),
-                str(),
+                "",
                 QtCore.Qt.EditRole)
             treeview = QtWidgets.QTreeView()
             treeview.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
@@ -129,10 +129,10 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
                 new_row = QtGui.QStandardItem(hierarchy_item.folder_name)
                 new_row.setData(hierarchy_item.folder_path, FOLDER_PATH_ROLE)
                 new_row.setData(
-                    hierarchy_item.path, QtCore.Qt.ToolTipRole
+                    hierarchy_item.folder_path, QtCore.Qt.ToolTipRole
                 )
                 new_rows.append(new_row)
-                hierarchy_queue.append((new_row, hierarchy_item.id))
+                hierarchy_queue.append((new_row, hierarchy_item.parent_id))
 
             if new_rows:
                 parent_item.appendRows(new_rows)

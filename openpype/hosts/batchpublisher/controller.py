@@ -96,9 +96,9 @@ class BatchPublisherController(object):
 
         asset_docs = self._asset_docs_by_project.get(project_name)
         if asset_docs is None:
-            asset_docs = list(get_assets(
-                project_name, fields={"name", "data.parents", "data.tasks"}
-            ))
+            asset_docs = get_assets(
+                project_name
+            )
             asset_docs_by_path = self._prepare_assets_by_path(asset_docs)
             self._asset_docs_by_project[project_name] = asset_docs_by_path
         return self._asset_docs_by_project[project_name]
@@ -118,7 +118,7 @@ class BatchPublisherController(object):
         for folder_path, asset_doc in asset_docs.items():
             folder_name = asset_doc["name"]
             folder_id = asset_doc["_id"]
-            parent_id = asset_doc["data"]["parents"][-1]
+            parent_id = asset_doc["data"]["visualParent"]
             hierarchy_item = HierarchyItem(
                 folder_name, folder_path, folder_id, parent_id)
             output.append(hierarchy_item)
