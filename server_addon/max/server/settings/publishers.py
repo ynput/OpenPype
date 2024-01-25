@@ -59,6 +59,10 @@ class PublishersModel(BaseSettingsModel):
         title="Validate Frame Range",
         section="Validators"
     )
+    ValidateTyCacheFrameRange: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Frame Range (TyCache)"
+    )
     ValidateAttributes: ValidateAttributesModel = Field(
         default_factory=ValidateAttributesModel,
         title="Validate Attributes"
@@ -94,6 +98,11 @@ class PublishersModel(BaseSettingsModel):
 DEFAULT_PUBLISH_SETTINGS = {
     "ValidateFrameRange": {
         "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateTyCacheFrameRange": {
+        "enabled": False,
         "optional": True,
         "active": True
     },

@@ -544,7 +544,8 @@
                 },
                 {
                     "families": [
-                        "tycache"
+                        "tycache",
+                        "tyspline"
                     ],
                     "hosts": [
                         "max"
