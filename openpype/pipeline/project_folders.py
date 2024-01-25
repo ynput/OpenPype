@@ -28,8 +28,14 @@ def concatenate_splitted_paths(split_paths, anatomy):
         # backward compatibility
         if "__project_root__" in path_items:
             for root, root_path in anatomy.roots.items():
-                if not root_path:
+                if not root_path or not os.path.exists(str(root_path)):
+                    log.debug(
+                        "Root {} path path {} not exist on computer!".format(
+                            root, root_path
+                        )
+                    )
                     continue
+
                 root_items = [
                     "{{root[{}]}}".format(root),
                     "{project[name]}"
