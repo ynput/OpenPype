@@ -59,6 +59,9 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                 ingest_file.folder_path = value
                 # Update product name
                 ingest_file.task_name = None
+                task_names = self._controller.get_task_names(value)
+                if not ingest_file.task_name and task_names:
+                    ingest_file.task_name = task_names[0]
                 # roles = [QtCore.Qt.UserRole]
                 # self.dataChanged.emit(
                 #     self.index(row, column),

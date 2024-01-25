@@ -134,8 +134,9 @@ class BatchPublisherController(object):
         asset_docs_by_path = self._get_asset_docs()
         if not asset_docs_by_path:
             return []
-
         asset_doc = asset_docs_by_path.get(folder_path)
+        if not asset_doc:
+            return []
         return list(asset_doc["data"]["tasks"].keys())
 
     def _prepare_assets_by_path(self, asset_docs):
