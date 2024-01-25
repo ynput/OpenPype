@@ -60,6 +60,14 @@ class BatchPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
         reload(openpype.hosts.batchpublisher.ui.batch_publisher_view)
         reload(openpype.hosts.batchpublisher.ui.window)
 
+        import openpype.hosts.batchpublisher.deadline
+        import openpype.hosts.batchpublisher.publish
+        import openpype.hosts.batchpublisher.utils
+
+        reload(openpype.hosts.batchpublisher.deadline)
+        reload(openpype.hosts.batchpublisher.publish)
+        reload(openpype.hosts.batchpublisher.utils)
+
         # from openpype.hosts.batchpublisher.ui.window \
         #     import BatchPublisherWindow
         self._dialog = openpype.hosts.batchpublisher.ui.window. \

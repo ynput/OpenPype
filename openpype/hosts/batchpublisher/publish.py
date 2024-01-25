@@ -30,6 +30,11 @@ def publish_version(
     expected_representations,
     publish_data,
 ):
+
+    # # Hack required for environment to pick up in the farm
+    # legacy_io.Session["AVALON_PROJECT"] = project_name
+    # legacy_io.Session["AVALON_APP"] = "traypublisher"
+
     # TODO: write some logic that finds the main path from the list of
     # representations
     source_path = list(expected_representations.values())[0]

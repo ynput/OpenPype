@@ -41,6 +41,11 @@ def create_metadata_path(instance_data):
 
 
 def replace_frame_number_with_token(path, token):
+    # print("path", path)
+    # print("token", token)
+    # print("RE_FRAME_NUMBER", RE_FRAME_NUMBER)
+    # TODO: This regex doesn't work on desired client file paths. lets just return the path for now
+    return path
     return RE_FRAME_NUMBER.sub(
         r"\g<prefix>.{}.\g<extension>".format(token), path
     )
@@ -72,7 +77,9 @@ def get_representations(
         list of representations
 
     """
+    print("Z1")
     anatomy = Anatomy(instance_data["project"])
+    print("Z2")
 
     representations = []
     for rep_name, file_path in exp_representations.items():
@@ -91,16 +98,20 @@ def get_representations(
         # If file path is in remainder it means it was a single file
         if file_path in remainder:
             collections = [remainder]
-            frame_match = RE_FRAME_NUMBER.match(file_path)
-            if frame_match:
-                ext = frame_match.group("extension")
-                frame = frame_match.group("frame")
-                rep_frame_start = frame
-                rep_frame_end = frame
-            else:
-                rep_frame_start = 1
-                rep_frame_end = 1
-                ext = os.path.splitext(file_path)[1][1:]
+            rep_frame_start = 1
+            rep_frame_end = 1
+            ext = os.path.splitext(file_path)[1][1:]
+            # TODO: Need to be able to find the frame number by regex like this or something else
+            # frame_match = RE_FRAME_NUMBER.match(file_path)
+            # if frame_match:
+            #     ext = frame_match.group("extension")
+            #     frame = frame_match.group("frame")
+            #     rep_frame_start = frame
+            #     rep_frame_end = frame
+            # else:
+            #     rep_frame_start = 1
+            #     rep_frame_end = 1
+            #     ext = os.path.splitext(file_path)[1][1:]
 
         elif not collections:
             logger.warning(
@@ -133,7 +144,6 @@ def get_representations(
                 " This may cause issues on farm.",
                 staging
             )
-
         if not rep_frame_start or not rep_frame_end:
             col_frame_range = list(collection.indexes)
             rep_frame_start = col_frame_range[0]
