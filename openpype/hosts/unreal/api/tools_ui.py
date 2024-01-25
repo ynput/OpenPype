@@ -8,6 +8,7 @@ from openpype import (
 from openpype.tools.utils import host_tools
 from openpype.tools.utils.lib import qt_app_context
 from openpype.hosts.unreal.api import rendering
+from openpype.hosts.unreal.api import hierarchy
 
 
 class ToolsBtnsWidget(QtWidgets.QWidget):
@@ -21,6 +22,8 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
         publish_btn = QtWidgets.QPushButton("Publisher...", self)
         manage_btn = QtWidgets.QPushButton("Manage...", self)
         render_btn = QtWidgets.QPushButton("Render...", self)
+        sequence_btn = QtWidgets.QPushButton(
+            "Build sequence hierarchy...", self)
         experimental_tools_btn = QtWidgets.QPushButton(
             "Experimental tools...", self
         )
@@ -31,6 +34,7 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
         layout.addWidget(publish_btn, 0)
         layout.addWidget(manage_btn, 0)
         layout.addWidget(render_btn, 0)
+        layout.addWidget(sequence_btn, 0)
         layout.addWidget(experimental_tools_btn, 0)
         layout.addStretch(1)
 
@@ -38,6 +42,7 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
         publish_btn.clicked.connect(self._on_publish)
         manage_btn.clicked.connect(self._on_manage)
         render_btn.clicked.connect(self._on_render)
+        sequence_btn.clicked.connect(self._on_sequence)
         experimental_tools_btn.clicked.connect(self._on_experimental)
 
     def _on_create(self):
@@ -54,6 +59,9 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
 
     def _on_render(self):
         rendering.start_rendering()
+
+    def _on_sequence(self):
+        hierarchy.build_sequence_hierarchy()
 
     def _on_experimental(self):
         self.tool_required.emit("experimental_tools")
