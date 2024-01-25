@@ -193,7 +193,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                 # part of the output defintion tags, then both the
                 # representations will be transcoded in ExtractReview and
                 # their outputs will clash in integration.
-                if not added_review and "review" in repre.get("tags", []):
+                if "review" in repre.get("tags", []):
                     added_review = True
 
                 new_representations.append(new_repre)
