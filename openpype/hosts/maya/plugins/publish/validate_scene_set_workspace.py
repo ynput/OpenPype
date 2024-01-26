@@ -44,4 +44,8 @@ class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
 
         if not is_subdir(scene_name, root_dir):
             raise PublishValidationError(
-                "Maya workspace is not set correctly.")
+                "Maya workspace is not set correctly.\n\n"
+                f"Current workfile `{scene_name}` is not inside the "
+                "current Maya project root directory `{root_dir}`.\n\n"
+                "Please use Workfile app to re-save."
+            )
