@@ -60,8 +60,12 @@ class AutoDetectCreateRenderModel(BaseSettingsModel):
     enabled: bool = SettingsField(True)
     allow_group_rename: bool = SettingsField(title="Allow group rename")
     group_name_template: str = SettingsField(title="Group name template")
-    group_idx_offset: int = SettingsField(1, title="Group index Offset", ge=1)
-    group_idx_padding: int = SettingsField(4, title="Group index Padding", ge=1)
+    group_idx_offset: int = SettingsField(
+        1, title="Group index Offset", ge=1
+    )
+    group_idx_padding: int = SettingsField(
+        4, title="Group index Padding", ge=1
+    )
 
 
 class CreatePluginsModel(BaseSettingsModel):
@@ -77,7 +81,7 @@ class CreatePluginsModel(BaseSettingsModel):
         default_factory=CreateReviewModel,
         title="Create Render Scene"
     )
-    create_render_layer: CreateRenderLayerModel= SettingsField(
+    create_render_layer: CreateRenderLayerModel = SettingsField(
         default_factory=CreateRenderLayerModel,
         title="Create Render Layer"
     )

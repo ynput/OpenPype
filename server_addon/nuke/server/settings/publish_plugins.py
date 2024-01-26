@@ -266,9 +266,11 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Extract Review Data Mov",
         default_factory=ExtractReviewDataMovModel
     )
-    ExtractReviewIntermediates: ExtractReviewIntermediatesModel = SettingsField(
-        title="Extract Review Intermediates",
-        default_factory=ExtractReviewIntermediatesModel
+    ExtractReviewIntermediates: ExtractReviewIntermediatesModel = (
+        SettingsField(
+            title="Extract Review Intermediates",
+            default_factory=ExtractReviewIntermediatesModel
+        )
     )
     ExtractSlateFrame: ExtractSlateFrameModel = SettingsField(
         title="Extract Slate Frame",

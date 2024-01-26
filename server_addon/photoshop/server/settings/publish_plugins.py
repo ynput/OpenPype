@@ -138,9 +138,11 @@ class ExtractReviewPlugin(BaseSettingsModel):
 
 
 class PhotoshopPublishPlugins(BaseSettingsModel):
-    CollectColorCodedInstances: CollectColorCodedInstancesPlugin = SettingsField(
-        title="Collect Color Coded Instances",
-        default_factory=CollectColorCodedInstancesPlugin,
+    CollectColorCodedInstances: CollectColorCodedInstancesPlugin = (
+        SettingsField(
+            title="Collect Color Coded Instances",
+            default_factory=CollectColorCodedInstancesPlugin,
+        )
     )
     CollectReview: CollectReviewPlugin = SettingsField(
         title="Collect Review",

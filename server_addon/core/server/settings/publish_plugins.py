@@ -232,7 +232,9 @@ class ExtractOIIOTranscodeOutputModel(BaseSettingsModel):
         title="OIIOtool arguments")
 
     tags: list[str] = SettingsField(default_factory=list, title="Tags")
-    custom_tags: list[str] = SettingsField(default_factory=list, title="Custom Tags")
+    custom_tags: list[str] = SettingsField(
+        default_factory=list, title="Custom Tags"
+    )
 
 
 class ExtractOIIOTranscodeProfileModel(BaseSettingsModel):
@@ -320,7 +322,9 @@ class ExtractReviewFilterModel(BaseSettingsModel):
     families: list[str] = SettingsField(default_factory=list, title="Families")
     product_names: list[str] = SettingsField(
         default_factory=list, title="Product names")
-    custom_tags: list[str] = SettingsField(default_factory=list, title="Custom Tags")
+    custom_tags: list[str] = SettingsField(
+        default_factory=list, title="Custom Tags"
+    )
     single_frame_filter: str = SettingsField(
         "everytime",
         description=(
@@ -623,9 +627,11 @@ class IntegrateProductGroupModel(BaseSettingsModel):
     """
 
     _isGroup = True
-    product_grouping_profiles: list[IntegrateProductGroupProfile] = SettingsField(
-        default_factory=list,
-        title="Product group profiles"
+    product_grouping_profiles: list[IntegrateProductGroupProfile] = (
+        SettingsField(
+            default_factory=list,
+            title="Product group profiles"
+        )
     )
 
 
@@ -706,7 +712,9 @@ class CleanUpModel(BaseSettingsModel):
         default_factory=list,
         title="Patterns (regex)"
     )
-    remove_temp_renders: bool = SettingsField(False, title="Remove Temp renders")
+    remove_temp_renders: bool = SettingsField(
+        False, title="Remove Temp renders"
+    )
 
 
 class CleanUpFarmModel(BaseSettingsModel):
