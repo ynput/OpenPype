@@ -1186,10 +1186,6 @@ def get_info(use_staging=None) -> list:
         inf.append(("Using Deadline webservice at",
                     os.environ.get("DEADLINE_REST_URL")))
 
-    if os.environ.get('MUSTER_REST_URL'):
-        inf.append(("Using Muster at",
-                    os.environ.get("MUSTER_REST_URL")))
-
     # Reinitialize
     Logger.initialize()
 
