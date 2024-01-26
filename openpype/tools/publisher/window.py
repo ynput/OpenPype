@@ -328,7 +328,6 @@ class PublisherWindow(QtWidgets.QDialog):
             "copy_report.request", self._copy_report
         )
 
-
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
         #   label and help button
@@ -492,7 +491,11 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def keyPressEvent(self, event):
         # Ignore escape button to close window
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() in {
+            QtCore.Qt.Key_Escape,
+            QtCore.Qt.Key_Enter,
+            QtCore.Qt.Key_Return,
+        }:
             event.accept()
             return
 
