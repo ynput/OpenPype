@@ -1,22 +1,21 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class TemplatesMapping(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: int = Field(title="mapping")
+    name: str = SettingsField(title="Name")
+    value: int = SettingsField(title="mapping")
 
 
 class MusterSettings(BaseSettingsModel):
     enabled: bool = True
-    MUSTER_REST_URL: str = Field(
+    MUSTER_REST_URL: str = SettingsField(
         "",
         title="Muster Rest URL",
         scope=["studio"],
     )
 
-    templates_mapping: list[TemplatesMapping] = Field(
+    templates_mapping: list[TemplatesMapping] = SettingsField(
         default_factory=list,
         title="Templates mapping",
     )
