@@ -47,15 +47,22 @@
                                 "multiselection": true
                             },
                             {
+                                "type": "splitter"
+                            },
+                            {
+                                "key": "primary_pool",
+                                "label": "Primary pool",
+                                "type": "text"
+                            },
+                            {
+                                "key": "secondary_pool",
+                                "label": "Secondary Pool",
+                                "type": "text"
+                            },
+                            {
                                 "type": "number",
                                 "key": "priority",
                                 "label": "Priority"
-                            },
-                            {
-                                "type": "list",
-                                "key": "limit_groups",
-                                "label": "Limit Groups",
-                                "object_type": "text"
                             },
                             {
                                 "type": "number",
