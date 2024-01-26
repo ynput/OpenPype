@@ -357,17 +357,6 @@ def register():
     bpy.types.WindowManager.render_bool_properties = bpy.props.CollectionProperty(type=RenderBoolProperty)
     bpy.types.WindowManager.render_list_properties = bpy.props.CollectionProperty(type=RenderListProperty)
     bpy.types.WindowManager.render_layers_to_use = bpy.props.CollectionProperty(type=RenderLayerProperty)
-    # bpy.types.WindowManager.render_layers = bpy.props.EnumProperty(
-    #     name = "Render layers",
-    #     description ="Render layers to ",
-    #     items = ('Test', 'Test', 'Test')#get_render_layers_names
-    # )
-    #))
-
-        # name="Render layers",
-        # description="Render layers",
-        # items=get_render_layers_names
-    #)
 
     ExecutionOrder.define("DEADLINE_OT_prepare_temporary_scene")
     ExecutionOrder.define("OPS_OT_submit_blender_to_deadline")
