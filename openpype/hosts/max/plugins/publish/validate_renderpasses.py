@@ -84,8 +84,12 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
             invalid.append(("Invalid Render Output Folder",
                             invalid_folder_name))
         beauty_fname = os.path.basename(rt.rendOutputFilename)
-        ext = os.path.splitext(beauty_fname)[-1].lstrip(".")
-        invalid_image_format = cls.get_invalid_image_format(instance, ext)
+        beauty_name, ext = os.path.splitext(beauty_fname)
+        invalid_filenames = cls.get_invalid_filenames(
+            instance, beauty_name)
+        invalid.extend(invalid_filenames)
+        invalid_image_format = cls.get_invalid_image_format(
+            instance, ext.lstrip("."))
         invalid.extend(invalid_image_format)
         renderer = instance.data["renderer"]
         if renderer in [
@@ -109,13 +113,9 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                                     "No filepath"))
                 rend_fname, ext = os.path.splitext(
                     os.path.basename(rend_file))
-                if not rend_fname.lstrip(".").endswith(renderpass):
-                    cls.log.error(
-                        f"Filename for {renderpass} should "
-                        f"end with {renderpass}"
-                    )
-                    invalid.append((f"Invalid {renderpass}",
-                                    os.path.basename(rend_file)))
+                invalid_filenames = cls.get_invalid_filenames(
+                    instance, rend_fname, renderpass=renderpass)
+                invalid.extend(invalid_filenames)
                 invalid_image_format = cls.get_invalid_image_format(
                     instance, ext)
                 invalid.extend(invalid_image_format)
@@ -124,6 +124,33 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                 "Renderpass validation not supported Arnold yet,"
                 " validation skipped...")
 
+        return invalid
+
+    @classmethod
+    def get_invalid_filenames(cls, instance, file_name, renderpass=None):
+        """Function to get invalid filenames from render outputs.
+
+        Args:
+            instance (pyblish.api.Instance): instance
+            file_name (str): name of the file
+            renderpass (str, optional): name of the renderpass. Defaults to None.
+
+        Returns:
+            list: invalid filenames
+        """
+        invalid = []
+        if instance.name not in file_name:
+            cls.log.error("The renderpass should have instance name inside.")
+            invalid.append((f"Invalid instance name",
+                            file_name))
+        if renderpass is not None:
+            if not file_name.rstrip(".").endswith(renderpass):
+                cls.log.error(
+                    f"Filename for {renderpass} should "
+                    f"end with {renderpass}"
+                )
+                invalid.append((f"Invalid {renderpass}",
+                                os.path.basename(file_name)))
         return invalid
 
     @classmethod
