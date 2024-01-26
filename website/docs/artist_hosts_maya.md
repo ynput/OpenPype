@@ -386,14 +386,11 @@ models you've put into layout.
 
 OpenPype in Maya can be used for submitting renders to render farm and for their
 subsequent publishing. Right now OpenPype support [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline)
-and [Virtual Vertex Muster](https://www.vvertex.com/overview/).
+and [Royal Render](https://www.royalrender.de/).
 
-* For setting up Muster support see [admin section](module_muster.md)
+* For setting up Royal Render support see [admin section](module_royalrender.md)
 * For setting up Deadline support see [here](module_deadline.md)
 
-:::note Muster login
-Muster is now configured so every user must log in to get authentication support. If OpenPype founds out this token is missing or expired, it will ask again for credentials.
-:::
 
 ### Creating basic render setup
 
@@ -436,12 +433,7 @@ checked **Use selection** it will use your current Render Layers (if you have th
 if no render layers is present in scene, it will create one for you named **Main** and under it
 default collection with `*` selector.
 
-No matter if you use *Deadline* or *Muster*, OpenPype will try to connect to render farm and
-fetch machine pool list.
-
-:::note Muster login
-This might fail on *Muster* in the event that you have expired authentication token. In that case, you'll be presented with login window. Nothing will be created in the scene until you log in again and do create **Render** again.
-:::
+OpenPype will try to connect to render farm and fetch machine pool list.
 
 So now my scene now looks like this:
 
