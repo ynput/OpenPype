@@ -220,6 +220,8 @@ class BlendLoader(plugin.AssetLoader):
         # Restore the actions
         for obj in asset_group.children_recursive:
             if obj.name in actions:
+                if not obj.animation_data:
+                    obj.animation_data_create()
                 obj.animation_data.action = actions[obj.name]
 
         # Restore the old data, but reset memebers, as they don't exist anymore
