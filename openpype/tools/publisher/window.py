@@ -42,7 +42,7 @@ from .widgets import (
 )
 
 
-class PublisherWindow(QtWidgets.QWidget):
+class PublisherWindow(QtWidgets.QDialog):
     """Main window of publisher."""
     default_width = 1300
     default_height = 800
@@ -50,7 +50,7 @@ class PublisherWindow(QtWidgets.QWidget):
     publish_footer_spacer = 2
 
     def __init__(self, parent=None, controller=None, reset_on_show=None):
-        super(PublisherWindow, self).__init__()
+        super(PublisherWindow, self).__init__(parent)
 
         self.setObjectName("PublishWindow")
 
