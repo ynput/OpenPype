@@ -133,7 +133,8 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         Args:
             instance (pyblish.api.Instance): instance
             file_name (str): name of the file
-            renderpass (str, optional): name of the renderpass. Defaults to None.
+            renderpass (str, optional): name of the renderpass.
+                Defaults to None.
 
         Returns:
             list: invalid filenames
