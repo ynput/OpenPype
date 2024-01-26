@@ -322,6 +322,7 @@ class LoaderWindow(QtWidgets.QWidget):
         )
 
     def refresh(self):
+        self._reset_on_show = False
         self._controller.reset()
 
     def showEvent(self, event):
@@ -331,6 +332,10 @@ class LoaderWindow(QtWidgets.QWidget):
             self._on_first_show()
 
         self._show_timer.start()
+
+    def closeEvent(self, event):
+        super(LoaderWindow, self).closeEvent(event)
+        self._reset_on_show = True
 
     def keyPressEvent(self, event):
         modifiers = event.modifiers()
@@ -378,8 +383,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self._show_timer.stop()
 
         if self._reset_on_show:
-            self._reset_on_show = False
-            self._controller.reset()
+            self.refresh()
 
     def _show_group_dialog(self):
         project_name = self._projects_combobox.get_selected_project_name()
