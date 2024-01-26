@@ -41,7 +41,9 @@ class AppVariant(BaseSettingsModel):
     arguments: MultiplatformStrList = SettingsField(
         default_factory=MultiplatformStrList, title="Arguments"
     )
-    environment: str = SettingsField("{}", title="Environment", widget="textarea")
+    environment: str = SettingsField(
+        "{}", title="Environment", widget="textarea"
+    )
 
     @validator("environment")
     def validate_json(cls, value):
@@ -57,7 +59,9 @@ class AppGroup(BaseSettingsModel):
     label: str = SettingsField("", title="Label")
     host_name: str = SettingsField("", title="Host name")
     icon: str = SettingsField("", title="Icon")
-    environment: str = SettingsField("{}", title="Environment", widget="textarea")
+    environment: str = SettingsField(
+        "{}", title="Environment", widget="textarea"
+    )
 
     variants: list[AppVariant] = SettingsField(
         default_factory=list,
@@ -87,7 +91,9 @@ class AdditionalAppGroup(BaseSettingsModel):
     label: str = SettingsField("", title="Label")
     host_name: str = SettingsField("", title="Host name")
     icon: str = SettingsField("", title="Icon")
-    environment: str = SettingsField("{}", title="Environment", widget="textarea")
+    environment: str = SettingsField(
+        "{}", title="Environment", widget="textarea"
+    )
 
     variants: list[AppVariantWithPython] = SettingsField(
         default_factory=list,
@@ -107,8 +113,12 @@ class ToolVariantModel(BaseSettingsModel):
     label: str = SettingsField("", title="Label")
     host_names: list[str] = SettingsField(default_factory=list, title="Hosts")
     # TODO use applications enum if possible
-    app_variants: list[str] = SettingsField(default_factory=list, title="Applications")
-    environment: str = SettingsField("{}", title="Environments", widget="textarea")
+    app_variants: list[str] = SettingsField(
+        default_factory=list, title="Applications"
+    )
+    environment: str = SettingsField(
+        "{}", title="Environments", widget="textarea"
+    )
 
     @validator("environment")
     def validate_json(cls, value):
@@ -118,7 +128,9 @@ class ToolVariantModel(BaseSettingsModel):
 class ToolGroupModel(BaseSettingsModel):
     name: str = SettingsField("", title="Name")
     label: str = SettingsField("", title="Label")
-    environment: str = SettingsField("{}", title="Environments", widget="textarea")
+    environment: str = SettingsField(
+        "{}", title="Environments", widget="textarea"
+    )
     variants: list[ToolVariantModel] = SettingsField(default_factory=list)
 
     @validator("environment")

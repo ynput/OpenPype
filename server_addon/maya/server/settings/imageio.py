@@ -48,7 +48,9 @@ class ColorManagementPreferenceV2Model(BaseSettingsModel):
     Please migrate all to 'imageio/workfile' and enable it.
     """
 
-    enabled: bool = SettingsField(True, title="Use Color Management Preference v2")
+    enabled: bool = SettingsField(
+        True, title="Use Color Management Preference v2"
+    )
 
     renderSpace: str = SettingsField(title="Rendering Space")
     displayName: str = SettingsField(title="Display")
@@ -92,9 +94,11 @@ class ImageIOSettings(BaseSettingsModel):
         title="Workfile"
     )
     # Deprecated
-    colorManagementPreference_v2: ColorManagementPreferenceV2Model = SettingsField(
-        default_factory=ColorManagementPreferenceV2Model,
-        title="DEPRECATED: Color Management Preference v2 (Maya 2022+)"
+    colorManagementPreference_v2: ColorManagementPreferenceV2Model = (
+        SettingsField(
+            default_factory=ColorManagementPreferenceV2Model,
+            title="DEPRECATED: Color Management Preference v2 (Maya 2022+)"
+        )
     )
     colorManagementPreference: ColorManagementPreferenceModel = SettingsField(
         default_factory=ColorManagementPreferenceModel,

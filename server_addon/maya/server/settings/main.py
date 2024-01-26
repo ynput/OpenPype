@@ -37,7 +37,9 @@ class MayaSettings(BaseSettingsModel):
         title="Explicit Plugins Loading")
     imageio: ImageIOSettings = SettingsField(
         default_factory=ImageIOSettings, title="Color Management (imageio)")
-    mel_workspace: str = SettingsField(title="Maya MEL Workspace", widget="textarea")
+    mel_workspace: str = SettingsField(
+        title="Maya MEL Workspace", widget="textarea"
+    )
     ext_mapping: list[ExtMappingItemModel] = SettingsField(
         default_factory=list, title="Extension Mapping")
     maya_dirmap: MayaDirmapModel = SettingsField(

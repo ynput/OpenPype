@@ -40,7 +40,9 @@ class ColorsSetting(BaseSettingsModel):
 class ReferenceLoaderModel(BaseSettingsModel):
     namespace: str = SettingsField(title="Namespace")
     group_name: str = SettingsField(title="Group name")
-    display_handle: bool = SettingsField(title="Display Handle On Load References")
+    display_handle: bool = SettingsField(
+        title="Display Handle On Load References"
+    )
 
 
 class ImportLoaderModel(BaseSettingsModel):

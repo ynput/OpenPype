@@ -715,9 +715,11 @@ class CleanUpFarmModel(BaseSettingsModel):
 
 
 class PublishPuginsModel(BaseSettingsModel):
-    CollectAnatomyInstanceData: CollectAnatomyInstanceDataModel = SettingsField(
-        default_factory=CollectAnatomyInstanceDataModel,
-        title="Collect Anatomy Instance Data"
+    CollectAnatomyInstanceData: CollectAnatomyInstanceDataModel = (
+        SettingsField(
+            default_factory=CollectAnatomyInstanceDataModel,
+            title="Collect Anatomy Instance Data"
+        )
     )
     CollectAudio: CollectAudioModel = SettingsField(
         default_factory=CollectAudioModel,

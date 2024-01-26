@@ -15,7 +15,9 @@ class PublishGUIFilterItemModel(BaseSettingsModel):
 class PublishGUIFiltersModel(BaseSettingsModel):
     _layout = "compact"
     name: str = SettingsField(title="Name")
-    value: list[PublishGUIFilterItemModel] = SettingsField(default_factory=list)
+    value: list[PublishGUIFilterItemModel] = SettingsField(
+        default_factory=list
+    )
 
     @validator("value")
     def validate_unique_outputs(cls, value):

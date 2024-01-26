@@ -55,7 +55,9 @@ class CoreImageIOFileRulesModel(BaseSettingsModel):
 
 
 class CoreImageIOConfigModel(BaseSettingsModel):
-    filepath: list[str] = SettingsField(default_factory=list, title="Config path")
+    filepath: list[str] = SettingsField(
+        default_factory=list, title="Config path"
+    )
 
 
 class CoreImageIOBaseModel(BaseSettingsModel):

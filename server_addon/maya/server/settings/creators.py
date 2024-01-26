@@ -111,7 +111,9 @@ class CreateAssModel(BasicCreatorModel):
 
 
 class CreateReviewModel(BasicCreatorModel):
-    useMayaTimeline: bool = SettingsField(title="Use Maya Timeline for Frame Range.")
+    useMayaTimeline: bool = SettingsField(
+        title="Use Maya Timeline for Frame Range."
+    )
 
 
 class CreateVrayProxyModel(BaseSettingsModel):

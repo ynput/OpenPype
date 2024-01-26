@@ -1,5 +1,3 @@
-from pydantic import validator
-
 from ayon_server.settings import (
     BaseSettingsModel,
     SettingsField,

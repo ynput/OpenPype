@@ -32,9 +32,11 @@ class AddTasksModel(BaseSettingsModel):
 class CollectTimelineInstancesModel(BaseSettingsModel):
     _isGroup = True
 
-    xml_preset_attrs_from_comments: list[XMLPresetAttrsFromCommentsModel] = SettingsField(
-        default_factory=list,
-        title="XML presets attributes parsable from segment comments"
+    xml_preset_attrs_from_comments: list[XMLPresetAttrsFromCommentsModel] = (
+        SettingsField(
+            default_factory=list,
+            title="XML presets attributes parsable from segment comments"
+        )
     )
     add_tasks: list[AddTasksModel] = SettingsField(
         default_factory=list,

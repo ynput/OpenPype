@@ -9,7 +9,9 @@ class ScriptsmenuSubmodel(BaseSettingsModel):
     sourcetype: str = SettingsField(title="Source Type")
     title: str = SettingsField(title="Title")
     tooltip: str = SettingsField(title="Tooltip")
-    tags: list[str] = SettingsField(default_factory=list, title="A list of tags")
+    tags: list[str] = SettingsField(
+        default_factory=list, title="A list of tags"
+    )
 
 
 class ScriptsmenuModel(BaseSettingsModel):
