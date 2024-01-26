@@ -36,6 +36,12 @@ def prepare_scene_name(
     if namespace:
         name = f"{name}_{namespace}"
     name = f"{name}_{subset}"
+
+    # Blender name for a collection or object cannot be longer than 63
+    # characters. If the name is longer, it will raise an error.
+    if len(name) > 63:
+        raise ValueError(f"Scene name '{name}' would be too long.")
+
     return name
 
 
@@ -226,7 +232,7 @@ class BaseCreator(Creator):
 
         # Create asset group
         if AYON_SERVER_ENABLED:
-            asset_name = instance_data["folderPath"]
+            asset_name = instance_data["folderPath"].split("/")[-1]
         else:
             asset_name = instance_data["asset"]
 
@@ -305,12 +311,16 @@ class BaseCreator(Creator):
                 )
                 return
 
-            # Rename the instance node in the scene if subset or asset changed
+            # Rename the instance node in the scene if subset or asset changed.
+            # Do not rename the instance if the family is workfile, as the
+            # workfile instance is included in the AVALON_CONTAINER collection.
             if (
                 "subset" in changes.changed_keys
                 or asset_name_key in changes.changed_keys
-            ):
+            ) and created_instance.family != "workfile":
                 asset_name = data[asset_name_key]
+                if AYON_SERVER_ENABLED:
+                    asset_name = asset_name.split("/")[-1]
                 name = prepare_scene_name(
                     asset=asset_name, subset=data["subset"]
                 )

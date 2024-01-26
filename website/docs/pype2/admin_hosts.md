@@ -157,6 +157,10 @@ machine setup on farm. If there is no mix of windows/linux machines on farm, the
 
 ## Virtual Vertex Muster
 
+:::warning
+Support for Muster was removed from OpenPype and AYON.
+:::
+
 Pype supports rendering with [Muster](https://www.vvertex.com/). To enable it:
 1. Add `muster` to **init_env** to your `deploy.json`
  file:

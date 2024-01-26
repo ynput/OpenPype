@@ -238,6 +238,11 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "loadTextures",
+                            "label": "Load Textures"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "useDefaultMaterial",
                             "label": "Use Default Material"
                         },
@@ -907,6 +912,12 @@
                                     },
                                     {
                                         "type": "splitter"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "loadTextures",
+                                        "label": "Load Textures",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
