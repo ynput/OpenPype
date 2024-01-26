@@ -410,9 +410,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         """
 
         hierarchy_queue = collections.deque()
-        hierarchy_queue.append(hierarchy_context)
+        hierarchy_queue.append(copy.deepcopy(hierarchy_context))
         while hierarchy_queue:
-            item = hierarchy_context.popleft()
+            item = hierarchy_queue.popleft()
             if asset_name in item:
                 return item[asset_name].get("tasks") or {}
 

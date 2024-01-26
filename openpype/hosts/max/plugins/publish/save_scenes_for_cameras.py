@@ -21,6 +21,11 @@ class SaveScenesForCamera(pyblish.api.InstancePlugin):
     families = ["maxrender"]
 
     def process(self, instance):
+        if not instance.data.get("multiCamera"):
+            self.log.debug(
+                "Multi Camera disabled. "
+                "Skipping to save scene files for cameras")
+            return
         current_folder = rt.maxFilePath
         current_filename = rt.maxFileName
         current_filepath = os.path.join(current_folder, current_filename)
