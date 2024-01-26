@@ -542,7 +542,8 @@ def _load_modules():
     module_dirs.insert(0, current_dir)
 
     addons_dir = os.path.join(os.path.dirname(current_dir), "addons")
-    module_dirs.append(addons_dir)
+    if os.path.exists(addons_dir):
+        module_dirs.append(addons_dir)
 
     ignored_host_names = set(IGNORED_HOSTS_IN_AYON)
     ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)

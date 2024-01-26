@@ -265,13 +265,16 @@ def transfer_image_planes(source_cameras, target_cameras,
     try:
         for source_camera, target_camera in zip(source_cameras,
                                                 target_cameras):
-            image_planes = cmds.listConnections(source_camera,
+            image_plane_plug = "{}.imagePlane".format(source_camera)
+            image_planes = cmds.listConnections(image_plane_plug,
+                                                source=True,
+                                                destination=False,
                                                 type="imagePlane") or []
 
             # Split of the parent path they are attached - we want
-            # the image plane node name.
+            # the image plane node name if attached to a camera.
             # TODO: Does this still mean the image plane name is unique?
-            image_planes = [x.split("->", 1)[1] for x in image_planes]
+            image_planes = [x.split("->", 1)[-1] for x in image_planes]
 
             if not image_planes:
                 continue
@@ -282,7 +285,7 @@ def transfer_image_planes(source_cameras, target_cameras,
                     if source_camera == target_camera:
                         continue
                     _attach_image_plane(target_camera, image_plane)
-                else:  # explicitly dettaching image planes
+                else:  # explicitly detach image planes
                     cmds.imagePlane(image_plane, edit=True, detach=True)
                 originals[source_camera].append(image_plane)
         yield

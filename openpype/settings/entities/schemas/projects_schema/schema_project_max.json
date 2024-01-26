@@ -6,6 +6,34 @@
     "is_file": true,
     "children": [
         {
+            "key": "unit_scale_settings",
+            "type": "dict",
+            "label": "Set Unit Scale",
+            "collapsible": true,
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "scene_unit_scale",
+                    "label": "Scene Unit Scale",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "exr",
+                    "enum_items": [
+                      {"Millimeters": "mm"},
+                      {"Centimeters": "cm"},
+                      {"Meters":  "m"},
+                      {"Kilometers":  "km"}
+                    ]
+                }
+            ]
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (OCIO managed)",

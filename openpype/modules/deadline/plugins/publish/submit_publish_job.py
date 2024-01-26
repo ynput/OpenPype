@@ -83,7 +83,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
     """
 
-    label = "Submit image sequence jobs to Deadline"
+    label = "Submit Image Publishing job to Deadline"
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
@@ -287,7 +287,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     job_index)] = assembly_id  # noqa: E501
                 job_index += 1
         elif instance.data.get("bakingSubmissionJobs"):
-            self.log.info("Adding baking submission jobs as dependencies...")
+            self.log.info(
+                "Adding baking submission jobs as dependencies..."
+            )
             job_index = 0
             for assembly_id in instance.data["bakingSubmissionJobs"]:
                 payload["JobInfo"]["JobDependency{}".format(
@@ -571,8 +573,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         ._____.
 
         '''
-        render_job = instance.data.pop("deadlineSubmissionJob", None)
 
+        render_job = instance.data.pop("deadlineSubmissionJob", None)
         if not render_job and instance.data.get("tileRendering") is False:
             raise AssertionError(("Cannot continue without valid "
                                   "Deadline submission."))

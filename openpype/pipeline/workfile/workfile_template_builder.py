@@ -1971,7 +1971,6 @@ class PlaceholderCreateMixin(object):
         if not placeholder.data.get("keep_placeholder", True):
             self.delete_placeholder(placeholder)
 
-
     def create_failed(self, placeholder, creator_data):
         if hasattr(placeholder, "create_failed"):
             placeholder.create_failed(creator_data)
@@ -2036,7 +2035,7 @@ class CreatePlaceholderItem(PlaceholderItem):
         self._failed_created_publish_instances = []
 
     def get_errors(self):
-        if not self._failed_representations:
+        if not self._failed_created_publish_instances:
             return []
         message = (
             "Failed to create {} instance using Creator {}"

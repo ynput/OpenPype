@@ -1219,6 +1219,8 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
     for profile in extract_oiio_transcode_profiles:
         new_outputs = {}
         name_counter = {}
+        if "product_names" in profile:
+            profile["subsets"] = profile.pop("product_names")
         for profile_output in profile["outputs"]:
             if "name" in profile_output:
                 name = profile_output.pop("name")
@@ -1273,12 +1275,6 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             extract_burnin_def.pop("name"): extract_burnin_def
             for extract_burnin_def in extract_burnin_defs
         }
-
-    ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
-    for profile in ayon_integrate_hero["template_name_profiles"]:
-        if "product_types" not in profile:
-            break
-        profile["families"] = profile.pop("product_types")
 
     if "IntegrateProductGroup" in ayon_publish:
         subset_group = ayon_publish.pop("IntegrateProductGroup")
