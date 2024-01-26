@@ -484,9 +484,11 @@ class PublisherWindow(QtWidgets.QDialog):
         app.removeEventFilter(self)
 
     def keyPressEvent(self, event):
-        # Ignore escape button to close window
         if event.key() in {
+            # Ignore escape button to close window
             QtCore.Qt.Key_Escape,
+            # Ignore enter keyboard event which by default triggers
+            #   first available button in QDialog
             QtCore.Qt.Key_Enter,
             QtCore.Qt.Key_Return,
         }:
