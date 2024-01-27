@@ -16,6 +16,7 @@ DEAFAULT_CONCURRENT_TASKS = 1
 
 
 def payload_submit(
+    project_name,
     plugin,
     plugin_data,
     batch_name,
@@ -111,10 +112,41 @@ def payload_submit(
     print("Submitting..")
     print(json.dumps(payload, indent=4, sort_keys=True))
 
-    url = "{}/api/jobs".format(constants.DEADLINE_URL)
+    # # Deadline connection
+    # AVALON_DEADLINE = legacy_io.Session.get(
+    #         "AVALON_DEADLINE", "http://localhost:8082")
+
+    DEADLINE_URL = get_deadline_web_service_url(project_name)
+
+    DEADLINE_URL = "http://0.0.0.0:8082"
+    url = "{}/api/jobs".format(DEADLINE_URL)
     response = requests.post(url, json=payload, timeout=10)
 
     if not response.ok:
         raise Exception(response.text)
 
     return response.json()
+
+
+def get_deadline_web_service_url(project_name):
+    from openpype.settings import (
+        get_project_settings,
+        get_system_settings)
+    from openpype import AYON_SERVER_ENABLED
+    project_settings = get_project_settings(project_name)
+    # Get deadline settings for project from global project settings
+    deadline_settings = project_settings["deadline"]
+    # Get deadline settings for context in collector plugin
+    # # deadline_settings = context.data["project_settings"]["deadline"]
+    deadline_server_name = None
+    if AYON_SERVER_ENABLED:
+        deadline_server_name = deadline_settings["deadline_server"]
+    else:
+        deadline_servers = deadline_settings["deadline_servers"]
+        if deadline_servers:
+            deadline_server_name = deadline_servers[0]
+    deadline_webservice_url = None
+    for settings in get_system_settings(project_name)["deadline"]["deadline_urls"]:
+        if settings["name"] == deadline_server_name:
+            deadline_webservice_url = settings["value"]
+    return deadline_webservice_url

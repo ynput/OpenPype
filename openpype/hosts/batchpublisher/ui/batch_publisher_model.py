@@ -24,16 +24,16 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         super(BatchPublisherModel, self).__init__()
 
         self._controller = controller
-        self._ingest_files = []
+        self._product_items = []
 
     def set_current_directory(self, directory):
         self._populate_from_directory(directory)
 
-    def get_ingest_files(self):
-        return list(self._ingest_files)
+    def get_product_items(self):
+        return list(self._product_items)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self._ingest_files)
+        return len(self._product_items)
 
     def columnCount(self, parent=QtCore.QModelIndex()):
         return len(BatchPublisherModel.HEADER_LABELS)
@@ -50,45 +50,45 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     def setData(self, index, value, role=None):
         column = index.column()
         row = index.row()
-        ingest_file = self._ingest_files[row]
+        product_item = self._product_items[row]
         if role == QtCore.Qt.EditRole:
             if column == BatchPublisherModel.COLUMN_OF_DIRECTORY:
-                ingest_file.filepath = value
+                product_item.filepath = value
             elif column == BatchPublisherModel.COLUMN_OF_FOLDER:
                 # Update product name
-                ingest_file.folder_path = value
+                product_item.folder_path = value
                 # Update product name
-                ingest_file.task_name = None
+                product_item.task_name = None
                 task_names = self._controller.get_task_names(value)
-                if not ingest_file.task_name and task_names:
-                    ingest_file.task_name = task_names[0]
+                if not product_item.task_name and task_names:
+                    product_item.task_name = task_names[0]
                 # roles = [QtCore.Qt.UserRole]
                 # self.dataChanged.emit(
                 #     self.index(row, column),
                 #     self.index(row, BatchPublisherModel.COLUMN_OF_TASK),
                 #     roles)
             elif column == BatchPublisherModel.COLUMN_OF_TASK:
-                ingest_file.task_name = value
+                product_item.task_name = value
                 # # Update product name
-                # self._controller._cache_task_names(ingest_file)
+                # self._controller._cache_task_names(product_item)
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:
-                ingest_file.product_type = value
+                product_item.product_type = value
                 # # Update product name
-                # self._controller._cache_task_names(ingest_file)
+                # self._controller._cache_task_names(product_item)
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
-                ingest_file.product_name = value
+                product_item.product_name = value
             elif column == BatchPublisherModel.COLUMN_OF_REPRESENTATION:
-                ingest_file.representation_name = value
+                product_item.representation_name = value
             elif column == BatchPublisherModel.COLUMN_OF_VERSION:
                 try:
-                    ingest_file.version = int(value)
+                    product_item.version = int(value)
                 except Exception:
-                    ingest_file.version = None
+                    product_item.version = None
             return True
         elif role == QtCore.Qt.CheckStateRole:
             if column == BatchPublisherModel.COLUMN_OF_CHECKBOX:
                 enabled = True if value == QtCore.Qt.Checked else False
-                ingest_file.enabled = enabled
+                product_item.enabled = enabled
                 roles = [QtCore.Qt.ForegroundRole]
                 self.dataChanged.emit(
                     self.index(row, column),
@@ -99,29 +99,29 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     def data(self, index, role=QtCore.Qt.DisplayRole):
         column = index.column()
         row = index.row()
-        ingest_file = self._ingest_files[row]
+        product_item = self._product_items[row]
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
             if column == BatchPublisherModel.COLUMN_OF_DIRECTORY:
-                return ingest_file.filepath
+                return product_item.filepath
             elif column == BatchPublisherModel.COLUMN_OF_FOLDER:
-                return ingest_file.folder_path
+                return product_item.folder_path
             elif column == BatchPublisherModel.COLUMN_OF_TASK:
-                return ingest_file.task_name
+                return product_item.task_name
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:
-                return ingest_file.product_type
+                return product_item.product_type
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
-                return ingest_file.product_name
+                return product_item.product_name
             elif column == BatchPublisherModel.COLUMN_OF_REPRESENTATION:
-                return ingest_file.representation_name
+                return product_item.representation_name
             elif column == BatchPublisherModel.COLUMN_OF_VERSION:
-                return str(ingest_file.version or "")
+                return str(product_item.version or "")
             # elif column == 1:
             #     magnitude = self.input_magnitudes[row]
             #     return f"{magnitude:.2f}"
         # elif role == QtCore.Qt.EditRole:
         #     return True
         elif role == QtCore.Qt.ForegroundRole:
-            if ingest_file.defined and ingest_file.enabled:
+            if product_item.defined and product_item.enabled:
                 return QtGui.QColor(240, 240, 240)
             else:
                 return QtGui.QColor(120, 120, 120)
@@ -132,22 +132,22 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         elif role == QtCore.Qt.ToolTipRole:
             project_name = self._controller.get_selected_project_name()
             tooltip = f"""
-Enabled: <b>{ingest_file.enabled}</b>
-<br>Filepath: <b>{ingest_file.filepath}</b>
-<br>Folder (Asset): <b>{ingest_file.folder_path}</b>
-<br>Task: <b>{ingest_file.task_name}</b>
-<br>Product Type (Family): <b>{ingest_file.product_type}</b>
-<br>Product Name (Subset): <b>{ingest_file.product_name}</b>
-<br>Representation: <b>{ingest_file.representation_name}</b>
-<br>Version: <b>{ingest_file.version}</b>
+Enabled: <b>{product_item.enabled}</b>
+<br>Filepath: <b>{product_item.filepath}</b>
+<br>Folder (Asset): <b>{product_item.folder_path}</b>
+<br>Task: <b>{product_item.task_name}</b>
+<br>Product Type (Family): <b>{product_item.product_type}</b>
+<br>Product Name (Subset): <b>{product_item.product_name}</b>
+<br>Representation: <b>{product_item.representation_name}</b>
+<br>Version: <b>{product_item.version}</b>
 <br>Project: <b>{project_name}</b>
-<br>Defined: <b>{ingest_file.defined}</b>
-<br>Task Names: <b>{ingest_file.task_names}</b>"""
+<br>Defined: <b>{product_item.defined}</b>
+<br>Task Names: <b>{product_item.task_names}</b>"""
             return tooltip
 
         elif role == QtCore.Qt.CheckStateRole:
             if column == BatchPublisherModel.COLUMN_OF_CHECKBOX:
-                return QtCore.Qt.Checked if ingest_file.enabled \
+                return QtCore.Qt.Checked if product_item.enabled \
                     else QtCore.Qt.Unchecked
         elif role == QtCore.Qt.FontRole:
             # if column in [
@@ -170,7 +170,7 @@ Enabled: <b>{ingest_file.enabled}</b>
 
     def _populate_from_directory(self, directory):
         self.beginResetModel()
-        self._ingest_files = self._controller.get_ingest_files(
+        self._product_items = self._controller.get_product_items(
             directory
         )
         self.endResetModel()
@@ -178,8 +178,9 @@ Enabled: <b>{ingest_file.enabled}</b>
     def _change_project(self, project_name):
         """Clear the existing picked folder names, since project changed"""
         for row in range(self.rowCount()):
-            ingest_file = self._ingest_files[row]
-            ingest_file.folder_path = str()
+            product_item = self._product_items[row]
+            product_item.folder_path = None
+            product_item.task_name = None
             roles = [QtCore.Qt.DisplayRole]
             self.dataChanged.emit(
                 self.index(row, self.COLUMN_OF_CHECKBOX),

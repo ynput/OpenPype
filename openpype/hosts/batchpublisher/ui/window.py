@@ -108,6 +108,7 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
     def _on_project_changed(self):
         project_name = str(self._project_combobox.currentText())
         self._controller.set_selected_project_name(project_name)
+        self._table_view._model._change_project(project_name)
 
     def _on_browse_button_clicked(self):
         directory = self._dir_input.text()
@@ -122,16 +123,16 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         self._table_view.set_current_directory(directory)
 
     def _on_publish_button_clicked(self):
-        ingest_files = self._table_view.get_ingest_files()
+        product_item = self._table_view.get_product_items()
         publish_count = 0
         enabled_count = 0
         defined_count = 0
-        for ingest_file in ingest_files:
-            if ingest_file.enabled and ingest_file.defined:
+        for product_item in product_item:
+            if product_item.enabled and product_item.defined:
                 publish_count += 1
-            if ingest_file.enabled:
+            if product_item.enabled:
                 enabled_count += 1
-            if ingest_file.defined:
+            if product_item.defined:
                 defined_count += 1
 
         if publish_count == 0:
@@ -166,7 +167,7 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
                 "You must provide asset, task, family, subset etc")
             return
 
-        self._controller.publish_ingest_files(ingest_files)
+        self._controller.publish_product_item(product_item)
 
 
 def main():

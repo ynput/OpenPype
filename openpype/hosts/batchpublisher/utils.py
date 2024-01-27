@@ -77,9 +77,7 @@ def get_representations(
         list of representations
 
     """
-    print("Z1")
     anatomy = Anatomy(instance_data["project"])
-    print("Z2")
 
     representations = []
     for rep_name, file_path in exp_representations.items():
@@ -133,6 +131,7 @@ def get_representations(
             ext = collection.tail.lstrip(".")
 
         staging = os.path.dirname(list(collection)[0])
+
         success, rootless_staging_dir = anatomy.find_root_template_from_path(
             staging
         )

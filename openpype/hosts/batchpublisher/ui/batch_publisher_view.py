@@ -38,8 +38,8 @@ class BatchPublisherTableView(QtWidgets.QTableView):
     def set_current_directory(self, directory):
         self._model.set_current_directory(directory)
 
-    def get_ingest_files(self):
-        return self._model.get_ingest_files()
+    def get_product_items(self):
+        return self._model.get_product_items()
 
     def commitData(self, editor):
         super(BatchPublisherTableView, self).commitData(editor)
@@ -50,7 +50,7 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         value = model.data(current_index, QtCore.Qt.EditRole)
         for qmodelindex in self.selectedIndexes():
             # row = qmodelindex.row()
-            # ingest_file = model.ingest_files[row]
+            # product_item = model.product_items[row]
             model.setData(qmodelindex, value, role=QtCore.Qt.EditRole)
 
         # When changing folder we need to propagate

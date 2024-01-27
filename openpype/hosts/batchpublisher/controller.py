@@ -19,7 +19,7 @@ FILE_MAPPINGS = [
 ]
 
 
-class IngestFile(object):
+class ProductItem(object):
     def __init__(
         self,
         filepath,
@@ -148,17 +148,15 @@ class BatchPublisherController(object):
             output[folder_path] = asset_doc
         return output
 
-    def get_ingest_files(self, directory):
+    def get_product_items(self, directory):
         """
 
         Returns:
-            list[IngestFile]: List of ingest files for the given directory
+            list[ProductItem]: List of ingest files for the given directory
         """
-
-        output = []
+        product_items = []
         if not directory or not os.path.exists(directory):
-            return output
-
+            return product_items
         # project_name = self._selected_project_name
         # project_settings = get_project_settings(project_name)
         # file_mappings = project_settings["batchpublisher"].get("file_mappings", [])
@@ -171,46 +169,46 @@ class BatchPublisherController(object):
                 filename = os.path.basename(filepath)
                 product_name, ext = os.path.splitext(filename)
                 representation_name = ext.lstrip(".")
-                ingest_file = IngestFile(
+                product_item = ProductItem(
                     filepath,
                     product_type,
                     product_name,
                     representation_name)
-                output.append(ingest_file)
-        return output
+                product_items.append(product_item)
+        return product_items
 
-    def publish_ingest_files(self, ingest_files):
+    def publish_product_items(self, product_items):
         """
 
         Args:
-            ingest_files (list[IngestFile]): List of ingest files to publish.
+            product_items (list[ProductItem]): List of ingest files to publish.
         """
 
-        for ingest_file in ingest_files:
-            if ingest_file.enabled and ingest_file.defined:
-                self._publish_ingest_file(ingest_file)
+        for product_item in product_items:
+            if product_item.enabled and product_item.defined:
+                self._publish_product_item(product_item)
 
-    def _publish_ingest_file(self, ingest_file):
+    def _publish_product_item(self, product_item):
         msg = f"""
-Publishing (ingesting): {ingest_file.filepath}
-As Folder (Asset): {ingest_file.folder_path}
-Task: {ingest_file.task_name}
-Product Type (Family): {ingest_file.product_type}
-Product Name (Subset): {ingest_file.product_name}
-Representation: {ingest_file.representation_name}
-Version: {ingest_file.version}"
+Publishing (ingesting): {product_item.filepath}
+As Folder (Asset): {product_item.folder_path}
+Task: {product_item.task_name}
+Product Type (Family): {product_item.product_type}
+Product Name (Subset): {product_item.product_name}
+Representation: {product_item.representation_name}
+Version: {product_item.version}"
 Project: {self._selected_project_name}"""
         print(msg)
         publish_data = dict()
         expected_representations = dict()
-        expected_representations[ingest_file.representation_name] = \
-            ingest_file.filepath
-        publish.publish_version(
+        expected_representations[product_item.representation_name] = \
+            product_item.filepath
+        publish.publish_version_pyblish(
             self._selected_project_name,
-            ingest_file.folder_path,
-            ingest_file.task_name,
-            ingest_file.product_type,
-            ingest_file.product_name,
+            product_item.folder_path,
+            product_item.task_name,
+            product_item.product_type,
+            product_item.product_name,
             expected_representations,
             publish_data)
         # publish.publish_version(
