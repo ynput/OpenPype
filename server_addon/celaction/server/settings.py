@@ -1,18 +1,17 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from .imageio import CelActionImageIOModel
 
 
 class CollectRenderPathModel(BaseSettingsModel):
-    output_extension: str = Field(
+    output_extension: str = SettingsField(
         "",
         title="Output render file extension"
     )
-    anatomy_template_key_render_files: str = Field(
+    anatomy_template_key_render_files: str = SettingsField(
         "",
         title="Anatomy template key: render files"
     )
-    anatomy_template_key_metadata: str = Field(
+    anatomy_template_key_metadata: str = SettingsField(
         "",
         title="Anatomy template key: metadata job file"
     )
@@ -36,7 +35,7 @@ def _workfile_submit_overrides():
 
 
 class WorkfileModel(BaseSettingsModel):
-    submission_overrides: list[str] = Field(
+    submission_overrides: list[str] = SettingsField(
         default_factory=list,
         title="Submission workfile overrides",
         enum_resolver=_workfile_submit_overrides
@@ -44,21 +43,21 @@ class WorkfileModel(BaseSettingsModel):
 
 
 class PublishPuginsModel(BaseSettingsModel):
-    CollectRenderPath: CollectRenderPathModel = Field(
+    CollectRenderPath: CollectRenderPathModel = SettingsField(
         default_factory=CollectRenderPathModel,
         title="Collect Render Path"
     )
 
 
 class CelActionSettings(BaseSettingsModel):
-    imageio: CelActionImageIOModel = Field(
+    imageio: CelActionImageIOModel = SettingsField(
         default_factory=CelActionImageIOModel,
         title="Color Management (ImageIO)"
     )
-    workfile: WorkfileModel = Field(
+    workfile: WorkfileModel = SettingsField(
         title="Workfile"
     )
-    publish: PublishPuginsModel = Field(
+    publish: PublishPuginsModel = SettingsField(
         default_factory=PublishPuginsModel,
         title="Publish plugins",
     )

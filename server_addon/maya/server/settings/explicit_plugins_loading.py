@@ -1,19 +1,17 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class PluginsModel(BaseSettingsModel):
     _layout = "expanded"
-    enabled: bool = Field(title="Enabled")
-    name: str = Field("", title="Name")
+    enabled: bool = SettingsField(title="Enabled")
+    name: str = SettingsField("", title="Name")
 
 
 class ExplicitPluginsLoadingModel(BaseSettingsModel):
     """Maya Explicit Plugins Loading."""
     _isGroup: bool = True
-    enabled: bool = Field(title="enabled")
-    plugins_to_load: list[PluginsModel] = Field(
+    enabled: bool = SettingsField(title="enabled")
+    plugins_to_load: list[PluginsModel] = SettingsField(
         default_factory=list, title="Plugins To Load"
     )
 

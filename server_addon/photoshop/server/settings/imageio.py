@@ -1,29 +1,29 @@
-from pydantic import Field, validator
-from ayon_server.settings import BaseSettingsModel
+from pydantic import validator
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from ayon_server.settings.validators import ensure_unique_names
 
 
 class ImageIOConfigModel(BaseSettingsModel):
-    override_global_config: bool = Field(
+    override_global_config: bool = SettingsField(
         False,
         title="Override global OCIO config"
     )
-    filepath: list[str] = Field(
+    filepath: list[str] = SettingsField(
         default_factory=list,
         title="Config path"
     )
 
 
 class ImageIOFileRuleModel(BaseSettingsModel):
-    name: str = Field("", title="Rule name")
-    pattern: str = Field("", title="Regex pattern")
-    colorspace: str = Field("", title="Colorspace name")
-    ext: str = Field("", title="File extension")
+    name: str = SettingsField("", title="Rule name")
+    pattern: str = SettingsField("", title="Regex pattern")
+    colorspace: str = SettingsField("", title="Colorspace name")
+    ext: str = SettingsField("", title="File extension")
 
 
 class ImageIOFileRulesModel(BaseSettingsModel):
-    activate_host_rules: bool = Field(False)
-    rules: list[ImageIOFileRuleModel] = Field(
+    activate_host_rules: bool = SettingsField(False)
+    rules: list[ImageIOFileRuleModel] = SettingsField(
         default_factory=list,
         title="Rules"
     )
@@ -35,30 +35,30 @@ class ImageIOFileRulesModel(BaseSettingsModel):
 
 
 class ImageIORemappingRulesModel(BaseSettingsModel):
-    host_native_name: str = Field(
+    host_native_name: str = SettingsField(
         title="Application native colorspace name"
     )
-    ocio_name: str = Field(title="OCIO colorspace name")
+    ocio_name: str = SettingsField(title="OCIO colorspace name")
 
 
 class ImageIORemappingModel(BaseSettingsModel):
-    rules: list[ImageIORemappingRulesModel] = Field(
+    rules: list[ImageIORemappingRulesModel] = SettingsField(
         default_factory=list)
 
 
 class PhotoshopImageIOModel(BaseSettingsModel):
-    activate_host_color_management: bool = Field(
+    activate_host_color_management: bool = SettingsField(
         True, title="Enable Color Management"
     )
-    remapping: ImageIORemappingModel = Field(
+    remapping: ImageIORemappingModel = SettingsField(
         title="Remapping colorspace names",
         default_factory=ImageIORemappingModel
     )
-    ocio_config: ImageIOConfigModel = Field(
+    ocio_config: ImageIOConfigModel = SettingsField(
         default_factory=ImageIOConfigModel,
         title="OCIO config"
     )
-    file_rules: ImageIOFileRulesModel = Field(
+    file_rules: ImageIOFileRulesModel = SettingsField(
         default_factory=ImageIOFileRulesModel,
         title="File Rules"
     )
