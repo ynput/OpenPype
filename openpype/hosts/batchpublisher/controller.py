@@ -60,12 +60,12 @@ class ProductItem(object):
     @property
     def defined(self):
         return all([
-            bool(self.filepath),
-            bool(self.folder_path),
-            bool(self.task_name),
-            bool(self.product_type),
-            bool(self.product_name),
-            bool(self.representation_name)])
+            self.filepath,
+            self.folder_path,
+            self.task_name,
+            self.product_type,
+            self.product_name,
+            self.representation_name])
 
 
 class HierarchyItem:
