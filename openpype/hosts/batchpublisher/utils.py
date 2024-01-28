@@ -44,7 +44,8 @@ def replace_frame_number_with_token(path, token):
     # print("path", path)
     # print("token", token)
     # print("RE_FRAME_NUMBER", RE_FRAME_NUMBER)
-    # TODO: This regex doesn't work on desired client file paths. lets just return the path for now
+    # TODO: This regex doesn't work on desired client file paths.
+    # lets just return the path for now
     return path
     return RE_FRAME_NUMBER.sub(
         r"\g<prefix>.{}.\g<extension>".format(token), path
@@ -99,7 +100,8 @@ def get_representations(
             rep_frame_start = 1
             rep_frame_end = 1
             ext = os.path.splitext(file_path)[1][1:]
-            # TODO: Need to be able to find the frame number by regex like this or something else
+            # TODO: Need to be able to find the frame
+            # number by regex like this or something else
             # frame_match = RE_FRAME_NUMBER.match(file_path)
             # if frame_match:
             #     ext = frame_match.group("extension")
@@ -197,7 +199,8 @@ def get_colorspace_settings(project_name):
     """
     config_data = get_imageio_config(
         project_name,
-        host_name="nuke",  # temporary hack as get_imageio_config doesn't support grabbing just global
+        host_name="nuke",  # temporary hack as get_imageio_config
+        # doesn't support grabbing just global
     )
 
     # in case host color management is not enabled

@@ -1,7 +1,7 @@
 import glob
 import os
 
-from openpype.settings import get_project_settings
+# from openpype.settings import get_project_settings
 from openpype.client.entities import (
     get_projects,
     get_assets,
@@ -175,7 +175,8 @@ class BatchPublisherController(object):
             return product_items
         # project_name = self._selected_project_name
         # project_settings = get_project_settings(project_name)
-        # file_mappings = project_settings["batchpublisher"].get("file_mappings", [])
+        # file_mappings = project_settings["batchpublisher"].get(
+        #     "file_mappings", [])
         file_mappings = FILE_MAPPINGS
         for file_mapping in file_mappings:
             product_type = file_mapping["product_type"]

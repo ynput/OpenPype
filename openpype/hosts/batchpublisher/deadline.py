@@ -146,7 +146,8 @@ def get_deadline_web_service_url(project_name):
         if deadline_servers:
             deadline_server_name = deadline_servers[0]
     deadline_webservice_url = None
-    for settings in get_system_settings(project_name)["deadline"]["deadline_urls"]:
+    settings = get_system_settings(project_name)
+    for settings in settings["deadline"]["deadline_urls"]:
         if settings["name"] == deadline_server_name:
             deadline_webservice_url = settings["value"]
     return deadline_webservice_url

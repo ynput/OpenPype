@@ -39,7 +39,7 @@ def publish_version_pyblish(
     representation_name = list(expected_representations.keys())[0]
     file_path = list(expected_representations.values())[0]
 
-    from openpype.lib import FileDefItem
+    # from openpype.lib import FileDefItem
 
     from openpype.hosts.traypublisher.api import TrayPublisherHost
     from openpype.pipeline import install_host
@@ -55,7 +55,9 @@ def publish_version_pyblish(
     pyblish_context.data["create_context"] = create_context
     pyblish_plugins = create_context.publish_plugins
 
-    instance = pyblish_context.create_instance(name=subset_name, family=family_name)
+    instance = pyblish_context.create_instance(
+        name=subset_name,
+        family=family_name)
     instance.data.update(
         {
             "family": family_name,
@@ -86,7 +88,9 @@ def publish_version_pyblish(
 
     error_format = ("Failed {plugin.__name__}: {error} -- {error.traceback}")
 
-    for result in pyblish.util.publish_iter(context=pyblish_context, plugins=pyblish_plugins):
+    for result in pyblish.util.publish_iter(
+            context=pyblish_context,
+            plugins=pyblish_plugins):
         for record in result["records"]:
             logging.info("{}: {}".format(result["plugin"].label, record.msg))
         if result["error"]:
