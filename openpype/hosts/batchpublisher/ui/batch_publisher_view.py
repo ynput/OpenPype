@@ -19,10 +19,11 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         self.setColumnWidth(model.COLUMN_OF_DIRECTORY, 700)
         self.setColumnWidth(model.COLUMN_OF_FOLDER, 200)
         self.setColumnWidth(model.COLUMN_OF_TASK, 90)
-        self.setColumnWidth(model.COLUMN_OF_PRODUCT_TYPE, 160)
-        self.setColumnWidth(model.COLUMN_OF_PRODUCT_NAME, 250)
+        self.setColumnWidth(model.COLUMN_OF_PRODUCT_TYPE, 140)
+        self.setColumnWidth(model.COLUMN_OF_PRODUCT_NAME, 275)
         self.setColumnWidth(model.COLUMN_OF_REPRESENTATION, 120)
         self.setColumnWidth(model.COLUMN_OF_VERSION, 70)
+        self.setColumnWidth(model.COLUMN_OF_COMMENT, 120)
 
         self.setTextElideMode(QtCore.Qt.ElideNone)
         self.setWordWrap(False)

@@ -65,15 +65,9 @@ def publish_version_pyblish(
             "publish": True,
             "active": True,
             "source": file_path,
-            "comment": "this is my comment"
+            "version": publish_data.get("version"),
+            "comment": publish_data.get("comment"),
         })
-
-    version = publish_data.get("version")
-    if version:
-        instance.data.update(
-            {
-                "version": version,
-            })
 
     directory = os.path.dirname(file_path)
     file_name = os.path.basename(file_path)

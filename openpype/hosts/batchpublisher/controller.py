@@ -9,6 +9,8 @@ from openpype.client.entities import (
 from openpype.hosts.batchpublisher import publish
 
 
+# List that contains dictionary including glob statement to check for match.
+# If filepath matches then it becomes product type.
 # TODO: add to OpenPype settings so other studios can change
 FILE_MAPPINGS = [
     {
@@ -17,6 +19,18 @@ FILE_MAPPINGS = [
         "product_type": "model",
     }
 ]
+
+# Dictionary that maps the extension name to the representation name
+# we want to use for it
+EXT_TO_REP_NAME = {
+    ".nk": "nuke",
+    ".ma": "maya",
+    ".mb": "maya",
+    ".hip": "houdini",
+    ".sfx": "silhouette",
+    ".mocha": "mocha",
+    ".psd": "photoshop"
+}
 
 
 class ProductItem(object):
@@ -27,6 +41,7 @@ class ProductItem(object):
         product_name,
         representation_name,
         version=None,
+        comment=None,
         enabled=True,
         folder_path=None,
         task_name=None
@@ -38,6 +53,7 @@ class ProductItem(object):
         self.representation_name = representation_name
         self.version = version
         self.folder_path = folder_path
+        self.comment = comment
         self.task_name = task_name
         self.task_names = []
 
@@ -167,8 +183,11 @@ class BatchPublisherController(object):
             files = glob.glob(glob_full_path, recursive=False)
             for filepath in files:
                 filename = os.path.basename(filepath)
-                product_name, ext = os.path.splitext(filename)
-                representation_name = ext.lstrip(".")
+                product_name, extension = os.path.splitext(filename)
+                # Create representation name from extension
+                representation_name = EXT_TO_REP_NAME.get(extension)
+                if not representation_name:
+                    representation_name = extension.lstrip(".")
                 product_item = ProductItem(
                     filepath,
                     product_type,
@@ -201,6 +220,7 @@ Project: {self._selected_project_name}"""
         print(msg)
         publish_data = dict()
         publish_data["version"] = product_item.version
+        publish_data["comment"] = product_item.comment
         expected_representations = dict()
         expected_representations[product_item.representation_name] = \
             product_item.filepath

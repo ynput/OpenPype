@@ -5,12 +5,13 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     HEADER_LABELS = [
         str(),
         "Filepath",
-        "Folder (Asset)",
+        "Folder",
         "Task",
-        "Product Type (Family)",
-        "Product Name (subset)",
+        "Product Type",
+        "Product Name",
         "Representation",
-        "Version"]
+        "Version",
+        "Comment"]
     COLUMN_OF_CHECKBOX = 0
     COLUMN_OF_DIRECTORY = 1
     COLUMN_OF_FOLDER = 2
@@ -19,6 +20,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     COLUMN_OF_PRODUCT_NAME = 5
     COLUMN_OF_REPRESENTATION = 6
     COLUMN_OF_VERSION = 7
+    COLUMN_OF_COMMENT = 8
 
     def __init__(self, controller):
         super(BatchPublisherModel, self).__init__()
@@ -84,6 +86,8 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                     product_item.version = int(value)
                 except Exception:
                     product_item.version = None
+            elif column == BatchPublisherModel.COLUMN_OF_COMMENT:
+                product_item.comment = value
             return True
         elif role == QtCore.Qt.CheckStateRole:
             if column == BatchPublisherModel.COLUMN_OF_CHECKBOX:
@@ -115,11 +119,8 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                 return product_item.representation_name
             elif column == BatchPublisherModel.COLUMN_OF_VERSION:
                 return str(product_item.version or "")
-            # elif column == 1:
-            #     magnitude = self.input_magnitudes[row]
-            #     return f"{magnitude:.2f}"
-        # elif role == QtCore.Qt.EditRole:
-        #     return True
+            elif column == BatchPublisherModel.COLUMN_OF_COMMENT:
+                return product_item.comment
         elif role == QtCore.Qt.ForegroundRole:
             if product_item.defined and product_item.enabled:
                 return QtGui.QColor(240, 240, 240)
@@ -140,6 +141,7 @@ Enabled: <b>{product_item.enabled}</b>
 <br>Product Name (Subset): <b>{product_item.product_name}</b>
 <br>Representation: <b>{product_item.representation_name}</b>
 <br>Version: <b>{product_item.version}</b>
+<br>Comment: <b>{product_item.comment}</b>
 <br>Project: <b>{project_name}</b>
 <br>Defined: <b>{product_item.defined}</b>
 <br>Task Names: <b>{product_item.task_names}</b>"""
