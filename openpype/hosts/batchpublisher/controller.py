@@ -34,11 +34,11 @@ class ProductItem(object):
         self.enabled = enabled
         self.filepath = filepath
         self.product_type = product_type
-        self.product_name = product_name or ""
+        self.product_name = product_name
         self.representation_name = representation_name
         self.version = version
-        self.folder_path = folder_path or ""
-        self.task_name = task_name or ""
+        self.folder_path = folder_path
+        self.task_name = task_name
         self.task_names = []
 
     @property
@@ -200,6 +200,7 @@ Version: {product_item.version}"
 Project: {self._selected_project_name}"""
         print(msg)
         publish_data = dict()
+        publish_data["version"] = product_item.version
         expected_representations = dict()
         expected_representations[product_item.representation_name] = \
             product_item.filepath
@@ -211,6 +212,14 @@ Project: {self._selected_project_name}"""
             product_item.product_name,
             expected_representations,
             publish_data)
+        # publish.publish_version(
+        #     self._selected_project_name,
+        #     product_item.folder_path,
+        #     product_item.task_name,
+        #     product_item.product_type,
+        #     product_item.product_name,
+        #     expected_representations,
+        #     publish_data)
         # publish.publish_version(
         #     project_name,
         #     asset_name,

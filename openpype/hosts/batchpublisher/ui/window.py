@@ -123,11 +123,11 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         self._table_view.set_current_directory(directory)
 
     def _on_publish_button_clicked(self):
-        product_item = self._table_view.get_product_items()
+        product_items = self._table_view.get_product_items()
         publish_count = 0
         enabled_count = 0
         defined_count = 0
-        for product_item in product_item:
+        for product_item in product_items:
             if product_item.enabled and product_item.defined:
                 publish_count += 1
             if product_item.enabled:
@@ -167,7 +167,7 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
                 "You must provide asset, task, family, subset etc")
             return
 
-        self._controller.publish_product_item(product_item)
+        self._controller.publish_product_items(product_items)
 
 
 def main():

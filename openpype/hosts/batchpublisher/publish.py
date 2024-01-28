@@ -21,6 +21,85 @@ PUBLISH_TO_SG_FAMILIES = {
 }
 
 
+def publish_version_pyblish(
+        project_name,
+        asset_name,
+        task_name,
+        family_name,
+        subset_name,
+        expected_representations,
+        publish_data):
+
+    # Hack required for environment to pick up in the farm
+    legacy_io.Session["AVALON_PROJECT"] = project_name
+    legacy_io.Session["AVALON_APP"] = "traypublisher"
+
+    os.environ['AVALON_PROJECT'] = project_name
+
+    representation_name = list(expected_representations.keys())[0]
+    file_path = list(expected_representations.values())[0]
+
+    from openpype.lib import FileDefItem
+
+    from openpype.hosts.traypublisher.api import TrayPublisherHost
+    from openpype.pipeline import install_host
+    from openpype.pipeline.create import CreateContext
+    import pyblish.api
+    import logging
+
+    host = TrayPublisherHost()
+    install_host(host)
+
+    create_context = CreateContext(host)
+    pyblish_context = pyblish.api.Context()
+    pyblish_context.data["create_context"] = create_context
+    pyblish_plugins = create_context.publish_plugins
+
+    instance = pyblish_context.create_instance(name=subset_name, family=family_name)
+    instance.data.update(
+        {
+            "family": family_name,
+            "asset": asset_name,
+            "task": task_name,
+            "subset": subset_name,
+            "publish": True,
+            "active": True,
+            "source": file_path,
+            "comment": "this is my comment"
+        })
+
+    version = publish_data.get("version")
+    if version:
+        instance.data.update(
+            {
+                "version": version,
+            })
+
+    directory = os.path.dirname(file_path)
+    file_name = os.path.basename(file_path)
+    extension = os.path.splitext(file_name)[1].lstrip(".")
+
+    representation = {
+        "name": representation_name,
+        "ext": extension,
+        "preview": True,
+        "tags": [],
+        "files": file_name,
+        "stagingDir": directory,
+    }
+    instance.data.setdefault("representations", [])
+    instance.data["representations"].append(representation)
+
+    error_format = ("Failed {plugin.__name__}: {error} -- {error.traceback}")
+
+    for result in pyblish.util.publish_iter(context=pyblish_context, plugins=pyblish_plugins):
+        for record in result["records"]:
+            logging.info("{}: {}".format(result["plugin"].label, record.msg))
+        if result["error"]:
+            error_message = error_format.format(**result)
+            logging.error(error_message)
+
+
 def publish_version(
     project_name,
     asset_name,
@@ -173,70 +252,3 @@ def publish_version(
         json.dump(publish_job, f, indent=4, sort_keys=True)
 
     return response
-
-
-def publish_version_pyblish(
-        project_name,
-        asset_name,
-        task_name,
-        family_name,
-        subset_name,
-        expected_representations,
-        publish_data):
-
-    # Hack required for environment to pick up in the farm
-    legacy_io.Session["AVALON_PROJECT"] = project_name
-    legacy_io.Session["AVALON_APP"] = "traypublisher"
-
-    os.environ['AVALON_PROJECT'] = project_name
-
-    representation_name = list(expected_representations.keys())[0]
-
-    from openpype.lib import FileDefItem
-
-    from openpype.hosts.traypublisher.api import TrayPublisherHost
-    from openpype.pipeline import install_host
-    from openpype.pipeline.create import CreateContext
-    import pyblish.api
-    import logging
-
-    host = TrayPublisherHost()
-    install_host(host)
-
-    create_context = CreateContext(host)
-    pyblish_context = pyblish.api.Context()
-    pyblish_context.data["create_context"] = create_context
-    pyblish_plugins = create_context.publish_plugins
-
-    instance = pyblish_context.create_instance(name=subset_name, family=family_name)
-    instance.data.update(
-        {
-            "family": "model",
-            "asset": "/assets/characters/robot",
-            "task": "Modeling",
-            "subset": "tk087_chr_errol_facs_neutral_tier_01",
-            "publish": True,
-            "active": True,
-            "source": r"C:\errolDotting\tk087_chr_errol_facs_neutral_tier_01\fbx\tk087_chr_errol_facs_neutral_tier_01.fbx",
-        }
-    )
-
-    representation = {
-        "name": "fbx",
-        "ext": 'fbx',
-        "preview": True,
-        "tags": [],
-        "files": 'tk087_chr_errol_facs_neutral_tier_01.fbx',
-        "stagingDir": r"C:\errolDotting\tk087_chr_errol_facs_neutral_tier_01\fbx",
-    }
-    instance.data.setdefault("representations", [])
-    instance.data["representations"].append(representation)
-
-    error_format = ("Failed {plugin.__name__}: {error} -- {error.traceback}")
-
-    for result in pyblish.util.publish_iter(context=pyblish_context, plugins=pyblish_plugins):
-        for record in result["records"]:
-            logging.info("{}: {}".format(result["plugin"].label, record.msg))
-        if result["error"]:
-            error_message = error_format.format(**result)
-            logging.error(error_message)
