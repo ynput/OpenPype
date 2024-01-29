@@ -83,7 +83,7 @@ class ValidateModelName(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         if not self.is_active(instance.data):
-            self.log.debug("Skipping Validate Frame Range...")
+            self.log.debug("Skipping Validate Model Name...")
             return
 
         invalid = self.get_invalid(instance)

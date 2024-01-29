@@ -43,7 +43,7 @@ class ValidateModelNameModel(BaseSettingsModel):
     optional: bool = SettingsField(title="Optional")
     active: bool = SettingsField(title="Active")
     regex: str = SettingsField(
-        "(?P<subset>.*)_(GEO)",
+        "(.*)_(?P<subset>.*)_(GEO)",
         title="Validation regex",
         description=(
             "Regex for validating model name. You can use named "
@@ -123,7 +123,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": False,
-        "regex": "(?P<subset>.*)_(GEO)"
+        "regex": "*_(?P<subset>.*)_(GEO)"
     },
     "ValidateLoadedPlugin": {
         "enabled": False,
