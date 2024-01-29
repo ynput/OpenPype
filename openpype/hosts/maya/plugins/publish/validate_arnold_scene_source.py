@@ -1,7 +1,11 @@
+from maya import cmds
+
 import pyblish.api
+
 from openpype.pipeline.publish import (
     ValidateContentsOrder, PublishValidationError
 )
+from openpype.hosts.maya.api.lib import is_visible
 
 
 class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
@@ -39,6 +43,27 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         return ungrouped_nodes, nodes_by_name, parents
 
     def process(self, instance):
+        # Validate against having raw and content nodes.
+        if instance.data["contentMembers"] and instance[:]:
+            raise PublishValidationError(
+                "Found nodes in both root and content set. It is recommended"
+                " to separate raw and content ass nodes into separate"
+                " instances."
+            )
+
+        # Validate against having nodes hidden, which will result in the
+        # extraction to ignore the node.
+        nodes = instance.data["contentMembers"] + instance[:]
+        nodes += instance.data.get("proxy", [])
+        nodes = [x for x in nodes if cmds.objectType(x, isAType='dagNode')]
+        hidden_nodes = [x for x in nodes if not is_visible(x)]
+        if hidden_nodes:
+            raise PublishValidationError(
+                "Found hidden nodes:\n\n{}\n\nPlease unhide for"
+                " publishing.".format("\n".join(hidden_nodes))
+            )
+
+        # Validate against nodes directly parented to world.
         ungrouped_nodes = []
 
         nodes, content_nodes_by_name, content_parents = (
@@ -51,7 +76,6 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         )
         ungrouped_nodes.extend(nodes)
 
-        # Validate against nodes directly parented to world.
         if ungrouped_nodes:
             raise PublishValidationError(
                 "Found nodes parented to the world: {}\n"
