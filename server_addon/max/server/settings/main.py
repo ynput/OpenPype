@@ -1,5 +1,4 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from .imageio import ImageIOSettings
 from .render_settings import (
     RenderSettingsModel, DEFAULT_RENDER_SETTINGS
@@ -23,8 +22,8 @@ def unit_scale_enum():
 
 
 class UnitScaleSettings(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
-    scene_unit_scale: str = Field(
+    enabled: bool = SettingsField(True, title="Enabled")
+    scene_unit_scale: str = SettingsField(
         "Centimeters",
         title="Scene Unit Scale",
         enum_resolver=unit_scale_enum
@@ -33,37 +32,37 @@ class UnitScaleSettings(BaseSettingsModel):
 
 class PRTAttributesModel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: str = Field(title="Attribute")
+    name: str = SettingsField(title="Name")
+    value: str = SettingsField(title="Attribute")
 
 
 class PointCloudSettings(BaseSettingsModel):
-    attribute: list[PRTAttributesModel] = Field(
+    attribute: list[PRTAttributesModel] = SettingsField(
         default_factory=list, title="Channel Attribute")
 
 
 class MaxSettings(BaseSettingsModel):
-    unit_scale_settings: UnitScaleSettings = Field(
+    unit_scale_settings: UnitScaleSettings = SettingsField(
         default_factory=UnitScaleSettings,
         title="Set Unit Scale"
     )
-    imageio: ImageIOSettings = Field(
+    imageio: ImageIOSettings = SettingsField(
         default_factory=ImageIOSettings,
         title="Color Management (ImageIO)"
     )
-    RenderSettings: RenderSettingsModel = Field(
+    RenderSettings: RenderSettingsModel = SettingsField(
         default_factory=RenderSettingsModel,
         title="Render Settings"
     )
-    CreateReview: CreateReviewModel = Field(
+    CreateReview: CreateReviewModel = SettingsField(
         default_factory=CreateReviewModel,
         title="Create Review"
     )
-    PointCloud: PointCloudSettings = Field(
+    PointCloud: PointCloudSettings = SettingsField(
         default_factory=PointCloudSettings,
         title="Point Cloud"
     )
-    publish: PublishersModel = Field(
+    publish: PublishersModel = SettingsField(
         default_factory=PublishersModel,
         title="Publish Plugins")
 

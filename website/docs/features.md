@@ -238,17 +238,11 @@ Create preview quicktimes from rendered frames
 
 publish rendered outputs to Avalon and Ftrack
 
- ## Muster
-
-Publish to deadline from
-
+## Royal Render
+Publish to Royal Render from
 Maya
-
 Nuke
 
-Create preview quicktimes from rendered frames
-
-publish rendered outputs to Avalon and Ftrack
 
 ## Clockify
 
