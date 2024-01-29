@@ -31,7 +31,6 @@ class ValidateModelName(pyblish.api.InstancePlugin,
     @classmethod
     def get_invalid(cls, instance):
         invalid = []
-        #TODO: validation regex for validation
         model_names = [model.name for model in instance.data.get("members")]
         cls.log.debug(model_names)
         if not model_names:
