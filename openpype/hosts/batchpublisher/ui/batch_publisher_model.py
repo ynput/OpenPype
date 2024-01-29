@@ -37,9 +37,13 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         return list(self._product_items)
 
     def rowCount(self, parent=QtCore.QModelIndex()):
+        if parent is None:
+            parent = QtCore.QModelIndex()
         return len(self._product_items)
 
     def columnCount(self, parent=QtCore.QModelIndex()):
+        if parent is None:
+            parent = QtCore.QModelIndex()
         return len(BatchPublisherModel.HEADER_LABELS)
 
     def headerData(self, section, orientation, role=None):
@@ -62,7 +66,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                 # Check folder path is valid in available docs.
                 # Folder path might also be reset to None.
                 asset_docs_by_path = self._controller._get_asset_docs()
-                if value == None or value in asset_docs_by_path:
+                if value is None or value in asset_docs_by_path:
                     # Update folder path
                     product_item.folder_path = value
                     # Update task name
@@ -150,7 +154,8 @@ Enabled: <b>{product_item.enabled}</b>
 <br>Comment: <b>{product_item.comment}</b>
 <br>Project: <b>{project_name}</b>
 <br>Defined: <b>{product_item.defined}</b>
-<br>Task Names: <b>{task_names}</b>"""
+<br>Task Names: <b>{task_names}</b>
+<br>Project: <b>{project_name}</b>"""
             return tooltip
 
         elif role == QtCore.Qt.CheckStateRole:

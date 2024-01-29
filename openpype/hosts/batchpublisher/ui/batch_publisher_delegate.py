@@ -128,7 +128,8 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
                 new_row.setData(hierarchy_item.folder_path, FOLDER_PATH_ROLE)
                 new_row.setData(
                     hierarchy_item.folder_path, QtCore.Qt.ToolTipRole)
-                # new_row.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                # new_row.setFlags(
+                #     QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                 new_rows.append(new_row)
                 hierarchy_queue.append((new_row, hierarchy_item.folder_id))
 
