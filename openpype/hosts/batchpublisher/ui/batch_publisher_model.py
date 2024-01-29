@@ -89,8 +89,10 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                     product_item.derive_product_name()
                     roles = [QtCore.Qt.DisplayRole]
                     self.dataChanged.emit(
-                        self.index(row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
-                        self.index(row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
+                        self.index(
+                            row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
+                        self.index(
+                            row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
                         roles)
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
                 product_item.product_name = value
