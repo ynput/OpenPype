@@ -172,7 +172,7 @@ class PrepareAndRenderScene(bpy.types.Panel):
             col.prop(render_property, 'items', text=render_property.name)
 
         col = layout.box()
-        col.label(text="Render layers to activate")
+        col.label(text="Render layers to use")
         if render_layers_needs_update():
             collect_render_layers()
 
