@@ -1,11 +1,11 @@
-from functools import partial
-
 from maya import cmds
 
 from openpype.hosts.maya.api.workfile_template_builder import (
     MayaPlaceholderPlugin
 )
 from openpype.lib import NumberDef, TextDef, EnumDef
+from openpype.lib.events import weakref_partial
+
 
 EXAMPLE_SCRIPT = """
 # Access maya commands
@@ -154,14 +154,18 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
 
         # Run at each depth processed
         if depth_script:
-            callback = partial(self.run_script, placeholder, depth_script)
+            callback = weakref_partial(self.run_script,
+                                       placeholder,
+                                       depth_script)
             self.register_on_depth_processed_callback(placeholder,
                                                       callback,
                                                       order=placeholder.order)
 
         # Run at build finish
         if finished_script:
-            callback = partial(self.run_script, placeholder, finished_script)
+            callback = weakref_partial(self.run_script,
+                                       placeholder,
+                                       finished_script)
             self.register_on_finished_callback(placeholder,
                                                callback,
                                                order=placeholder.order)
@@ -169,7 +173,10 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
         # If placeholder should be deleted, delete it after finish so
         # the scripts have access to it up to the last run
         if not placeholder.data.get("keep_placeholder", True):
-            delete_callback = partial(self.delete_placeholder, placeholder)
+            delete_callback = weakref_partial(
+                self.delete_placeholder,
+                placeholder
+            )
             self.register_on_finished_callback(placeholder,
                                                delete_callback,
                                                order=placeholder.order + 1)

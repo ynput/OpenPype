@@ -1,5 +1,3 @@
-from functools import partial
-
 from maya import cmds
 
 from openpype.lib import (
@@ -8,6 +6,7 @@ from openpype.lib import (
     TextDef,
     BoolDef
 )
+from openpype.lib.events import weakref_partial
 from openpype.hosts.maya.api.workfile_template_builder import (
     MayaPlaceholderPlugin,
 )
@@ -79,12 +78,13 @@ class AssignLookPlaceholderPlugin(MayaPlaceholderPlugin):
         self.imprint(node, placeholder_data)
 
     def populate_placeholder(self, placeholder):
-        callback = partial(self.assign_look, placeholder)
+        callback = weakref_partial(self.assign_look, placeholder)
         self.register_on_depth_processed_callback(placeholder, callback)
 
         # If placeholder should be deleted, delete it after finish
         if not placeholder.data.get("keep_placeholder", True):
-            delete_callback = partial(self.delete_placeholder, placeholder)
+            delete_callback = weakref_partial(self.delete_placeholder,
+                                              placeholder)
             self.register_on_finished_callback(placeholder,
                                                delete_callback)
 

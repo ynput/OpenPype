@@ -1146,13 +1146,6 @@ class PlaceholderPlugin(object):
             # Match placeholder order by default
             order = placeholder.order
 
-        # We must persist the callback over time otherwise it will be removed
-        # by the event system as a valid function reference. We do that here
-        # always just so it's easier to develop plugins where callbacks might
-        # be partials or lambdas
-        # TODO: Resolve this differently, do not store in data structure
-        placeholder.data.setdefault("callbacks", []).append(callback)
-
         self.log.debug("Registering '%s' callback: %s", topic, callback)
         self.builder.add_event_callback(topic, callback, order=order)
 
