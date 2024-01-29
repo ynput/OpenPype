@@ -445,7 +445,11 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # Set video input attributes
         max_int = str(2147483647)
         video_data = get_ffprobe_data(video_file_path, logger=self.log)
-        duration = float(video_data["streams"][0]["duration"])
+        duration = max(
+            float(stream.get("duration", 0))
+            for stream in video_data["streams"]
+            if stream.get("codec_type") == "video"
+        )
 
         cmd_args = [
             "-y",
