@@ -55,7 +55,6 @@ class ProductItem(object):
         self.folder_path = folder_path
         self.comment = comment
         self.task_name = task_name
-        self.task_names = []
 
     @property
     def defined(self):

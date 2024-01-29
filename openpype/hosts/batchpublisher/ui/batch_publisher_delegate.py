@@ -47,16 +47,15 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             return editor
 
         elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
+            task_names = self.controller.get_task_names(
+                ingest_file.folder_path)
             # editor = QtWidgets.QLineEdit(parent)
             # completer = QtWidgets.QCompleter(
-            #     ingest_file.task_names,
+            #     task_names,
             #     self)
             # completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
             # editor.setCompleter(completer)
             editor = QtWidgets.QComboBox(parent)
-            task_names = self.controller.get_task_names(
-                ingest_file.folder_path
-            )
             editor.addItems(task_names)
             return editor
 

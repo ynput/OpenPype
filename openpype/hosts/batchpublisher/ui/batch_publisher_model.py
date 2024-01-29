@@ -133,6 +133,8 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         #     return QtCore.Qt.AlignRight
         elif role == QtCore.Qt.ToolTipRole:
             project_name = self._controller.get_selected_project_name()
+            task_names = self._controller.get_task_names(
+                product_item.folder_path)
             tooltip = f"""
 Enabled: <b>{product_item.enabled}</b>
 <br>Filepath: <b>{product_item.filepath}</b>
@@ -145,7 +147,7 @@ Enabled: <b>{product_item.enabled}</b>
 <br>Comment: <b>{product_item.comment}</b>
 <br>Project: <b>{project_name}</b>
 <br>Defined: <b>{product_item.defined}</b>
-<br>Task Names: <b>{product_item.task_names}</b>"""
+<br>Task Names: <b>{task_names}</b>"""
             return tooltip
 
         elif role == QtCore.Qt.CheckStateRole:
