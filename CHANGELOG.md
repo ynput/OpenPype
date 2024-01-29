@@ -1,6 +1,221 @@
 # Changelog
 
 
+## [3.18.5](https://github.com/ynput/OpenPype/tree/3.18.5)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.4...3.18.5)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Chore: Add addons dir only if exists <a href="https://github.com/ynput/OpenPype/pull/6140">#6140</a></summary>
+
+Do not add addons directory path for addons discovery if does not exists.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: Effect Categories - OP-7397 <a href="https://github.com/ynput/OpenPype/pull/6143">#6143</a></summary>
+
+This PR introduces `Effect Categories` for the Hiero settings. This allows studios to split effect stacks into meaningful subsets.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Render Workfile Attributes <a href="https://github.com/ynput/OpenPype/pull/6146">#6146</a></summary>
+
+`Workfile Dependency` default value can now be controlled from project settings.`Use Published Workfile` makes using published workfiles for rendering optional.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Attributes are locked after publishing if they are locked in Camera Family <a href="https://github.com/ynput/OpenPype/pull/6073">#6073</a></summary>
+
+This PR is to make sure unlock attributes only during the bake context, make sure attributes are relocked after to preserve the lock state of the original node being baked.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Missing nuke family Windows arguments <a href="https://github.com/ynput/OpenPype/pull/6131">#6131</a></summary>
+
+Default Windows arguments for launching the Nuke family was missing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix the bug on the limit group not being set correctly in Maya Deadline Setting <a href="https://github.com/ynput/OpenPype/pull/6139">#6139</a></summary>
+
+This PR is to bug-fix the limit groups from maya deadline settings errored out when the user tries to edit the setting.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Transcoding extensions add missing '.tif' extension <a href="https://github.com/ynput/OpenPype/pull/6142">#6142</a></summary>
+
+Image extensions in transcoding helper was missing `.tif` extension and had `.tiff` twice.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Use the new API for override context <a href="https://github.com/ynput/OpenPype/pull/6145">#6145</a></summary>
+
+Blender 4.0 disabled the old API to override context. This API updates the code to use the new API.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>BugFix: Include Model in FBX Loader in Houdini <a href="https://github.com/ynput/OpenPype/pull/6150">#6150</a></summary>
+
+A quick bugfig where we can't load fbx exported from blender. The bug was reported here.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Restore actions to objects after update <a href="https://github.com/ynput/OpenPype/pull/6153">#6153</a></summary>
+
+Restore the actions assigned to objects after updating assets from blend files.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Collect template data with hierarchy context <a href="https://github.com/ynput/OpenPype/pull/6154">#6154</a></summary>
+
+Fixed queue loop where is used wrong variable to pop items from queue.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>OP-6382 - Thumbnail Integration Problem <a href="https://github.com/ynput/OpenPype/pull/6156">#6156</a></summary>
+
+This ticket alerted to 3 different cases of integration issues;
+- [x] Using the Tray Publisher with the same image format (extension) for representation and review representation.
+- [x] Clash on publish file path from output definitions in `ExtractOIIOTranscode`.
+- [x] Clash on publish file from thumbnail in `ExtractThumbnail`There might be an issue with this fix, if a studio does not use the `{output}` token in their `render` anatomy template. But thinking if they have customized it, they will be responsible to maintain these edge cases.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Bugfix saving camera scene errored out when creating render instance with multi-camera option turned off  <a href="https://github.com/ynput/OpenPype/pull/6163">#6163</a></summary>
+
+This PR is to make sure the integrator of saving camera scene turned off and the render submitted successfully when multi-camera options being turned off in 3dsmax
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Fix duplicated project name on create project structure <a href="https://github.com/ynput/OpenPype/pull/6166">#6166</a></summary>
+
+Small fix in project folders. It is not used same variable name to change values which breaks values on any next loop.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Maya: Remove duplicate plugin <a href="https://github.com/ynput/OpenPype/pull/6157">#6157</a></summary>
+
+The two plugins below are doing the same work, so we can remove the one focused solely on lookdev.https://github.com/ynput/OpenPype/blob/develop/openpype/hosts/maya/plugins/publish/validate_look_members_unique.pyhttps://github.com/ynput/OpenPype/blob/develop/openpype/hosts/maya/plugins/publish/validate_node_ids_unique.py
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publish report viewer: Report items sorting <a href="https://github.com/ynput/OpenPype/pull/6092">#6092</a></summary>
+
+Proposal of items sorting in Publish report viewer tool. Items are sorted by report creation time. Creation time is also added to publish report data when saved from publisher tool.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Extended error message <a href="https://github.com/ynput/OpenPype/pull/6161">#6161</a></summary>
+
+Added more details to message
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Added settings for Fusion creators to legacy OP <a href="https://github.com/ynput/OpenPype/pull/6162">#6162</a></summary>
+
+Added missing OP variant of setting for new Fusion creator.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.4](https://github.com/ynput/OpenPype/tree/3.18.4)
 
 

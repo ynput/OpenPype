@@ -1,13 +1,13 @@
 import json
-from pydantic import Field, validator
+from pydantic import validator
 
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from ayon_server.exceptions import BadRequestException
 
 
 class ValidateAttributesModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateAttributes")
-    attributes: str = Field(
+    enabled: bool = SettingsField(title="ValidateAttributes")
+    attributes: str = SettingsField(
         "{}", title="Attributes", widget="textarea")
 
     @validator("attributes")
@@ -28,53 +28,53 @@ class ValidateAttributesModel(BaseSettingsModel):
 
 
 class ValidateCameraAttributesModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    fov: float = Field(0.0, title="Focal Length")
-    nearrange: float = Field(0.0, title="Near Range")
-    farrange: float = Field(0.0, title="Far Range")
-    nearclip: float = Field(0.0, title="Near Clip")
-    farclip: float = Field(0.0, title="Far Clip")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    fov: float = SettingsField(0.0, title="Focal Length")
+    nearrange: float = SettingsField(0.0, title="Near Range")
+    farrange: float = SettingsField(0.0, title="Far Range")
+    nearclip: float = SettingsField(0.0, title="Near Clip")
+    farclip: float = SettingsField(0.0, title="Far Clip")
 
 
 class FamilyMappingItemModel(BaseSettingsModel):
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product Types"
     )
-    plugins: list[str] = Field(
+    plugins: list[str] = SettingsField(
         default_factory=list,
         title="Plugins"
     )
 
 
 class ValidateLoadedPluginModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    family_plugins_mapping: list[FamilyMappingItemModel] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    family_plugins_mapping: list[FamilyMappingItemModel] = SettingsField(
         default_factory=list,
         title="Family Plugins Mapping"
     )
 
 
 class BasicValidateModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
 
 
 class PublishersModel(BaseSettingsModel):
-    ValidateFrameRange: BasicValidateModel = Field(
+    ValidateFrameRange: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Frame Range",
         section="Validators"
     )
-    ValidateAttributes: ValidateAttributesModel = Field(
+    ValidateAttributes: ValidateAttributesModel = SettingsField(
         default_factory=ValidateAttributesModel,
         title="Validate Attributes"
     )
-    ValidateCameraAttributes: ValidateCameraAttributesModel = Field(
+    ValidateCameraAttributes: ValidateCameraAttributesModel = SettingsField(
         default_factory=ValidateCameraAttributesModel,
         title="Validate Camera Attributes",
         description=(
@@ -82,28 +82,28 @@ class PublishersModel(BaseSettingsModel):
             "the system automatically skips checking it"
         )
     )
-    ValidateLoadedPlugin: ValidateLoadedPluginModel = Field(
+    ValidateLoadedPlugin: ValidateLoadedPluginModel = SettingsField(
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
     )
-    ExtractModelObj: BasicValidateModel = Field(
+    ExtractModelObj: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Extract OBJ",
         section="Extractors"
     )
-    ExtractModelFbx: BasicValidateModel = Field(
+    ExtractModelFbx: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Extract FBX"
     )
-    ExtractModelUSD: BasicValidateModel = Field(
+    ExtractModelUSD: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Extract Geometry (USD)"
     )
-    ExtractModel: BasicValidateModel = Field(
+    ExtractModel: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Extract Geometry (Alembic)"
     )
-    ExtractMaxSceneRaw: BasicValidateModel = Field(
+    ExtractMaxSceneRaw: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Extract Max Scene (Raw)"
     )

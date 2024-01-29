@@ -231,7 +231,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 "files": jpeg_file,
                 "stagingDir": dst_staging,
                 "thumbnail": True,
-                "tags": new_repre_tags
+                "tags": new_repre_tags,
+                # If source image is jpg then there can be clash when
+                # integrating to making the output name explicit.
+                "outputName": "thumbnail"
             }
 
             # adding representation
