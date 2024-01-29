@@ -11,7 +11,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
     def __init__(self, controller, parent=None):
         super(BatchPublisherTableDelegate, self).__init__(parent)
-        self.controller = controller
+        self._controller = controller
 
     def createEditor(self, parent, option, index):
         model = index.model()
@@ -47,7 +47,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             return editor
 
         elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
-            task_names = self.controller.get_task_names(
+            task_names = self._controller.get_task_names(
                 ingest_file.folder_path)
             # editor = QtWidgets.QLineEdit(parent)
             # completer = QtWidgets.QCompleter(
@@ -108,7 +108,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             model.setData(index, value, QtCore.Qt.EditRole)
 
     def _fill_model_with_hierarchy(self, model):
-        hierarchy_items = self.controller.get_hierarchy_items()
+        hierarchy_items = self._controller.get_hierarchy_items()
         hierarchy_items_by_parent_id = collections.defaultdict(list)
         for hierarchy_item in hierarchy_items:
             hierarchy_items_by_parent_id[hierarchy_item.parent_id].append(
