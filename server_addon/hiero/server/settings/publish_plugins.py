@@ -1,11 +1,14 @@
-from pydantic import Field, validator
+from pydantic import validator
 from ayon_server.settings import (
-    BaseSettingsModel, ensure_unique_names, normalize_name
+    BaseSettingsModel,
+    SettingsField,
+    ensure_unique_names,
+    normalize_name,
 )
 
 
 class CollectInstanceVersionModel(BaseSettingsModel):
-    enabled: bool = Field(
+    enabled: bool = SettingsField(
         True,
         title="Enabled"
     )
@@ -13,8 +16,8 @@ class CollectInstanceVersionModel(BaseSettingsModel):
 
 class CollectClipEffectsDefModel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field("", title="Name")
-    effect_classes: list[str] = Field(
+    name: str = SettingsField("", title="Name")
+    effect_classes: list[str] = SettingsField(
         default_factory=list, title="Effect Classes"
     )
 
@@ -25,7 +28,7 @@ class CollectClipEffectsDefModel(BaseSettingsModel):
 
 
 class CollectClipEffectsModel(BaseSettingsModel):
-    effect_categories: list[CollectClipEffectsDefModel] = Field(
+    effect_categories: list[CollectClipEffectsDefModel] = SettingsField(
         default_factory=list, title="Effect Categories"
     )
 
@@ -36,22 +39,22 @@ class CollectClipEffectsModel(BaseSettingsModel):
 
 
 class ExtractReviewCutUpVideoModel(BaseSettingsModel):
-    enabled: bool = Field(
+    enabled: bool = SettingsField(
         True,
         title="Enabled"
     )
-    tags_addition: list[str] = Field(
+    tags_addition: list[str] = SettingsField(
         default_factory=list,
         title="Additional tags"
     )
 
 
 class PublishPuginsModel(BaseSettingsModel):
-    CollectInstanceVersion: CollectInstanceVersionModel = Field(
+    CollectInstanceVersion: CollectInstanceVersionModel = SettingsField(
         default_factory=CollectInstanceVersionModel,
         title="Collect Instance Version"
     )
-    CollectClipEffects: CollectClipEffectsModel = Field(
+    CollectClipEffects: CollectClipEffectsModel = SettingsField(
         default_factory=CollectClipEffectsModel,
         title="Collect Clip Effects"
     )
@@ -59,7 +62,7 @@ class PublishPuginsModel(BaseSettingsModel):
     Rename class name and plugin name
     to match title (it makes more sense)
     """
-    ExtractReviewCutUpVideo: ExtractReviewCutUpVideoModel = Field(
+    ExtractReviewCutUpVideo: ExtractReviewCutUpVideoModel = SettingsField(
         default_factory=ExtractReviewCutUpVideoModel,
         title="Exctract Review Trim"
     )

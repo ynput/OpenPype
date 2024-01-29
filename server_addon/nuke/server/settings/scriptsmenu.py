@@ -1,24 +1,23 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class ScriptsmenuSubmodel(BaseSettingsModel):
     """Item Definition"""
     _isGroup = True
 
-    type: str = Field(title="Type")
-    command: str = Field(title="Command")
-    sourcetype: str = Field(title="Source Type")
-    title: str = Field(title="Title")
-    tooltip: str = Field(title="Tooltip")
+    type: str = SettingsField(title="Type")
+    command: str = SettingsField(title="Command")
+    sourcetype: str = SettingsField(title="Source Type")
+    title: str = SettingsField(title="Title")
+    tooltip: str = SettingsField(title="Tooltip")
 
 
 class ScriptsmenuSettings(BaseSettingsModel):
     """Nuke script menu project settings."""
     _isGroup = True
 
-    name: str = Field(title="Menu Name")
-    definition: list[ScriptsmenuSubmodel] = Field(
+    name: str = SettingsField(title="Menu Name")
+    definition: list[ScriptsmenuSubmodel] = SettingsField(
         default_factory=list,
         title="Definition",
         description="Scriptmenu Items Definition"
