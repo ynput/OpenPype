@@ -402,18 +402,19 @@ or updating already created. Publishing will create OTIO file.
             except AttributeError:
                 track_start_frame = 0
 
-            for clip in track.each_child():
-                if not self._validate_clip_for_processing(clip):
+            for otio_clip in track.each_child():
+                if not self._validate_clip_for_processing(otio_clip):
                     continue
 
+
                 # get available frames info to clip data
-                self._create_otio_reference(clip, media_path, media_data)
+                self._create_otio_reference(otio_clip, media_path, media_data)
 
                 # convert timeline range to source range
-                self._restore_otio_source_range(clip)
+                self._restore_otio_source_range(otio_clip)
 
                 base_instance_data = self._get_base_instance_data(
-                    clip,
+                    otio_clip,
                     instance_data,
                     track_start_frame
                 )
@@ -432,7 +433,7 @@ or updating already created. Publishing will create OTIO file.
                         continue
 
                     instance = self._make_subset_instance(
-                        clip,
+                        otio_clip,
                         _fpreset,
                         deepcopy(base_instance_data),
                         parenting_data
