@@ -26,6 +26,8 @@ class InjectEnvironment:
     - AYON_EXECUTABLE_PATH - locally accessible path for `ayon_console`
     (could be removed if it would be possible to have it in renderApps config
     and to be accessible from there as there it is required for publish jobs).
+    - AYON_FILTER_ENVIRONMENTS - potential black list of unwanted environment
+    variables (separated by ';') - will be filtered out from created .rrEnv.
 
     Ayon submission job must be adding this line to .xml submission file:
     <SubmitterParameter>OSperjob_ayon_inject_envvar=1~1</SubmitterParameter>
@@ -48,17 +50,21 @@ class InjectEnvironment:
             return
         self.meta_dir = meta_dir
 
+        envs = self._get_job_environments()
+        if not envs.get("AYON_RENDER_JOB"):
+            logs.append("Not a ayon render job, skipping.")
+            return
+
         if not self._is_required_environment():
             return
 
-        context = self._get_context(metadata)
+        context = self._get_context()
         logs.append("context {}".format(context))
 
         executable = self._get_executable()
         logs.append("executable {}".format(executable))
 
-        extracted_env = self._extract_environments(executable, context,
-                                                   metadata)
+        extracted_env = self._extract_environments(executable, context)
 
         rrEnv_path = self._create_rrEnv(meta_dir, extracted_env)
 
@@ -84,16 +90,15 @@ class InjectEnvironment:
 
     def _is_required_environment(self):
         if (not os.environ.get("AYON_API_KEY") or
-                not os.path.exists(os.environ.get("AYON_EXECUTABLE_PATH", ""))
-        ):
+                not os.path.exists(os.environ.get("AYON_EXECUTABLE_PATH", ""))):
             msg = ("AYON_API_KEY and AYON_EXECUTABLE_PATHenv var must be set "
                    "for Ayon jobs!")
             logs.append(msg)
             return False
         return True
 
-    def _get_context(self, metadata_content):
-        envs = self._get_job_environments(metadata_content)
+    def _get_context(self):
+        envs = self._get_job_environments()
 
         return {"project": envs["AVALON_PROJECT"],
                 "asset": envs["AVALON_ASSET"],
@@ -101,14 +106,10 @@ class InjectEnvironment:
                 "app": envs["AVALON_APP_NAME"],
                 "envgroup": "farm"}
 
-    def _get_job_environments(self, metadata_content):
-        """Gets environments set on job.
-
-        It seems that it is not possible to query "rrEnvList" on job directly,
-        it must be parsed from .json document.
-        """
-        job = metadata_content["job"]
-        env_list = job["rrEnvList"]
+    def _get_job_environments(self):
+        """Gets environments set on job."""
+        job = rr.getJob()
+        env_list = job.customData_Str('rrEnvList')
         envs = {}
         for env in env_list.split("~~~"):
             key, value = env.split("=")
@@ -119,7 +120,7 @@ class InjectEnvironment:
         # rr_python_utils.cache.get_rr_bin_folder()  # TODO maybe useful
         return os.environ["AYON_EXECUTABLE_PATH"]
 
-    def _extract_environments(self, executable, context, metadata_content):
+    def _extract_environments(self, executable, context):
         # tempfile.TemporaryFile cannot be used because of locking
         export_url = self._get_export_url()
 
@@ -134,7 +135,7 @@ class InjectEnvironment:
             for key, value in context.items():
                 args.extend(["--{}".format(key), value])
 
-        environments = self._get_launch_environments(metadata_content)
+        environments = self._get_launch_environments()
 
         logs.append("Running:: {}".format(args))
         proc = subprocess.Popen(args, env=environments,
@@ -148,9 +149,9 @@ class InjectEnvironment:
         with open(export_url) as json_file:
             return json.load(json_file)
 
-    def _get_launch_environments(self, metadata_content):
+    def _get_launch_environments(self):
         """ Enhances environemnt with required for Ayon to be launched."""
-        job_envs = self._get_job_environments(metadata_content)
+        job_envs = self._get_job_environments()
         ayon_environment = {
             "AYON_SERVER_URL": os.environ["AYON_SERVER_URL"],
             "AYON_API_KEY": os.environ["AYON_API_KEY"],
@@ -206,5 +207,5 @@ if __name__ == "__main__":
         logs.append(f"Error happened::{str(exp)}")
 
     log_path = os.path.join(injector.meta_dir, "log.txt")
-    with open(log_path, "w") as fp:
+    with open(log_path, "a") as fp:
         fp.writelines(s + '\n' for s in logs)
