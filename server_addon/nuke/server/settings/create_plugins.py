@@ -55,8 +55,8 @@ class CreateWriteRenderModel(BaseSettingsModel):
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-    exposed_knobs: list[str] = Field(
-        title="Exposed Knobs",
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
         default_factory=list
     )
     prenodes: list[PrenodeModel] = SettingsField(
@@ -84,8 +84,8 @@ class CreateWritePrerenderModel(BaseSettingsModel):
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-    exposed_knobs: list[str] = Field(
-        title="Exposed Knobs",
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
         default_factory=list
     )
     prenodes: list[PrenodeModel] = SettingsField(
@@ -113,8 +113,8 @@ class CreateWriteImageModel(BaseSettingsModel):
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-    exposed_knobs: list[str] = Field(
-        title="Exposed Knobs",
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
         default_factory=list
     )
     prenodes: list[PrenodeModel] = SettingsField(

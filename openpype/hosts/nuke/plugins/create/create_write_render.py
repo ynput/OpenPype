@@ -9,6 +9,7 @@ from openpype.lib import (
     BoolDef
 )
 from openpype.hosts.nuke import api as napi
+from openpype.hosts.nuke.api.plugin import exposed_write_knobs
 
 
 class CreateWriteRender(napi.NukeWriteCreator):
@@ -113,15 +114,9 @@ class CreateWriteRender(napi.NukeWriteCreator):
                 instance.data_to_store()
             )
 
-            settings = self.project_settings["nuke"]["create"]
-            exposed_knobs = settings["CreateWriteRender"]["exposed_knobs"]
-            write_node = nuke.allNodes(group=instance_node, filter="Write")[0]
-            for knob in exposed_knobs:
-                link = nuke.Link_Knob("")
-                link.makeLink(write_node.name(), knob)
-                link.setName(knob)
-                link.setFlag(0x1000)
-                instance_node.addKnob(link)
+            exposed_write_knobs(
+                self.project_settings, self.__class__.__name__, instance_node
+            )
 
             return instance
 
