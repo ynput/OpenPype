@@ -1,5 +1,7 @@
 from qtpy import QtCore, QtGui
 
+from openpype.plugins.publish import integrate
+
 
 class BatchPublisherModel(QtCore.QAbstractTableModel):
     HEADER_LABELS = [
@@ -12,8 +14,8 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         "Representation",
         "Version",
         "Comment"]
-    COLUMN_OF_CHECKBOX = 0
-    COLUMN_OF_DIRECTORY = 1
+    COLUMN_OF_ENABLED = 0
+    COLUMN_OF_FILEPATH = 1
     COLUMN_OF_FOLDER = 2
     COLUMN_OF_TASK = 3
     COLUMN_OF_PRODUCT_TYPE = 4
@@ -54,29 +56,28 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         row = index.row()
         product_item = self._product_items[row]
         if role == QtCore.Qt.EditRole:
-            if column == BatchPublisherModel.COLUMN_OF_DIRECTORY:
+            if column == BatchPublisherModel.COLUMN_OF_FILEPATH:
                 product_item.filepath = value
             elif column == BatchPublisherModel.COLUMN_OF_FOLDER:
-                # Update product name
-                product_item.folder_path = value
-                # Update product name
-                product_item.task_name = None
-                task_names = self._controller.get_task_names(value)
-                if not product_item.task_name and task_names:
-                    product_item.task_name = task_names[0]
-                # roles = [QtCore.Qt.UserRole]
-                # self.dataChanged.emit(
-                #     self.index(row, column),
-                #     self.index(row, BatchPublisherModel.COLUMN_OF_TASK),
-                #     roles)
+                # Check folder path is valid in available docs
+                project_name = self._controller.get_selected_project_name()
+                asset_docs_by_path = self._controller._get_asset_docs()
+                if value in asset_docs_by_path:
+                    # Update folder path
+                    product_item.folder_path = value
+                    # Update task name
+                    product_item.task_name = None
+                    task_names = self._controller.get_task_names(value)
+                    if not product_item.task_name and task_names:
+                        product_item.task_name = task_names[0]
             elif column == BatchPublisherModel.COLUMN_OF_TASK:
-                product_item.task_name = value
-                # # Update product name
-                # self._controller._cache_task_names(product_item)
+                if value in self._controller.get_task_names(
+                        product_item.folder_path):
+                    product_item.task_name = value
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:
-                product_item.product_type = value
-                # # Update product name
-                # self._controller._cache_task_names(product_item)
+                # Check family is valid in available families
+                if value in integrate.IntegrateAsset.families:
+                    product_item.product_type = value
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
                 product_item.product_name = value
             elif column == BatchPublisherModel.COLUMN_OF_REPRESENTATION:
@@ -90,7 +91,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                 product_item.comment = value
             return True
         elif role == QtCore.Qt.CheckStateRole:
-            if column == BatchPublisherModel.COLUMN_OF_CHECKBOX:
+            if column == BatchPublisherModel.COLUMN_OF_ENABLED:
                 enabled = True if value == QtCore.Qt.Checked else False
                 product_item.enabled = enabled
                 roles = [QtCore.Qt.ForegroundRole]
@@ -105,7 +106,7 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         row = index.row()
         product_item = self._product_items[row]
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            if column == BatchPublisherModel.COLUMN_OF_DIRECTORY:
+            if column == BatchPublisherModel.COLUMN_OF_FILEPATH:
                 return product_item.filepath
             elif column == BatchPublisherModel.COLUMN_OF_FOLDER:
                 return product_item.folder_path
@@ -148,12 +149,12 @@ Enabled: <b>{product_item.enabled}</b>
             return tooltip
 
         elif role == QtCore.Qt.CheckStateRole:
-            if column == BatchPublisherModel.COLUMN_OF_CHECKBOX:
+            if column == BatchPublisherModel.COLUMN_OF_ENABLED:
                 return QtCore.Qt.Checked if product_item.enabled \
                     else QtCore.Qt.Unchecked
         elif role == QtCore.Qt.FontRole:
             # if column in [
-            #         BatchPublisherModel.COLUMN_OF_DIRECTORY,
+            #         BatchPublisherModel.COLUMN_OF_FILEPATH,
             #         BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE,
             #         BatchPublisherModel.COLUMN_OF_PRODUCT_NAME]:
             font = QtGui.QFont()
@@ -164,9 +165,9 @@ Enabled: <b>{product_item.enabled}</b>
 
     def flags(self, index):
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-        if index.column() == BatchPublisherModel.COLUMN_OF_CHECKBOX:
+        if index.column() == BatchPublisherModel.COLUMN_OF_ENABLED:
             flags |= QtCore.Qt.ItemIsUserCheckable
-        elif index.column() > BatchPublisherModel.COLUMN_OF_DIRECTORY:
+        elif index.column() > BatchPublisherModel.COLUMN_OF_FILEPATH:
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 
@@ -185,6 +186,6 @@ Enabled: <b>{product_item.enabled}</b>
             product_item.task_name = None
             roles = [QtCore.Qt.DisplayRole]
             self.dataChanged.emit(
-                self.index(row, self.COLUMN_OF_CHECKBOX),
-                self.index(row, self.COLUMN_OF_VERSION),
+                self.index(row, self.COLUMN_OF_ENABLED),
+                self.index(row, self.COLUMN_OF_COMMENT),
                 roles)

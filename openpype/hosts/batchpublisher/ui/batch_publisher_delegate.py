@@ -99,8 +99,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
         if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
             value = editor.model().data(
                 editor.view().currentIndex(),
-                FOLDER_PATH_ROLE
-            )
+                FOLDER_PATH_ROLE)
             model.setData(index, value, QtCore.Qt.EditRole)
         elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
             value = editor.currentText()
@@ -129,8 +128,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
                 new_row = QtGui.QStandardItem(hierarchy_item.folder_name)
                 new_row.setData(hierarchy_item.folder_path, FOLDER_PATH_ROLE)
                 new_row.setData(
-                    hierarchy_item.folder_path, QtCore.Qt.ToolTipRole
-                )
+                    hierarchy_item.folder_path, QtCore.Qt.ToolTipRole)
                 new_rows.append(new_row)
                 hierarchy_queue.append((new_row, hierarchy_item.folder_id))
 

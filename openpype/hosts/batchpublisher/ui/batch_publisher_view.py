@@ -1,4 +1,6 @@
-from qtpy import QtWidgets, QtCore
+import functools
+
+from qtpy import QtWidgets, QtCore, QtGui
 
 from .batch_publisher_model import BatchPublisherModel
 
@@ -15,8 +17,8 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         self.setSelectionMode(self.ExtendedSelection)
         # self.setSelectionBehavior(self.SelectRows)
 
-        self.setColumnWidth(model.COLUMN_OF_CHECKBOX, 22)
-        self.setColumnWidth(model.COLUMN_OF_DIRECTORY, 700)
+        self.setColumnWidth(model.COLUMN_OF_ENABLED, 22)
+        self.setColumnWidth(model.COLUMN_OF_FILEPATH, 700)
         self.setColumnWidth(model.COLUMN_OF_FOLDER, 200)
         self.setColumnWidth(model.COLUMN_OF_TASK, 90)
         self.setColumnWidth(model.COLUMN_OF_PRODUCT_TYPE, 140)
@@ -30,11 +32,15 @@ class BatchPublisherTableView(QtWidgets.QTableView):
 
         header = self.horizontalHeader()
         header.setSectionResizeMode(
-            BatchPublisherModel.COLUMN_OF_DIRECTORY,
+            BatchPublisherModel.COLUMN_OF_FILEPATH,
             header.Stretch)
         self.verticalHeader().hide()
 
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._open_menu)
+
         self._model = model
+        self._controller = controller
 
     def set_current_directory(self, directory):
         self._model.set_current_directory(directory)
@@ -71,3 +77,63 @@ class BatchPublisherTableView(QtWidgets.QTableView):
                     qmodelindex_task,
                     value_task,
                     QtCore.Qt.EditRole)
+
+    def _open_menu(self, pos):
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+        product_items = self._model.get_product_items()
+        product_item = product_items[index.row()]
+        enabled = not product_item.enabled
+
+        menu = QtWidgets.QMenu()
+
+        action_copy = QtWidgets.QAction()
+        action_copy.setText("Copy selected text")
+        action_copy.triggered.connect(
+            functools.partial(self.__copy_selected_text, pos))
+        menu.addAction(action_copy)
+
+        action_paste = QtWidgets.QAction()
+        action_paste.setText("Paste text into selected cells")
+        action_paste.triggered.connect(
+            functools.partial(self.__paste_selected_text, pos))
+        menu.addAction(action_paste)
+
+        action_toggle_enabled = QtWidgets.QAction()
+        action_toggle_enabled.setText("Toggle enabled")
+        action_toggle_enabled.triggered.connect(
+            functools.partial(self.__toggle_selected_enabled, enabled))
+        menu.addAction(action_toggle_enabled)
+
+        menu.exec_(self.viewport().mapToGlobal(pos))
+
+    def __toggle_selected_enabled(self, enabled):
+        product_items = self._model.get_product_items()
+        for _index in self.selectedIndexes():
+            product_item = product_items[_index.row()]
+            product_item.enabled = enabled
+            roles = [QtCore.Qt.DisplayRole]
+            self._model.dataChanged.emit(
+                self._model.index(_index.row(), self._model.COLUMN_OF_ENABLED),
+                self._model.index(_index.row(), self._model.COLUMN_OF_COMMENT),
+                roles)
+
+    def __copy_selected_text(self, pos):
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+        value = self._model.data(index)
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(value, QtGui.QClipboard.Clipboard)
+
+    def __paste_selected_text(self, pos):
+        index = self.indexAt(pos)
+        if not index.isValid():
+            return
+        value = QtWidgets.QApplication.clipboard().text()
+        column = index.column()
+        for index in self.selectedIndexes():
+            if column == self._model.COLUMN_OF_FILEPATH:
+                continue
+            self._model.setData(index, value, QtCore.Qt.EditRole)
