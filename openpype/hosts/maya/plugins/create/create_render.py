@@ -10,17 +10,14 @@ from openpype.hosts.maya.api import (
     plugin
 )
 from openpype.pipeline import CreatorError
-from openpype.pipeline.context_tools import (
-    get_current_task_name,
-    get_current_project_name
-)
+from openpype.pipeline.context_tools import get_current_project_name
 from openpype.lib import (
     BoolDef,
     NumberDef,
-    EnumDef,
-    filter_profiles
+    EnumDef
 )
 from openpype.pipeline.context_tools import _get_modules_manager
+from openpype_modules.deadline import get_deadline_job_settings
 
 
 class CreateRenderlayer(plugin.RenderlayerCreator):
@@ -74,7 +71,9 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
             deadline_enabled, deadline_url
         )
 
-        profile = self.get_profile()
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+        profile = get_deadline_job_settings(project_settings, self.log)
         if profile:
             default_machine_limit = profile.get("limit_machines", 0)
             default_limit_groups = profile.get("limit_plugins", [])
@@ -141,36 +140,6 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
                     default=self.render_settings.get("enable_all_lights",
                                                      False))
         ]
-
-    def get_profile(self):
-        task = get_current_task_name()
-        project_name = get_current_project_name()
-        project_settings = get_project_settings(project_name)
-        settings = project_settings["deadline"]["DefaultJobSettings"]
-        profile = None
-
-        filtering_criteria = {
-            "hosts": "maya",
-            "task_type": task
-        }
-        if settings.get("profiles"):
-            profile = filter_profiles(
-                settings["profiles"],
-                filtering_criteria,
-                logger=self.log
-            )
-
-        return profile
-
-    def _get_default_machine_limit(self, deadline_enabled):
-        default_machine_limit = 0
-
-        if deadline_enabled:
-            default_machine_limit = \
-                self.project_settings.get("deadline").get("publish").get(
-                    "MayaSubmitDeadline").get("jobInfo").get("machineLimit", 0)
-
-        return default_machine_limit
 
     def _get_limit_groups(self, deadline_enabled, deadline_url):
         manager = _get_modules_manager()

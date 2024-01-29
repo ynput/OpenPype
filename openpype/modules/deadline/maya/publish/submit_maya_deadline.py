@@ -38,15 +38,15 @@ from openpype.lib import (
     BoolDef,
     NumberDef,
     TextDef,
-    EnumDef,
-    filter_profiles
+    EnumDef
 )
-from openpype.pipeline.context_tools import get_current_task_name
-from openpype.settings import get_project_settings
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
 
-from openpype_modules.deadline import abstract_submit_deadline
+from openpype_modules.deadline import (
+    abstract_submit_deadline,
+    get_deadline_job_settings
+)
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.modules.deadline.utils import set_custom_deadline_name
 from openpype.tests.lib import is_in_tests
@@ -125,7 +125,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
-        profile = cls.get_profile(self=cls, project_settings=project_settings)
+        profile = get_deadline_job_settings(project_settings, cls.log)
         if profile:
             cls.priority = profile.get("priority", cls.priority)
 
@@ -143,24 +143,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         cls.jobInfo = settings.get("jobInfo", cls.jobInfo)
         cls.pluginInfo = settings.get("pluginInfo", cls.pluginInfo)
-
-    def get_profile(self, project_settings):
-        settings = project_settings["deadline"]["DefaultJobSettings"] # noqa
-        task = get_current_task_name()
-        profile = None
-
-        filtering_criteria = {
-            "hosts": "maya",
-            "task_types": task
-        }
-        if settings.get("profiles"):
-            profile = filter_profiles(
-                settings["profiles"],
-                filtering_criteria,
-                logger=self.log
-            )
-
-        return profile
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")

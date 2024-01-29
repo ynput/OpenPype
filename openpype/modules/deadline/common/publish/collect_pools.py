@@ -3,12 +3,9 @@
 
 """
 import pyblish.api
-from openpype.lib import (
-    TextDef,
-    filter_profiles
-)
+from openpype.lib import TextDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
-from openpype.pipeline.context_tools import get_current_task_name
+from openpype_modules.deadline import get_deadline_job_settings
 
 
 class CollectDeadlinePools(pyblish.api.InstancePlugin,
@@ -30,31 +27,13 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         # deadline.publish.CollectDeadlinePools
-        profile = cls.get_profile(self=cls, project_settings=project_settings)
+        profile = get_deadline_job_settings(project_settings, cls.log)
         if profile:
             cls.primary_pool = profile.get("primary_pool", cls.primary_pool)
             cls.secondary_pool = profile.get(
                 "secondary_pool",
                 cls.secondary_pool
             )
-
-    def get_profile(self, project_settings):
-        settings = project_settings["deadline"]["DefaultJobSettings"] # noqa
-        task = get_current_task_name()
-        profile = None
-
-        filtering_criteria = {
-            "hosts": "maya",
-            "task_types": task
-        }
-        if settings.get("profiles"):
-            profile = filter_profiles(
-                settings["profiles"],
-                filtering_criteria,
-                logger=self.log
-            )
-
-        return profile
 
     def process(self, instance):
 

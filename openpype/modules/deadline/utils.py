@@ -2,7 +2,11 @@ import os
 import re
 
 from openpype.settings import get_current_project_settings
-from openpype.pipeline.context_tools import _get_modules_manager
+from openpype.lib import filter_profiles
+from openpype.pipeline.context_tools import (
+    _get_modules_manager,
+    get_current_task_name
+)
 
 
 class SafeDict(dict):
@@ -74,3 +78,22 @@ def get_deadline_limit_groups(deadline_enabled, deadline_url, log):
         )
 
     return limit_groups
+
+
+def get_deadline_job_settings(project_settings, log):
+    settings = project_settings["deadline"]["DefaultJobSettings"] # noqa
+    task = get_current_task_name()
+    profile = None
+
+    filtering_criteria = {
+        "hosts": "maya",
+        "task_types": task
+    }
+    if settings.get("profiles"):
+        profile = filter_profiles(
+            settings["profiles"],
+            filtering_criteria,
+            logger=log
+        )
+
+    return profile
