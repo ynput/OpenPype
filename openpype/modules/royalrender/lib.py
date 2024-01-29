@@ -176,16 +176,16 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             instance, render_path, start_frame, end_frame)
         instance.data["expectedFiles"].extend(expected_files)
 
-        submitter_parameters = [
-            SubmitterParameter("OSperjob_ayon_inject_envvar", "1~1")
-        ]
+        submitter_parameters = []
 
         anatomy_data = instance.context.data["anatomyData"]
         environment = RREnvList({
             "AVALON_PROJECT": anatomy_data["project"]["name"],
             "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": anatomy_data["task"]["name"],
-            "AVALON_APP": instance.context.data.get("appName")
+            "AVALON_APP_NAME": instance.context.data.get("appName"),
+            "AYON_RENDER_JOB": "1",
+            "AYON_BUNDLE_NAME": os.environ["AYON_BUNDLE_NAME"]
         })
 
         job = RRJob(
