@@ -4,11 +4,11 @@ from pathlib import Path
 import bpy
 
 from openpype.pipeline import (
-    legacy_create,
     get_representation_path,
     AVALON_CONTAINER_ID,
+    registered_host
 )
-from openpype.pipeline.create import get_legacy_creator_by_name
+from openpype.pipeline.create import CreateContext
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.lib import imprint
 from openpype.hosts.blender.api.pipeline import (
@@ -20,7 +20,7 @@ from openpype.hosts.blender.api.pipeline import (
 class BlendLoader(plugin.AssetLoader):
     """Load assets from a .blend file."""
 
-    families = ["model", "rig", "layout", "camera", "blendScene"]
+    families = ["model", "rig", "layout", "camera"]
     representations = ["blend"]
 
     label = "Append Blend"
@@ -32,7 +32,7 @@ class BlendLoader(plugin.AssetLoader):
         empties = [obj for obj in objects if obj.type == 'EMPTY']
 
         for empty in empties:
-            if empty.get(AVALON_PROPERTY):
+            if empty.get(AVALON_PROPERTY) and empty.parent is None:
                 return empty
 
         return None
@@ -57,19 +57,21 @@ class BlendLoader(plugin.AssetLoader):
                 obj.get(AVALON_PROPERTY).get('family') == 'rig'
             )
         ]
+        if not rigs:
+            return
+
+        # Create animation instances for each rig
+        creator_identifier = "io.openpype.creators.blender.animation"
+        host = registered_host()
+        create_context = CreateContext(host)
 
         for rig in rigs:
-            creator_plugin = get_legacy_creator_by_name("CreateAnimation")
-            legacy_create(
-                creator_plugin,
-                name=rig.name.split(':')[-1] + "_animation",
-                asset=asset,
-                options={
-                    "useSelection": False,
+            create_context.create(
+                creator_identifier=creator_identifier,
+                variant=rig.name.split(':')[-1],
+                pre_create_data={
+                    "use_selection": False,
                     "asset_group": rig
-                },
-                data={
-                    "dependencies": representation
                 }
             )
 
@@ -103,7 +105,12 @@ class BlendLoader(plugin.AssetLoader):
             bpy.context.scene.collection.objects.link(obj)
 
         # Remove the library from the blend file
-        library = bpy.data.libraries.get(bpy.path.basename(libpath))
+        filepath = bpy.path.basename(libpath)
+        # Blender has a limit of 63 characters for any data name.
+        # If the filepath is longer, it will be truncated.
+        if len(filepath) > 63:
+            filepath = filepath[:63]
+        library = bpy.data.libraries.get(filepath)
         bpy.data.libraries.remove(library)
 
         return container, members
@@ -130,9 +137,9 @@ class BlendLoader(plugin.AssetLoader):
 
         representation = str(context["representation"]["_id"])
 
-        asset_name = plugin.asset_name(asset, subset)
+        asset_name = plugin.prepare_scene_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
+        group_name = plugin.prepare_scene_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
@@ -186,7 +193,19 @@ class BlendLoader(plugin.AssetLoader):
 
         transform = asset_group.matrix_basis.copy()
         old_data = dict(asset_group.get(AVALON_PROPERTY))
+        old_members = old_data.get("members", [])
         parent = asset_group.parent
+
+        actions = {}
+        objects_with_anim = [
+            obj for obj in asset_group.children_recursive
+            if obj.animation_data]
+        for obj in objects_with_anim:
+            # Check if the object has an action and, if so, add it to a dict
+            # so we can restore it later. Save and restore the action only
+            # if it wasn't originally loaded from the current asset.
+            if obj.animation_data.action not in old_members:
+                actions[obj.name] = obj.animation_data.action
 
         self.exec_remove(container)
 
@@ -197,6 +216,13 @@ class BlendLoader(plugin.AssetLoader):
 
         asset_group.matrix_basis = transform
         asset_group.parent = parent
+
+        # Restore the actions
+        for obj in asset_group.children_recursive:
+            if obj.name in actions:
+                if not obj.animation_data:
+                    obj.animation_data_create()
+                obj.animation_data.action = actions[obj.name]
 
         # Restore the old data, but reset memebers, as they don't exist anymore
         # This avoids a crash, because the memory addresses of those members

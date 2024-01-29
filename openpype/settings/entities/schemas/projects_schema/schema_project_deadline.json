@@ -363,6 +363,16 @@
                             "label": "Use GPU"
                         },
                         {
+                            "type": "boolean",
+                            "key": "workfile_dependency",
+                            "label": "Workfile Dependency"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "use_published_workfile",
+                            "label": "Use Published Workfile"
+                        },
+                        {
                             "type": "list",
                             "key": "env_allowed_keys",
                             "object_type": "text",
@@ -581,6 +591,51 @@
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "job_delay",
+                            "label": "Delay job (timecode dd:hh:mm:ss)"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ProcessSubmittedCacheJobOnFarm",
+                    "label": "ProcessSubmittedCacheJobOnFarm",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_department",
+                            "label": "Deadline department"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline Pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_group",
+                            "label": "Deadline Group"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_chunk_size",
+                            "label": "Deadline Chunk Size"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_priority",
+                            "label": "Deadline Priotity"
                         }
                     ]
                 },

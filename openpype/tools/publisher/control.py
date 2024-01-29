@@ -10,12 +10,15 @@ import inspect
 from abc import ABCMeta, abstractmethod
 
 import six
+import arrow
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_assets,
     get_asset_by_id,
     get_subsets,
+    get_asset_name_identifier,
 )
 from openpype.lib.events import EventSystem
 from openpype.lib.attribute_definitions import (
@@ -73,6 +76,8 @@ class AssetDocsCache:
         "data.visualParent": True,
         "data.tasks": True
     }
+    if AYON_SERVER_ENABLED:
+        projection["data.parents"] = True
 
     def __init__(self, controller):
         self._controller = controller
@@ -105,7 +110,7 @@ class AssetDocsCache:
             elif "tasks" not in asset_doc["data"]:
                 asset_doc["data"]["tasks"] = {}
 
-            asset_name = asset_doc["name"]
+            asset_name = get_asset_name_identifier(asset_doc)
             asset_tasks = asset_doc["data"]["tasks"]
             task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
             asset_docs_by_name[asset_name] = asset_doc
@@ -281,6 +286,8 @@ class PublishReportMaker:
 
     def get_report(self, publish_plugins=None):
         """Report data with all details of current state."""
+
+        now = arrow.utcnow().to("local")
         instances_details = {}
         for instance in self._all_instances_by_id.values():
             instances_details[instance.id] = self._extract_instance_data(
@@ -330,7 +337,8 @@ class PublishReportMaker:
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
             "id": uuid.uuid4().hex,
-            "report_version": "1.0.0"
+            "created_at": now.isoformat(),
+            "report_version": "1.0.1",
         }
 
     def _extract_context_data(self, context):
@@ -1453,7 +1461,7 @@ class BasePublisherController(AbstractPublisherController):
         """
 
         if self._log is None:
-            self._log = logging.getLogget(self.__class__.__name__)
+            self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @property
@@ -1881,10 +1889,19 @@ class PublisherController(BasePublisherController):
         self._emit_event("plugins.refresh.finished")
 
     def _collect_creator_items(self):
-        return {
-            identifier: CreatorItem.from_creator(creator)
-            for identifier, creator in self._create_context.creators.items()
-        }
+        # TODO add crashed initialization of create plugins to report
+        output = {}
+        for identifier, creator in self._create_context.creators.items():
+            try:
+                output[identifier] = CreatorItem.from_creator(creator)
+            except Exception:
+                self.log.error(
+                    "Failed to create creator item for '%s'",
+                    identifier,
+                    exc_info=True
+                )
+
+        return output
 
     def _reset_instances(self):
         """Reset create instances."""
@@ -2504,7 +2521,7 @@ class PublisherController(BasePublisherController):
                 else:
                     msg = (
                         "Something went wrong. Send report"
-                        " to your supervisor or OpenPype."
+                        " to your supervisor or Ynput team."
                     )
                 self.publish_error_msg = msg
                 self.publish_has_crashed = True

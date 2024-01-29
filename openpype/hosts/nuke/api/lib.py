@@ -13,6 +13,7 @@ from collections import OrderedDict
 import nuke
 from qtpy import QtCore, QtWidgets
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_project,
     get_asset_by_name,
@@ -120,7 +121,7 @@ def deprecated(new_destination):
 
 class Context:
     main_window = None
-    context_label = None
+    context_action_item = None
     project_name = os.getenv("AVALON_PROJECT")
     # Workfile related code
     workfiles_launched = False
@@ -1107,7 +1108,9 @@ def format_anatomy(data):
     Return:
         path (str)
     '''
-    anatomy = Anatomy()
+
+    project_name = get_current_project_name()
+    anatomy = Anatomy(project_name)
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
     padding = None
@@ -1125,8 +1128,10 @@ def format_anatomy(data):
         file = script_name()
         data["version"] = get_version_from_path(file)
 
-    project_name = anatomy.project_name
-    asset_name = data["asset"]
+    if AYON_SERVER_ENABLED:
+        asset_name = data["folderPath"]
+    else:
+        asset_name = data["asset"]
     task_name = data["task"]
     host_name = get_current_host_name()
     context_data = get_template_data_with_names(
@@ -3478,3 +3483,19 @@ def get_filenames_without_hash(filename, frame_start, frame_end):
             new_filename = filename_without_hashes.format(frame)
             filenames.append(new_filename)
     return filenames
+
+
+def create_camera_node_by_version():
+    """Function to create the camera with the latest node class
+    For Nuke version 14.0 or later, the Camera4 camera node class
+        would be used
+    For the version before, the Camera2 camera node class
+        would be used
+    Returns:
+        Node: camera node
+    """
+    nuke_number_version = nuke.NUKE_VERSION_MAJOR
+    if nuke_number_version >= 14:
+        return nuke.createNode("Camera4")
+    else:
+        return nuke.createNode("Camera2")

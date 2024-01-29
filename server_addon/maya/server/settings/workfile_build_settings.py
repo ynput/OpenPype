@@ -1,38 +1,41 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel, task_types_enum
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    task_types_enum,
+)
 
 
 class ContextItemModel(BaseSettingsModel):
     _layout = "expanded"
-    product_name_filters: list[str] = Field(
+    product_name_filters: list[str] = SettingsField(
         default_factory=list, title="Product name Filters")
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list, title="Product types")
-    repre_names: list[str] = Field(
+    repre_names: list[str] = SettingsField(
         default_factory=list, title="Repre Names")
-    loaders: list[str] = Field(
+    loaders: list[str] = SettingsField(
         default_factory=list, title="Loaders")
 
 
 class WorkfileSettingModel(BaseSettingsModel):
     _layout = "expanded"
-    task_types: list[str] = Field(
+    task_types: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=task_types_enum,
         title="Task types")
-    tasks: list[str] = Field(
+    tasks: list[str] = SettingsField(
         default_factory=list,
         title="Task names")
-    current_context: list[ContextItemModel] = Field(
+    current_context: list[ContextItemModel] = SettingsField(
         default_factory=list,
         title="Current Context")
-    linked_assets: list[ContextItemModel] = Field(
+    linked_assets: list[ContextItemModel] = SettingsField(
         default_factory=list,
         title="Linked Assets")
 
 
 class ProfilesModel(BaseSettingsModel):
-    profiles: list[WorkfileSettingModel] = Field(
+    profiles: list[WorkfileSettingModel] = SettingsField(
         default_factory=list,
         title="Profiles"
     )
@@ -104,7 +107,7 @@ DEFAULT_WORKFILE_SETTING = {
                 {
                     "product_name_filters": [],
                     "product_types": [
-                        "sedress"
+                        "setdress"
                     ],
                     "repre_names": [
                         "ma"

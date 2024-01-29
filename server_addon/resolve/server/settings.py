@@ -1,91 +1,90 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 from .imageio import ResolveImageIOModel
 
 
 class CreateShotClipModels(BaseSettingsModel):
-    hierarchy: str = Field(
+    hierarchy: str = SettingsField(
         "{folder}/{sequence}",
         title="Shot parent hierarchy",
         section="Shot Hierarchy And Rename Settings"
     )
-    clipRename: bool = Field(
+    clipRename: bool = SettingsField(
         True,
         title="Rename clips"
     )
-    clipName: str = Field(
+    clipName: str = SettingsField(
         "{track}{sequence}{shot}",
         title="Clip name template"
     )
-    countFrom: int = Field(
+    countFrom: int = SettingsField(
         10,
         title="Count sequence from"
     )
-    countSteps: int = Field(
+    countSteps: int = SettingsField(
         10,
         title="Stepping number"
     )
 
-    folder: str = Field(
+    folder: str = SettingsField(
         "shots",
         title="{folder}",
         section="Shot Template Keywords"
     )
-    episode: str = Field(
+    episode: str = SettingsField(
         "ep01",
         title="{episode}"
     )
-    sequence: str = Field(
+    sequence: str = SettingsField(
         "sq01",
         title="{sequence}"
     )
-    track: str = Field(
+    track: str = SettingsField(
         "{_track_}",
         title="{track}"
     )
-    shot: str = Field(
+    shot: str = SettingsField(
         "sh###",
         title="{shot}"
     )
 
-    vSyncOn: bool = Field(
+    vSyncOn: bool = SettingsField(
         False,
         title="Enable Vertical Sync",
         section="Vertical Synchronization Of Attributes"
     )
 
-    workfileFrameStart: int = Field(
+    workfileFrameStart: int = SettingsField(
         1001,
         title="Workfiles Start Frame",
         section="Shot Attributes"
     )
-    handleStart: int = Field(
+    handleStart: int = SettingsField(
         10,
         title="Handle start (head)"
     )
-    handleEnd: int = Field(
+    handleEnd: int = SettingsField(
         10,
         title="Handle end (tail)"
     )
 
 
 class CreatorPuginsModel(BaseSettingsModel):
-    CreateShotClip: CreateShotClipModels = Field(
+    CreateShotClip: CreateShotClipModels = SettingsField(
         default_factory=CreateShotClipModels,
         title="Create Shot Clip"
     )
 
 
 class ResolveSettings(BaseSettingsModel):
-    launch_openpype_menu_on_start: bool = Field(
+    launch_openpype_menu_on_start: bool = SettingsField(
         False, title="Launch OpenPype menu on start of Resolve"
     )
-    imageio: ResolveImageIOModel = Field(
+    imageio: ResolveImageIOModel = SettingsField(
         default_factory=ResolveImageIOModel,
         title="Color Management (ImageIO)"
     )
-    create: CreatorPuginsModel = Field(
+    create: CreatorPuginsModel = SettingsField(
         default_factory=CreatorPuginsModel,
         title="Creator plugins",
     )

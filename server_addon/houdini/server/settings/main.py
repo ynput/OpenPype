@@ -1,5 +1,4 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from .general import (
     GeneralSettingsModel,
     DEFAULT_GENERAL_SETTINGS
@@ -17,23 +16,23 @@ from .publish import (
 
 
 class HoudiniSettings(BaseSettingsModel):
-    general: GeneralSettingsModel = Field(
+    general: GeneralSettingsModel = SettingsField(
         default_factory=GeneralSettingsModel,
         title="General"
     )
-    imageio: HoudiniImageIOModel = Field(
+    imageio: HoudiniImageIOModel = SettingsField(
         default_factory=HoudiniImageIOModel,
         title="Color Management (ImageIO)"
     )
-    shelves: list[ShelvesModel] = Field(
+    shelves: list[ShelvesModel] = SettingsField(
         default_factory=list,
         title="Shelves Manager",
     )
-    create: CreatePluginsModel = Field(
+    create: CreatePluginsModel = SettingsField(
         default_factory=CreatePluginsModel,
         title="Creator Plugins",
     )
-    publish: PublishPluginsModel = Field(
+    publish: PublishPluginsModel = SettingsField(
         default_factory=PublishPluginsModel,
         title="Publish Plugins",
     )

@@ -79,12 +79,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
             "representation": "TEMP"
         })
 
-        # For the first time publish
-        if instance.data.get("hierarchy"):
-            template_data.update({
-                "hierarchy": instance.data["hierarchy"]
-            })
-
         publish_templates = anatomy.templates_obj["publish"]
         if "folder" in publish_templates:
             publish_folder = publish_templates["folder"].format_strict(

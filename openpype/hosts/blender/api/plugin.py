@@ -1,28 +1,34 @@
 """Shared functionality for pipeline plugins for Blender."""
 
+import itertools
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import bpy
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import (
-    LegacyCreator,
+    Creator,
+    CreatedInstance,
     LoaderPlugin,
 )
-from .pipeline import AVALON_CONTAINERS
+from openpype.lib import BoolDef
+
+from .pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_INSTANCES,
+    AVALON_PROPERTY,
+)
 from .ops import (
     MainThreadItem,
     execute_in_main_thread
 )
-from .lib import (
-    imprint,
-    get_selection
-)
+from .lib import imprint
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 
-def asset_name(
+def prepare_scene_name(
     asset: str, subset: str, namespace: Optional[str] = None
 ) -> str:
     """Return a consistent name for an asset."""
@@ -30,6 +36,12 @@ def asset_name(
     if namespace:
         name = f"{name}_{namespace}"
     name = f"{name}_{subset}"
+
+    # Blender name for a collection or object cannot be longer than 63
+    # characters. If the name is longer, it will raise an error.
+    if len(name) > 63:
+        raise ValueError(f"Scene name '{name}' would be too long.")
+
     return name
 
 
@@ -40,9 +52,16 @@ def get_unique_number(
     avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
     if not avalon_container:
         return "01"
-    asset_groups = avalon_container.all_objects
-
-    container_names = [c.name for c in asset_groups if c.type == 'EMPTY']
+    # Check the names of both object and collection containers
+    obj_asset_groups = avalon_container.objects
+    obj_group_names = {
+        c.name for c in obj_asset_groups
+        if c.type == 'EMPTY' and c.get(AVALON_PROPERTY)}
+    coll_asset_groups = avalon_container.children
+    coll_group_names = {
+        c.name for c in coll_asset_groups
+        if c.get(AVALON_PROPERTY)}
+    container_names = obj_group_names.union(coll_group_names)
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
@@ -134,20 +153,228 @@ def deselect_all():
     bpy.context.view_layer.objects.active = active
 
 
-class Creator(LegacyCreator):
-    """Base class for Creator plug-ins."""
+class BaseCreator(Creator):
+    """Base class for Blender Creator plug-ins."""
     defaults = ['Main']
 
-    def process(self):
-        collection = bpy.data.collections.new(name=self.data["subset"])
-        bpy.context.scene.collection.children.link(collection)
-        imprint(collection, self.data)
+    create_as_asset_group = False
 
-        if (self.options or {}).get("useSelection"):
-            for obj in get_selection():
-                collection.objects.link(obj)
+    @staticmethod
+    def cache_subsets(shared_data):
+        """Cache instances for Creators shared data.
 
-        return collection
+        Create `blender_cached_subsets` key when needed in shared data and
+        fill it with all collected instances from the scene under its
+        respective creator identifiers.
+
+        If legacy instances are detected in the scene, create
+        `blender_cached_legacy_subsets` key and fill it with
+        all legacy subsets from this family as a value.  # key or value?
+
+        Args:
+            shared_data(Dict[str, Any]): Shared data.
+
+        Return:
+            Dict[str, Any]: Shared data with cached subsets.
+        """
+        if not shared_data.get('blender_cached_subsets'):
+            cache = {}
+            cache_legacy = {}
+
+            avalon_instances = bpy.data.collections.get(AVALON_INSTANCES)
+            avalon_instance_objs = (
+                avalon_instances.objects if avalon_instances else []
+            )
+
+            for obj_or_col in itertools.chain(
+                    avalon_instance_objs,
+                    bpy.data.collections
+            ):
+                avalon_prop = obj_or_col.get(AVALON_PROPERTY, {})
+                if not avalon_prop:
+                    continue
+
+                if avalon_prop.get('id') != 'pyblish.avalon.instance':
+                    continue
+
+                creator_id = avalon_prop.get('creator_identifier')
+                if creator_id:
+                    # Creator instance
+                    cache.setdefault(creator_id, []).append(obj_or_col)
+                else:
+                    family = avalon_prop.get('family')
+                    if family:
+                        # Legacy creator instance
+                        cache_legacy.setdefault(family, []).append(obj_or_col)
+
+            shared_data["blender_cached_subsets"] = cache
+            shared_data["blender_cached_legacy_subsets"] = cache_legacy
+
+        return shared_data
+
+    def create(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
+        """Override abstract method from Creator.
+        Create new instance and store it.
+
+        Args:
+            subset_name(str): Subset name of created instance.
+            instance_data(dict): Instance base data.
+            pre_create_data(dict): Data based on pre creation attributes.
+                Those may affect how creator works.
+        """
+        # Get Instance Container or create it if it does not exist
+        instances = bpy.data.collections.get(AVALON_INSTANCES)
+        if not instances:
+            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
+            bpy.context.scene.collection.children.link(instances)
+
+        # Create asset group
+        if AYON_SERVER_ENABLED:
+            asset_name = instance_data["folderPath"].split("/")[-1]
+        else:
+            asset_name = instance_data["asset"]
+
+        name = prepare_scene_name(asset_name, subset_name)
+        if self.create_as_asset_group:
+            # Create instance as empty
+            instance_node = bpy.data.objects.new(name=name, object_data=None)
+            instance_node.empty_display_type = 'SINGLE_ARROW'
+            instances.objects.link(instance_node)
+        else:
+            # Create instance collection
+            instance_node = bpy.data.collections.new(name=name)
+            instances.children.link(instance_node)
+
+        self.set_instance_data(subset_name, instance_data)
+
+        instance = CreatedInstance(
+            self.family, subset_name, instance_data, self
+        )
+        instance.transient_data["instance_node"] = instance_node
+        self._add_instance_to_context(instance)
+
+        imprint(instance_node, instance_data)
+
+        return instance_node
+
+    def collect_instances(self):
+        """Override abstract method from BaseCreator.
+        Collect existing instances related to this creator plugin."""
+
+        # Cache subsets in shared data
+        self.cache_subsets(self.collection_shared_data)
+
+        # Get cached subsets
+        cached_subsets = self.collection_shared_data.get(
+            "blender_cached_subsets"
+        )
+        if not cached_subsets:
+            return
+
+        # Process only instances that were created by this creator
+        for instance_node in cached_subsets.get(self.identifier, []):
+            property = instance_node.get(AVALON_PROPERTY)
+            # Create instance object from existing data
+            instance = CreatedInstance.from_existing(
+                instance_data=property.to_dict(),
+                creator=self
+            )
+            instance.transient_data["instance_node"] = instance_node
+
+            # Add instance to create context
+            self._add_instance_to_context(instance)
+
+    def update_instances(self, update_list):
+        """Override abstract method from BaseCreator.
+        Store changes of existing instances so they can be recollected.
+
+        Args:
+            update_list(List[UpdateData]): Changed instances
+                and their changes, as a list of tuples.
+        """
+
+        if AYON_SERVER_ENABLED:
+            asset_name_key = "folderPath"
+        else:
+            asset_name_key = "asset"
+
+        for created_instance, changes in update_list:
+            data = created_instance.data_to_store()
+            node = created_instance.transient_data["instance_node"]
+            if not node:
+                # We can't update if we don't know the node
+                self.log.error(
+                    f"Unable to update instance {created_instance} "
+                    f"without instance node."
+                )
+                return
+
+            # Rename the instance node in the scene if subset or asset changed.
+            # Do not rename the instance if the family is workfile, as the
+            # workfile instance is included in the AVALON_CONTAINER collection.
+            if (
+                "subset" in changes.changed_keys
+                or asset_name_key in changes.changed_keys
+            ) and created_instance.family != "workfile":
+                asset_name = data[asset_name_key]
+                if AYON_SERVER_ENABLED:
+                    asset_name = asset_name.split("/")[-1]
+                name = prepare_scene_name(
+                    asset=asset_name, subset=data["subset"]
+                )
+                node.name = name
+
+            imprint(node, data)
+
+    def remove_instances(self, instances: List[CreatedInstance]):
+
+        for instance in instances:
+            node = instance.transient_data["instance_node"]
+
+            if isinstance(node, bpy.types.Collection):
+                for children in node.children_recursive:
+                    if isinstance(children, bpy.types.Collection):
+                        bpy.data.collections.remove(children)
+                    else:
+                        bpy.data.objects.remove(children)
+
+                bpy.data.collections.remove(node)
+            elif isinstance(node, bpy.types.Object):
+                bpy.data.objects.remove(node)
+
+            self._remove_instance_from_context(instance)
+
+    def set_instance_data(
+        self,
+        subset_name: str,
+        instance_data: dict
+    ):
+        """Fill instance data with required items.
+
+        Args:
+            subset_name(str): Subset name of created instance.
+            instance_data(dict): Instance base data.
+            instance_node(bpy.types.ID): Instance node in blender scene.
+        """
+        if not instance_data:
+            instance_data = {}
+
+        instance_data.update(
+            {
+                "id": "pyblish.avalon.instance",
+                "creator_identifier": self.identifier,
+                "subset": subset_name,
+            }
+        )
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection",
+                    label="Use selection",
+                    default=True)
+        ]
 
 
 class Loader(LoaderPlugin):
@@ -241,7 +468,7 @@ class AssetLoader(LoaderPlugin):
             namespace: Use pre-defined namespace
             options: Additional settings dictionary
         """
-        # TODO (jasper): make it possible to add the asset several times by
+        # TODO: make it possible to add the asset several times by
         # just re-using the collection
         filepath = self.filepath_from_context(context)
         assert Path(filepath).exists(), f"{filepath} doesn't exist."
@@ -252,7 +479,7 @@ class AssetLoader(LoaderPlugin):
             asset, subset
         )
         namespace = namespace or f"{asset}_{unique_number}"
-        name = name or asset_name(
+        name = name or prepare_scene_name(
             asset, subset, unique_number
         )
 
@@ -281,7 +508,9 @@ class AssetLoader(LoaderPlugin):
 
         # asset = context["asset"]["name"]
         # subset = context["subset"]["name"]
-        # instance_name = asset_name(asset, subset, unique_number) + '_CON'
+        # instance_name = prepare_scene_name(
+        #     asset, subset, unique_number
+        # ) + '_CON'
 
         # return self._get_instance_collection(instance_name, nodes)
 

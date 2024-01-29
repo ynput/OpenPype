@@ -7,6 +7,7 @@ import six
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.lib import BoolDef, Logger
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
@@ -271,7 +272,7 @@ class MayaCreatorBase(object):
 @six.add_metaclass(ABCMeta)
 class MayaCreator(NewCreator, MayaCreatorBase):
 
-    settings_name = None
+    settings_category = "maya"
 
     def create(self, subset_name, instance_data, pre_create_data):
 
@@ -317,24 +318,6 @@ class MayaCreator(NewCreator, MayaCreatorBase):
                     default=True)
         ]
 
-    def apply_settings(self, project_settings):
-        """Method called on initialization of plugin to apply settings."""
-
-        settings_name = self.settings_name
-        if settings_name is None:
-            settings_name = self.__class__.__name__
-
-        settings = project_settings["maya"]["create"]
-        settings = settings.get(settings_name)
-        if settings is None:
-            self.log.debug(
-                "No settings found for {}".format(self.__class__.__name__)
-            )
-            return
-
-        for key, value in settings.items():
-            setattr(self, key, value)
-
 
 class MayaAutoCreator(AutoCreator, MayaCreatorBase):
     """Automatically triggered creator for Maya.
@@ -342,6 +325,8 @@ class MayaAutoCreator(AutoCreator, MayaCreatorBase):
     The plugin is not visible in UI, and 'create' method does not expect
         any arguments.
     """
+
+    settings_category = "maya"
 
     def collect_instances(self):
         return self._default_collect_instances()
@@ -359,6 +344,8 @@ class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
     The plugin is not visible in UI, and it does not have strictly defined
         arguments for 'create' method.
     """
+
+    settings_category = "maya"
 
     def create(self, *args, **kwargs):
         return MayaCreator.create(self, *args, **kwargs)
@@ -463,14 +450,16 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 # this instance will not have the `instance_node` data yet
                 # until it's been saved/persisted at least once.
                 project_name = self.create_context.get_current_project_name()
-
+                asset_name = self.create_context.get_current_asset_name()
                 instance_data = {
-                    "asset": self.create_context.get_current_asset_name(),
                     "task": self.create_context.get_current_task_name(),
                     "variant": layer.name(),
                 }
-                asset_doc = get_asset_by_name(project_name,
-                                              instance_data["asset"])
+                if AYON_SERVER_ENABLED:
+                    instance_data["folderPath"] = asset_name
+                else:
+                    instance_data["asset"] = asset_name
+                asset_doc = get_asset_by_name(project_name, asset_name)
                 subset_name = self.get_subset_name(
                     layer.name(),
                     instance_data["task"],
@@ -771,7 +760,8 @@ class ReferenceLoader(Loader):
             "ma": "mayaAscii",
             "mb": "mayaBinary",
             "abc": "Alembic",
-            "fbx": "FBX"
+            "fbx": "FBX",
+            "usd": "USD Import"
         }.get(representation["name"])
 
         assert file_type, "Unsupported representation: %s" % representation

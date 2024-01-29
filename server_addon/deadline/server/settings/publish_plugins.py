@@ -1,32 +1,30 @@
-from pydantic import Field, validator
+from pydantic import validator
 
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
-
-
-class CollectDefaultDeadlineServerModel(BaseSettingsModel):
-    """Settings for event handlers running in ftrack service."""
-
-    pass_mongo_url: bool = Field(title="Pass Mongo url to job")
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    ensure_unique_names,
+)
 
 
 class CollectDeadlinePoolsModel(BaseSettingsModel):
     """Settings Deadline default pools."""
 
-    primary_pool: str = Field(title="Primary Pool")
+    primary_pool: str = SettingsField(title="Primary Pool")
 
-    secondary_pool: str = Field(title="Secondary Pool")
+    secondary_pool: str = SettingsField(title="Secondary Pool")
 
 
 class ValidateExpectedFilesModel(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
-    active: bool = Field(True, title="Active")
-    allow_user_override: bool = Field(
+    enabled: bool = SettingsField(True, title="Enabled")
+    active: bool = SettingsField(True, title="Active")
+    allow_user_override: bool = SettingsField(
         True, title="Allow user change frame range"
     )
-    families: list[str] = Field(
+    families: list[str] = SettingsField(
         default_factory=list, title="Trigger on families"
     )
-    targets: list[str] = Field(
+    targets: list[str] = SettingsField(
         default_factory=list, title="Trigger for plugins"
     )
 
@@ -51,74 +49,76 @@ def tile_assembler_enum():
 
 class ScenePatchesSubmodel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field(title="Patch name")
-    regex: str = Field(title="Patch regex")
-    line: str = Field(title="Patch line")
+    name: str = SettingsField(title="Patch name")
+    regex: str = SettingsField(title="Patch regex")
+    line: str = SettingsField(title="Patch line")
 
 
 class MayaSubmitDeadlineModel(BaseSettingsModel):
     """Maya deadline submitter settings."""
 
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    use_published: bool = Field(title="Use Published scene")
-    import_reference: bool = Field(title="Use Scene with Imported Reference")
-    asset_dependencies: bool = Field(title="Use Asset dependencies")
-    priority: int = Field(title="Priority")
-    tile_priority: int = Field(title="Tile Priority")
-    group: str = Field(title="Group")
-    limit: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    use_published: bool = SettingsField(title="Use Published scene")
+    import_reference: bool = SettingsField(
+        title="Use Scene with Imported Reference"
+    )
+    asset_dependencies: bool = SettingsField(title="Use Asset dependencies")
+    priority: int = SettingsField(title="Priority")
+    tile_priority: int = SettingsField(title="Tile Priority")
+    group: str = SettingsField(title="Group")
+    limit: list[str] = SettingsField(
         default_factory=list,
         title="Limit Groups"
     )
-    tile_assembler_plugin: str = Field(
+    tile_assembler_plugin: str = SettingsField(
         title="Tile Assembler Plugin",
         enum_resolver=tile_assembler_enum,
     )
-    jobInfo: str = Field(
+    jobInfo: str = SettingsField(
         title="Additional JobInfo data",
         widget="textarea",
     )
-    pluginInfo: str = Field(
+    pluginInfo: str = SettingsField(
         title="Additional PluginInfo data",
         widget="textarea",
     )
 
-    scene_patches: list[ScenePatchesSubmodel] = Field(
+    scene_patches: list[ScenePatchesSubmodel] = SettingsField(
         default_factory=list,
         title="Scene patches",
     )
-    strict_error_checking: bool = Field(
+    strict_error_checking: bool = SettingsField(
         title="Disable Strict Error Check profiles"
     )
 
-    @validator("limit", "scene_patches")
+    @validator("scene_patches")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
 
 
 class MaxSubmitDeadlineModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    use_published: bool = Field(title="Use Published scene")
-    priority: int = Field(title="Priority")
-    chunk_size: int = Field(title="Frame per Task")
-    group: str = Field("", title="Group Name")
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    use_published: bool = SettingsField(title="Use Published scene")
+    priority: int = SettingsField(title="Priority")
+    chunk_size: int = SettingsField(title="Frame per Task")
+    group: str = SettingsField("", title="Group Name")
 
 
 class EnvSearchReplaceSubmodel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: str = Field(title="Value")
+    name: str = SettingsField(title="Name")
+    value: str = SettingsField(title="Value")
 
 
 class LimitGroupsSubmodel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field(title="Name")
-    value: list[str] = Field(
+    name: str = SettingsField(title="Name")
+    value: list[str] = SettingsField(
         default_factory=list,
         title="Limit Groups"
     )
@@ -143,14 +143,16 @@ def fusion_deadline_plugin_enum():
 
 
 class FusionSubmitDeadlineModel(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
-    optional: bool = Field(False, title="Optional")
-    active: bool = Field(True, title="Active")
-    priority: int = Field(50, title="Priority")
-    chunk_size: int = Field(10, title="Frame per Task")
-    concurrent_tasks: int = Field(1, title="Number of concurrent tasks")
-    group: str = Field("", title="Group Name")
-    plugin: str = Field("Fusion",
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
+    priority: int = SettingsField(50, title="Priority")
+    chunk_size: int = SettingsField(10, title="Frame per Task")
+    concurrent_tasks: int = SettingsField(
+        1, title="Number of concurrent tasks"
+    )
+    group: str = SettingsField("", title="Group Name")
+    plugin: str = SettingsField("Fusion",
                         enum_resolver=fusion_deadline_plugin_enum,
                         title="Deadline Plugin")
 
@@ -158,32 +160,39 @@ class FusionSubmitDeadlineModel(BaseSettingsModel):
 class NukeSubmitDeadlineModel(BaseSettingsModel):
     """Nuke deadline submitter settings."""
 
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    priority: int = Field(title="Priority")
-    chunk_size: int = Field(title="Chunk Size")
-    concurrent_tasks: int = Field(title="Number of concurrent tasks")
-    group: str = Field(title="Group")
-    department: str = Field(title="Department")
-    use_gpu: bool = Field(title="Use GPU")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    priority: int = SettingsField(title="Priority")
+    chunk_size: int = SettingsField(title="Chunk Size")
+    concurrent_tasks: int = SettingsField(title="Number of concurrent tasks")
+    group: str = SettingsField(title="Group")
+    department: str = SettingsField(title="Department")
+    use_gpu: bool = SettingsField(title="Use GPU")
+    workfile_dependency: bool = SettingsField(title="Workfile Dependency")
+    use_published_workfile: bool = SettingsField(
+        title="Use Published Workfile"
+    )
 
-    env_allowed_keys: list[str] = Field(
+    env_allowed_keys: list[str] = SettingsField(
         default_factory=list,
         title="Allowed environment keys"
     )
 
-    env_search_replace_values: list[EnvSearchReplaceSubmodel] = Field(
+    env_search_replace_values: list[EnvSearchReplaceSubmodel] = SettingsField(
         default_factory=list,
         title="Search & replace in environment values",
     )
 
-    limit_groups: list[LimitGroupsSubmodel] = Field(
+    limit_groups: list[LimitGroupsSubmodel] = SettingsField(
         default_factory=list,
         title="Limit Groups",
     )
 
-    @validator("limit_groups", "env_allowed_keys", "env_search_replace_values")
+    @validator(
+        "limit_groups",
+        "env_allowed_keys",
+        "env_search_replace_values")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
@@ -192,134 +201,147 @@ class NukeSubmitDeadlineModel(BaseSettingsModel):
 class HarmonySubmitDeadlineModel(BaseSettingsModel):
     """Harmony deadline submitter settings."""
 
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    use_published: bool = Field(title="Use Published scene")
-    priority: int = Field(title="Priority")
-    chunk_size: int = Field(title="Chunk Size")
-    group: str = Field(title="Group")
-    department: str = Field(title="Department")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    use_published: bool = SettingsField(title="Use Published scene")
+    priority: int = SettingsField(title="Priority")
+    chunk_size: int = SettingsField(title="Chunk Size")
+    group: str = SettingsField(title="Group")
+    department: str = SettingsField(title="Department")
 
 
 class AfterEffectsSubmitDeadlineModel(BaseSettingsModel):
     """After Effects deadline submitter settings."""
 
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    use_published: bool = Field(title="Use Published scene")
-    priority: int = Field(title="Priority")
-    chunk_size: int = Field(title="Chunk Size")
-    group: str = Field(title="Group")
-    department: str = Field(title="Department")
-    multiprocess: bool = Field(title="Optional")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    use_published: bool = SettingsField(title="Use Published scene")
+    priority: int = SettingsField(title="Priority")
+    chunk_size: int = SettingsField(title="Chunk Size")
+    group: str = SettingsField(title="Group")
+    department: str = SettingsField(title="Department")
+    multiprocess: bool = SettingsField(title="Optional")
 
 
 class CelactionSubmitDeadlineModel(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
-    deadline_department: str = Field("", title="Deadline apartment")
-    deadline_priority: int = Field(50, title="Deadline priority")
-    deadline_pool: str = Field("", title="Deadline pool")
-    deadline_pool_secondary: str = Field("", title="Deadline pool (secondary)")
-    deadline_group: str = Field("", title="Deadline Group")
-    deadline_chunk_size: int = Field(10, title="Deadline Chunk size")
-    deadline_job_delay: str = Field(
+    enabled: bool = SettingsField(True, title="Enabled")
+    deadline_department: str = SettingsField("", title="Deadline apartment")
+    deadline_priority: int = SettingsField(50, title="Deadline priority")
+    deadline_pool: str = SettingsField("", title="Deadline pool")
+    deadline_pool_secondary: str = SettingsField(
+        "", title="Deadline pool (secondary)"
+    )
+    deadline_group: str = SettingsField("", title="Deadline Group")
+    deadline_chunk_size: int = SettingsField(10, title="Deadline Chunk size")
+    deadline_job_delay: str = SettingsField(
         "", title="Delay job (timecode dd:hh:mm:ss)"
     )
 
 
 class BlenderSubmitDeadlineModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    use_published: bool = Field(title="Use Published scene")
-    priority: int = Field(title="Priority")
-    chunk_size: int = Field(title="Frame per Task")
-    group: str = Field("", title="Group Name")
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    use_published: bool = SettingsField(title="Use Published scene")
+    priority: int = SettingsField(title="Priority")
+    chunk_size: int = SettingsField(title="Frame per Task")
+    group: str = SettingsField("", title="Group Name")
+    job_delay: str = SettingsField(
+        "", title="Delay job (timecode dd:hh:mm:ss)"
+    )
 
 
 class AOVFilterSubmodel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field(title="Host")
-    value: list[str] = Field(
+    name: str = SettingsField(title="Host")
+    value: list[str] = SettingsField(
         default_factory=list,
         title="AOV regex"
     )
 
 
+class ProcessCacheJobFarmModel(BaseSettingsModel):
+    """Process submitted job on farm."""
+
+    enabled: bool = SettingsField(title="Enabled")
+    deadline_department: str = SettingsField(title="Department")
+    deadline_pool: str = SettingsField(title="Pool")
+    deadline_group: str = SettingsField(title="Group")
+    deadline_chunk_size: int = SettingsField(title="Chunk Size")
+    deadline_priority: int = SettingsField(title="Priority")
+
+
 class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
     """Process submitted job on farm."""
 
-    enabled: bool = Field(title="Enabled")
-    deadline_department: str = Field(title="Department")
-    deadline_pool: str = Field(title="Pool")
-    deadline_group: str = Field(title="Group")
-    deadline_chunk_size: int = Field(title="Chunk Size")
-    deadline_priority: int = Field(title="Priority")
-    publishing_script: str = Field(title="Publishing script path")
-    skip_integration_repre_list: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    deadline_department: str = SettingsField(title="Department")
+    deadline_pool: str = SettingsField(title="Pool")
+    deadline_group: str = SettingsField(title="Group")
+    deadline_chunk_size: int = SettingsField(title="Chunk Size")
+    deadline_priority: int = SettingsField(title="Priority")
+    publishing_script: str = SettingsField(title="Publishing script path")
+    skip_integration_repre_list: list[str] = SettingsField(
         default_factory=list,
         title="Skip integration of representation with ext"
     )
-    aov_filter: list[AOVFilterSubmodel] = Field(
+    aov_filter: list[AOVFilterSubmodel] = SettingsField(
         default_factory=list,
         title="Reviewable products filter",
     )
 
-    @validator("aov_filter", "skip_integration_repre_list")
+    @validator("aov_filter")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
 
 
 class PublishPluginsModel(BaseSettingsModel):
-    CollectDefaultDeadlineServer: CollectDefaultDeadlineServerModel = Field(
-        default_factory=CollectDefaultDeadlineServerModel,
-        title="Default Deadline Webservice")
-    CollectDefaultDeadlineServer: CollectDefaultDeadlineServerModel = Field(
-        default_factory=CollectDefaultDeadlineServerModel,
-        title="Default Deadline Webservice")
-    CollectDeadlinePools: CollectDeadlinePoolsModel = Field(
+    CollectDeadlinePools: CollectDeadlinePoolsModel = SettingsField(
         default_factory=CollectDeadlinePoolsModel,
         title="Default Pools")
-    ValidateExpectedFiles: ValidateExpectedFilesModel = Field(
+    ValidateExpectedFiles: ValidateExpectedFilesModel = SettingsField(
         default_factory=ValidateExpectedFilesModel,
         title="Validate Expected Files"
     )
-    MayaSubmitDeadline: MayaSubmitDeadlineModel = Field(
+    MayaSubmitDeadline: MayaSubmitDeadlineModel = SettingsField(
         default_factory=MayaSubmitDeadlineModel,
         title="Maya Submit to deadline")
-    MaxSubmitDeadline: MaxSubmitDeadlineModel = Field(
+    MaxSubmitDeadline: MaxSubmitDeadlineModel = SettingsField(
         default_factory=MaxSubmitDeadlineModel,
         title="Max Submit to deadline")
-    FusionSubmitDeadline: FusionSubmitDeadlineModel = Field(
+    FusionSubmitDeadline: FusionSubmitDeadlineModel = SettingsField(
         default_factory=FusionSubmitDeadlineModel,
         title="Fusion submit to Deadline")
-    NukeSubmitDeadline: NukeSubmitDeadlineModel = Field(
+    NukeSubmitDeadline: NukeSubmitDeadlineModel = SettingsField(
         default_factory=NukeSubmitDeadlineModel,
         title="Nuke Submit to deadline")
-    HarmonySubmitDeadline: HarmonySubmitDeadlineModel = Field(
+    HarmonySubmitDeadline: HarmonySubmitDeadlineModel = SettingsField(
         default_factory=HarmonySubmitDeadlineModel,
         title="Harmony Submit to deadline")
-    AfterEffectsSubmitDeadline: AfterEffectsSubmitDeadlineModel = Field(
-        default_factory=AfterEffectsSubmitDeadlineModel,
-        title="After Effects to deadline")
-    CelactionSubmitDeadline: CelactionSubmitDeadlineModel = Field(
+    AfterEffectsSubmitDeadline: AfterEffectsSubmitDeadlineModel = (
+        SettingsField(
+            default_factory=AfterEffectsSubmitDeadlineModel,
+            title="After Effects to deadline"
+        )
+    )
+    CelactionSubmitDeadline: CelactionSubmitDeadlineModel = SettingsField(
         default_factory=CelactionSubmitDeadlineModel,
         title="Celaction Submit Deadline")
-    BlenderSubmitDeadline: BlenderSubmitDeadlineModel = Field(
+    BlenderSubmitDeadline: BlenderSubmitDeadlineModel = SettingsField(
         default_factory=BlenderSubmitDeadlineModel,
         title="Blender Submit Deadline")
-    ProcessSubmittedJobOnFarm: ProcessSubmittedJobOnFarmModel = Field(
+    ProcessSubmittedCacheJobOnFarm: ProcessCacheJobFarmModel = SettingsField(
+        default_factory=ProcessCacheJobFarmModel,
+        title="Process submitted cache Job on farm.")
+    ProcessSubmittedJobOnFarm: ProcessSubmittedJobOnFarmModel = SettingsField(
         default_factory=ProcessSubmittedJobOnFarmModel,
         title="Process submitted job on farm.")
 
 
 DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
-    "CollectDefaultDeadlineServer": {
-        "pass_mongo_url": True
-    },
     "CollectDeadlinePools": {
         "primary_pool": "",
         "secondary_pool": ""
@@ -382,6 +404,8 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "group": "",
         "department": "",
         "use_gpu": True,
+        "workfile_dependency": True,
+        "use_published_workfile": True,
         "env_allowed_keys": [],
         "env_search_replace_values": [],
         "limit_groups": []
@@ -424,7 +448,16 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "use_published": True,
         "priority": 50,
         "chunk_size": 10,
-        "group": "none"
+        "group": "none",
+        "job_delay": "00:00:00:00"
+    },
+    "ProcessSubmittedCacheJobOnFarm": {
+        "enabled": True,
+        "deadline_department": "",
+        "deadline_pool": "",
+        "deadline_group": "",
+        "deadline_chunk_size": 1,
+        "deadline_priority": 50
     },
     "ProcessSubmittedJobOnFarm": {
         "enabled": True,

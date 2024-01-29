@@ -140,7 +140,7 @@ def is_running_staging():
             latest_version = get_latest_version(local=False, remote=True)
         staging_version = latest_version
 
-    if current_version == production_version:
+    if current_version == staging_version:
         return True
 
     return is_staging_enabled()

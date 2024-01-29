@@ -145,6 +145,9 @@ def get_transferable_representations(instance):
 
         trans_rep = representation.copy()
 
+        # remove publish_on_farm from representations tags
+        trans_rep["tags"].remove("publish_on_farm")
+
         staging_dir = trans_rep.get("stagingDir")
 
         if staging_dir:
@@ -579,16 +582,17 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             group_name = subset
 
         # if there are multiple cameras, we need to add camera name
-        if isinstance(col, (list, tuple)):
-            cam = [c for c in cameras if c in col[0]]
-        else:
-            # in case of single frame
-            cam = [c for c in cameras if c in col]
-        if cam:
-            if aov:
-                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
-            else:
-                subset_name = '{}_{}'.format(group_name, cam)
+        expected_filepath = col[0] if isinstance(col, (list, tuple)) else col
+        cams = [cam for cam in cameras if cam in expected_filepath]
+        if cams:
+            for cam in cams:
+                if aov:
+                    if not aov.startswith(cam):
+                        subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                    else:
+                        subset_name = "{}_{}".format(group_name, aov)
+                else:
+                    subset_name = '{}_{}'.format(group_name, cam)
         else:
             if aov:
                 subset_name = '{}_{}'.format(group_name, aov)
@@ -743,6 +747,238 @@ def get_resources(project_name, version, extension=None):
     )
 
     return resources
+
+
+def create_skeleton_instance_cache(instance):
+    # type: (pyblish.api.Instance, list, dict) -> dict
+    """Create skeleton instance from original instance data.
+
+    This will create dictionary containing skeleton
+    - common - data used for publishing rendered instances.
+    This skeleton instance is then extended with additional data
+    and serialized to be processed by farm job.
+
+    Args:
+        instance (pyblish.api.Instance): Original instance to
+            be used as a source of data.
+
+    Returns:
+        dict: Dictionary with skeleton instance data.
+
+    """
+    # list of family names to transfer to new family if present
+
+    context = instance.context
+    data = instance.data.copy()
+    anatomy = instance.context.data["anatomy"]  # type: Anatomy
+
+    # get time related data from instance (or context)
+    time_data = get_time_data_from_instance_or_context(instance)
+
+    if data.get("extendFrames", False):
+        time_data.start, time_data.end = extend_frames(
+            data["asset"],
+            data["subset"],
+            time_data.start,
+            time_data.end,
+        )
+
+    source = data.get("source") or context.data.get("currentFile")
+    success, rootless_path = (
+        anatomy.find_root_template_from_path(source)
+    )
+    if success:
+        source = rootless_path
+    else:
+        # `rootless_path` is not set to `source` if none of roots match
+        log = Logger.get_logger("farm_publishing")
+        log.warning(("Could not find root path for remapping \"{}\". "
+                     "This may cause issues.").format(source))
+
+    family = instance.data["family"]
+    # Make sure "render" is in the families to go through
+    # validating expected and rendered files
+    # during publishing job.
+    families = ["render", family]
+
+    instance_skeleton_data = {
+        "family": family,
+        "subset": data["subset"],
+        "families": families,
+        "asset": data["asset"],
+        "frameStart": time_data.start,
+        "frameEnd": time_data.end,
+        "handleStart": time_data.handle_start,
+        "handleEnd": time_data.handle_end,
+        "frameStartHandle": time_data.start - time_data.handle_start,
+        "frameEndHandle": time_data.end + time_data.handle_end,
+        "comment": data.get("comment"),
+        "fps": time_data.fps,
+        "source": source,
+        "extendFrames": data.get("extendFrames"),
+        "overrideExistingFrame": data.get("overrideExistingFrame"),
+        "jobBatchName": data.get("jobBatchName", ""),
+        # map inputVersions `ObjectId` -> `str` so json supports it
+        "inputVersions": list(map(str, data.get("inputVersions", []))),
+    }
+
+    # skip locking version if we are creating v01
+    instance_version = data.get("version")  # take this if exists
+    if instance_version != 1:
+        instance_skeleton_data["version"] = instance_version
+
+    representations = get_transferable_representations(instance)
+    instance_skeleton_data["representations"] = representations
+
+    persistent = instance.data.get("stagingDir_persistent") is True
+    instance_skeleton_data["stagingDir_persistent"] = persistent
+
+    return instance_skeleton_data
+
+
+def prepare_cache_representations(skeleton_data, exp_files, anatomy):
+    """Create representations for file sequences.
+
+    This will return representations of expected files if they are not
+    in hierarchy of aovs. There should be only one sequence of files for
+    most cases, but if not - we create representation from each of them.
+
+    Arguments:
+        skeleton_data (dict): instance data for which we are
+                         setting representations
+        exp_files (list): list of expected files
+        anatomy (Anatomy)
+    Returns:
+        list of representations
+
+    """
+    representations = []
+    collections, remainders = clique.assemble(exp_files)
+
+    log = Logger.get_logger("farm_publishing")
+
+    # create representation for every collected sequence
+    for collection in collections:
+        ext = collection.tail.lstrip(".")
+
+        staging = os.path.dirname(list(collection)[0])
+        success, rootless_staging_dir = (
+            anatomy.find_root_template_from_path(staging)
+        )
+        if success:
+            staging = rootless_staging_dir
+        else:
+            log.warning((
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues on farm."
+            ).format(staging))
+
+        frame_start = int(skeleton_data.get("frameStartHandle"))
+        rep = {
+            "name": ext,
+            "ext": ext,
+            "files": [os.path.basename(f) for f in list(collection)],
+            "frameStart": frame_start,
+            "frameEnd": int(skeleton_data.get("frameEndHandle")),
+            # If expectedFile are absolute, we need only filenames
+            "stagingDir": staging,
+            "fps": skeleton_data.get("fps")
+        }
+
+        representations.append(rep)
+
+    return representations
+
+
+def create_instances_for_cache(instance, skeleton):
+    """Create instance for cache.
+
+    This will create new instance for every AOV it can detect in expected
+    files list.
+
+    Args:
+        instance (pyblish.api.Instance): Original instance.
+        skeleton (dict): Skeleton data for instance (those needed) later
+            by collector.
+
+
+    Returns:
+        list of instances
+
+    Throws:
+        ValueError:
+
+    """
+    anatomy = instance.context.data["anatomy"]
+    subset = skeleton["subset"]
+    family = skeleton["family"]
+    exp_files = instance.data["expectedFiles"]
+    log = Logger.get_logger("farm_publishing")
+
+    instances = []
+    # go through AOVs in expected files
+    for _, files in exp_files[0].items():
+        cols, rem = clique.assemble(files)
+        # we shouldn't have any reminders. And if we do, it should
+        # be just one item for single frame renders.
+        if not cols and rem:
+            if len(rem) != 1:
+                raise ValueError("Found multiple non related files "
+                                 "to render, don't know what to do "
+                                 "with them.")
+            col = rem[0]
+            ext = os.path.splitext(col)[1].lstrip(".")
+        else:
+            # but we really expect only one collection.
+            # Nothing else make sense.
+            if len(cols) != 1:
+                raise ValueError("Only one image sequence type is expected.")  # noqa: E501
+            ext = cols[0].tail.lstrip(".")
+            col = list(cols[0])
+
+        if isinstance(col, (list, tuple)):
+            staging = os.path.dirname(col[0])
+        else:
+            staging = os.path.dirname(col)
+
+        try:
+            staging = remap_source(staging, anatomy)
+        except ValueError as e:
+            log.warning(e)
+
+        new_instance = deepcopy(skeleton)
+
+        new_instance["subset"] = subset
+        log.info("Creating data for: {}".format(subset))
+        new_instance["family"] = family
+        new_instance["families"] = skeleton["families"]
+        # create representation
+        if isinstance(col, (list, tuple)):
+            files = [os.path.basename(f) for f in col]
+        else:
+            files = os.path.basename(col)
+
+        rep = {
+            "name": ext,
+            "ext": ext,
+            "files": files,
+            "frameStart": int(skeleton["frameStartHandle"]),
+            "frameEnd": int(skeleton["frameEndHandle"]),
+            # If expectedFile are absolute, we need only filenames
+            "stagingDir": staging,
+            "fps": new_instance.get("fps"),
+            "tags": [],
+        }
+
+        new_instance["representations"] = [rep]
+
+        # if extending frames from existing version, copy files from there
+        # into our destination directory
+        if new_instance.get("extendFrames", False):
+            copy_extend_frames(new_instance, rep)
+        instances.append(new_instance)
+        log.debug("instances:{}".format(instances))
+    return instances
 
 
 def copy_extend_frames(instance, representation):

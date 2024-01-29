@@ -26,8 +26,15 @@ class ExtractThumbnail(publish.Extractor):
     def process(self, instance):
         self.log.debug("Extracting capture..")
 
+        if instance.data.get("thumbnailSource"):
+            self.log.debug("Thumbnail source found, skipping...")
+            return
+
         stagingdir = self.staging_dir(instance)
-        filename = instance.name
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        filename = f"{asset_name}_{subset}"
+
         path = os.path.join(stagingdir, filename)
 
         self.log.debug(f"Outputting images to {path}")

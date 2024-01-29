@@ -19,6 +19,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_asset_by_name,
     get_linked_assets,
@@ -1348,31 +1349,54 @@ class PlaceholderLoadMixin(object):
         # Sort for readability
         families = list(sorted(families))
 
-        return [
+        if AYON_SERVER_ENABLED:
+            builder_type_enum_items = [
+                {"label": "Current folder", "value": "context_folder"},
+                # TODO implement linked folders
+                # {"label": "Linked folders", "value": "linked_folders"},
+                {"label": "All folders", "value": "all_folders"},
+            ]
+            build_type_label = "Folder Builder Type"
+            build_type_help = (
+                "Folder Builder Type\n"
+                "\nBuilder type describe what template loader will look"
+                " for."
+                "\nCurrent Folder: Template loader will look for products"
+                " of current context folder (Folder /assets/bob will"
+                " find asset)"
+                "\nAll folders: All folders matching the regex will be"
+                " used."
+            )
+        else:
+            builder_type_enum_items = [
+                {"label": "Current asset", "value": "context_asset"},
+                {"label": "Linked assets", "value": "linked_asset"},
+                {"label": "All assets", "value": "all_assets"},
+            ]
+            build_type_label = "Asset Builder Type"
+            build_type_help = (
+                "Asset Builder Type\n"
+                "\nBuilder type describe what template loader will look"
+                " for."
+                "\ncontext_asset : Template loader will look for subsets"
+                " of current context asset (Asset bob will find asset)"
+                "\nlinked_asset : Template loader will look for assets"
+                " linked to current context asset."
+                "\nLinked asset are looked in database under"
+                " field \"inputLinks\""
+            )
+
+        attr_defs = [
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Main attributes"),
             attribute_definitions.UISeparatorDef(),
 
             attribute_definitions.EnumDef(
                 "builder_type",
-                label="Asset Builder Type",
+                label=build_type_label,
                 default=options.get("builder_type"),
-                items=[
-                    {"label": "Current asset", "value": "context_asset"},
-                    {"label": "Linked assets", "value": "linked_asset"},
-                    {"label": "All assets", "value": "all_assets"},
-                ],
-                tooltip=(
-                    "Asset Builder Type\n"
-                    "\nBuilder type describe what template loader will look"
-                    " for."
-                    "\ncontext_asset : Template loader will look for subsets"
-                    " of current context asset (Asset bob will find asset)"
-                    "\nlinked_asset : Template loader will look for assets"
-                    " linked to current context asset."
-                    "\nLinked asset are looked in database under"
-                    " field \"inputLinks\""
-                )
+                items=builder_type_enum_items,
+                tooltip=build_type_help
             ),
             attribute_definitions.EnumDef(
                 "family",
@@ -1428,34 +1452,63 @@ class PlaceholderLoadMixin(object):
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Optional attributes"),
             attribute_definitions.UISeparatorDef(),
-            attribute_definitions.TextDef(
-                "asset",
-                label="Asset filter",
-                default=options.get("asset"),
-                placeholder="regex filtering by asset name",
-                tooltip=(
-                    "Filtering assets by matching field regex to asset's name"
-                )
-            ),
-            attribute_definitions.TextDef(
-                "subset",
-                label="Subset filter",
-                default=options.get("subset"),
-                placeholder="regex filtering by subset name",
-                tooltip=(
-                    "Filtering assets by matching field regex to subset's name"
-                )
-            ),
-            attribute_definitions.TextDef(
-                "hierarchy",
-                label="Hierarchy filter",
-                default=options.get("hierarchy"),
-                placeholder="regex filtering by asset's hierarchy",
-                tooltip=(
-                    "Filtering assets by matching field asset's hierarchy"
-                )
-            )
         ]
+        if AYON_SERVER_ENABLED:
+            attr_defs.extend([
+                attribute_definitions.TextDef(
+                    "folder_path",
+                    label="Folder filter",
+                    default=options.get("folder_path"),
+                    placeholder="regex filtering by folder path",
+                    tooltip=(
+                        "Filtering assets by matching"
+                        " field regex to folder path"
+                    )
+                ),
+                attribute_definitions.TextDef(
+                    "product_name",
+                    label="Product filter",
+                    default=options.get("product_name"),
+                    placeholder="regex filtering by product name",
+                    tooltip=(
+                        "Filtering assets by matching"
+                        " field regex to product name"
+                    )
+                ),
+            ])
+        else:
+            attr_defs.extend([
+                attribute_definitions.TextDef(
+                    "asset",
+                    label="Asset filter",
+                    default=options.get("asset"),
+                    placeholder="regex filtering by asset name",
+                    tooltip=(
+                        "Filtering assets by matching"
+                        " field regex to asset's name"
+                    )
+                ),
+                attribute_definitions.TextDef(
+                    "subset",
+                    label="Subset filter",
+                    default=options.get("subset"),
+                    placeholder="regex filtering by subset name",
+                    tooltip=(
+                        "Filtering assets by matching"
+                        " field regex to subset's name"
+                    )
+                ),
+                attribute_definitions.TextDef(
+                    "hierarchy",
+                    label="Hierarchy filter",
+                    default=options.get("hierarchy"),
+                    placeholder="regex filtering by asset's hierarchy",
+                    tooltip=(
+                        "Filtering assets by matching field asset's hierarchy"
+                    )
+                )
+            ])
+        return attr_defs
 
     def parse_loader_args(self, loader_args):
         """Helper function to parse string of loader arugments.
@@ -1485,6 +1538,117 @@ class PlaceholderLoadMixin(object):
 
         return {}
 
+    def _query_by_folder_regex(self, project_name, folder_regex):
+        """Query folders by folder path regex.
+
+        WARNING:
+            This method will be removed once the same functionality is
+                available in ayon-python-api.
+
+        Args:
+            project_name (str): Project name.
+            folder_regex (str): Regex for folder path.
+
+        Returns:
+            list[str]: List of folder paths.
+        """
+
+        from ayon_api.graphql_queries import folders_graphql_query
+        from openpype.client import get_ayon_server_api_connection
+
+        query = folders_graphql_query({"id"})
+
+        folders_field = None
+        for child in query._children:
+            if child.path != "project":
+                continue
+
+            for project_child in child._children:
+                if project_child.path == "project/folders":
+                    folders_field = project_child
+                    break
+            if folders_field:
+                break
+
+        if "folderPathRegex" not in query._variables:
+            folder_path_regex_var = query.add_variable(
+                "folderPathRegex", "String!"
+            )
+            folders_field.set_filter("pathEx", folder_path_regex_var)
+
+        query.set_variable_value("projectName", project_name)
+        if folder_regex:
+            query.set_variable_value("folderPathRegex", folder_regex)
+
+        api = get_ayon_server_api_connection()
+        for parsed_data in query.continuous_query(api):
+            for folder in parsed_data["project"]["folders"]:
+                yield folder["id"]
+
+    def _get_representations_ayon(self, placeholder):
+        # An OpenPype placeholder loaded in AYON
+        if "asset" in placeholder.data:
+            return []
+
+        representation_name = placeholder.data["representation"]
+        if not representation_name:
+            return []
+
+        project_name = self.builder.project_name
+        current_asset_doc = self.builder.current_asset_doc
+
+        folder_path_regex = placeholder.data["folder_path"]
+        product_name_regex_value = placeholder.data["product_name"]
+        product_name_regex = None
+        if product_name_regex_value:
+            product_name_regex = re.compile(product_name_regex_value)
+        product_type = placeholder.data["family"]
+
+        builder_type = placeholder.data["builder_type"]
+        folder_ids = []
+        if builder_type == "context_folder":
+            folder_ids = [current_asset_doc["_id"]]
+
+        elif builder_type == "all_folders":
+            folder_ids = list(self._query_by_folder_regex(
+                project_name, folder_path_regex
+            ))
+
+        if not folder_ids:
+            return []
+
+        from ayon_api import get_products, get_last_versions
+
+        products = list(get_products(
+            project_name,
+            folder_ids=folder_ids,
+            product_types=[product_type],
+            fields={"id", "name"}
+        ))
+        filtered_product_ids = set()
+        for product in products:
+            if (
+                product_name_regex is None
+                or product_name_regex.match(product["name"])
+            ):
+                filtered_product_ids.add(product["id"])
+
+        if not filtered_product_ids:
+            return []
+
+        version_ids = set(
+            version["id"]
+            for version in get_last_versions(
+                project_name, filtered_product_ids, fields={"id"}
+            ).values()
+        )
+        return list(get_representations(
+            project_name,
+            representation_names=[representation_name],
+            version_ids=version_ids
+        ))
+
+
     def _get_representations(self, placeholder):
         """Prepared query of representations based on load options.
 
@@ -1503,6 +1667,13 @@ class PlaceholderLoadMixin(object):
             List[Dict[str, Any]]: Representation documents matching filters
                 from placeholder data.
         """
+
+        if AYON_SERVER_ENABLED:
+            return self._get_representations_ayon(placeholder)
+
+        # An AYON placeholder loaded in OpenPype
+        if "folder_path" in placeholder.data:
+            return []
 
         project_name = self.builder.project_name
         current_asset_doc = self.builder.current_asset_doc
@@ -1940,7 +2111,7 @@ class CreatePlaceholderItem(PlaceholderItem):
         self._failed_created_publish_instances = []
 
     def get_errors(self):
-        if not self._failed_representations:
+        if not self._failed_created_publish_instances:
             return []
         message = (
             "Failed to create {} instance using Creator {}"

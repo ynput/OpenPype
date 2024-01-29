@@ -18,10 +18,11 @@ class ScreenMarquee(QtWidgets.QDialog):
         super(ScreenMarquee, self).__init__(parent=parent)
 
         self.setWindowFlags(
-            QtCore.Qt.FramelessWindowHint
+            QtCore.Qt.Window
+            | QtCore.Qt.FramelessWindowHint
             | QtCore.Qt.WindowStaysOnTopHint
             | QtCore.Qt.CustomizeWindowHint
-            | QtCore.Qt.Tool)
+        )
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setCursor(QtCore.Qt.CrossCursor)
         self.setMouseTracking(True)
@@ -210,6 +211,9 @@ class ScreenMarquee(QtWidgets.QDialog):
         """
 
         tool = cls()
+        # Activate so Escape event is not ignored.
+        tool.setWindowState(QtCore.Qt.WindowActive)
+        # Exec dialog and return captured pixmap.
         tool.exec_()
         return tool.get_captured_pixmap()
 

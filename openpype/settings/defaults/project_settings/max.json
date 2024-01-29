@@ -1,4 +1,8 @@
 {
+    "unit_scale_settings": {
+        "enabled": true,
+        "scene_unit_scale": "Meters"
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
@@ -15,6 +19,17 @@
         "aov_separator": "underscore",
         "image_format": "exr",
         "multipass": true
+    },
+    "CreateReview": {
+        "review_width": 1920,
+        "review_height": 1080,
+        "percentSize": 100.0,
+        "keep_images": false,
+        "image_format": "png",
+        "visual_style": "Realistic",
+        "viewport_preset": "Quality",
+        "anti_aliasing": "None",
+        "vp_texture": true
     },
     "PointCloud": {
         "attribute": {
@@ -33,6 +48,40 @@
     },
     "publish": {
         "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateAttributes": {
+            "enabled": false,
+            "attributes": {}
+        },
+        "ValidateLoadedPlugin": {
+            "enabled": false,
+            "optional": true,
+            "family_plugins_mapping": []
+        },
+        "ExtractModelObj": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractModelFbx": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractModelUSD": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractModel": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractMaxSceneRaw": {
             "enabled": true,
             "optional": true,
             "active": true

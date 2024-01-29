@@ -1,14 +1,12 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class MayaDirmapPathsSubmodel(BaseSettingsModel):
     _layout = "compact"
-    source_path: list[str] = Field(
+    source_path: list[str] = SettingsField(
         default_factory=list, title="Source Paths"
     )
-    destination_path: list[str] = Field(
+    destination_path: list[str] = SettingsField(
         default_factory=list, title="Destination Paths"
     )
 
@@ -18,13 +16,13 @@ class MayaDirmapModel(BaseSettingsModel):
     # _layout = "expanded"
     _isGroup: bool = True
 
-    enabled: bool = Field(title="enabled")
+    enabled: bool = SettingsField(title="enabled")
     # Use ${} placeholder instead of absolute value of a root in
     #   referenced filepaths.
-    use_env_var_as_root: bool = Field(
+    use_env_var_as_root: bool = SettingsField(
         title="Use env var placeholder in referenced paths"
     )
-    paths: MayaDirmapPathsSubmodel = Field(
+    paths: MayaDirmapPathsSubmodel = SettingsField(
         default_factory=MayaDirmapPathsSubmodel,
         title="Dirmap Paths"
     )
