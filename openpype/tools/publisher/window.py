@@ -322,6 +322,9 @@ class PublisherWindow(QtWidgets.QWidget):
             "convertors.find.failed", self._on_convertor_error
         )
         controller.event_system.add_callback(
+            "action.failed", self._on_action_error
+        )
+        controller.event_system.add_callback(
             "export_report.request", self._export_report
         )
         controller.event_system.add_callback(
@@ -1010,6 +1013,18 @@ class PublisherWindow(QtWidgets.QWidget):
             new_failed_info.append(new_item)
         self.add_error_message_dialog(
             event["title"], new_failed_info, "Convertor:"
+        )
+
+    def _on_action_error(self, event):
+        self.add_error_message_dialog(
+            event["title"],
+            [{
+                "message": event["message"],
+                "traceback": event["traceback"],
+                "label": event["label"],
+                "identifier": event["identifier"]
+            }],
+            "Action:"
         )
 
     def _update_create_overlay_size(self):

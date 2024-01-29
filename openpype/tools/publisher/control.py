@@ -2329,6 +2329,21 @@ class PublisherController(BasePublisherController):
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id
         )
+        exception = result.get("error")
+        if exception:
+            self._emit_event(
+                "action.failed",
+                {
+                    "title": "Action failed",
+                    "message": "Action failed.",
+                    "traceback": "".join(
+                        traceback.format_exception(exception)
+                    ),
+                    "label": "",
+                    "identifier": action.__name__
+                }
+            )
+
         self._publish_report.add_action_result(action, result)
 
     def _publish_next_process(self):
