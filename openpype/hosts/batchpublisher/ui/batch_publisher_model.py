@@ -59,10 +59,10 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
             if column == BatchPublisherModel.COLUMN_OF_FILEPATH:
                 product_item.filepath = value
             elif column == BatchPublisherModel.COLUMN_OF_FOLDER:
-                # Check folder path is valid in available docs
-                project_name = self._controller.get_selected_project_name()
+                # Check folder path is valid in available docs.
+                # Folder path might also be reset to None.
                 asset_docs_by_path = self._controller._get_asset_docs()
-                if value in asset_docs_by_path:
+                if value == None or value in asset_docs_by_path:
                     # Update folder path
                     product_item.folder_path = value
                     # Update task name
@@ -71,12 +71,15 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                     if not product_item.task_name and task_names:
                         product_item.task_name = task_names[0]
             elif column == BatchPublisherModel.COLUMN_OF_TASK:
-                if value in self._controller.get_task_names(
+                # Check task is valid in availble task names.
+                # Task name might also be reset to None.
+                if value is None or value in self._controller.get_task_names(
                         product_item.folder_path):
                     product_item.task_name = value
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:
                 # Check family is valid in available families
-                if value in integrate.IntegrateAsset.families:
+                # Product type might also be reset to None.
+                if value is None or value in integrate.IntegrateAsset.families:
                     product_item.product_type = value
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
                 product_item.product_name = value

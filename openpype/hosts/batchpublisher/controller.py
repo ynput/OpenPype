@@ -17,7 +17,12 @@ FILE_MAPPINGS = [
         "glob": "*/fbx/*.fbx",
         "is_sequence": False,
         "product_type": "model",
-    }
+    },
+    {
+        "glob": "*/ma/*.ma",
+        "is_sequence": False,
+        "product_type": "model",
+    },
 ]
 
 # Dictionary that maps the extension name to the representation name
