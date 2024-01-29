@@ -14,7 +14,7 @@ class RepairStartFrame(pyblish.api.Action):
     on = "failed"
 
     def process(self, context, plugin):
-        execute_george("tv_startframe 0")
+        execute_george(f"tv_startframe {plugin.start_frame}")
 
 
 class ValidateStartFrame(
@@ -28,19 +28,21 @@ class ValidateStartFrame(
     hosts = ["tvpaint"]
     actions = [RepairStartFrame]
     optional = True
+    start_frame = 0
 
     def process(self, context):
         if not self.is_active(context.data):
             return
 
-        start_frame = execute_george("tv_startframe")
-        if start_frame == 0:
+        scene_start_frame = execute_george("tv_startframe")
+        if scene_start_frame == self.start_frame:
             return
 
         raise PublishXmlValidationError(
             self,
-            "Start frame has to be frame 0.",
+            f"Start frame has to be frame {self.start_frame}.",
             formatting_data={
-                "current_start_frame": start_frame
+                "start_frame_expected": self.start_frame,
+                "current_start_frame": scene_start_frame
             }
         )
