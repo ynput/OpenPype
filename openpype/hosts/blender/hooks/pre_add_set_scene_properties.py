@@ -22,6 +22,8 @@ class SetSceneProperties(PreLaunchHook):
         # In the future there should be a way to get this info somewhere.
         target_os = "linux"
         current_os = data['env']['OS']
+        hierarchy = data['workdir_data']['hierarchy']
+        entity_name = data['asset_name']
 
         target_work_dir = self._get_correct_work_dir(data, target_os)
         current_work_dir = self._get_correct_work_dir(data, current_os)
@@ -33,22 +35,19 @@ class SetSceneProperties(PreLaunchHook):
             self.log.warning(f"Can't find correct work directory for os {current_work_dir}. Can't set default output path.")
             return '/tmp/'
 
-        sequence_name, shot_name = data['asset_name'].split('_')
-
         try:
             base_output_path = Path(
                     data['project_name'],
-                    'Shots',
-                    sequence_name,
-                    data['asset_name'],
+                    hierarchy,
+                    entity_name,
                     'publish',
                     'render',
                 )
             render_layer_path = self._generate_path_with_version(
-                target_work_dir, base_output_path, data['project_name'], shot_name
+                target_work_dir, base_output_path, data['project_name'], entity_name
             )
             output_path = self._generate_path_without_version(
-                current_work_dir, base_output_path, data['project_name'], shot_name
+                current_work_dir, base_output_path, data['project_name'], entity_name
             )
             return render_layer_path, output_path
 
@@ -69,21 +68,21 @@ class SetSceneProperties(PreLaunchHook):
         return retrieved_work_dir
 
 
-    def _generate_path_with_version(self, work_dir, base_path, project_name, shot_name):
+    def _generate_path_with_version(self, work_dir, base_path, project_name, entity_name):
         return Path(
             work_dir,
             base_path,
             '{version}',
             '{render_layer_name}',
-            '_'.join([project_name, shot_name, '{render_layer_name}', '{version}'])
+            '_'.join([project_name, entity_name, '{render_layer_name}', '{version}'])
         )
 
-    def _generate_path_without_version(self, work_dir, base_path, project_name, shot_name):
+    def _generate_path_without_version(self, work_dir, base_path, project_name, entity_name):
         return Path(
             work_dir,
             base_path,
             '{render_layer_name}',
-            '_'.join([project_name, shot_name, '{render_layer_name}'])
+            '_'.join([project_name, entity_name, '{render_layer_name}'])
         )
 
     def execute(self):
