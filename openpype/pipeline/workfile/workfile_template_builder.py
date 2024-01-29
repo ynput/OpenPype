@@ -37,7 +37,7 @@ from openpype.lib import (
     attribute_definitions,
 )
 from openpype.pipeline.plugin_discover import discover
-from openpype.lib.events import OrderedEventSystem
+from openpype.lib.events import EventSystem
 from openpype.lib.attribute_definitions import get_attributes_keys
 from openpype.pipeline import Anatomy
 from openpype.pipeline.load import (
@@ -125,7 +125,7 @@ class AbstractTemplateBuilder(object):
         self._linked_asset_docs = None
         self._task_type = None
 
-        self._event_system = OrderedEventSystem()
+        self._event_system = EventSystem()
 
     @property
     def project_name(self):
@@ -267,7 +267,7 @@ class AbstractTemplateBuilder(object):
         self._system_settings = None
         self._project_settings = None
 
-        self._event_system = OrderedEventSystem()
+        self._event_system = EventSystem()
 
         self.clear_shared_data()
         self.clear_shared_populate_data()
