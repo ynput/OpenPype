@@ -36,12 +36,12 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
     def get_product_items(self):
         return list(self._product_items)
 
-    def rowCount(self, parent=QtCore.QModelIndex()):
+    def rowCount(self, parent=None):
         if parent is None:
             parent = QtCore.QModelIndex()
         return len(self._product_items)
 
-    def columnCount(self, parent=QtCore.QModelIndex()):
+    def columnCount(self, parent=None):
         if parent is None:
             parent = QtCore.QModelIndex()
         return len(BatchPublisherModel.HEADER_LABELS)
