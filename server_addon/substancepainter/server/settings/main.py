@@ -1,20 +1,19 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from .imageio import ImageIOSettings, DEFAULT_IMAGEIO_SETTINGS
 
 
 class ShelvesSettingsModel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: str = Field(title="Path")
+    name: str = SettingsField(title="Name")
+    value: str = SettingsField(title="Path")
 
 
 class SubstancePainterSettings(BaseSettingsModel):
-    imageio: ImageIOSettings = Field(
+    imageio: ImageIOSettings = SettingsField(
         default_factory=ImageIOSettings,
         title="Color Management (ImageIO)"
     )
-    shelves: list[ShelvesSettingsModel] = Field(
+    shelves: list[ShelvesSettingsModel] = SettingsField(
         default_factory=list,
         title="Shelves"
     )

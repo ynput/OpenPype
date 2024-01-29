@@ -127,8 +127,9 @@ def isolate_objects(window, objects):
 
     context = create_blender_context(selected=objects, window=window)
 
-    bpy.ops.view3d.view_axis(context, type="FRONT")
-    bpy.ops.view3d.localview(context)
+    with bpy.context.temp_override(**context):
+        bpy.ops.view3d.view_axis(type="FRONT")
+        bpy.ops.view3d.localview()
 
     deselect_all()
 
@@ -270,10 +271,12 @@ def _independent_window():
     """Create capture-window context."""
     context = create_blender_context()
     current_windows = set(bpy.context.window_manager.windows)
-    bpy.ops.wm.window_new(context)
-    window = list(set(bpy.context.window_manager.windows) - current_windows)[0]
-    context["window"] = window
-    try:
-        yield window
-    finally:
-        bpy.ops.wm.window_close(context)
+    with bpy.context.temp_override(**context):
+        bpy.ops.wm.window_new()
+        window = list(
+            set(bpy.context.window_manager.windows) - current_windows)[0]
+        context["window"] = window
+        try:
+            yield window
+        finally:
+            bpy.ops.wm.window_close()

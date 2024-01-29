@@ -1,60 +1,64 @@
-from ayon_server.settings import Field, BaseSettingsModel
+from ayon_server.settings import SettingsField, BaseSettingsModel
 
 
 class LoadClipModel(BaseSettingsModel):
-    enabled: bool = Field(True)
+    enabled: bool = SettingsField(True)
 
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types"
     )
-    reel_group_name: str = Field(
+    reel_group_name: str = SettingsField(
         "OpenPype_Reels",
         title="Reel group name"
     )
-    reel_name: str = Field(
+    reel_name: str = SettingsField(
         "Loaded",
         title="Reel name"
     )
 
-    clip_name_template: str = Field(
+    clip_name_template: str = SettingsField(
         "{folder[name]}_{product[name]}<_{output}>",
         title="Clip name template"
     )
-    layer_rename_template: str = Field("", title="Layer name template")
-    layer_rename_patterns: list[str] = Field(
+    layer_rename_template: str = SettingsField(
+        "", title="Layer name template"
+    )
+    layer_rename_patterns: list[str] = SettingsField(
         default_factory=list,
         title="Layer rename patters",
     )
 
 
 class LoadClipBatchModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    product_types: list[str] = Field(
+    enabled: bool = SettingsField(True)
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types"
     )
-    reel_name: str = Field(
+    reel_name: str = SettingsField(
         "OP_LoadedReel",
         title="Reel name"
     )
-    clip_name_template: str = Field(
+    clip_name_template: str = SettingsField(
         "{batch}_{folder[name]}_{product[name]}<_{output}>",
         title="Clip name template"
     )
-    layer_rename_template: str = Field("", title="Layer name template")
-    layer_rename_patterns: list[str] = Field(
+    layer_rename_template: str = SettingsField(
+        "", title="Layer name template"
+    )
+    layer_rename_patterns: list[str] = SettingsField(
         default_factory=list,
         title="Layer rename patters",
     )
 
 
 class LoaderPluginsModel(BaseSettingsModel):
-    LoadClip: LoadClipModel = Field(
+    LoadClip: LoadClipModel = SettingsField(
         default_factory=LoadClipModel,
         title="Load Clip"
     )
-    LoadClipBatch: LoadClipBatchModel = Field(
+    LoadClipBatch: LoadClipBatchModel = SettingsField(
         default_factory=LoadClipBatchModel,
         title="Load as clip to current batch"
     )

@@ -31,7 +31,8 @@
                 "reviewable",
                 "farm_rendering"
             ],
-            "image_format": "exr"
+            "image_format": "exr",
+            "default_frame_range_option": "asset_db"
         },
         "CreateImageSaver": {
             "temp_rendering_path_template": "{workdir}/renders/fusion/{subset}/{subset}.{ext}",
@@ -43,7 +44,8 @@
                 "reviewable",
                 "farm_rendering"
             ],
-            "image_format": "exr"
+            "image_format": "exr",
+            "default_frame": 0
         }
     },
     "publish": {

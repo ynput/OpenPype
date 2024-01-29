@@ -1,5 +1,4 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 from .imageio import TrayPublisherImageIOModel
 from .simple_creators import (
@@ -22,23 +21,23 @@ from .publish_plugins import (
 
 class TraypublisherSettings(BaseSettingsModel):
     """Traypublisher Project Settings."""
-    imageio: TrayPublisherImageIOModel = Field(
+    imageio: TrayPublisherImageIOModel = SettingsField(
         default_factory=TrayPublisherImageIOModel,
         title="Color Management (ImageIO)"
     )
-    simple_creators: list[SimpleCreatorPlugin] = Field(
+    simple_creators: list[SimpleCreatorPlugin] = SettingsField(
         title="Simple Create Plugins",
         default_factory=SimpleCreatorPlugin,
     )
-    editorial_creators: TraypublisherEditorialCreatorPlugins = Field(
+    editorial_creators: TraypublisherEditorialCreatorPlugins = SettingsField(
         title="Editorial Creators",
         default_factory=TraypublisherEditorialCreatorPlugins,
     )
-    create: TrayPublisherCreatePluginsModel = Field(
+    create: TrayPublisherCreatePluginsModel = SettingsField(
         title="Create",
         default_factory=TrayPublisherCreatePluginsModel
     )
-    publish: TrayPublisherPublishPlugins = Field(
+    publish: TrayPublisherPublishPlugins = SettingsField(
         title="Publish Plugins",
         default_factory=TrayPublisherPublishPlugins
     )

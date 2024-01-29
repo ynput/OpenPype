@@ -50,19 +50,19 @@ class ExtractCamera(publish.Extractor, publish.OptionalPyblishPluginMixin):
         scale_length = bpy.context.scene.unit_settings.scale_length
         bpy.context.scene.unit_settings.scale_length = 0.01
 
-        # We export the fbx
-        bpy.ops.export_scene.fbx(
-            context,
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            bake_anim_use_nla_strips=False,
-            bake_anim_use_all_actions=False,
-            add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'CAMERA'},
-            bake_anim_simplify_factor=0.0
-        )
+        with bpy.context.temp_override(**context):
+            # We export the fbx
+            bpy.ops.export_scene.fbx(
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                bake_anim_use_nla_strips=False,
+                bake_anim_use_all_actions=False,
+                add_leaf_bones=False,
+                armature_nodetype='ROOT',
+                object_types={'CAMERA'},
+                bake_anim_simplify_factor=0.0
+            )
 
         bpy.context.scene.unit_settings.scale_length = scale_length
 

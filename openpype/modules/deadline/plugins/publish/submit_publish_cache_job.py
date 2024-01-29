@@ -99,10 +99,6 @@ class ProcessSubmittedCacheJobOnFarm(pyblish.api.InstancePlugin,
     def _submit_deadline_post_job(self, instance, job):
         """Submit publish job to Deadline.
 
-        Deadline specific code separated from :meth:`process` for sake of
-        more universal code. Muster post job is sent directly by Muster
-        submitter, so this type of code isn't necessary for it.
-
         Returns:
             (str): deadline_publish_job_id
         """
