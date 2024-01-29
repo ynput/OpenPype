@@ -122,14 +122,20 @@ def populate_render_properties(dummy=None):
 
 
 def collect_render_layers():
-        for render_layer_name in get_render_layers_names():
-            item = bpy.context.window_manager.render_layers_to_use.add()
-            item.name = render_layer_name
-            item.value = bpy.context.scene.view_layers[render_layer_name].use
+    bpy.context.window_manager.render_layers_to_use.clear()
+    for render_layer_name in get_render_layers_names():
+        item = bpy.context.window_manager.render_layers_to_use.add()
+        item.name = render_layer_name
+        item.value = bpy.context.scene.view_layers[render_layer_name].use
 
 
 def render_layers_needs_update():
-    return len(bpy.context.window_manager.render_layers_to_use) != len(get_render_layers_names())
+    return set(
+        [
+            render_layer.name for render_layer in
+            bpy.context.window_manager.render_layers_to_use
+        ]
+    ) != set(get_render_layers_names())
 
 
 class RenderBoolProperty(bpy.types.PropertyGroup):
