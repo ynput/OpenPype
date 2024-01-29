@@ -38,11 +38,11 @@ class FamilyMappingItemModel(BaseSettingsModel):
     )
 
 
-class ValidateModelName(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    regex: str = Field(
+class ValidateModelNameModel(BaseSettingsModel):
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    regex: str = SettingsField(
         "(?P<subset>.*)_(GEO)",
         title="Validation regex",
         description=(
@@ -81,6 +81,10 @@ class PublishersModel(BaseSettingsModel):
     ValidateLoadedPlugin: ValidateLoadedPluginModel = SettingsField(
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
+    )
+    ValidateModelName: ValidateModelNameModel = SettingsField(
+        default_factory=ValidateModelNameModel,
+        title="Validate Model Name"
     )
     ExtractModelObj: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
