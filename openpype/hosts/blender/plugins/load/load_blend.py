@@ -102,7 +102,6 @@ class BlendLoader(plugin.AssetLoader):
 
         # Link all the container children to the collection
         for obj in container.children_recursive:
-            print(obj)
             bpy.context.scene.collection.objects.link(obj)
 
         # Remove the library from the blend file
@@ -194,7 +193,19 @@ class BlendLoader(plugin.AssetLoader):
 
         transform = asset_group.matrix_basis.copy()
         old_data = dict(asset_group.get(AVALON_PROPERTY))
+        old_members = old_data.get("members", [])
         parent = asset_group.parent
+
+        actions = {}
+        objects_with_anim = [
+            obj for obj in asset_group.children_recursive
+            if obj.animation_data]
+        for obj in objects_with_anim:
+            # Check if the object has an action and, if so, add it to a dict
+            # so we can restore it later. Save and restore the action only
+            # if it wasn't originally loaded from the current asset.
+            if obj.animation_data.action not in old_members:
+                actions[obj.name] = obj.animation_data.action
 
         self.exec_remove(container)
 
@@ -205,6 +216,13 @@ class BlendLoader(plugin.AssetLoader):
 
         asset_group.matrix_basis = transform
         asset_group.parent = parent
+
+        # Restore the actions
+        for obj in asset_group.children_recursive:
+            if obj.name in actions:
+                if not obj.animation_data:
+                    obj.animation_data_create()
+                obj.animation_data.action = actions[obj.name]
 
         # Restore the old data, but reset memebers, as they don't exist anymore
         # This avoids a crash, because the memory addresses of those members

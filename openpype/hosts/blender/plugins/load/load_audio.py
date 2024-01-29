@@ -67,7 +67,8 @@ class AudioLoader(plugin.AssetLoader):
         oc = bpy.context.copy()
         oc["area"] = window_manager.windows[-1].screen.areas[0]
 
-        bpy.ops.sequencer.sound_strip_add(oc, filepath=libpath, frame_start=1)
+        with bpy.context.temp_override(**oc):
+            bpy.ops.sequencer.sound_strip_add(filepath=libpath, frame_start=1)
 
         window_manager.windows[-1].screen.areas[0].type = old_type
 
@@ -156,17 +157,18 @@ class AudioLoader(plugin.AssetLoader):
         oc = bpy.context.copy()
         oc["area"] = window_manager.windows[-1].screen.areas[0]
 
-        # We deselect all sequencer strips, and then select the one we
-        # need to remove.
-        bpy.ops.sequencer.select_all(oc, action='DESELECT')
-        scene = bpy.context.scene
-        scene.sequence_editor.sequences_all[old_audio].select = True
+        with bpy.context.temp_override(**oc):
+            # We deselect all sequencer strips, and then select the one we
+            # need to remove.
+            bpy.ops.sequencer.select_all(action='DESELECT')
+            scene = bpy.context.scene
+            scene.sequence_editor.sequences_all[old_audio].select = True
 
-        bpy.ops.sequencer.delete(oc)
-        bpy.data.sounds.remove(bpy.data.sounds[old_audio])
+            bpy.ops.sequencer.delete()
+            bpy.data.sounds.remove(bpy.data.sounds[old_audio])
 
-        bpy.ops.sequencer.sound_strip_add(
-            oc, filepath=str(libpath), frame_start=1)
+            bpy.ops.sequencer.sound_strip_add(
+                filepath=str(libpath), frame_start=1)
 
         window_manager.windows[-1].screen.areas[0].type = old_type
 
@@ -205,12 +207,13 @@ class AudioLoader(plugin.AssetLoader):
         oc = bpy.context.copy()
         oc["area"] = window_manager.windows[-1].screen.areas[0]
 
-        # We deselect all sequencer strips, and then select the one we
-        # need to remove.
-        bpy.ops.sequencer.select_all(oc, action='DESELECT')
-        bpy.context.scene.sequence_editor.sequences_all[audio].select = True
-
-        bpy.ops.sequencer.delete(oc)
+        with bpy.context.temp_override(**oc):
+            # We deselect all sequencer strips, and then select the one we
+            # need to remove.
+            bpy.ops.sequencer.select_all(action='DESELECT')
+            scene = bpy.context.scene
+            scene.sequence_editor.sequences_all[audio].select = True
+            bpy.ops.sequencer.delete()
 
         window_manager.windows[-1].screen.areas[0].type = old_type
 
