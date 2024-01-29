@@ -1,12 +1,10 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class CollectPalettesPlugin(BaseSettingsModel):
     """Set regular expressions to filter triggering on specific task names. '.*' means on all."""  # noqa
 
-    allowed_tasks: list[str] = Field(
+    allowed_tasks: list[str] = SettingsField(
         default_factory=list,
         title="Allowed tasks"
     )
@@ -16,16 +14,16 @@ class ValidateAudioPlugin(BaseSettingsModel):
     """Check if scene contains audio track."""  #
     _isGroup = True
     enabled: bool = True
-    optional: bool = Field(False, title="Optional")
-    active: bool = Field(True, title="Active")
+    optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class ValidateContainersPlugin(BaseSettingsModel):
     """Check if loaded container is scene are latest versions."""
     _isGroup = True
     enabled: bool = True
-    optional: bool = Field(False, title="Optional")
-    active: bool = Field(True, title="Active")
+    optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class ValidateSceneSettingsPlugin(BaseSettingsModel):
@@ -34,20 +32,20 @@ class ValidateSceneSettingsPlugin(BaseSettingsModel):
        or task names."""
     _isGroup = True
     enabled: bool = True
-    optional: bool = Field(False, title="Optional")
-    active: bool = Field(True, title="Active")
+    optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
-    frame_check_filter: list[str] = Field(
+    frame_check_filter: list[str] = SettingsField(
         default_factory=list,
         title="Skip Frame check for Assets with name containing"
     )
 
-    skip_resolution_check: list[str] = Field(
+    skip_resolution_check: list[str] = SettingsField(
         default_factory=list,
         title="Skip Resolution Check for Tasks"
     )
 
-    skip_timelines_check: list[str] = Field(
+    skip_timelines_check: list[str] = SettingsField(
         default_factory=list,
         title="Skip Timeline Check for Tasks"
     )
@@ -55,22 +53,22 @@ class ValidateSceneSettingsPlugin(BaseSettingsModel):
 
 class HarmonyPublishPlugins(BaseSettingsModel):
 
-    CollectPalettes: CollectPalettesPlugin = Field(
+    CollectPalettes: CollectPalettesPlugin = SettingsField(
         title="Collect Palettes",
         default_factory=CollectPalettesPlugin,
     )
 
-    ValidateAudio: ValidateAudioPlugin = Field(
+    ValidateAudio: ValidateAudioPlugin = SettingsField(
         title="Validate Audio",
         default_factory=ValidateAudioPlugin,
     )
 
-    ValidateContainers: ValidateContainersPlugin = Field(
+    ValidateContainers: ValidateContainersPlugin = SettingsField(
         title="Validate Containers",
         default_factory=ValidateContainersPlugin,
     )
 
-    ValidateSceneSettings: ValidateSceneSettingsPlugin = Field(
+    ValidateSceneSettings: ValidateSceneSettingsPlugin = SettingsField(
         title="Validate Scene Settings",
         default_factory=ValidateSceneSettingsPlugin,
     )

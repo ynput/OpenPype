@@ -1333,7 +1333,6 @@ class TrayModulesManager(ModulesManager):
         "user",
         "ftrack",
         "kitsu",
-        "muster",
         "launcher_tool",
         "avalon",
         "clockify",

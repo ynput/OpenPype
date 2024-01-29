@@ -1,44 +1,43 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class CreateWorkfileModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    default_variant: str = Field(title="Default variant")
-    default_variants: list[str] = Field(
+    enabled: bool = SettingsField(True)
+    default_variant: str = SettingsField(title="Default variant")
+    default_variants: list[str] = SettingsField(
         default_factory=list, title="Default variants")
 
 
 class CreateReviewModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    active_on_create: bool = Field(True, title="Active by default")
-    default_variant: str = Field(title="Default variant")
-    default_variants: list[str] = Field(
+    enabled: bool = SettingsField(True)
+    active_on_create: bool = SettingsField(True, title="Active by default")
+    default_variant: str = SettingsField(title="Default variant")
+    default_variants: list[str] = SettingsField(
         default_factory=list, title="Default variants")
 
 
 class CreateRenderSceneModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    active_on_create: bool = Field(True, title="Active by default")
-    mark_for_review: bool = Field(True, title="Review by default")
-    default_pass_name: str = Field(title="Default beauty pass")
-    default_variant: str = Field(title="Default variant")
-    default_variants: list[str] = Field(
+    enabled: bool = SettingsField(True)
+    active_on_create: bool = SettingsField(True, title="Active by default")
+    mark_for_review: bool = SettingsField(True, title="Review by default")
+    default_pass_name: str = SettingsField(title="Default beauty pass")
+    default_variant: str = SettingsField(title="Default variant")
+    default_variants: list[str] = SettingsField(
         default_factory=list, title="Default variants")
 
 
 class CreateRenderLayerModel(BaseSettingsModel):
-    mark_for_review: bool = Field(True, title="Review by default")
-    default_pass_name: str = Field(title="Default beauty pass")
-    default_variant: str = Field(title="Default variant")
-    default_variants: list[str] = Field(
+    mark_for_review: bool = SettingsField(True, title="Review by default")
+    default_pass_name: str = SettingsField(title="Default beauty pass")
+    default_variant: str = SettingsField(title="Default variant")
+    default_variants: list[str] = SettingsField(
         default_factory=list, title="Default variants")
 
 
 class CreateRenderPassModel(BaseSettingsModel):
-    mark_for_review: bool = Field(True, title="Review by default")
-    default_variant: str = Field(title="Default variant")
-    default_variants: list[str] = Field(
+    mark_for_review: bool = SettingsField(True, title="Review by default")
+    default_variant: str = SettingsField(title="Default variant")
+    default_variants: list[str] = SettingsField(
         default_factory=list, title="Default variants")
 
 
@@ -58,35 +57,39 @@ class AutoDetectCreateRenderModel(BaseSettingsModel):
     Would create group names "L010", "L020", ...
     """
 
-    enabled: bool = Field(True)
-    allow_group_rename: bool = Field(title="Allow group rename")
-    group_name_template: str = Field(title="Group name template")
-    group_idx_offset: int = Field(1, title="Group index Offset", ge=1)
-    group_idx_padding: int = Field(4, title="Group index Padding", ge=1)
+    enabled: bool = SettingsField(True)
+    allow_group_rename: bool = SettingsField(title="Allow group rename")
+    group_name_template: str = SettingsField(title="Group name template")
+    group_idx_offset: int = SettingsField(
+        1, title="Group index Offset", ge=1
+    )
+    group_idx_padding: int = SettingsField(
+        4, title="Group index Padding", ge=1
+    )
 
 
 class CreatePluginsModel(BaseSettingsModel):
-    create_workfile: CreateWorkfileModel = Field(
+    create_workfile: CreateWorkfileModel = SettingsField(
         default_factory=CreateWorkfileModel,
         title="Create Workfile"
     )
-    create_review: CreateReviewModel = Field(
+    create_review: CreateReviewModel = SettingsField(
         default_factory=CreateReviewModel,
         title="Create Review"
     )
-    create_render_scene: CreateRenderSceneModel = Field(
+    create_render_scene: CreateRenderSceneModel = SettingsField(
         default_factory=CreateReviewModel,
         title="Create Render Scene"
     )
-    create_render_layer: CreateRenderLayerModel= Field(
+    create_render_layer: CreateRenderLayerModel = SettingsField(
         default_factory=CreateRenderLayerModel,
         title="Create Render Layer"
     )
-    create_render_pass: CreateRenderPassModel = Field(
+    create_render_pass: CreateRenderPassModel = SettingsField(
         default_factory=CreateRenderPassModel,
         title="Create Render Pass"
     )
-    auto_detect_render: AutoDetectCreateRenderModel = Field(
+    auto_detect_render: AutoDetectCreateRenderModel = SettingsField(
         default_factory=AutoDetectCreateRenderModel,
         title="Auto-Detect Create Render",
     )
