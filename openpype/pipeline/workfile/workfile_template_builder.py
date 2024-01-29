@@ -778,7 +778,7 @@ class AbstractTemplateBuilder(object):
         )
 
     def get_template_preset(self):
-        """Unified way how template preset is received usign settings.
+        """Unified way how template preset is received using settings.
 
         Method is dependent on '_get_build_profiles' which should return filter
         profiles to resolve path to a template. Default implementation looks
@@ -786,7 +786,9 @@ class AbstractTemplateBuilder(object):
         - 'project_settings/{host name}/templated_workfile_build/profiles'
 
         Returns:
-            str: Path to a template file with placeholders.
+            dict: Template Preset settings based on current context.
+                Including path to a template file with placeholders,
+                keep placeholder boolean, create first version boolean.
 
         Raises:
             TemplateProfileNotFound: When profiles are not filled.
