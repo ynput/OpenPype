@@ -223,9 +223,11 @@ class BatchPublisherController(object):
                     representation_name)
                 product_items[filepath] = product_item
 
-        # Walk the entire directory structure again and look for product items to add.
-        # This time we try to find
-        for root, dirs, filenames in os.walk(directory, topdown=False):
+        # Walk the entire directory structure again
+        # and look for product items to add.
+        # This time we are looking for product types
+        # by PRODUCT_TYPE_TO_EXT_MAP
+        for root, _dirs, filenames in os.walk(directory, topdown=False):
             for filename in filenames:
                 filepath = os.path.join(root, filename)
                 if filepath in product_items:
@@ -237,7 +239,8 @@ class BatchPublisherController(object):
                 representation_name = EXT_TO_REP_NAME_MAP.get(extension)
                 if not representation_name:
                     representation_name = extension.lstrip(".")
-                for _product_type, extensions in PRODUCT_TYPE_TO_EXT_MAP.items():
+                for _product_type, extensions in \
+                        PRODUCT_TYPE_TO_EXT_MAP.items():
                     if extension in extensions:
                         product_type = _product_type
                         break
