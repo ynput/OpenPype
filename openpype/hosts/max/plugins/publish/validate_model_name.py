@@ -15,9 +15,11 @@ from openpype.pipeline.publish import (
 
 class ValidateModelName(pyblish.api.InstancePlugin,
                         OptionalPyblishPluginMixin):
-    """Validate name of model
+    """Validate Model Name
+    Validation regex is (?P<subset>.*)_(GEO) by default.
+    e.g. (subset_name)_GEO should be your model name
 
-    starts with (somename)_###_(materialID)_GEO
+    starts with (somename)_GEO
 
     """
     optional = True
@@ -45,7 +47,6 @@ class ValidateModelName(pyblish.api.InstancePlugin,
     @classmethod
     def get_invalid_model_name(cls, instance, name):
         invalid = []
-
         regex = cls.regex
         reg = re.compile(regex)
         matched_name = reg.match(name)
