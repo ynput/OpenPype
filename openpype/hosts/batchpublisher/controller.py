@@ -1,3 +1,4 @@
+import collections
 import glob
 import os
 
@@ -12,22 +13,26 @@ from openpype.hosts.batchpublisher import publish
 # List that contains dictionary including glob statement to check for match.
 # If filepath matches then it becomes product type.
 # TODO: add to OpenPype settings so other studios can change
-FILE_MAPPINGS = [
+GLOB_SEARCH_TO_PRODUCT_INFO_MAP = [
     {
         "glob": "*/fbx/*.fbx",
         "is_sequence": False,
         "product_type": "model",
+        "representation_name": "fbx"
     },
     {
         "glob": "*/ma/*.ma",
         "is_sequence": False,
         "product_type": "model",
+        "representation_name": "maya"
     },
 ]
 
-# Dictionary that maps the extension name to the representation name
-# we want to use for it
-EXT_TO_REP_NAME = {
+# Dictionary that maps the extension name to the representation name.
+# We only use this as fallback if
+# GLOB_SEARCH_TO_PRODUCT_INFO_MAP doesn't match any glob statement.
+# TODO: add to OpenPype settings so other studios can change
+EXT_TO_REP_NAME_MAP = {
     ".nk": "nuke",
     ".ma": "maya",
     ".mb": "maya",
@@ -35,6 +40,20 @@ EXT_TO_REP_NAME = {
     ".sfx": "silhouette",
     ".mocha": "mocha",
     ".psd": "photoshop"
+}
+
+# Dictionary that maps the product type (family) to file extensions
+# We only use this as fallback if
+# GLOB_SEARCH_TO_PRODUCT_INFO_MAP doesn't match any glob statement.
+# TODO: add to OpenPype settings so other studios can change
+PRODUCT_TYPE_TO_EXT_MAP = {
+    "render": {".exr", ".dpx", ".tif", ".tiff", ".jpg", ".jpeg"},
+    "pointcache": {".abc"},
+    "camera": {".abc", ".fbx"},
+    "reference": {".mov", ".mp4", ".mxf", ".avi", ".wmv"},
+    "workfile": {".nk", ".ma", ".mb", ".hip", ".sfx", ".mocha", ".psd"},
+    "distortion": {".nk", ".exr"},
+    "color_grade": {".ccc", ".cc"},
 }
 
 
@@ -174,23 +193,27 @@ class BatchPublisherController(object):
         Returns:
             list[ProductItem]: List of ingest files for the given directory
         """
-        product_items = []
+        product_items = collections.OrderedDict()
         if not directory or not os.path.exists(directory):
             return product_items
         # project_name = self._selected_project_name
         # project_settings = get_project_settings(project_name)
         # file_mappings = project_settings["batchpublisher"].get(
         #     "file_mappings", [])
-        file_mappings = FILE_MAPPINGS
+        file_mappings = GLOB_SEARCH_TO_PRODUCT_INFO_MAP
         for file_mapping in file_mappings:
             product_type = file_mapping["product_type"]
             glob_full_path = directory + "/" + file_mapping["glob"]
+            representation_name = file_mapping.get("representation_name")
             files = glob.glob(glob_full_path, recursive=False)
             for filepath in files:
+                if filepath in product_items:
+                    continue
                 filename = os.path.basename(filepath)
                 product_name, extension = os.path.splitext(filename)
                 # Create representation name from extension
-                representation_name = EXT_TO_REP_NAME.get(extension)
+                representation_name = representation_name or \
+                    EXT_TO_REP_NAME_MAP.get(extension)
                 if not representation_name:
                     representation_name = extension.lstrip(".")
                 product_item = ProductItem(
@@ -198,8 +221,36 @@ class BatchPublisherController(object):
                     product_type,
                     product_name,
                     representation_name)
-                product_items.append(product_item)
-        return product_items
+                product_items[filepath] = product_item
+
+        # Walk the entire directory structure again and look for product items to add.
+        # This time we try to find
+        for root, dirs, filenames in os.walk(directory, topdown=False):
+            for filename in filenames:
+                filepath = os.path.join(root, filename)
+                if filepath in product_items:
+                    continue
+                product_type = None
+                filename = os.path.basename(filepath)
+                product_name, extension = os.path.splitext(filename)
+                # Create representation name from extension
+                representation_name = EXT_TO_REP_NAME_MAP.get(extension)
+                if not representation_name:
+                    representation_name = extension.lstrip(".")
+                for _product_type, extensions in PRODUCT_TYPE_TO_EXT_MAP.items():
+                    if extension in extensions:
+                        product_type = _product_type
+                        break
+                if not product_type:
+                    continue
+                product_item = ProductItem(
+                    filepath,
+                    product_type,
+                    product_name,
+                    representation_name)
+                product_items[filepath] = product_item
+
+        return list(product_items.values())
 
     def publish_product_items(self, product_items):
         """
