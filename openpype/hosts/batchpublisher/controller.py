@@ -62,8 +62,8 @@ class ProductItem(object):
         self,
         filepath,
         product_type,
-        product_name,
         representation_name,
+        product_name=None,
         version=None,
         comment=None,
         enabled=True,
@@ -79,6 +79,22 @@ class ProductItem(object):
         self.folder_path = folder_path
         self.comment = comment
         self.task_name = task_name
+
+        self.derive_product_name()
+
+    def derive_product_name(self):
+        filename = os.path.basename(self.filepath)
+        filename_no_ext, extension = os.path.splitext(filename)
+        # Exclude possible frame in product name
+        product_name = filename_no_ext.split(".")[0]
+        product_name, _extension = os.path.splitext(filename)
+        # Add the product type as prefix to product name
+        if product_name.startswith("_"):
+            product_name = self.product_type + product_name
+        else:
+            product_name = self.product_type + "_" + product_name
+        self.product_name = product_name
+        return self.product_name
 
     @property
     def defined(self):
@@ -210,7 +226,7 @@ class BatchPublisherController(object):
                 if filepath in product_items:
                     continue
                 filename = os.path.basename(filepath)
-                product_name, extension = os.path.splitext(filename)
+                _filename_no_ext, extension = os.path.splitext(filename)
                 # Create representation name from extension
                 representation_name = representation_name or \
                     EXT_TO_REP_NAME_MAP.get(extension)
@@ -219,7 +235,6 @@ class BatchPublisherController(object):
                 product_item = ProductItem(
                     filepath,
                     product_type,
-                    product_name,
                     representation_name)
                 product_items[filepath] = product_item
 
@@ -232,13 +247,9 @@ class BatchPublisherController(object):
                 filepath = os.path.join(root, filename)
                 if filepath in product_items:
                     continue
-                product_type = None
                 filename = os.path.basename(filepath)
-                product_name, extension = os.path.splitext(filename)
-                # Create representation name from extension
-                representation_name = EXT_TO_REP_NAME_MAP.get(extension)
-                if not representation_name:
-                    representation_name = extension.lstrip(".")
+                _filename_no_ext, extension = os.path.splitext(filename)
+                product_type = None
                 for _product_type, extensions in \
                         PRODUCT_TYPE_TO_EXT_MAP.items():
                     if extension in extensions:
@@ -246,10 +257,13 @@ class BatchPublisherController(object):
                         break
                 if not product_type:
                     continue
+                # Create representation name from extension
+                representation_name = EXT_TO_REP_NAME_MAP.get(extension)
+                if not representation_name:
+                    representation_name = extension.lstrip(".")
                 product_item = ProductItem(
                     filepath,
                     product_type,
-                    product_name,
                     representation_name)
                 product_items[filepath] = product_item
 

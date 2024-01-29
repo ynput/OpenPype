@@ -85,6 +85,13 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                 # Product type might also be reset to None.
                 if value is None or value in integrate.IntegrateAsset.families:
                     product_item.product_type = value
+                    # Update the product name based on product type
+                    product_item.derive_product_name()
+                    roles = [QtCore.Qt.DisplayRole]
+                    self.dataChanged.emit(
+                        self.index(row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
+                        self.index(row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
+                        roles)
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
                 product_item.product_name = value
             elif column == BatchPublisherModel.COLUMN_OF_REPRESENTATION:
