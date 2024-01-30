@@ -90,7 +90,6 @@ class ProductItem(object):
         filename_no_ext, extension = os.path.splitext(filename)
         # Exclude possible frame in product name
         product_name = filename_no_ext.split(".")[0]
-        product_name, _extension = os.path.splitext(product_name)
         # Add the product type as prefix to product name
         if product_name.startswith("_"):
             product_name = self.product_type + product_name
