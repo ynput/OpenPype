@@ -73,7 +73,7 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
 
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
-        profile = get_deadline_job_settings(project_settings, self.log)
+        profile = get_deadline_job_settings(project_settings, "maya", self.log)
         if profile:
             default_machine_limit = profile.get("limit_machines", 0)
             default_limit_groups = profile.get("limit_plugins", [])

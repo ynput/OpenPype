@@ -27,7 +27,7 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         # deadline.publish.CollectDeadlinePools
-        profile = get_deadline_job_settings(project_settings, cls.log)
+        profile = get_deadline_job_settings(project_settings, "maya", cls.log)
         if profile:
             cls.primary_pool = profile.get("primary_pool", cls.primary_pool)
             cls.secondary_pool = profile.get(

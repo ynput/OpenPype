@@ -125,7 +125,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
-        profile = get_deadline_job_settings(project_settings, cls.log)
+        profile = get_deadline_job_settings(project_settings, "maya", cls.log)
         if profile:
             cls.priority = profile.get("priority", cls.priority)
 
@@ -187,7 +187,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
-
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
         job_info.Comment = context.data.get("comment")

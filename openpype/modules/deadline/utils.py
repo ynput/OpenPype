@@ -80,13 +80,13 @@ def get_deadline_limit_groups(deadline_enabled, deadline_url, log):
     return limit_groups
 
 
-def get_deadline_job_settings(project_settings, log):
+def get_deadline_job_settings(project_settings, host, log):
     settings = project_settings["deadline"]["DefaultJobSettings"] # noqa
     task = get_current_task_name()
     profile = None
 
     filtering_criteria = {
-        "hosts": "maya",
+        "hosts": host,
         "task_types": task
     }
     if settings.get("profiles"):
