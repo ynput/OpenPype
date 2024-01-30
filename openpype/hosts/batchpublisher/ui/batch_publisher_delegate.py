@@ -24,7 +24,6 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             accepted, _project_name, folder_path, task_name = \
                 self._on_choose_context(ingest_file.folder_path)
             if accepted and folder_path:
-                product_items = model.get_product_items()
                 for _index in view.selectedIndexes():
                     model.setData(
                         model.index(_index.row(), model.COLUMN_OF_FOLDER),
@@ -164,7 +163,6 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
         dialog._project_combobox.hide()
         dialog.set_context(
             project_name=project_name)
-            # asset_name=folder_path)
         accepted = dialog.exec_()
         if accepted:
             context = dialog.get_context()
@@ -173,7 +171,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             # AYON version of dialog stores the folder path
             folder_path = context.get("folder_path")
             if folder_path:
-                # Folder path returned by ContextDialog is missing slash at front
+                # Folder path returned by ContextDialog is missing slash
                 folder_path = "/" + folder_path
             folder_path = folder_path or asset
             task_name = context["task"]
