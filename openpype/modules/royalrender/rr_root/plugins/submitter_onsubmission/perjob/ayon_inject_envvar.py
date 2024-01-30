@@ -107,7 +107,11 @@ class InjectEnvironment:
                 "envgroup": "farm"}
 
     def _get_job_environments(self):
-        """Gets environments set on job."""
+        """Gets environments set on job.
+
+        It seems that it is not possible to query "rrEnvList" on job directly,
+        it must be parsed from .json document.
+        """
         job = rr.getJob()
         env_list = job.customData_Str('rrEnvList')
         envs = {}
@@ -157,7 +161,7 @@ class InjectEnvironment:
             "AYON_API_KEY": os.environ["AYON_API_KEY"],
             "AYON_BUNDLE_NAME": job_envs["AYON_BUNDLE_NAME"],
         }
-
+        logs.append("Ayon launch environments:: {}".format(ayon_environment))
         environment = os.environ.copy()
         environment.update(ayon_environment)
         return environment
