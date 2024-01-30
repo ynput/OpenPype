@@ -12,6 +12,7 @@ from openpype.pipeline.workfile.workfile_template_builder import (
 )
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
+    open_template_ui
 )
 
 from .lib import read, imprint, get_reference_node, get_main_window
@@ -342,8 +343,7 @@ def update_workfile_template(*args):
 
 
 def open_template(*args):
-    builder = MayaTemplateBuilder(registered_host())
-    builder.open_template()
+    open_template_ui(MayaTemplateBuilder(registered_host()), get_main_window())
 
 
 def create_placeholder(*args):

@@ -21,8 +21,8 @@ class Window(QtWidgets.QWidget):
             self._warning()
         elif self.level == "critical":
             self._critical()
-        elif self.level == "ask":
-            self._ask()
+        elif self.level == "question":
+            self._question()
 
     def _info(self):
         self.setWindowTitle(self.title)
@@ -43,7 +43,7 @@ class Window(QtWidgets.QWidget):
         if rc:
             self.exit()
 
-    def _ask(self):
+    def _question(self):
         self.answer = None
         rc = QtWidgets.QMessageBox.question(
             self,
@@ -92,7 +92,7 @@ def message(title=None, message=None, level="info", parent=None):
         # skip all possible issues that may happen feature is not crutial
         log.warning("Couldn't center message.", exc_info=True)
 
-    if level == "ask":
+    if level == "question":
         return ex.answer
 
 
