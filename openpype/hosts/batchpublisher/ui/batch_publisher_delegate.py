@@ -18,32 +18,52 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
         ingest_file = model.get_product_items()[index.row()]
 
         if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
-            # clear the folder
-            model.setData(index, None, QtCore.Qt.EditRole)
-            # clear the task
-            model.setData(
-                model.index(index.row(), BatchPublisherModel.COLUMN_OF_TASK),
-                None,
-                QtCore.Qt.EditRole)
-            treeview = QtWidgets.QTreeView()
-            treeview.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
-            treeview.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
-            treeview.setSelectionMode(QtWidgets.QTreeView.SingleSelection)
-            treeview.setItemsExpandable(True)
-            treeview.header().setVisible(False)
-            treeview.setMinimumHeight(250)
-            editor = ComboBox(parent)
-            editor.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
-            editor.setView(treeview)
-            model = QtGui.QStandardItemModel()
-            editor.setModel(model)
-            self._fill_model_with_hierarchy(model)
-            editor.view().expandAll()
-            # editor.showPopup()
-            # editor = QtWidgets.QLineEdit(parent)
-            # completer = QtWidgets.QCompleter(self._folder_names, self)
-            # completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-            # editor.setCompleter(completer)
+            editor = None
+            view = parent.parent()
+            # NOTE: Project name has been disabled to change from this dialog
+            accepted, _project_name, folder_path, task_name = \
+                self._on_choose_context(ingest_file.folder_path)
+            if accepted and folder_path:
+                product_items = model.get_product_items()
+                for _index in view.selectedIndexes():
+                    model.setData(
+                        model.index(_index.row(), model.COLUMN_OF_FOLDER),
+                        folder_path,
+                        QtCore.Qt.EditRole)
+                    if task_name:
+                        model.setData(
+                            model.index(_index.row(), model.COLUMN_OF_TASK),
+                            task_name,
+                            QtCore.Qt.EditRole)
+            # editor = QtWidgets.QPushButton()
+            # editor.setText(folder_path)
+            # view.closePersistentEditor(index)
+            # # clear the folder
+            # model.setData(index, None, QtCore.Qt.EditRole)
+            # # clear the task
+            # model.setData(
+            #     model.index(index.row(), BatchPublisherModel.COLUMN_OF_TASK),
+            #     None,
+            #     QtCore.Qt.EditRole)
+            # treeview = QtWidgets.QTreeView()
+            # treeview.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+            # treeview.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
+            # treeview.setSelectionMode(QtWidgets.QTreeView.SingleSelection)
+            # treeview.setItemsExpandable(True)
+            # treeview.header().setVisible(False)
+            # treeview.setMinimumHeight(250)
+            # editor = ComboBox(parent)
+            # editor.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+            # editor.setView(treeview)
+            # model = QtGui.QStandardItemModel()
+            # editor.setModel(model)
+            # self._fill_model_with_hierarchy(model)
+            # editor.view().expandAll()
+            # # editor.showPopup()
+            # # editor = QtWidgets.QLineEdit(parent)
+            # # completer = QtWidgets.QCompleter(self._folder_names, self)
+            # # completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+            # # editor.setCompleter(completer)
             return editor
 
         elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
@@ -72,15 +92,15 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
         #     index)
 
     def setEditorData(self, editor, index):
-        if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
-            editor.blockSignals(True)
-            value = index.data(QtCore.Qt.DisplayRole)
-            # self._apply_asset_path_to_combo_box(editor, value)
-            # Lets return the QComboxBox back to unselected state
-            editor.setRootModelIndex(QtCore.QModelIndex())
-            editor.setCurrentIndex(-1)
-            editor.blockSignals(False)
-        elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
+        # if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
+        #     editor.blockSignals(True)
+        #     # value = index.data(QtCore.Qt.DisplayRole)
+        #     # editor.setText(value)
+        #     # Lets return the QComboxBox back to unselected state
+        #     editor.setRootModelIndex(QtCore.QModelIndex())
+        #     editor.setCurrentIndex(-1)
+        #     editor.blockSignals(False)
+        if index.column() == BatchPublisherModel.COLUMN_OF_TASK:
             editor.blockSignals(True)
             value = index.data(QtCore.Qt.DisplayRole)
             row = editor.findText(value)
@@ -95,12 +115,13 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
     def setModelData(self, editor, model, index):
         model = index.model()
-        if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
-            value = editor.model().data(
-                editor.view().currentIndex(),
-                FOLDER_PATH_ROLE)
-            model.setData(index, value, QtCore.Qt.EditRole)
-        elif index.column() == BatchPublisherModel.COLUMN_OF_TASK:
+        # if index.column() == BatchPublisherModel.COLUMN_OF_FOLDER:
+        #     # value = editor.text()
+        #     value = editor.model().data(
+        #         editor.view().currentIndex(),
+        #         FOLDER_PATH_ROLE)
+        #     model.setData(index, value, QtCore.Qt.EditRole)
+        if index.column() == BatchPublisherModel.COLUMN_OF_TASK:
             value = editor.currentText()
             model.setData(index, value, QtCore.Qt.EditRole)
         elif index.column() == BatchPublisherModel.COLUMN_OF_PRODUCT_TYPE:
@@ -135,6 +156,29 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
             if new_rows:
                 parent_item.appendRows(new_rows)
+
+    def _on_choose_context(self, folder_path):
+        from openpype.tools.context_dialog import ContextDialog
+        project_name = self._controller.get_selected_project_name()
+        dialog = ContextDialog()
+        dialog._project_combobox.hide()
+        dialog.set_context(
+            project_name=project_name)
+            # asset_name=folder_path)
+        accepted = dialog.exec_()
+        if accepted:
+            context = dialog.get_context()
+            project = context["project"]
+            asset = context["asset"]
+            # AYON version of dialog stores the folder path
+            folder_path = context.get("folder_path")
+            if folder_path:
+                # Folder path returned by ContextDialog is missing slash at front
+                folder_path = "/" + folder_path
+            folder_path = folder_path or asset
+            task_name = context["task"]
+            return accepted, project, folder_path, task_name
+        return accepted, None, None, None
 
 
 class ComboBox(QtWidgets.QComboBox):
