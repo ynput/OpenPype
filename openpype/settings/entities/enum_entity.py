@@ -1,12 +1,9 @@
 import abc
-import six
 import copy
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
 from .lib import NOT_SET, STRING_TYPE
 
-from openpype.modules.deadline import get_deadline_limit_groups
-from openpype.pipeline.context_tools import _get_modules_manager
 from openpype.settings import get_system_settings
 
 
@@ -561,6 +558,9 @@ class DeadlinePluginLimitEnumEntity(BaseEnumEntity):
         self.placeholder = None
 
     def _get_enum_values(self):
+        # Import here to avoid circular import
+        from openpype.modules.deadline import get_deadline_limit_groups
+
         modules_system_settings = get_system_settings()["modules"]
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")  # noqa
