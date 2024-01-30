@@ -16,8 +16,10 @@ from openpype.lib import (
     NumberDef,
     EnumDef
 )
-from openpype.pipeline.context_tools import _get_modules_manager
-from openpype_modules.deadline import get_deadline_job_settings
+from openpype_modules.deadline import (
+    get_deadline_job_settings,
+    get_deadline_limit_groups
+)
 
 
 class CreateRenderlayer(plugin.RenderlayerCreator):
@@ -67,8 +69,8 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
 
-        limit_groups = self._get_limit_groups(
-            deadline_enabled, deadline_url
+        limit_groups = get_deadline_limit_groups(
+            deadline_enabled, deadline_url, self.log
         )
 
         project_name = get_current_project_name()
@@ -140,19 +142,3 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
                     default=self.render_settings.get("enable_all_lights",
                                                      False))
         ]
-
-    def _get_limit_groups(self, deadline_enabled, deadline_url):
-        manager = _get_modules_manager()
-        deadline_module = manager.modules_by_name["deadline"]
-
-        limit_groups = []
-        if deadline_enabled:
-            requested_arguments = {"NamesOnly": True}
-            limit_groups = deadline_module.get_deadline_data(
-                deadline_url,
-                "limitgroups",
-                log=self.log,
-                **requested_arguments
-            )
-
-        return limit_groups
