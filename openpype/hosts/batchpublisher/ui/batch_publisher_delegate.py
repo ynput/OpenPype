@@ -34,9 +34,6 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
                             model.index(_index.row(), model.COLUMN_OF_TASK),
                             task_name,
                             QtCore.Qt.EditRole)
-            # editor = QtWidgets.QPushButton()
-            # editor.setText(folder_path)
-            # view.closePersistentEditor(index)
             # # clear the folder
             # model.setData(index, None, QtCore.Qt.EditRole)
             # # clear the task
