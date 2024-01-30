@@ -3,6 +3,7 @@ import re
 import copy
 import json
 import shutil
+import subprocess
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -11,7 +12,7 @@ import speedcopy
 import pyblish.api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     filter_profiles,
     path_to_subprocess_arg,
     run_subprocess,
@@ -20,10 +21,15 @@ from openpype.lib.transcoding import (
     IMAGE_EXTENSIONS,
     get_ffprobe_streams,
     should_convert_for_ffmpeg,
+    get_review_layer_name,
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory,
 )
-from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish import (
+    KnownPublishError,
+    get_publish_instance_label,
+)
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -45,6 +51,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "maya",
         "blender",
         "houdini",
+        "max",
         "shell",
         "hiero",
         "premiere",
@@ -61,14 +68,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
     ]
 
     # Supported extensions
-    image_exts = ["exr", "jpg", "jpeg", "png", "dpx"]
+    image_exts = ["exr", "jpg", "jpeg", "png", "dpx", "tga"]
     video_exts = ["mov", "mp4"]
     supported_exts = image_exts + video_exts
 
     alpha_exts = ["exr", "png", "dpx"]
-
-    # FFmpeg tools paths
-    ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
     # Preset attributes
     profiles = None
@@ -85,15 +89,25 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Make sure cleanup happens and pop representations with "delete" tag.
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            if "delete" in tags and "thumbnail" not in tags:
-                instance.data["representations"].remove(repre)
+            # Representation is not marked to be deleted
+            if "delete" not in tags:
+                continue
+
+            # The representation can be used as thumbnail source
+            if "thumbnail" in tags or "need_thumbnail" in tags:
+                continue
+
+            self.log.debug(
+                "Removing representation: {}".format(repre)
+            )
+            instance.data["representations"].remove(repre)
 
     def _get_outputs_for_instance(self, instance):
         host_name = instance.context.data["hostName"]
         family = self.main_family_from_instance(instance)
 
-        self.log.info("Host: \"{}\"".format(host_name))
-        self.log.info("Family: \"{}\"".format(family))
+        self.log.debug("Host: \"{}\"".format(host_name))
+        self.log.debug("Family: \"{}\"".format(family))
 
         profile = filter_profiles(
             self.profiles,
@@ -139,7 +153,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             custom_tags = repre.get("custom_tags")
             if "review" not in tags:
                 self.log.debug((
-                    "Repre: {} - Didn't found \"review\" in tags. Skipping"
+                    "Repre: {} - Didn't find \"review\" in tags. Skipping"
                 ).format(repre_name))
                 continue
 
@@ -202,17 +216,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return filtered_defs
 
-    @staticmethod
-    def get_instance_label(instance):
-        return (
-            getattr(instance, "label", None)
-            or instance.data.get("label")
-            or instance.data.get("name")
-            or str(instance)
-        )
-
     def main_process(self, instance):
-        instance_label = self.get_instance_label(instance)
+        instance_label = get_publish_instance_label(instance)
         self.log.debug("Processing instance \"{}\"".format(instance_label))
         profile_outputs = self._get_outputs_for_instance(instance)
         if not profile_outputs:
@@ -272,6 +277,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 ))
                 continue
 
+            layer_name = get_review_layer_name(first_input_path)
+
             # Do conversion if needed
             #   - change staging dir of source representation
             #   - must be set back after output definitions processing
@@ -290,7 +297,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     instance,
                     repre,
                     src_repre_staging_dir,
-                    filtered_output_defs
+                    filtered_output_defs,
+                    layer_name
                 )
 
             finally:
@@ -304,7 +312,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         shutil.rmtree(new_staging_dir)
 
     def _render_output_definitions(
-        self, instance, repre, src_repre_staging_dir, output_definitions
+        self,
+        instance,
+        repre,
+        src_repre_staging_dir,
+        output_definitions,
+        layer_name
     ):
         fill_data = copy.deepcopy(instance.data["anatomyData"])
         for _output_def in output_definitions:
@@ -318,19 +331,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # Create copy of representation
             new_repre = copy.deepcopy(repre)
+            new_tags = new_repre.get("tags") or []
             # Make sure new representation has origin staging dir
             #   - this is because source representation may change
             #       it's staging dir because of ffmpeg conversion
             new_repre["stagingDir"] = src_repre_staging_dir
 
             # Remove "delete" tag from new repre if there is
-            if "delete" in new_repre["tags"]:
-                new_repre["tags"].remove("delete")
+            if "delete" in new_tags:
+                new_tags.remove("delete")
+
+            if "need_thumbnail" in new_tags:
+                new_tags.remove("need_thumbnail")
 
             # Add additional tags from output definition to representation
             for tag in output_def["tags"]:
-                if tag not in new_repre["tags"]:
-                    new_repre["tags"].append(tag)
+                if tag not in new_tags:
+                    new_tags.append(tag)
+
+            # Return tags to new representation
+            new_repre["tags"] = new_tags
 
             # Add burnin link from output definition to representation
             for burnin in output_def["burnins"]:
@@ -351,7 +371,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             temp_data = self.prepare_temp_data(instance, repre, output_def)
             files_to_clean = []
             if temp_data["input_is_sequence"]:
-                self.log.info("Filling gaps in sequence.")
+                self.log.debug("Checking sequence to fill gaps in sequence..")
                 files_to_clean = self.fill_sequence_gaps(
                     files=temp_data["origin_repre"]["files"],
                     staging_dir=new_repre["stagingDir"],
@@ -376,7 +396,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             try:  # temporary until oiiotool is supported cross platform
                 ffmpeg_args = self._ffmpeg_arguments(
-                    output_def, instance, new_repre, temp_data, fill_data
+                    output_def,
+                    instance,
+                    new_repre,
+                    temp_data,
+                    fill_data,
+                    layer_name,
                 )
             except ZeroDivisionError:
                 # TODO recalculate width and height using OIIO before
@@ -424,6 +449,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "Adding new representation: {}".format(new_repre)
             )
             instance.data["representations"].append(new_repre)
+
+            add_repre_files_for_cleanup(instance, new_repre)
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""
@@ -535,7 +562,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
         }
 
     def _ffmpeg_arguments(
-        self, output_def, instance, new_repre, temp_data, fill_data
+        self,
+        output_def,
+        instance,
+        new_repre,
+        temp_data,
+        fill_data,
+        layer_name
     ):
         """Prepares ffmpeg arguments for expected extraction.
 
@@ -602,6 +635,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
 
         duration_seconds = float(output_frames_len / temp_data["fps"])
+
+        # Define which layer should be used
+        if layer_name:
+            ffmpeg_input_args.extend(["-layer", layer_name])
 
         if temp_data["input_is_sequence"]:
             # Set start frame of input sequence (just frame in filename)
@@ -789,8 +826,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     arg = arg.replace(identifier, "").strip()
                     audio_filters.append(arg)
 
-        all_args = []
-        all_args.append(path_to_subprocess_arg(self.ffmpeg_path))
+        all_args = [
+            subprocess.list2cmdline(get_ffmpeg_tool_args("ffmpeg"))
+        ]
         all_args.extend(input_args)
         if video_filters:
             all_args.append("-filter:v")

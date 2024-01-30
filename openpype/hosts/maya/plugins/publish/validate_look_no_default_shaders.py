@@ -2,7 +2,10 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
@@ -37,7 +40,7 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Invalid node relationships found: "
+            raise PublishValidationError("Invalid node relationships found: "
                                "{0}".format(invalid))
 
     @classmethod

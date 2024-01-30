@@ -7,8 +7,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -86,7 +86,7 @@ class LoadImage(load.LoaderPlugin):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname
+        file = self.filepath_from_context(context)
 
         if not file:
             repr_id = context["representation"]["_id"]
@@ -96,7 +96,8 @@ class LoadImage(load.LoaderPlugin):
 
         file = file.replace("\\", "/")
 
-        repr_cont = context["representation"]["context"]
+        representation = context["representation"]
+        repr_cont = representation["context"]
         frame = repr_cont.get("frame")
         if frame:
             padding = len(frame)
@@ -104,25 +105,15 @@ class LoadImage(load.LoaderPlugin):
                 frame,
                 format(frame_number, "0{}".format(padding)))
 
-        name_data = {
-            "asset": repr_cont["asset"],
-            "subset": repr_cont["subset"],
-            "representation": context["representation"]["name"],
-            "ext": repr_cont["representation"],
-            "id": context["representation"]["_id"],
-            "class_name": self.__class__.__name__
-        }
-
-        read_name = self.node_name_template.format(**name_data)
+        read_name = self._get_node_name(representation)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
             r = nuke.createNode(
                 "Read",
-                "name {}".format(read_name))
-
-            # hide property panel
-            r.hideControlPanel()
+                "name {}".format(read_name),
+                inpanel=False
+            )
 
             r["file"].setValue(file)
 
@@ -155,8 +146,6 @@ class LoadImage(load.LoaderPlugin):
                     data_imprint.update(
                         {k: context["version"]['data'].get(k, str(None))})
 
-            data_imprint.update({"objectName": read_name})
-
             r["tile_color"].setValue(int("0x4ecd25ff", 16))
 
             return containerise(r,
@@ -177,7 +166,7 @@ class LoadImage(load.LoaderPlugin):
         inputs:
 
         """
-        node = nuke.toNode(container["objectName"])
+        node = container["node"]
         frame_number = node["first"].value()
 
         assert node.Class() == "Read", "Must be Read"
@@ -202,7 +191,7 @@ class LoadImage(load.LoaderPlugin):
                 format(frame_number, "0{}".format(padding)))
 
         # Get start frame from version data
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]
@@ -246,8 +235,22 @@ class LoadImage(load.LoaderPlugin):
         self.log.info("updated to version: {}".format(version_doc.get("name")))
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         assert node.Class() == "Read", "Must be Read"
 
         with viewer_update_and_undo_stop():
             nuke.delete(node)
+
+    def _get_node_name(self, representation):
+
+        repre_cont = representation["context"]
+        name_data = {
+            "asset": repre_cont["asset"],
+            "subset": repre_cont["subset"],
+            "representation": representation["name"],
+            "ext": repre_cont["representation"],
+            "id": representation["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        return self.node_name_template.format(**name_data)

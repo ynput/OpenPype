@@ -6,6 +6,7 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -30,7 +31,7 @@ class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Invalid nodes %s" % (invalid,))
+            raise PublishValidationError("Invalid nodes %s" % (invalid,))
 
     @staticmethod
     def get_invalid(instance):

@@ -5,6 +5,7 @@ import logging
 import pymongo
 from uuid import uuid4
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import OpenPypeMongoConnection
 
 from . import schema
@@ -61,8 +62,6 @@ def auto_reconnect(func):
 
 
 SESSION_CONTEXT_KEYS = (
-    # Root directory of projects on disk
-    "AVALON_PROJECTS",
     # Name of current Project
     "AVALON_PROJECT",
     # Name of current Asset
@@ -187,7 +186,8 @@ class AvalonMongoDB:
             return
 
         self._installed = True
-        self._database = self.mongo_client[str(os.environ["AVALON_DB"])]
+        if not AYON_SERVER_ENABLED:
+            self._database = self.mongo_client[str(os.environ["AVALON_DB"])]
 
     def uninstall(self):
         """Close any connection to the database"""

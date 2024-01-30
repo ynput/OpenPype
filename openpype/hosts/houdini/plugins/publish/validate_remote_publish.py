@@ -36,11 +36,11 @@ class ValidateRemotePublishOutNode(pyblish.api.ContextPlugin):
         if node.parm("shellexec").eval():
             self.raise_error("Must not execute in shell")
         if node.parm("prerender").eval() != cmd:
-            self.raise_error(("REMOTE_PUBLISH node does not have "
-                              "correct prerender script."))
+            self.raise_error("REMOTE_PUBLISH node does not have "
+                             "correct prerender script.")
         if node.parm("lprerender").eval() != "python":
-            self.raise_error(("REMOTE_PUBLISH node prerender script "
-                              "type not set to 'python'"))
+            self.raise_error("REMOTE_PUBLISH node prerender script "
+                             "type not set to 'python'")
 
     @classmethod
     def repair(cls, context):
@@ -48,5 +48,4 @@ class ValidateRemotePublishOutNode(pyblish.api.ContextPlugin):
         lib.create_remote_publish_node(force=True)
 
     def raise_error(self, message):
-        self.log.error(message)
-        raise PublishValidationError(message, title=self.label)
+        raise PublishValidationError(message)

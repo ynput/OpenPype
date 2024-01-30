@@ -22,6 +22,8 @@ from .pipeline import (
     show_tools_popup,
     instantiate,
     UnrealHost,
+    set_sequence_hierarchy,
+    generate_sequence,
     maintained_selection
 )
 
@@ -41,5 +43,7 @@ __all__ = [
     "show_tools_popup",
     "instantiate",
     "UnrealHost",
+    "set_sequence_hierarchy",
+    "generate_sequence",
     "maintained_selection"
 ]

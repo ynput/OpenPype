@@ -1,13 +1,15 @@
 import re
-from maya import cmds
 
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin, PublishValidationError, ValidateContentsOrder)
 
 
-class ValidateShaderName(pyblish.api.InstancePlugin):
+class ValidateShaderName(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validate shader name assigned.
 
        It should be <assetName>_<*>_SHD
@@ -23,12 +25,14 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
 
     # The default connections to check
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found shapes with invalid shader names "
-                               "assigned: "
-                               "\n{}".format(invalid))
+            raise PublishValidationError(
+                ("Found shapes with invalid shader names "
+                 "assigned:\n{}").format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):
@@ -47,7 +51,7 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
 
         descendants = cmds.ls(descendants, noIntermediate=True, long=True)
         shapes = cmds.ls(descendants, type=["nurbsSurface", "mesh"], long=True)
-        asset_name = instance.data.get("asset", None)
+        asset_name = instance.data.get("asset")
 
         # Check the number of connected shadingEngines per shape
         regex_compile = re.compile(cls.regex)

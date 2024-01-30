@@ -57,6 +57,18 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
             start_with_handle = comp_start
             end_with_handle = comp_end
 
+        frame = instance.data["creator_attributes"].get("frame")
+        # explicitly publishing only single frame
+        if frame is not None:
+            frame = int(frame)
+
+            start = frame
+            end = frame
+            handle_start = 0
+            handle_end = 0
+            start_with_handle = frame
+            end_with_handle = frame
+
         # Include start and end render frame in label
         subset = instance.data["subset"]
         label = (
@@ -85,5 +97,5 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         # Add review family if the instance is marked as 'review'
         # This could be done through a 'review' Creator attribute.
         if instance.data.get("review", False):
-            self.log.info("Adding review family..")
+            self.log.debug("Adding review family..")
             instance.data["families"].append("review")

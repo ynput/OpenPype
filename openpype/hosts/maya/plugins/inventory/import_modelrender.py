@@ -8,7 +8,7 @@ from openpype.client import (
 from openpype.pipeline import (
     InventoryAction,
     get_representation_context,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
@@ -33,9 +33,9 @@ class ImportModelRender(InventoryAction):
         )
 
     def process(self, containers):
-        from maya import cmds
+        from maya import cmds  # noqa: F401
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         for container in containers:
             con_name = container["objectName"]
             nodes = []
@@ -66,9 +66,9 @@ class ImportModelRender(InventoryAction):
             None
         """
 
-        from maya import cmds
+        from maya import cmds  # noqa: F401
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         repre_docs = get_representations(
             project_name, version_ids=[version_id], fields=["_id", "name"]
         )
@@ -85,12 +85,7 @@ class ImportModelRender(InventoryAction):
             if scene_type_regex.fullmatch(repre_name):
                 look_repres.append(repre_doc)
 
-        # QUESTION should we care if there is more then one look
-        #   representation? (since it's based on regex match)
-        look_repre = None
-        if look_repres:
-            look_repre = look_repres[0]
-
+        look_repre = look_repres[0] if look_repres else None
         # QUESTION shouldn't be json representation validated too?
         if not look_repre:
             print("No model render sets for this model version..")

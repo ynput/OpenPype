@@ -15,7 +15,6 @@ import contextlib
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
-# from colorbleed.maya import lib
 from .lib import pairwise
 
 

@@ -1,20 +1,58 @@
 import os
-import json
+import attr
 import getpass
 from datetime import datetime
 
-import requests
 import pyblish.api
 
-# import hou  ???
-
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, OpenPypePyblishPluginMixin
 from openpype.tests.lib import is_in_tests
-from openpype.lib import is_running_from_build
+from openpype_modules.deadline import abstract_submit_deadline
+from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.lib import (
+    is_running_from_build,
+    BoolDef,
+    NumberDef
+)
 
 
-class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
-    """Submit Solaris USD Render ROPs to Deadline.
+@attr.s
+class DeadlinePluginInfo():
+    SceneFile = attr.ib(default=None)
+    OutputDriver = attr.ib(default=None)
+    Version = attr.ib(default=None)
+    IgnoreInputs = attr.ib(default=True)
+
+
+@attr.s
+class ArnoldRenderDeadlinePluginInfo():
+    InputFile = attr.ib(default=None)
+    Verbose = attr.ib(default=4)
+
+
+@attr.s
+class MantraRenderDeadlinePluginInfo():
+    SceneFile = attr.ib(default=None)
+    Version = attr.ib(default=None)
+
+
+@attr.s
+class VrayRenderPluginInfo():
+    InputFilename = attr.ib(default=None)
+    SeparateFilesPerFrame = attr.ib(default=True)
+
+
+@attr.s
+class RedshiftRenderPluginInfo():
+    SceneFile = attr.ib(default=None)
+    Version = attr.ib(default=None)
+
+
+class HoudiniSubmitDeadline(
+    abstract_submit_deadline.AbstractSubmitDeadline,
+    OpenPypePyblishPluginMixin
+):
+    """Submit Render ROPs to Deadline.
 
     Renders are submitted to a Deadline Web Service as
     supplied via the environment variable AVALON_DEADLINE.
@@ -30,83 +68,149 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     hosts = ["houdini"]
     families = ["usdrender",
-                "redshift_rop"]
+                "redshift_rop",
+                "arnold_rop",
+                "mantra_rop",
+                "karma_rop",
+                "vray_rop"]
     targets = ["local"]
+    use_published = True
 
-    def process(self, instance):
+    # presets
+    priority = 50
+    chunk_size = 1
+    export_priority = 50
+    export_chunk_size = 10
+    group = ""
+    export_group = ""
 
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            NumberDef(
+                "priority",
+                label="Priority",
+                default=cls.priority,
+                decimals=0
+            ),
+            NumberDef(
+                "chunk",
+                label="Frames Per Task",
+                default=cls.chunk_size,
+                decimals=0,
+                minimum=1,
+                maximum=1000
+            ),
+            NumberDef(
+                "export_priority",
+                label="Export Priority",
+                default=cls.priority,
+                decimals=0
+            ),
+            NumberDef(
+                "export_chunk",
+                label="Export Frames Per Task",
+                default=cls.export_chunk_size,
+                decimals=0,
+                minimum=1,
+                maximum=1000
+            ),
+            BoolDef(
+                "suspend_publish",
+                default=False,
+                label="Suspend publish"
+            )
+        ]
+
+    def get_job_info(self, dependency_job_ids=None):
+
+        instance = self._instance
         context = instance.context
-        code = context.data["code"]
+
+        attribute_values = self.get_attr_values_from_data(instance.data)
+
+        # Whether Deadline render submission is being split in two
+        # (extract + render)
+        split_render_job = instance.data.get("splitRender")
+
+        # If there's some dependency job ids we can assume this is a render job
+        # and not an export job
+        is_export_job = True
+        if dependency_job_ids:
+            is_export_job = False
+
+        job_type = "[RENDER]"
+        if split_render_job and not is_export_job:
+            # Convert from family to Deadline plugin name
+            # i.e., arnold_rop -> Arnold
+            plugin = instance.data["family"].replace("_rop", "").capitalize()
+        else:
+            plugin = "Houdini"
+            if split_render_job:
+                job_type = "[EXPORT IFD]"
+
+        job_info = DeadlineJobInfo(Plugin=plugin)
+
         filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
-        comment = context.data.get("comment", "")
-        deadline_user = context.data.get("deadlineUser", getpass.getuser())
-        jobname = "%s - %s" % (filename, instance.name)
+        job_info.Name = "{} - {} {}".format(filename, instance.name, job_type)
+        job_info.BatchName = filename
 
-        # Support code prefix label for batch name
-        batch_name = filename
-        if code:
-            batch_name = "{0} - {1}".format(code, batch_name)
+        job_info.UserName = context.data.get(
+            "deadlineUser", getpass.getuser())
+
+        if split_render_job and is_export_job:
+            job_info.Priority = attribute_values.get(
+                "export_priority", self.export_priority
+            )
+        else:
+            job_info.Priority = attribute_values.get(
+                "priority", self.priority
+            )
 
         if is_in_tests():
-            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
+            job_info.BatchName += datetime.now().strftime("%d%m%Y%H%M%S")
 
-        # Output driver to render
-        driver = instance[0]
-
-        # StartFrame to EndFrame by byFrameStep
+        # Deadline requires integers in frame range
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
         frames = "{start}-{end}x{step}".format(
-            start=int(instance.data["frameStart"]),
-            end=int(instance.data["frameEnd"]),
+            start=int(start),
+            end=int(end),
             step=int(instance.data["byFrameStep"]),
         )
+        job_info.Frames = frames
 
-        # Documentation for keys available at:
-        # https://docs.thinkboxsoftware.com
-        #    /products/deadline/8.0/1_User%20Manual/manual
-        #    /manual-submission.html#job-info-file-options
-        payload = {
-            "JobInfo": {
-                # Top-level group name
-                "BatchName": batch_name,
+        # Make sure we make job frame dependent so render tasks pick up a soon
+        # as export tasks are done
+        if split_render_job and not is_export_job:
+            job_info.IsFrameDependent = True
 
-                # Job name, as seen in Monitor
-                "Name": jobname,
+        job_info.Pool = instance.data.get("primaryPool")
+        job_info.SecondaryPool = instance.data.get("secondaryPool")
+        job_info.Group = self.group
+        if split_render_job and is_export_job:
+            job_info.ChunkSize = attribute_values.get(
+                "export_chunk", self.export_chunk_size
+            )
+        else:
+            job_info.ChunkSize = attribute_values.get(
+                "chunk", self.chunk_size
+            )
 
-                # Arbitrary username, for visualisation in Monitor
-                "UserName": deadline_user,
+        job_info.Comment = context.data.get("comment")
 
-                "Plugin": "Houdini",
-                "Pool": instance.data.get("primaryPool"),
-                "secondaryPool": instance.data.get("secondaryPool"),
-                "Frames": frames,
-
-                "ChunkSize": instance.data.get("chunkSize", 10),
-
-                "Comment": comment
-            },
-            "PluginInfo": {
-                # Input
-                "SceneFile": filepath,
-                "OutputDriver": driver.path(),
-
-                # Mandatory for Deadline
-                # Houdini version without patch number
-                "Version": hou.applicationVersionString().rsplit(".", 1)[0],
-
-                "IgnoreInputs": True
-            },
-
-            # Mandatory for Deadline, may be empty
-            "AuxFiles": []
-        }
-
-        # Include critical environment variables with submission + api.Session
         keys = [
-            # Submit along the current Avalon tool setup that we launched
-            # this application with so the Render Slave can build its own
-            # similar environment using it, e.g. "maya2018;vray4.x;yeti3.1.9"
-            "AVALON_TOOLS"
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "OPENPYPE_SG_USER",
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP_NAME",
+            "OPENPYPE_DEV",
+            "OPENPYPE_LOG_NO_COLORS",
         ]
 
         # Add OpenPype version if we are running from build.
@@ -114,61 +218,97 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
             keys.append("OPENPYPE_VERSION")
 
         # Add mongo url if it's enabled
-        if context.data.get("deadlinePassMongoUrl"):
+        if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
+        for key in keys:
+            value = environment.get(key)
+            if value:
+                job_info.EnvironmentKeyValue[key] = value
 
-        # Include OutputFilename entries
-        # The first entry also enables double-click to preview rendered
-        # frames from Deadline Monitor
-        output_data = {}
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
+
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)
             fname = os.path.basename(filepath)
-            output_data["OutputDirectory%d" % i] = dirname.replace("\\", "/")
-            output_data["OutputFilename%d" % i] = fname
+            job_info.OutputDirectory += dirname.replace("\\", "/")
+            job_info.OutputFilename += fname
 
-            # For now ensure destination folder exists otherwise HUSK
-            # will fail to render the output image. This is supposedly fixed
-            # in new production builds of Houdini
-            # TODO Remove this workaround with Houdini 18.0.391+
-            if not os.path.exists(dirname):
-                self.log.info("Ensuring output directory exists: %s" %
-                              dirname)
-                os.makedirs(dirname)
+        # Add dependencies if given
+        if dependency_job_ids:
+            job_info.JobDependencies = ",".join(dependency_job_ids)
 
-        payload["JobInfo"].update(output_data)
+        return job_info
 
-        self.submit(instance, payload)
+    def get_plugin_info(self, job_type=None):
+        # Not all hosts can import this module.
+        import hou
 
-    def submit(self, instance, payload):
+        instance = self._instance
+        context = instance.context
 
-        AVALON_DEADLINE = legacy_io.Session.get("AVALON_DEADLINE",
-                                          "http://localhost:8082")
-        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        hou_major_minor = hou.applicationVersionString().rsplit(".", 1)[0]
 
-        plugin = payload["JobInfo"]["Plugin"]
-        self.log.info("Using Render Plugin : {}".format(plugin))
+        # Output driver to render
+        if job_type == "render":
+            family = instance.data.get("family")
+            if family == "arnold_rop":
+                plugin_info = ArnoldRenderDeadlinePluginInfo(
+                    InputFile=instance.data["ifdFile"]
+                )
+            elif family == "mantra_rop":
+                plugin_info = MantraRenderDeadlinePluginInfo(
+                    SceneFile=instance.data["ifdFile"],
+                    Version=hou_major_minor,
+                )
+            elif family == "vray_rop":
+                plugin_info = VrayRenderPluginInfo(
+                    InputFilename=instance.data["ifdFile"],
+                )
+            elif family == "redshift_rop":
+                plugin_info = RedshiftRenderPluginInfo(
+                    SceneFile=instance.data["ifdFile"]
+                )
+                # Note: To use different versions of Redshift on Deadline
+                #       set the `REDSHIFT_VERSION` env variable in the Tools
+                #       settings in the AYON Application plugin. You will also
+                #       need to set that version in `Redshift.param` file
+                #       of the Redshift Deadline plugin:
+                #           [Redshift_Executable_*]
+                #           where * is the version number.
+                if os.getenv("REDSHIFT_VERSION"):
+                    plugin_info.Version = os.getenv("REDSHIFT_VERSION")
+                else:
+                    self.log.warning((
+                        "REDSHIFT_VERSION env variable is not set"
+                        " - using version configured in Deadline"
+                    ))
 
-        self.log.info("Submitting..")
-        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
+            else:
+                self.log.error(
+                    "Family '%s' not supported yet to split render job",
+                    family
+                )
+                return
+        else:
+            driver = hou.node(instance.data["instance_node"])
+            plugin_info = DeadlinePluginInfo(
+                SceneFile=context.data["currentFile"],
+                OutputDriver=driver.path(),
+                Version=hou_major_minor,
+                IgnoreInputs=True
+            )
 
-        # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(AVALON_DEADLINE)
-        response = requests.post(url, json=payload)
-        if not response.ok:
-            raise Exception(response.text)
+        return attr.asdict(plugin_info)
 
+    def process(self, instance):
+        super(HoudiniSubmitDeadline, self).process(instance)
+
+        # TODO: Avoid the need for this logic here, needed for submit publish
         # Store output dir for unified publisher (filesequence)
         output_dir = os.path.dirname(instance.data["files"][0])
         instance.data["outputDir"] = output_dir
-        instance.data["deadlineSubmissionJob"] = response.json()

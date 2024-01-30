@@ -55,7 +55,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             has_family = node.evalParm("family")
             assert has_family, "'%s' is missing 'family'" % node.name()
 
-            self.log.info("processing {}".format(node))
+            self.log.info(
+                "Processing legacy instance node {}".format(node.path())
+            )
 
             data = lib.read(node)
             # Check bypass state and reverse
@@ -68,15 +70,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "active" in data:
                 data["publish"] = data["active"]
 
-            data.update(self.get_frame_data(node))
-
             # Create nice name if the instance has a frame range.
             label = data.get("name", node.name())
             label += " (%s)" % data["asset"]  # include asset in name
-
-            if "frameStart" in data and "frameEnd" in data:
-                frames = "[{frameStart} - {frameEnd}]".format(**data)
-                label = "{} {}".format(label, frames)
 
             instance = context.create_instance(label)
 
@@ -95,27 +91,3 @@ class CollectInstances(pyblish.api.ContextPlugin):
         context[:] = sorted(context, key=sort_by_family)
 
         return context
-
-    def get_frame_data(self, node):
-        """Get the frame data: start frame, end frame and steps
-        Args:
-            node(hou.Node)
-
-        Returns:
-            dict
-
-        """
-
-        data = {}
-
-        if node.parm("trange") is None:
-            return data
-
-        if node.evalParm("trange") == 0:
-            return data
-
-        data["frameStart"] = node.evalParm("f1")
-        data["frameEnd"] = node.evalParm("f2")
-        data["steps"] = node.evalParm("f3")
-
-        return data

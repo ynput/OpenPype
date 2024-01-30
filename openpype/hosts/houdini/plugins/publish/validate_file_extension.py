@@ -19,12 +19,11 @@ class ValidateFileExtension(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["pointcache", "camera", "vdbcache"]
+    families = ["camera", "vdbcache"]
     hosts = ["houdini"]
     label = "Output File Extension"
 
     family_extensions = {
-        "pointcache": ".abc",
         "camera": ".abc",
         "vdbcache": ".vdb",
     }

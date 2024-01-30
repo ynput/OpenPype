@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import pyblish.api
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import get_errored_instances_from_context
 
 
@@ -80,7 +79,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         asset_doc = instance.data.get("assetEntity")
         if not asset_doc:
             asset_name = instance.data["asset"]
-            project_name = legacy_io.active_project()
+            project_name = instance.context.data["projectName"]
             self.log.info((
                 "Asset is not stored on instance."
                 " Querying by name \"{}\" from project \"{}\""
@@ -111,15 +110,13 @@ class SelectInvalidAction(pyblish.api.Action):
         except ImportError:
             raise ImportError("Current host is not Maya")
 
-        errored_instances = get_errored_instances_from_context(context)
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        errored_instances = get_errored_instances_from_context(context,
+                                                               plugin=plugin)
 
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding invalid nodes..")
         invalid = list()
-        for instance in instances:
+        for instance in errored_instances:
             invalid_nodes = plugin.get_invalid(instance)
             if invalid_nodes:
                 if isinstance(invalid_nodes, (list, tuple)):

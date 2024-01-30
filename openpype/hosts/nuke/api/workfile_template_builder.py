@@ -25,6 +25,8 @@ from .lib import (
     select_nodes,
     duplicate_node,
     node_tempfile,
+    get_main_window,
+    WorkfileSettings,
 )
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
@@ -112,6 +114,11 @@ class NukePlaceholderPlugin(PlaceholderPlugin):
             placeholder_data[key] = value
         return placeholder_data
 
+    def delete_placeholder(self, placeholder):
+        """Remove placeholder if building was successful"""
+        placeholder_node = nuke.toNode(placeholder.scene_identifier)
+        nuke.delete(placeholder_node)
+
 
 class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
     identifier = "nuke.load"
@@ -156,8 +163,10 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
             )
         return loaded_representation_ids
 
-    def _before_repre_load(self, placeholder, representation):
+    def _before_placeholder_load(self, placeholder):
         placeholder.data["nodes_init"] = nuke.allNodes()
+
+    def _before_repre_load(self, placeholder, representation):
         placeholder.data["last_repre_id"] = str(representation["_id"])
 
     def collect_placeholders(self):
@@ -189,7 +198,14 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
+        """Cleanup placeholder after load of its corresponding representations.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -273,14 +289,6 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         placeholder.data["nb_children"] += 1
         reset_selection()
-
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
 
         # go back to root group
         nuke.root().begin()
@@ -603,7 +611,14 @@ class NukePlaceholderCreatePlugin(
     def get_placeholder_options(self, options=None):
         return self.get_create_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
+        """Cleanup placeholder after load of its corresponding representations.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -687,14 +702,6 @@ class NukePlaceholderCreatePlugin(
 
         placeholder.data["nb_children"] += 1
         reset_selection()
-
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
 
         # go back to root group
         nuke.root().begin()
@@ -954,6 +961,9 @@ def build_workfile_template(*args, **kwargs):
     builder = NukeTemplateBuilder(registered_host())
     builder.build_template(*args, **kwargs)
 
+    # set all settings to shot context default
+    WorkfileSettings().set_context_settings()
+
 
 def update_workfile_template(*args):
     builder = NukeTemplateBuilder(registered_host())
@@ -968,8 +978,9 @@ def open_template(*args):
 def create_placeholder(*args):
     host = registered_host()
     builder = NukeTemplateBuilder(host)
-    window = WorkfileBuildPlaceholderDialog(host, builder)
-    window.exec_()
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
+    window.show()
 
 
 def update_placeholder(*args):
@@ -993,6 +1004,7 @@ def update_placeholder(*args):
         raise ValueError("Too many selected nodes")
 
     placeholder_item = placeholder_items[0]
-    window = WorkfileBuildPlaceholderDialog(host, builder)
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
     window.set_update_mode(placeholder_item)
     window.exec_()

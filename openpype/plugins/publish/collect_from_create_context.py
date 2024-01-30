@@ -4,6 +4,7 @@
 import os
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io, registered_host
 from openpype.pipeline.create import CreateContext
@@ -16,7 +17,7 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.5
 
     def process(self, context):
-        create_context = context.data.pop("create_context", None)
+        create_context = context.data.get("create_context")
         if not create_context:
             host = registered_host()
             if isinstance(host, IPublishHost):
@@ -38,6 +39,8 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
         for created_instance in create_context.instances:
             instance_data = created_instance.data_to_store()
+            if AYON_SERVER_ENABLED:
+                instance_data["asset"] = instance_data.pop("folderPath")
             if instance_data["active"]:
                 thumbnail_path = thumbnail_paths_by_instance_id.get(
                     created_instance.id
@@ -92,5 +95,5 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
         instance.data["transientData"] = transient_data
 
-        self.log.info("collected instance: {}".format(instance.data))
-        self.log.info("parsing data: {}".format(in_data))
+        self.log.debug("collected instance: {}".format(instance.data))
+        self.log.debug("parsing data: {}".format(in_data))

@@ -1,7 +1,8 @@
 import os
 
 import pyblish.api
-from openpype.pipeline import legacy_io
+
+from openpype.client import get_asset_name_identifier
 from openpype.pipeline.create import get_subset_name
 
 
@@ -44,14 +45,16 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         instance.data["publish"] = instance.data["active"]  # for DL
 
     def _get_new_instance(self, context, scene_file):
-        task = legacy_io.Session["AVALON_TASK"]
+        task = context.data["task"]
         version = context.data["version"]
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
+        asset_name = get_asset_name_identifier(asset_entity)
+
         instance_data = {
             "active": True,
-            "asset": asset_entity["name"],
+            "asset": asset_name,
             "task": task,
             "frameStart": context.data['frameStart'],
             "frameEnd": context.data['frameEnd'],

@@ -350,6 +350,10 @@ class SlackPython3Operations(AbstractSlackOperations):
                     self.log.warning("Cannot pull user info, "
                                      "mentions won't work", exc_info=True)
                     return [], []
+            except Exception:
+                self.log.warning("Cannot pull user info, "
+                                 "mentions won't work", exc_info=True)
+                return [], []
 
         return users, groups
 
@@ -377,8 +381,12 @@ class SlackPython3Operations(AbstractSlackOperations):
             return response.data["ts"], file_ids
         except SlackApiError as e:
             # # You will get a SlackApiError if "ok" is False
-            error_str = self._enrich_error(str(e.response["error"]), channel)
-            self.log.warning("Error happened {}".format(error_str))
+            if e.response.get("error"):
+                error_str = self._enrich_error(str(e.response["error"]), channel)
+            else:
+                error_str = self._enrich_error(str(e), channel)
+            self.log.warning("Error happened: {}".format(error_str),
+                             exc_info=True)
         except Exception as e:
             error_str = self._enrich_error(str(e), channel)
             self.log.warning("Not SlackAPI error", exc_info=True)
@@ -448,12 +456,14 @@ class SlackPython2Operations(AbstractSlackOperations):
             if response.get("error"):
                 error_str = self._enrich_error(str(response.get("error")),
                                                channel)
-                self.log.warning("Error happened: {}".format(error_str))
+                self.log.warning("Error happened: {}".format(error_str),
+                                 exc_info=True)
             else:
                 return response["ts"], file_ids
         except Exception as e:
             # You will get a SlackApiError if "ok" is False
             error_str = self._enrich_error(str(e), channel)
-            self.log.warning("Error happened: {}".format(error_str))
+            self.log.warning("Error happened: {}".format(error_str),
+                             exc_info=True)
 
         return None, []

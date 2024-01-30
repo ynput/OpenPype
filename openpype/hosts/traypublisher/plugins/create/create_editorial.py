@@ -1,6 +1,7 @@
 import os
 from copy import deepcopy
 import opentimelineio as otio
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_asset_by_name,
     get_project
@@ -101,14 +102,23 @@ class EditorialShotInstanceCreator(EditorialClipInstanceCreatorBase):
     label = "Editorial Shot"
 
     def get_instance_attr_defs(self):
-        attr_defs = [
-            TextDef(
-                "asset_name",
-                label="Asset name",
+        instance_attributes = []
+        if AYON_SERVER_ENABLED:
+            instance_attributes.append(
+                TextDef(
+                    "folderPath",
+                    label="Folder path"
+                )
             )
-        ]
-        attr_defs.extend(CLIP_ATTR_DEFS)
-        return attr_defs
+        else:
+            instance_attributes.append(
+                TextDef(
+                    "shotName",
+                    label="Shot name"
+                )
+            )
+        instance_attributes.extend(CLIP_ATTR_DEFS)
+        return instance_attributes
 
 
 class EditorialPlateInstanceCreator(EditorialClipInstanceCreatorBase):
@@ -214,8 +224,11 @@ or updating already created. Publishing will create OTIO file.
                 i["family"] for i in self._creator_settings["family_presets"]
             ]
         }
-        # Create otio editorial instance
-        asset_name = instance_data["asset"]
+        if AYON_SERVER_ENABLED:
+            asset_name = instance_data["folderPath"]
+        else:
+            asset_name = instance_data["asset"]
+
         asset_doc = get_asset_by_name(self.project_name, asset_name)
 
         if pre_create_data["fps"] == "from_selection":
@@ -487,7 +500,22 @@ or updating already created. Publishing will create OTIO file.
             )
 
             # get video stream data
-            video_stream = media_data["streams"][0]
+            video_streams = []
+            audio_streams = []
+            for stream in media_data["streams"]:
+                codec_type = stream.get("codec_type")
+                if codec_type == "audio":
+                    audio_streams.append(stream)
+
+                elif codec_type == "video":
+                    video_streams.append(stream)
+
+            if not video_streams:
+                raise ValueError(
+                    "Could not find video stream in source file."
+                )
+
+            video_stream = video_streams[0]
             return_data = {
                 "video": True,
                 "start_frame": 0,
@@ -500,12 +528,7 @@ or updating already created. Publishing will create OTIO file.
             }
 
             # get audio  streams data
-            audio_stream = [
-                stream for stream in media_data["streams"]
-                if stream["codec_type"] == "audio"
-            ]
-
-            if audio_stream:
+            if audio_streams:
                 return_data["audio"] = True
 
         except Exception as exc:
@@ -585,19 +608,23 @@ or updating already created. Publishing will create OTIO file.
         Returns:
             str: label string
         """
-        shot_name = instance_data["shotName"]
+        if AYON_SERVER_ENABLED:
+            asset_name = instance_data["creator_attributes"]["folderPath"]
+        else:
+            asset_name = instance_data["creator_attributes"]["shotName"]
+
         variant_name = instance_data["variant"]
         family = preset["family"]
 
-        # get variant name from preset or from inharitance
+        # get variant name from preset or from inheritance
         _variant_name = preset.get("variant") or variant_name
 
         # subset name
         subset_name = "{}{}".format(
             family, _variant_name.capitalize()
         )
-        label = "{}_{}".format(
-            shot_name,
+        label = "{} {}".format(
+            asset_name,
             subset_name
         )
 
@@ -636,7 +663,7 @@ or updating already created. Publishing will create OTIO file.
         variant_name = instance_data["variant"]
 
         # basic unique asset name
-        clip_name = os.path.splitext(otio_clip.name)[0].lower()
+        clip_name = os.path.splitext(otio_clip.name)[0]
         project_doc = get_project(self.project_name)
 
         shot_name, shot_metadata = self._shot_metadata_solver.generate_data(
@@ -656,7 +683,10 @@ or updating already created. Publishing will create OTIO file.
             }
         )
 
-        self._validate_name_uniqueness(shot_name)
+        # It should be validated only in openpype since we are supporting
+        # publishing to AYON with folder path and uniqueness is not an issue
+        if not AYON_SERVER_ENABLED:
+            self._validate_name_uniqueness(shot_name)
 
         timing_data = self._get_timing_data(
             otio_clip,
@@ -667,33 +697,43 @@ or updating already created. Publishing will create OTIO file.
 
         # create creator attributes
         creator_attributes = {
-            "asset_name": shot_name,
-            "Parent hierarchy path": shot_metadata["hierarchy"],
+
             "workfile_start_frame": workfile_start_frame,
             "fps": fps,
             "handle_start": int(handle_start),
             "handle_end": int(handle_end)
         }
+        # add timing data
         creator_attributes.update(timing_data)
 
-        # create shared new instance data
+        # create base instance data
         base_instance_data = {
             "shotName": shot_name,
             "variant": variant_name,
-
-            # HACK: just for temporal bug workaround
-            # TODO: should loockup shot name for update
-            "asset": parent_asset_name,
             "task": "",
-
             "newAssetPublishing": True,
-
-            # parent time properties
             "trackStartFrame": track_start_frame,
             "timelineOffset": timeline_offset,
+
             # creator_attributes
             "creator_attributes": creator_attributes
         }
+        # update base instance data with context data
+        # and also update creator attributes with context data
+        if AYON_SERVER_ENABLED:
+            # TODO: this is here just to be able to publish
+            #   to AYON with folder path
+            creator_attributes["folderPath"] = shot_metadata.pop("folderPath")
+            base_instance_data["folderPath"] = parent_asset_name
+        else:
+            creator_attributes.update({
+                "shotName": shot_name,
+                "Parent hierarchy path": shot_metadata["hierarchy"]
+            })
+
+            base_instance_data["asset"] = parent_asset_name
+        # add creator attributes to shared instance data
+        base_instance_data["creator_attributes"] = creator_attributes
         # add hierarchy shot metadata
         base_instance_data.update(shot_metadata)
 

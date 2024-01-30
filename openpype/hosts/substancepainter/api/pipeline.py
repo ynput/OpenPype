@@ -86,7 +86,7 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         self._uninstall_menu()
         self._deregister_callbacks()
 
-    def has_unsaved_changes(self):
+    def workfile_has_unsaved_changes(self):
 
         if not substance_painter.project.is_open():
             return False
@@ -170,7 +170,8 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         parent = substance_painter.ui.get_main_window()
 
-        menu = QtWidgets.QMenu("OpenPype")
+        tab_menu_label = os.environ.get("AVALON_LABEL") or "AYON"
+        menu = QtWidgets.QMenu(tab_menu_label)
 
         action = menu.addAction("Create...")
         action.triggered.connect(

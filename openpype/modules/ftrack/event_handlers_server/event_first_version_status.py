@@ -1,3 +1,6 @@
+import collections
+
+from openpype.client import get_project
 from openpype_modules.ftrack.lib import BaseEvent
 
 
@@ -73,8 +76,21 @@ class FirstVersionStatus(BaseEvent):
         if not self.task_status_map:
             return
 
-        entities_info = self.filter_event_ents(event)
-        if not entities_info:
+        filtered_entities_info = self.filter_entities_info(event)
+        if not filtered_entities_info:
+            return
+
+        for project_id, entities_info in filtered_entities_info.items():
+            self.process_by_project(session, event, project_id, entities_info)
+
+    def process_by_project(self, session, event, project_id, entities_info):
+        project_name = self.get_project_name_from_event(
+            session, event, project_id
+        )
+        if get_project(project_name) is None:
+            self.log.debug(
+                f"Project '{project_name}' not found in OpenPype. Skipping"
+            )
             return
 
         entity_ids = []
@@ -154,18 +170,18 @@ class FirstVersionStatus(BaseEvent):
                     exc_info=True
                 )
 
-    def filter_event_ents(self, event):
-        filtered_ents = []
-        for entity in event["data"].get("entities", []):
+    def filter_entities_info(self, event):
+        filtered_entities_info = collections.defaultdict(list)
+        for entity_info in event["data"].get("entities", []):
             # Care only about add actions
-            if entity.get("action") != "add":
+            if entity_info.get("action") != "add":
                 continue
 
             # Filter AssetVersions
-            if entity["entityType"] != "assetversion":
+            if entity_info["entityType"] != "assetversion":
                 continue
 
-            entity_changes = entity.get("changes") or {}
+            entity_changes = entity_info.get("changes") or {}
 
             # Check if version of Asset Version is `1`
             version_num = entity_changes.get("version", {}).get("new")
@@ -177,9 +193,18 @@ class FirstVersionStatus(BaseEvent):
             if not task_id:
                 continue
 
-            filtered_ents.append(entity)
+            project_id = None
+            for parent_item in reversed(entity_info["parents"]):
+                if parent_item["entityType"] == "show":
+                    project_id = parent_item["entityId"]
+                    break
 
-        return filtered_ents
+            if project_id is None:
+                continue
+
+            filtered_entities_info[project_id].append(entity_info)
+
+        return filtered_entities_info
 
 
 def register(session):

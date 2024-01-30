@@ -30,6 +30,9 @@ class CreateWritePrerender(napi.NukeWriteCreator):
     temp_rendering_path_template = (
         "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}")
 
+    # Before write node render.
+    order = 90
+
     def get_pre_create_attr_defs(self):
         attr_defs = [
             BoolDef(
@@ -42,10 +45,6 @@ class CreateWritePrerender(napi.NukeWriteCreator):
         return attr_defs
 
     def create_instance_node(self, subset_name, instance_data):
-        linked_knobs_ = []
-        if "use_range_limit" in self.instance_attributes:
-            linked_knobs_ = ["channels", "___", "first", "last", "use_limit"]
-
         # add fpath_template
         write_data = {
             "creator": self.__class__.__name__,
@@ -68,13 +67,12 @@ class CreateWritePrerender(napi.NukeWriteCreator):
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
-            linked_knobs=linked_knobs_,
+            linked_knobs=self.get_linked_knobs(),
             **{
                 "width": width,
                 "height": height
             }
         )
-        self.add_info_knob(created_node)
 
         self._add_frame_range_limit(created_node)
 

@@ -10,7 +10,41 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractAnimationFBX(publish.Extractor):
+def get_all_parents(obj):
+    """Get all recursive parents of object"""
+    result = []
+    while True:
+        obj = obj.parent
+        if not obj:
+            break
+        result.append(obj)
+    return result
+
+
+def get_highest_root(objects):
+    # Get the highest object that is also in the collection
+    included_objects = {obj.name_full for obj in objects}
+    num_parents_to_obj = {}
+    for obj in objects:
+        if isinstance(obj, bpy.types.Object):
+            parents = get_all_parents(obj)
+            # included parents
+            parents = [parent for parent in parents if
+                       parent.name_full in included_objects]
+            if not parents:
+                # A node without parents must be a highest root
+                return obj
+
+            num_parents_to_obj.setdefault(len(parents), obj)
+
+    minimum_parent = min(num_parents_to_obj)
+    return num_parents_to_obj[minimum_parent]
+
+
+class ExtractAnimationFBX(
+        publish.Extractor,
+        publish.OptionalPyblishPluginMixin,
+):
     """Extract as animation."""
 
     label = "Extract FBX"
@@ -19,23 +53,43 @@ class ExtractAnimationFBX(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
-        # The first collection object in the instance is taken, as there
-        # should be only one that contains the asset group.
-        collection = [
-            obj for obj in instance if type(obj) is bpy.types.Collection][0]
+        asset_group = instance.data["transientData"]["instance_node"]
 
-        # Again, the first object in the collection is taken , as there
-        # should be only the asset group in the collection.
-        asset_group = collection.objects[0]
+        # Get objects in this collection (but not in children collections)
+        # and for those objects include the children hierarchy
+        # TODO: Would it make more sense for the Collect Instance collector
+        #   to also always retrieve all the children?
+        objects = set(asset_group.objects)
 
-        armature = [
-            obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
+        # From the direct children of the collection find the 'root' node
+        # that we want to export - it is the 'highest' node in a hierarchy
+        root = get_highest_root(objects)
+
+        for obj in list(objects):
+            objects.update(obj.children_recursive)
+
+        # Find all armatures among the objects, assume to find only one
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        if not armatures:
+            raise RuntimeError(
+                f"Unable to find ARMATURE in collection: "
+                f"{asset_group.name}"
+            )
+        elif len(armatures) > 1:
+            self.log.warning(
+                "Found more than one ARMATURE, using "
+                f"only first of: {armatures}"
+            )
+        armature = armatures[0]
 
         object_action_pairs = []
         original_actions = []
@@ -44,9 +98,6 @@ class ExtractAnimationFBX(publish.Extractor):
         ending_frames = []
 
         # For each armature, we make a copy of the current action
-        curr_action = None
-        copy_action = None
-
         if armature.animation_data and armature.animation_data.action:
             curr_action = armature.animation_data.action
             copy_action = curr_action.copy()
@@ -56,12 +107,20 @@ class ExtractAnimationFBX(publish.Extractor):
             starting_frames.append(curr_frame_range[0])
             ending_frames.append(curr_frame_range[1])
         else:
-            self.log.info("Object have no animation.")
+            self.log.info(
+                f"Armature '{armature.name}' has no animation, "
+                f"skipping FBX animation extraction for {instance}."
+            )
             return
 
         asset_group_name = asset_group.name
-        asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
+        asset_name = asset_group.get(AVALON_PROPERTY).get("asset_name")
+        if asset_name:
+            # Rename for the export; this data is only present when loaded
+            # from a JSON Layout (layout family)
+            asset_group.name = asset_name
 
+        # Remove : from the armature name for the export
         armature_name = armature.name
         original_name = armature_name.split(':')[1]
         armature.name = original_name
@@ -84,27 +143,33 @@ class ExtractAnimationFBX(publish.Extractor):
         for obj in bpy.data.objects:
             obj.select_set(False)
 
-        asset_group.select_set(True)
+        root.select_set(True)
         armature.select_set(True)
-        fbx_filename = f"{instance.name}_{armature.name}.fbx"
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        fbx_filename = f"{instance_name}_{armature.name}.fbx"
         filepath = os.path.join(stagingdir, fbx_filename)
 
         override = plugin.create_blender_context(
-            active=asset_group, selected=[asset_group, armature])
-        bpy.ops.export_scene.fbx(
-            override,
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            bake_anim_use_nla_strips=False,
-            bake_anim_use_all_actions=False,
-            add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'EMPTY', 'ARMATURE'}
-        )
+            active=root, selected=[root, armature])
+
+        with bpy.context.temp_override(**override):
+            # We export the fbx
+            bpy.ops.export_scene.fbx(
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                bake_anim_use_nla_strips=False,
+                bake_anim_use_all_actions=False,
+                add_leaf_bones=False,
+                armature_nodetype='ROOT',
+                object_types={'EMPTY', 'ARMATURE'}
+            )
+
         armature.name = armature_name
         asset_group.name = asset_group_name
-        asset_group.select_set(False)
+        root.select_set(True)
         armature.select_set(False)
 
         # We delete the baked action and set the original one back
@@ -119,7 +184,7 @@ class ExtractAnimationFBX(publish.Extractor):
                 pair[1].user_clear()
                 bpy.data.actions.remove(pair[1])
 
-        json_filename = f"{instance.name}.json"
+        json_filename = f"{instance_name}.json"
         json_path = os.path.join(stagingdir, json_filename)
 
         json_dict = {
@@ -158,5 +223,5 @@ class ExtractAnimationFBX(publish.Extractor):
         instance.data["representations"].append(fbx_representation)
         instance.data["representations"].append(json_representation)
 
-        self.log.info("Extracted instance '{}' to: {}".format(
-                      instance.name, fbx_representation))
+        self.log.debug("Extracted instance '{}' to: {}".format(
+                       instance.name, fbx_representation))

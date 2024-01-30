@@ -11,7 +11,6 @@ import six
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io
 from .publish_plugins import AbstractMetaContextPlugin
 
 
@@ -31,7 +30,7 @@ class RenderInstance(object):
     label = attr.ib()  # label to show in GUI
     subset = attr.ib()  # subset name
     task = attr.ib()  # task name
-    asset = attr.ib()  # asset name (AVALON_ASSET)
+    asset = attr.ib()  # asset name
     attachTo = attr.ib()  # subset name to attach render to
     setMembers = attr.ib()  # list of nodes/members producing render output
     publish = attr.ib()  # bool, True to publish instance
@@ -75,7 +74,6 @@ class RenderInstance(object):
     tilesY = attr.ib(default=0)  # number of tiles in Y
 
     # submit_publish_job
-    toBeRenderedOn = attr.ib(default=None)
     deadlineSubmissionJob = attr.ib(default=None)
     anatomyData = attr.ib(default=None)
     outputDir = attr.ib(default=None)
@@ -130,7 +128,6 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
         """Constructor."""
         super(AbstractCollectRender, self).__init__(*args, **kwargs)
         self._file_path = None
-        self._asset = legacy_io.Session["AVALON_ASSET"]
         self._context = None
 
     def process(self, context):
@@ -167,16 +164,25 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
 
             frame_start_render = int(render_instance.frameStart)
             frame_end_render = int(render_instance.frameEnd)
+            # TODO: Refactor hacky frame range workaround below
             if (render_instance.ignoreFrameHandleCheck or
                     int(context.data['frameStartHandle']) == frame_start_render
                     and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
-
+                # only for Harmony where frame range cannot be set by DB
                 handle_start = context.data['handleStart']
                 handle_end = context.data['handleEnd']
                 frame_start = context.data['frameStart']
                 frame_end = context.data['frameEnd']
                 frame_start_handle = context.data['frameStartHandle']
                 frame_end_handle = context.data['frameEndHandle']
+            elif (hasattr(render_instance, "frameStartHandle")
+                  and hasattr(render_instance, "frameEndHandle")):
+                handle_start = int(render_instance.handleStart)
+                handle_end = int(render_instance.handleEnd)
+                frame_start = int(render_instance.frameStart)
+                frame_end = int(render_instance.frameEnd)
+                frame_start_handle = int(render_instance.frameStartHandle)
+                frame_end_handle = int(render_instance.frameEndHandle)
             else:
                 handle_start = 0
                 handle_end = 0

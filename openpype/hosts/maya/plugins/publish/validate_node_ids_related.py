@@ -1,11 +1,13 @@
 import pyblish.api
 
-from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin, PublishValidationError, ValidatePipelineOrder)
 
 
-class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
+class ValidateNodeIDsRelated(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Validate nodes have a related Colorbleed Id to the instance.data[asset]
 
     """
@@ -23,12 +25,15 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all nodes in instance (including hierarchy)"""
+        if not self.is_active(instance.data):
+            return
+
         # Ensure all nodes have a cbId
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes IDs found that are not related to asset "
-                               "'{}' : {}".format(instance.data['asset'],
-                                                  invalid))
+            raise PublishValidationError(
+                ("Nodes IDs found that are not related to asset "
+                 "'{}' : {}").format(instance.data['asset'], invalid))
 
     @classmethod
     def get_invalid(cls, instance):

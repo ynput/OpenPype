@@ -1,6 +1,6 @@
 {
   "projectName": "OpenPype",
-  "projectOwner": "pypeclub",
+  "projectOwner": "ynput",
   "repoType": "github",
   "repoHost": "https://github.com",
   "files": [
@@ -319,8 +319,18 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "movalex",
+      "name": "Alexey Bogomolov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11698866?v=4",
+      "profile": "http://abogomolov.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
-  "skipCi": true
+  "skipCi": true,
+  "commitType": "docs"
 }

@@ -14,7 +14,7 @@ sidebar_label: Houdini
 - [Library Loader](artist_tools_library-loader)
 
 ## Publishing Alembic Cameras
-You can publish baked camera in Alembic format. 
+You can publish baked camera in Alembic format.
 
 Select your camera and go **OpenPype -> Create** and select **Camera (abc)**.
 This will create Alembic ROP in **out** with path and frame range already set. This node will have a name you've
@@ -30,7 +30,7 @@ You can use any COP node and publish the image sequence generated from it. For e
 ![Noise COP](assets/houdini_imagesequence_cop.png)
 
 To publish the output of the `radialblur1` go to **OpenPype -> Create** and
-select **Composite (Image Sequence)**. If you name the variant *Noise* this will create the `/out/imagesequenceNoise` Composite ROP with the frame range set. 
+select **Composite (Image Sequence)**. If you name the variant *Noise* this will create the `/out/imagesequenceNoise` Composite ROP with the frame range set.
 
 When you hit **Publish** it will render image sequence from selected node.
 
@@ -56,20 +56,56 @@ Now select the `output0` node and go **OpenPype -> Create** and select **Point C
 Alembic ROP `/out/pointcacheStrange`
 
 ## Publishing Reviews (OpenGL)
-To generate a review output from Houdini you need to create a **review** instance. 
+To generate a review output from Houdini you need to create a **review** instance.
 Go to **OpenPype -> Create** and select **Review**.
 
 ![Houdini Create Review](assets/houdini_review_create_attrs.png)
 
-On create, with the **Use Selection** checkbox enabled it will set up the first 
-camera found in your selection as the camera for the OpenGL ROP node and other 
-non-cameras are set in **Force Objects**. It will then render those even if 
+On create, with the **Use Selection** checkbox enabled it will set up the first
+camera found in your selection as the camera for the OpenGL ROP node and other
+non-cameras are set in **Force Objects**. It will then render those even if
 their display flag is disabled in your scene.
 
 ## Redshift
 :::note Work in progress
 This part of documentation is still work in progress.
 :::
+
+## Publishing Render to Deadline
+Five Renderers(Arnold, Redshift, Mantra, Karma, VRay) are supported for Render Publishing.
+They are named with the suffix("_ROP")
+To submit render to deadline, you need to create a **Render** instance.
+Go to **Openpype -> Create** and select **Publish**. Before clicking **Create** button,
+you need select your preferred image rendering format. You can also enable the **Use selection** to
+select your render camera.
+![Houdini Create Render](assets/houdini_render_publish_creator.png)
+
+All the render outputs are stored in the pyblish/render directory within your project path.\
+For Karma-specific render, it also outputs the USD render as default.
+
+## Publishing cache to Deadline
+Artist can publish cache to deadline which increases productivity as artist can use local machine
+could be used for other tasks.
+Caching on the farm is supported for:
+
+**Arnold ASS (.ass)**
+**Pointcache (.bgeo and .abc)**
+**VDB (.vdb)**
+**Redshift Proxy (.rs)**
+
+To submit your cache to deadline, you need to create the instance(s) with clicking
+**Submitting to Farm** and you can also enable  **Use selection** to
+select the object for caching in farm.
+![Houdini Farm Cache Creator](assets/houdini_farm_cache_creator.png)
+
+When you go to Publish Tab and click the instance(s), you can set up your preferred
+**Frame per task**.
+![Houdini Farm Per Task](assets/houdini_frame_per_task.png)
+
+Once you hit **Publish**, the cache would be submitted and rendered in deadline.
+When the render is finished, all the caches would be located in your publish folder.
+You can see them in the Loader.
+![Houdini Farm Per Task](assets/houdini_farm_cache_loader.png)
 
 ## USD (experimental support)
 ### Publishing USD
@@ -120,3 +156,25 @@ switch versions between different hda types.
 
 When you load hda, it will install its type in your hip file and add published version as its definition file. When
 you  switch version via Scene Manager, it will add its definition and set it as preferred.
+
+## Publishing and loading BGEO caches
+
+There is a simple support for publishing and loading **BGEO** files in all supported compression variants.
+
+### Creating BGEO instances
+
+Select your SOP node to be exported as BGEO. If your selection is in the object level, OpenPype will try to find if there is an `output` node inside, the one with the lowest index will be used:
+
+![BGEO output node](assets/houdini_bgeo_output_node.png)
+
+Then you can open Publisher, in Create you select **BGEO PointCache**:
+
+![BGEO Publisher](assets/houdini_bgeo-publisher.png)
+
+You can select compression type and if the current selection should be connected to ROPs SOP path parameter. Publishing will produce sequence of files based on your timeline settings.
+
+### Loading BGEO
+
+Select your published BGEO subsets in Loader, right click and load them in:
+
+![BGEO Publisher](assets/houdini_bgeo-loading.png)

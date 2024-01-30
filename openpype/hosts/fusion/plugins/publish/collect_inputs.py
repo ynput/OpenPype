@@ -95,7 +95,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
     label = "Collect Inputs"
     order = pyblish.api.CollectorOrder + 0.2
     hosts = ["fusion"]
-    families = ["render"]
+    families = ["render", "image"]
 
     def process(self, instance):
 
@@ -113,4 +113,4 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
 
         inputs = [c["representation"] for c in containers]
         instance.data["inputRepresentations"] = inputs
-        self.log.info("Collected inputs: %s" % inputs)
+        self.log.debug("Collected inputs: %s" % inputs)

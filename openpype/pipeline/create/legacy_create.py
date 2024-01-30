@@ -74,12 +74,12 @@ class LegacyCreator(object):
         if not plugin_settings:
             return
 
-        print(">>> We have preset for {}".format(plugin_name))
+        cls.log.debug(">>> We have preset for {}".format(plugin_name))
         for option, value in plugin_settings.items():
             if option == "enabled" and value is False:
-                print("  - is disabled by preset")
+                cls.log.debug("  - is disabled by preset")
             else:
-                print("  - setting `{}`: `{}`".format(option, value))
+                cls.log.debug("  - setting `{}`: `{}`".format(option, value))
             setattr(cls, option, value)
 
     def process(self):

@@ -9,12 +9,14 @@ from openpype import (
     resources,
     style
 )
+from openpype import AYON_SERVER_ENABLED
 from openpype.tools.utils import (
     ErrorMessageBox,
     PlaceholderLineEdit,
     MessageOverlayObject,
     PixmapLabel,
 )
+from openpype.tools.utils.lib import center_window
 
 from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
@@ -40,7 +42,7 @@ from .widgets import (
 )
 
 
-class PublisherWindow(QtWidgets.QDialog):
+class PublisherWindow(QtWidgets.QWidget):
     """Main window of publisher."""
     default_width = 1300
     default_height = 800
@@ -48,11 +50,13 @@ class PublisherWindow(QtWidgets.QDialog):
     publish_footer_spacer = 2
 
     def __init__(self, parent=None, controller=None, reset_on_show=None):
-        super(PublisherWindow, self).__init__(parent)
+        super(PublisherWindow, self).__init__()
 
         self.setObjectName("PublishWindow")
 
-        self.setWindowTitle("OpenPype publisher")
+        self.setWindowTitle("{} publisher".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
@@ -60,18 +64,12 @@ class PublisherWindow(QtWidgets.QDialog):
         if reset_on_show is None:
             reset_on_show = True
 
-        if parent is None:
-            on_top_flag = QtCore.Qt.WindowStaysOnTopHint
-        else:
-            on_top_flag = QtCore.Qt.Dialog
-
         self.setWindowFlags(
-            self.windowFlags()
+            QtCore.Qt.Window
             | QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
-            | on_top_flag
         )
 
         if controller is None:
@@ -186,7 +184,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ReportPageWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, content_stacked_widget)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
@@ -297,6 +295,12 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.process.stopped", self._on_publish_stop
         )
         controller.event_system.add_callback(
+            "publish.process.instance.changed", self._on_instance_change
+        )
+        controller.event_system.add_callback(
+            "publish.process.plugin.changed", self._on_plugin_change
+        )
+        controller.event_system.add_callback(
             "show.card.message", self._on_overlay_message
         )
         controller.event_system.add_callback(
@@ -389,6 +393,45 @@ class PublisherWindow(QtWidgets.QDialog):
     def controller(self):
         return self._controller
 
+    def show_and_publish(self, comment=None):
+        """Show the window and start publishing.
+
+        The method will reset controller and start the publishing afterwards.
+
+        Todos:
+            Move validations from '_on_publish_clicked' and change of
+                'comment' value in controller to controller so it can be
+                simplified.
+
+        Args:
+            comment (Optional[str]): Comment to be set to publish.
+                If is set to 'None' a comment is not changed at all.
+        """
+
+        self._reset_on_show = False
+        self._reset_on_first_show = False
+
+        if comment is not None:
+            self.set_comment(comment)
+        self.make_sure_is_visible()
+        # Reset controller
+        self._controller.reset()
+        # Fake publish click to trigger save validation and propagate
+        #   comment to controller
+        self._on_publish_clicked()
+
+    def set_comment(self, comment):
+        """Change comment text.
+
+        Todos:
+            Be able to set the comment via controller.
+
+        Args:
+            comment (str): Comment text.
+        """
+
+        self._comment_input.setText(comment)
+
     def make_sure_is_visible(self):
         if self._window_is_visible:
             self.setWindowState(QtCore.Qt.WindowActive)
@@ -454,7 +497,11 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         save_match = event.matches(QtGui.QKeySequence.Save)
-        if save_match == QtGui.QKeySequence.ExactMatch:
+        # PySide2 and PySide6 support
+        if not isinstance(save_match, bool):
+            save_match = save_match == QtGui.QKeySequence.ExactMatch
+
+        if save_match:
             if not self._controller.publish_has_started:
                 self._save_changes(True)
             event.accept()
@@ -487,6 +534,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
+        center_window(self)
         self._reset_on_show = self._reset_on_first_show
 
     def _on_show_timer(self):
@@ -509,6 +557,18 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._reset_on_show:
             self._reset_on_show = False
             self.reset()
+
+    def _make_sure_on_top(self):
+        """Raise window to top and activate it.
+
+        This may not work for some DCCs without Qt.
+        """
+
+        if not self._window_is_visible:
+            self.show()
+
+        self.setWindowState(QtCore.Qt.WindowActive)
+        self.raise_()
 
     def _checks_before_save(self, explicit_save):
         """Save of changes may trigger some issues.
@@ -631,16 +691,7 @@ class PublisherWindow(QtWidgets.QDialog):
         if old_tab == "details":
             self._publish_details_widget.close_details_popup()
 
-        if new_tab in ("create", "publish"):
-            animate = True
-            if old_tab not in ("create", "publish"):
-                animate = False
-                self._content_stacked_layout.setCurrentWidget(
-                    self._overview_widget
-                )
-            self._overview_widget.set_state(new_tab, animate)
-
-        elif new_tab == "details":
+        if new_tab == "details":
             self._content_stacked_layout.setCurrentWidget(
                 self._publish_details_widget
             )
@@ -650,6 +701,21 @@ class PublisherWindow(QtWidgets.QDialog):
             self._content_stacked_layout.setCurrentWidget(
                 self._report_widget
             )
+
+        old_on_overview = old_tab in ("create", "publish")
+        if new_tab in ("create", "publish"):
+            self._content_stacked_layout.setCurrentWidget(
+                self._overview_widget
+            )
+            # Overview state is animated only when switching between
+            #   'create' and 'publish' tab
+            self._overview_widget.set_state(new_tab, old_on_overview)
+
+        elif old_on_overview:
+            # Make sure animation finished if previous tab was 'create'
+            #   or 'publish'. That is just for safety to avoid stuck animation
+            #   when user clicks too fast.
+            self._overview_widget.make_sure_animation_is_finished()
 
         is_create = new_tab == "create"
         if is_create:
@@ -676,7 +742,15 @@ class PublisherWindow(QtWidgets.QDialog):
         self._tabs_widget.set_current_tab(identifier)
 
     def set_current_tab(self, tab):
-        self._set_current_tab(tab)
+        if tab == "create":
+            self._go_to_create_tab()
+        elif tab == "publish":
+            self._go_to_publish_tab()
+        elif tab == "report":
+            self._go_to_report_tab()
+        elif tab == "details":
+            self._go_to_details_tab()
+
         if not self._window_is_visible:
             self.set_tab_on_reset(tab)
 
@@ -686,6 +760,12 @@ class PublisherWindow(QtWidgets.QDialog):
     def _go_to_create_tab(self):
         if self._create_tab.isEnabled():
             self._set_current_tab("create")
+            return
+
+        self._overlay_object.add_message(
+            "Can't switch to Create tab because publishing is paused.",
+            message_type="info"
+        )
 
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")
@@ -802,6 +882,12 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._is_on_create_tab():
             self._go_to_publish_tab()
 
+    def _on_instance_change(self):
+        self._make_sure_on_top()
+
+    def _on_plugin_change(self):
+        self._make_sure_on_top()
+
     def _on_publish_validated_change(self, event):
         if event["value"]:
             self._validate_btn.setEnabled(False)
@@ -812,6 +898,7 @@ class PublisherWindow(QtWidgets.QDialog):
             self._comment_input.setText("")
 
     def _on_publish_stop(self):
+        self._make_sure_on_top()
         self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)

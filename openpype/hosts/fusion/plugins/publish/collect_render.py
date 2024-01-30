@@ -17,6 +17,8 @@ class FusionRenderInstance(RenderInstance):
     tool = attr.ib(default=None)
     workfileComp = attr.ib(default=None)
     publish_attributes = attr.ib(default={})
+    frameStartHandle = attr.ib(default=None)
+    frameEndHandle = attr.ib(default=None)
 
 
 class CollectFusionRender(
@@ -48,7 +50,7 @@ class CollectFusionRender(
                 continue
 
             family = inst.data["family"]
-            if family != "render":
+            if family not in ["render", "image"]:
                 continue
 
             task_name = context.data["task"]
@@ -57,7 +59,7 @@ class CollectFusionRender(
             instance_families = inst.data.get("families", [])
             subset_name = inst.data["subset"]
             instance = FusionRenderInstance(
-                family="render",
+                family=family,
                 tool=tool,
                 workfileComp=comp,
                 families=instance_families,
@@ -83,8 +85,8 @@ class CollectFusionRender(
                 frameEnd=inst.data["frameEnd"],
                 handleStart=inst.data["handleStart"],
                 handleEnd=inst.data["handleEnd"],
-                ignoreFrameHandleCheck=(
-                    inst.data["frame_range_source"] == "render_range"),
+                frameStartHandle=inst.data["frameStartHandle"],
+                frameEndHandle=inst.data["frameEndHandle"],
                 frameStep=1,
                 fps=comp_frame_format_prefs.get("Rate"),
                 app_version=comp.GetApp().Version,
@@ -106,7 +108,6 @@ class CollectFusionRender(
                 fam = "render.farm"
                 if fam not in instance.families:
                     instance.families.append(fam)
-                instance.toBeRenderedOn = "deadline"
                 instance.farm = True  # to skip integrate
                 if "review" in instance.families:
                     # to skip ExtractReview locally
@@ -144,9 +145,11 @@ class CollectFusionRender(
         start = render_instance.frameStart - render_instance.handleStart
         end = render_instance.frameEnd + render_instance.handleEnd
 
-        path = (
-            render_instance.tool["Clip"]
-            [render_instance.workfileComp.TIME_UNDEFINED]
+        comp = render_instance.workfileComp
+        path = comp.MapPath(
+            render_instance.tool["Clip"][
+                render_instance.workfileComp.TIME_UNDEFINED
+            ]
         )
         output_dir = os.path.dirname(path)
         render_instance.outputDir = output_dir

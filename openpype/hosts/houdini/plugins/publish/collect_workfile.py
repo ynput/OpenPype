@@ -32,5 +32,4 @@ class CollectWorkfile(pyblish.api.InstancePlugin):
             "stagingDir": folder,
         }]
 
-        self.log.info('Collected instance: {}'.format(file))
-        self.log.info('staging Dir: {}'.format(folder))
+        self.log.debug('Collected workfile instance: {}'.format(file))

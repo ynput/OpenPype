@@ -19,6 +19,9 @@ from openpype.pipeline.load import (
     switch_container,
     get_repres_contexts,
     loaders_from_repre_context,
+    LoaderSwitchNotImplementedError,
+    IncompatibleLoaderError,
+    LoaderNotFoundError
 )
 
 from .widgets import (
@@ -1227,12 +1230,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         version_ids = list()
 
-        version_docs_by_parent_id = {}
+        version_docs_by_parent_id_and_name = collections.defaultdict(dict)
         for version_doc in version_docs:
             parent_id = version_doc["parent"]
-            if parent_id not in version_docs_by_parent_id:
-                version_ids.append(version_doc["_id"])
-                version_docs_by_parent_id[parent_id] = version_doc
+            version_ids.append(version_doc["_id"])
+            name = version_doc["name"]
+            version_docs_by_parent_id_and_name[parent_id][name] = version_doc
 
         hero_version_docs_by_parent_id = {}
         for hero_version_doc in hero_version_docs:
@@ -1290,27 +1293,55 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                         repre_doc = _repres.get(container_repre_name)
 
             if not repre_doc:
-                version_doc = version_docs_by_parent_id[subset_id]
-                version_id = version_doc["_id"]
-                repres_by_name = repre_docs_by_parent_id_by_name[version_id]
-                if selected_representation:
-                    repre_doc = repres_by_name[selected_representation]
-                else:
-                    repre_doc = repres_by_name[container_repre_name]
+                version_docs_by_name = version_docs_by_parent_id_and_name[
+                    subset_id
+                ]
 
+                # If asset or subset are selected for switching, we use latest
+                # version else we try to keep the current container version.
+                if (
+                    selected_asset not in (None, container_asset_name)
+                    or selected_subset not in (None, container_subset_name)
+                ):
+                    version_name = max(version_docs_by_name)
+                else:
+                    version_name = container_version["name"]
+
+                version_doc = version_docs_by_name[version_name]
+                version_id = version_doc["_id"]
+                repres_docs_by_name = repre_docs_by_parent_id_by_name[
+                    version_id
+                ]
+
+                if selected_representation:
+                    repres_name = selected_representation
+                else:
+                    repres_name = container_repre_name
+
+                repre_doc = repres_docs_by_name[repres_name]
+
+            error = None
             try:
                 switch_container(container, repre_doc, loader)
+            except (
+                LoaderSwitchNotImplementedError,
+                IncompatibleLoaderError,
+                LoaderNotFoundError,
+            ) as exc:
+                error = str(exc)
             except Exception:
-                msg = (
+                error = (
+                    "Switch asset failed. "
+                    "Search console log for more details."
+                )
+            if error is not None:
+                log.warning((
                     "Couldn't switch asset."
                     "See traceback for more information."
-                )
-                log.warning(msg, exc_info=True)
+                ), exc_info=True)
                 dialog = QtWidgets.QMessageBox(self)
                 dialog.setWindowTitle("Switch asset failed")
-                dialog.setText(
-                    "Switch asset failed. Search console log for more details"
-                )
+                dialog.setText(error)
                 dialog.exec_()
 
         self.switched.emit()

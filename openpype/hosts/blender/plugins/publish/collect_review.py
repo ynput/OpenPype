@@ -1,7 +1,6 @@
 import bpy
 
 import pyblish.api
-from openpype.pipeline import legacy_io
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -17,10 +16,12 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug(f"instance: {instance}")
 
+        datablock = instance.data["transientData"]["instance_node"]
+
         # get cameras
         cameras = [
             obj
-            for obj in instance
+            for obj in datablock.all_objects
             if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA"
         ]
 
@@ -30,19 +31,22 @@ class CollectReview(pyblish.api.InstancePlugin):
         camera = cameras[0].name
         self.log.debug(f"camera: {camera}")
 
-        # get isolate objects list from meshes instance members .
+        focal_length = cameras[0].data.lens
+
+        # get isolate objects list from meshes instance members.
+        types = {"MESH", "GPENCIL"}
         isolate_objects = [
             obj
             for obj in instance
-            if isinstance(obj, bpy.types.Object) and obj.type == "MESH"
+            if isinstance(obj, bpy.types.Object) and obj.type in types
         ]
 
         if not instance.data.get("remove"):
-
-            task = legacy_io.Session.get("AVALON_TASK")
+            # Store focal length in `burninDataMembers`
+            burninData = instance.data.setdefault("burninDataMembers", {})
+            burninData["focalLength"] = focal_length
 
             instance.data.update({
-                "subset": f"{task}Review",
                 "review_camera": camera,
                 "frameStart": instance.context.data["frameStart"],
                 "frameEnd": instance.context.data["frameEnd"],

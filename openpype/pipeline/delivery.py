@@ -157,6 +157,8 @@ def deliver_single_file(
     delivery_path = delivery_path.replace("..", ".")
     # Make sure path is valid for all platforms
     delivery_path = os.path.normpath(delivery_path.replace("\\", "/"))
+    # Remove newlines from the end of the string to avoid OSError during copy
+    delivery_path = delivery_path.rstrip()
 
     delivery_folder = os.path.dirname(delivery_path)
     if not os.path.exists(delivery_folder):
@@ -176,7 +178,9 @@ def deliver_sequence(
     anatomy_data,
     format_dict,
     report_items,
-    log
+    log,
+    has_renumbered_frame=False,
+    new_frame_start=0
 ):
     """ For Pype2(mainly - works in 3 too) where representation might not
         contain files.
@@ -292,17 +296,30 @@ def deliver_sequence(
     src_head = src_collection.head
     src_tail = src_collection.tail
     uploaded = 0
+    first_frame = min(src_collection.indexes)
     for index in src_collection.indexes:
         src_padding = src_collection.format("{padding}") % index
         src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
         src = os.path.normpath(
             os.path.join(dir_path, src_file_name)
         )
-
-        dst_padding = dst_collection.format("{padding}") % index
+        dst_index = index
+        if has_renumbered_frame:
+            # Calculate offset between first frame and current frame
+            # - '0' for first frame
+            offset = new_frame_start - first_frame
+            # Add offset to new frame start
+            dst_index = index + offset
+            if dst_index < 0:
+                msg = "Renumber frame has a smaller number than original frame"     # noqa
+                report_items[msg].append(src_file_name)
+                log.warning("{} <{}>".format(msg, context))
+                return report_items, 0
+        dst_padding = dst_collection.format("{padding}") % dst_index
         dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
         log.debug("Copying single: {} -> {}".format(src, dst))
         _copy_file(src, dst)
+
         uploaded += 1
 
     return report_items, uploaded

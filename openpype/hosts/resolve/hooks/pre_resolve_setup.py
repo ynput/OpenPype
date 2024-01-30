@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
 import platform
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.hosts.resolve.utils import setup
 
 
-class ResolvePrelaunch(PreLaunchHook):
+class PreLaunchResolveSetup(PreLaunchHook):
     """
     This hook will set up the Resolve scripting environment as described in
     Resolve's documentation found with the installed application at
@@ -30,7 +30,8 @@ class ResolvePrelaunch(PreLaunchHook):
 
     """
 
-    app_groups = ["resolve"]
+    app_groups = {"resolve"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         current_platform = platform.system().lower()

@@ -9,7 +9,6 @@ from '~/openpype/pipeline/workfile/workfile_template_builder'. Which gives
 more abilities to define how build happens but require more code to achive it.
 """
 
-import os
 import re
 import collections
 import json
@@ -26,7 +25,6 @@ from openpype.lib import (
     filter_profiles,
     Logger,
 )
-from openpype.pipeline import legacy_io
 from openpype.pipeline.load import (
     discover_loader_plugins,
     IncompatibleLoaderError,
@@ -102,11 +100,17 @@ class BuildWorkfile:
             List[Dict[str, Any]]: Loaded containers during build.
         """
 
+        from openpype.pipeline.context_tools import (
+            get_current_project_name,
+            get_current_asset_name,
+            get_current_task_name,
+        )
+
         loaded_containers = []
 
         # Get current asset name and entity
-        project_name = legacy_io.active_project()
-        current_asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        current_asset_name = get_current_asset_name()
         current_asset_entity = get_asset_by_name(
             project_name, current_asset_name
         )
@@ -135,7 +139,7 @@ class BuildWorkfile:
             return loaded_containers
 
         # Get current task name
-        current_task_name = legacy_io.Session["AVALON_TASK"]
+        current_task_name = get_current_task_name()
 
         # Load workfile presets for task
         self.build_presets = self.get_build_presets(
@@ -236,9 +240,14 @@ class BuildWorkfile:
             Dict[str, Any]: preset per entered task name
         """
 
-        host_name = os.environ["AVALON_APP"]
+        from openpype.pipeline.context_tools import (
+            get_current_host_name,
+            get_current_project_name,
+        )
+
+        host_name = get_current_host_name()
         project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
+            get_current_project_name()
         )
 
         host_settings = project_settings.get(host_name) or {}
@@ -651,13 +660,15 @@ class BuildWorkfile:
         ```
         """
 
+        from openpype.pipeline.context_tools import get_current_project_name
+
         output = {}
         if not asset_docs:
             return output
 
         asset_docs_by_ids = {asset["_id"]: asset for asset in asset_docs}
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         subsets = list(get_subsets(
             project_name, asset_ids=asset_docs_by_ids.keys()
         ))

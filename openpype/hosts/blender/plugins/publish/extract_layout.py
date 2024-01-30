@@ -11,10 +11,10 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractLayout(publish.Extractor):
+class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract a layout."""
 
-    label = "Extract Layout"
+    label = "Extract Layout (JSON)"
     hosts = ["blender"]
     families = ["layout"]
     optional = True
@@ -45,7 +45,7 @@ class ExtractLayout(publish.Extractor):
                 starting_frames.append(curr_frame_range[0])
                 ending_frames.append(curr_frame_range[1])
             else:
-                self.log.info("Object have no animation.")
+                self.log.info("Object has no animation.")
                 continue
 
             asset_group_name = asset.name
@@ -80,17 +80,18 @@ class ExtractLayout(publish.Extractor):
 
             override = plugin.create_blender_context(
                 active=asset, selected=[asset, obj])
-            bpy.ops.export_scene.fbx(
-                override,
-                filepath=filepath,
-                use_active_collection=False,
-                use_selection=True,
-                bake_anim_use_nla_strips=False,
-                bake_anim_use_all_actions=False,
-                add_leaf_bones=False,
-                armature_nodetype='ROOT',
-                object_types={'EMPTY', 'ARMATURE'}
-            )
+            with bpy.context.temp_override(**override):
+                # We export the fbx
+                bpy.ops.export_scene.fbx(
+                    filepath=filepath,
+                    use_active_collection=False,
+                    use_selection=True,
+                    bake_anim_use_nla_strips=False,
+                    bake_anim_use_all_actions=False,
+                    add_leaf_bones=False,
+                    armature_nodetype='ROOT',
+                    object_types={'EMPTY', 'ARMATURE'}
+                )
             obj.name = armature_name
             asset.name = asset_group_name
             asset.select_set(False)
@@ -113,11 +114,14 @@ class ExtractLayout(publish.Extractor):
         return None, n
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -125,13 +129,22 @@ class ExtractLayout(publish.Extractor):
         json_data = []
         fbx_files = []
 
-        asset_group = bpy.data.objects[str(instance)]
+        asset_group = instance.data["transientData"]["instance_node"]
 
         fbx_count = 0
 
         project_name = instance.context.data["projectEntity"]["name"]
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
+            if not metadata:
+                # Avoid raising error directly if there's just invalid data
+                # inside the instance; better to log it to the artist
+                # TODO: This should actually be validated in a validator
+                self.log.warning(
+                    f"Found content in layout that is not a loaded "
+                    f"asset, skipping: {asset.name_full}"
+                )
+                continue
 
             version_id = metadata["parent"]
             family = metadata["family"]
@@ -212,7 +225,11 @@ class ExtractLayout(publish.Extractor):
 
             json_data.append(json_element)
 
-        json_filename = "{}.json".format(instance.name)
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        json_filename = f"{instance_name}.json"
+
         json_path = os.path.join(stagingdir, json_filename)
 
         with open(json_path, "w+") as file:
@@ -245,5 +262,5 @@ class ExtractLayout(publish.Extractor):
             }
             instance.data["representations"].append(fbx_representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, json_representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, json_representation)

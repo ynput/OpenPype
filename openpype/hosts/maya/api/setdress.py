@@ -18,17 +18,19 @@ from openpype.client import (
 )
 from openpype.pipeline import (
     schema,
-    legacy_io,
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
     update_container,
     remove_container,
     get_representation_path,
+    get_current_project_name,
 )
 from openpype.hosts.maya.api.lib import (
     matrix_equals,
-    unique_namespace
+    unique_namespace,
+    get_container_transforms,
+    DEFAULT_MATRIX
 )
 
 log = logging.getLogger("PackageLoader")
@@ -183,8 +185,6 @@ def _add(instance, representation_id, loaders, namespace, root="|"):
 
     """
 
-    from openpype.hosts.maya.lib import get_container_transforms
-
     # Process within the namespace
     with namespaced(namespace, new=False) as namespace:
 
@@ -289,7 +289,7 @@ def update_package_version(container, version):
     """
 
     # Versioning (from `core.maya.pipeline`)
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     current_representation = get_representation_by_id(
         project_name, container["representation"]
     )
@@ -332,7 +332,7 @@ def update_package(set_container, representation):
     """
 
     # Load the original package data
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     current_representation = get_representation_by_id(
         project_name, set_container["representation"]
     )
@@ -379,10 +379,8 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 
     """
 
-    from openpype.hosts.maya.lib import DEFAULT_MATRIX, get_container_transforms
-
     set_namespace = set_container['namespace']
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
 
     # Update the setdress hierarchy alembic
     set_root = get_container_transforms(set_container, root=True)

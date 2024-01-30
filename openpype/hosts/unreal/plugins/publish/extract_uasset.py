@@ -11,16 +11,16 @@ class ExtractUAsset(publish.Extractor):
 
     label = "Extract UAsset"
     hosts = ["unreal"]
-    families = ["uasset"]
+    families = ["uasset", "umap"]
     optional = True
 
     def process(self, instance):
+        extension = (
+            "umap" if "umap" in instance.data.get("families") else "uasset")
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        self.log.info("Performing extraction..")
-
+        self.log.debug("Performing extraction..")
         staging_dir = self.staging_dir(instance)
-        filename = "{}.uasset".format(instance.name)
 
         members = instance.data.get("members", [])
 
@@ -36,13 +36,15 @@ class ExtractUAsset(publish.Extractor):
 
         shutil.copy(sys_path, staging_dir)
 
+        self.log.info(f"instance.data: {instance.data}")
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': 'uasset',
-            'ext': 'uasset',
-            'files': filename,
+            "name": extension,
+            "ext": extension,
+            "files": filename,
             "stagingDir": staging_dir,
         }
         instance.data["representations"].append(representation)

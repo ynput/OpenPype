@@ -6,6 +6,7 @@ import shutil
 
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_version_by_id,
     get_hero_version_by_subset_id,
@@ -53,7 +54,6 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
     # permissions error on files (files were used or user didn't have perms)
     # *but all other plugins must be sucessfully completed
 
-    template_name_profiles = []
     _default_template_name = "hero"
 
     def process(self, instance):
@@ -141,6 +141,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             ))
             return
 
+        if AYON_SERVER_ENABLED and src_version_entity["name"] == 0:
+            self.log.debug(
+                "Version 0 cannot have hero version. Skipping."
+            )
+            return
+
         all_copied_files = []
         transfers = instance.data.get("transfers", list())
         for _src, dst in transfers:
@@ -195,11 +201,20 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         entity_id = None
         if old_version:
             entity_id = old_version["_id"]
-        new_hero_version = new_hero_version_doc(
-            src_version_entity["_id"],
-            src_version_entity["parent"],
-            entity_id=entity_id
-        )
+
+        if AYON_SERVER_ENABLED:
+            new_hero_version = new_hero_version_doc(
+                src_version_entity["parent"],
+                copy.deepcopy(src_version_entity["data"]),
+                src_version_entity["name"],
+                entity_id=entity_id
+            )
+        else:
+            new_hero_version = new_hero_version_doc(
+                src_version_entity["_id"],
+                src_version_entity["parent"],
+                entity_id=entity_id
+            )
 
         if old_version:
             self.log.debug("Replacing old hero version.")
@@ -259,10 +274,10 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     backup_hero_publish_dir = _backup_hero_publish_dir
                     break
                 except Exception:
-                    self.log.info((
+                    self.log.info(
                         "Could not remove previous backup folder."
-                        " Trying to add index to folder name"
-                    ))
+                        " Trying to add index to folder name."
+                    )
 
                 _backup_hero_publish_dir = (
                     backup_hero_publish_dir + str(idx)

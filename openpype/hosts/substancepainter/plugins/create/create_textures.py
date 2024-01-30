@@ -34,6 +34,18 @@ class CreateTextures(Creator):
         if not substance_painter.project.is_open():
             raise CreatorError("Can't create a Texture Set instance without "
                                "an open project.")
+        # Transfer settings from pre create to instance
+        creator_attributes = instance_data.setdefault(
+            "creator_attributes", dict())
+        for key in [
+            "exportPresetUrl",
+            "exportFileFormat",
+            "exportSize",
+            "exportPadding",
+            "exportDilationDistance"
+        ]:
+            if key in pre_create_data:
+                creator_attributes[key] = pre_create_data[key]
 
         instance = self.create_instance_in_context(subset_name,
                                                    instance_data)

@@ -11,7 +11,7 @@ import qargparse
 from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.load import get_representation_path_from_context
 from . import lib
 
 log = Logger.get_logger(__name__)
@@ -31,7 +31,7 @@ def load_stylesheet():
 class CreatorWidget(QtWidgets.QDialog):
 
     # output items
-    items = dict()
+    items = {}
 
     def __init__(self, name, info, ui_inputs, parent=None):
         super(CreatorWidget, self).__init__(parent)
@@ -316,20 +316,6 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-def get_reference_node_parents(ref):
-    """Return all parent reference nodes of reference node
-
-    Args:
-        ref (str): reference node.
-
-    Returns:
-        list: The upstream parent reference nodes.
-
-    """
-    parents = []
-    return parents
-
-
 class SequenceLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 
@@ -393,7 +379,7 @@ class ClipLoader:
     active_bin = None
     data = dict()
 
-    def __init__(self, cls, context, **options):
+    def __init__(self, cls, context, path, **options):
         """ Initialize object
 
         Arguments:
@@ -406,6 +392,7 @@ class ClipLoader:
         self.__dict__.update(cls.__dict__)
         self.context = context
         self.active_project = lib.get_current_project()
+        self.fname = path
 
         # try to get value from options or evaluate key value for `handles`
         self.with_handles = options.get("handles") or bool(
@@ -467,7 +454,7 @@ class ClipLoader:
         self.data["track_name"] = "_".join([subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
-        file = self.fname
+        file = get_representation_path_from_context(self.context)
         if not file:
             repr_id = repr["_id"]
             log.warning(
@@ -506,9 +493,8 @@ class ClipLoader:
         joint `data` key with asset.data dict into the representation
 
         """
-        asset_name = self.context["representation"]["context"]["asset"]
-        asset_doc = get_current_project_asset(asset_name)
-        log.debug("__ asset_doc: {}".format(pformat(asset_doc)))
+
+        asset_doc = self.context["asset"]
         self.data["assetData"] = asset_doc["data"]
 
     def _make_track_item(self, source_bin_item, audio=False):
@@ -656,8 +642,8 @@ class PublishClip:
     Returns:
         hiero.core.TrackItem: hiero track item object with pype tag
     """
-    vertical_clip_match = dict()
-    tag_data = dict()
+    vertical_clip_match = {}
+    tag_data = {}
     types = {
         "shot": "shot",
         "folder": "folder",
@@ -719,9 +705,10 @@ class PublishClip:
         self._create_parents()
 
     def convert(self):
-
         # solve track item data and add them to tag data
-        self._convert_to_tag_data()
+        tag_hierarchy_data = self._convert_to_tag_data()
+
+        self.tag_data.update(tag_hierarchy_data)
 
         # if track name is in review track name and also if driving track name
         # is not in review track name: skip tag creation
@@ -735,16 +722,23 @@ class PublishClip:
         if self.rename:
             # rename track item
             self.track_item.setName(new_name)
-            self.tag_data["asset"] = new_name
+            self.tag_data["asset_name"] = new_name
         else:
-            self.tag_data["asset"] = self.ti_name
+            self.tag_data["asset_name"] = self.ti_name
             self.tag_data["hierarchyData"]["shot"] = self.ti_name
 
+        # AYON unique identifier
+        folder_path = "/{}/{}".format(
+            tag_hierarchy_data["hierarchy"],
+            self.tag_data["asset_name"]
+        )
+        self.tag_data["folderPath"] = folder_path
         if self.tag_data["heroTrack"] and self.review_layer:
             self.tag_data.update({"reviewTrack": self.review_layer})
         else:
             self.tag_data.update({"reviewTrack": None})
 
+        # TODO: remove debug print
         log.debug("___ self.tag_data: {}".format(
             pformat(self.tag_data)
         ))
@@ -903,7 +897,7 @@ class PublishClip:
                     tag_hierarchy_data = hero_data
 
         # add data to return data dict
-        self.tag_data.update(tag_hierarchy_data)
+        return tag_hierarchy_data
 
     def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve tag data from hierarchy data and templates. """

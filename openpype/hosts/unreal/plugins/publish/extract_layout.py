@@ -8,7 +8,7 @@ from unreal import EditorLevelLibrary as ell
 from unreal import EditorAssetLibrary as eal
 
 from openpype.client import get_representation_by_name
-from openpype.pipeline import legacy_io, publish
+from openpype.pipeline import publish
 
 
 class ExtractLayout(publish.Extractor):
@@ -32,7 +32,7 @@ class ExtractLayout(publish.Extractor):
             "Wrong level loaded"
 
         json_data = []
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
 
         for member in instance[:]:
             actor = ell.get_actor_reference(member)

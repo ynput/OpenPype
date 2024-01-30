@@ -1,14 +1,17 @@
 """Standalone helper functions"""
 
 import os
+import copy
+from pprint import pformat
 import sys
-import platform
 import uuid
 import re
 
 import json
 import logging
 import contextlib
+import capture
+from .exitstack import ExitStack
 from collections import OrderedDict, defaultdict
 from math import ceil
 from six import string_types
@@ -25,23 +28,18 @@ from openpype.client import (
 )
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
     load_container,
-    registered_host,
+    registered_host
 )
-from openpype.pipeline.create import (
-    legacy_create,
-    get_legacy_creator_by_name,
-)
-from openpype.pipeline.context_tools import (
-    get_current_asset_name,
-    get_current_project_asset,
-    get_current_project_name,
-    get_current_task_name
-)
+from openpype.lib import NumberDef
+from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.create import CreateContext
 from openpype.lib.profiles_filtering import filter_profiles
 
 
@@ -66,19 +64,6 @@ SHAPE_ATTRS = {"castsShadows",
                "visibleInRefractions",
                "doubleSided",
                "opposite"}
-
-RENDER_ATTRS = {"vray": {
-    "node": "vraySettings",
-    "prefix": "fileNamePrefix",
-    "padding": "fileNamePadding",
-    "ext": "imageFormatStr"
-},
-    "default": {
-    "node": "defaultRenderGlobals",
-    "prefix": "imageFilePrefix",
-    "padding": "extensionPadding"
-}
-}
 
 
 DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
@@ -120,18 +105,14 @@ _alembic_options = {
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
-RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
-DISPLAY_LIGHTS_VALUES = [
-    "project_settings", "default", "all", "selected", "flat", "none"
-]
-DISPLAY_LIGHTS_LABELS = [
-    "Use Project Settings",
-    "Default Lighting",
-    "All Lights",
-    "Selected Lights",
-    "Flat Lighting",
-    "No Lights"
+DISPLAY_LIGHTS_ENUM = [
+    {"label": "Use Project Settings", "value": "project_settings"},
+    {"label": "Default Lighting", "value": "default"},
+    {"label": "All Lights", "value": "all"},
+    {"label": "Selected Lights", "value": "selected"},
+    {"label": "Flat Lighting", "value": "flat"},
+    {"label": "No Lights", "value": "none"}
 ]
 
 
@@ -153,6 +134,10 @@ def suspended_refresh(suspend=True):
 
     cmds.ogs(pause=True) is a toggle so we cant pass False.
     """
+    if IS_HEADLESS:
+        yield
+        return
+
     original_state = cmds.ogs(query=True, pause=True)
     try:
         if suspend and not original_state:
@@ -188,6 +173,261 @@ def maintained_selection():
                         noExpand=True)
         else:
             cmds.select(clear=True)
+
+
+def reload_all_udim_tile_previews():
+    """Regenerate all UDIM tile preview in texture file"""
+    for texture_file in cmds.ls(type="file"):
+        if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
+            cmds.ogs(regenerateUVTilePreview=texture_file)
+
+
+@contextlib.contextmanager
+def panel_camera(panel, camera):
+    """Set modelPanel's camera during the context.
+
+    Arguments:
+        panel (str): modelPanel name.
+        camera (str): camera name.
+
+    """
+    original_camera = cmds.modelPanel(panel, query=True, camera=True)
+    try:
+        cmds.modelPanel(panel, edit=True, camera=camera)
+        yield
+    finally:
+        cmds.modelPanel(panel, edit=True, camera=original_camera)
+
+
+def render_capture_preset(preset):
+    """Capture playblast with a preset.
+
+    To generate the preset use `generate_capture_preset`.
+
+    Args:
+        preset (dict): preset options
+
+    Returns:
+        str: Output path of `capture.capture`
+    """
+
+    # Force a refresh at the start of the timeline
+    # TODO (Question): Why do we need to do this? What bug does it solve?
+    #   Is this for simulations?
+    cmds.refresh(force=True)
+    refresh_frame_int = int(cmds.playbackOptions(query=True, minTime=True))
+    cmds.currentTime(refresh_frame_int - 1, edit=True)
+    cmds.currentTime(refresh_frame_int, edit=True)
+    log.debug(
+        "Using preset: {}".format(
+            json.dumps(preset, indent=4, sort_keys=True)
+        )
+    )
+    preset = copy.deepcopy(preset)
+    # not supported by `capture` so we pop it off of the preset
+    reload_textures = preset["viewport_options"].pop("loadTextures", False)
+    panel = preset.pop("panel")
+    with ExitStack() as stack:
+        stack.enter_context(maintained_time())
+        stack.enter_context(panel_camera(panel, preset["camera"]))
+        stack.enter_context(viewport_default_options(panel, preset))
+        if reload_textures:
+            # Force immediate texture loading when to ensure
+            # all textures have loaded before the playblast starts
+            stack.enter_context(material_loading_mode(mode="immediate"))
+            # Regenerate all UDIM tiles previews
+            reload_all_udim_tile_previews()
+        path = capture.capture(log=self.log, **preset)
+
+    return path
+
+
+def generate_capture_preset(instance, camera, path,
+                            start=None, end=None, capture_preset=None):
+    """Function for getting all the data of preset options for
+    playblast capturing
+
+    Args:
+        instance (pyblish.api.Instance): instance
+        camera (str): review camera
+        path (str): filepath
+        start (int): frameStart
+        end (int): frameEnd
+        capture_preset (dict): capture preset
+
+    Returns:
+        dict: Resulting preset
+    """
+    preset = load_capture_preset(data=capture_preset)
+
+    preset["camera"] = camera
+    preset["start_frame"] = start
+    preset["end_frame"] = end
+    preset["filename"] = path
+    preset["overwrite"] = True
+    preset["panel"] = instance.data["panel"]
+
+    # Disable viewer since we use the rendering logic for publishing
+    # We don't want to open the generated playblast in a viewer directly.
+    preset["viewer"] = False
+
+    # "isolate_view" will already have been applied at creation, so we'll
+    # ignore it here.
+    preset.pop("isolate_view")
+
+    # Set resolution variables from capture presets
+    width_preset = capture_preset["Resolution"]["width"]
+    height_preset = capture_preset["Resolution"]["height"]
+
+    # Set resolution variables from asset values
+    asset_data = instance.data["assetEntity"]["data"]
+    asset_width = asset_data.get("resolutionWidth")
+    asset_height = asset_data.get("resolutionHeight")
+    review_instance_width = instance.data.get("review_width")
+    review_instance_height = instance.data.get("review_height")
+
+    # Use resolution from instance if review width/height is set
+    # Otherwise use the resolution from preset if it has non-zero values
+    # Otherwise fall back to asset width x height
+    # Else define no width, then `capture.capture` will use render resolution
+    if review_instance_width and review_instance_height:
+        preset["width"] = review_instance_width
+        preset["height"] = review_instance_height
+    elif width_preset and height_preset:
+        preset["width"] = width_preset
+        preset["height"] = height_preset
+    elif asset_width and asset_height:
+        preset["width"] = asset_width
+        preset["height"] = asset_height
+
+    # Isolate view is requested by having objects in the set besides a
+    # camera. If there is only 1 member it'll be the camera because we
+    # validate to have 1 camera only.
+    if instance.data["isolate"] and len(instance.data["setMembers"]) > 1:
+        preset["isolate"] = instance.data["setMembers"]
+
+    # Override camera options
+    # Enforce persisting camera depth of field
+    camera_options = preset.setdefault("camera_options", {})
+    camera_options["depthOfField"] = cmds.getAttr(
+        "{0}.depthOfField".format(camera)
+    )
+
+    # Use Pan/Zoom from instance data instead of from preset
+    preset.pop("pan_zoom", None)
+    camera_options["panZoomEnabled"] = instance.data["panZoom"]
+
+    # Override viewport options by instance data
+    viewport_options = preset.setdefault("viewport_options", {})
+    viewport_options["displayLights"] = instance.data["displayLights"]
+    viewport_options["imagePlane"] = instance.data.get("imagePlane", True)
+
+    # Override transparency if requested.
+    transparency = instance.data.get("transparency", 0)
+    if transparency != 0:
+        preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+
+    # Update preset with current panel setting
+    # if override_viewport_options is turned off
+    if not capture_preset["Viewport Options"]["override_viewport_options"]:
+        panel_preset = capture.parse_view(preset["panel"])
+        panel_preset.pop("camera")
+        preset.update(panel_preset)
+
+    return preset
+
+
+@contextlib.contextmanager
+def viewport_default_options(panel, preset):
+    """Context manager used by `render_capture_preset`.
+
+    We need to explicitly enable some viewport changes so the viewport is
+    refreshed ahead of playblasting.
+
+    """
+    # TODO: Clarify in the docstring WHY we need to set it ahead of
+    #  playblasting. What issues does it solve?
+    viewport_defaults = {}
+    try:
+        keys = [
+            "useDefaultMaterial",
+            "wireframeOnShaded",
+            "xray",
+            "jointXray",
+            "backfaceCulling",
+            "textures"
+        ]
+        for key in keys:
+            viewport_defaults[key] = cmds.modelEditor(
+                panel, query=True, **{key: True}
+            )
+            if preset["viewport_options"].get(key):
+                cmds.modelEditor(
+                    panel, edit=True, **{key: True}
+                )
+        yield
+    finally:
+        # Restoring viewport options.
+        if viewport_defaults:
+            cmds.modelEditor(
+                panel, edit=True, **viewport_defaults
+            )
+
+
+@contextlib.contextmanager
+def material_loading_mode(mode="immediate"):
+    """Set material loading mode during context"""
+    original = cmds.displayPref(query=True, materialLoadingMode=True)
+    cmds.displayPref(materialLoadingMode=mode)
+    try:
+        yield
+    finally:
+        cmds.displayPref(materialLoadingMode=original)
+
+
+def get_namespace(node):
+    """Return namespace of given node"""
+    node_name = node.rsplit("|", 1)[-1]
+    if ":" in node_name:
+        return node_name.rsplit(":", 1)[0]
+    else:
+        return ""
+
+
+def strip_namespace(node, namespace):
+    """Strip given namespace from node path.
+
+    The namespace will only be stripped from names
+    if it starts with that namespace. If the namespace
+    occurs within another namespace it's not removed.
+
+    Examples:
+        >>> strip_namespace("namespace:node", namespace="namespace:")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello:world")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello")
+        "world:node"
+        >>> strip_namespace("hello:world:node", namespace="world")
+        "hello:world:node"
+        >>> strip_namespace("ns:group|ns:node", namespace="ns")
+        "group|node"
+
+    Returns:
+        str: Node name without given starting namespace.
+
+    """
+
+    # Ensure namespace ends with `:`
+    if not namespace.endswith(":"):
+        namespace = "{}:".format(namespace)
+
+    # The long path for a node can also have the namespace
+    # in its parents so we need to remove it from each
+    return "|".join(
+        name[len(namespace):] if name.startswith(namespace) else name
+        for name in node.split("|")
+    )
 
 
 def get_custom_namespace(custom_namespace):
@@ -343,8 +583,8 @@ def pairwise(iterable):
     return zip(a, a)
 
 
-def collect_animation_data(fps=False):
-    """Get the basic animation data
+def collect_animation_defs(fps=False):
+    """Get the basic animation attribute defintions for the publisher.
 
     Returns:
         OrderedDict
@@ -363,17 +603,42 @@ def collect_animation_data(fps=False):
     handle_end = frame_end_handle - frame_end
 
     # build attributes
-    data = OrderedDict()
-    data["frameStart"] = frame_start
-    data["frameEnd"] = frame_end
-    data["handleStart"] = handle_start
-    data["handleEnd"] = handle_end
-    data["step"] = 1.0
+    defs = [
+        NumberDef("frameStart",
+                  label="Frame Start",
+                  default=frame_start,
+                  decimals=0),
+        NumberDef("frameEnd",
+                  label="Frame End",
+                  default=frame_end,
+                  decimals=0),
+        NumberDef("handleStart",
+                  label="Handle Start",
+                  default=handle_start,
+                  decimals=0),
+        NumberDef("handleEnd",
+                  label="Handle End",
+                  default=handle_end,
+                  decimals=0),
+        NumberDef("step",
+                  label="Step size",
+                  tooltip="A smaller step size means more samples and larger "
+                          "output files.\n"
+                          "A 1.0 step size is a single sample every frame.\n"
+                          "A 0.5 step size is two samples per frame.\n"
+                          "A 0.2 step size is five samples per frame.",
+                  default=1.0,
+                  decimals=3),
+    ]
 
     if fps:
-        data["fps"] = mel.eval('currentTimeUnitToFPS()')
+        current_fps = mel.eval('currentTimeUnitToFPS()')
+        fps_def = NumberDef(
+            "fps", label="FPS", default=current_fps, decimals=5
+        )
+        defs.append(fps_def)
 
-    return data
+    return defs
 
 
 def imprint(node, data):
@@ -459,10 +724,10 @@ def lsattrs(attrs):
         attrs (dict): Name and value pairs of expected matches
 
     Example:
-        >> # Return nodes with an `age` of five.
-        >> lsattr({"age": "five"})
-        >> # Return nodes with both `age` and `color` of five and blue.
-        >> lsattr({"age": "five", "color": "blue"})
+        >>> # Return nodes with an `age` of five.
+        >>> lsattrs({"age": "five"})
+        >>> # Return nodes with both `age` and `color` of five and blue.
+        >>> lsattrs({"age": "five", "color": "blue"})
 
     Return:
          list: matching nodes.
@@ -904,7 +1169,7 @@ def no_display_layers(nodes):
 
 
 @contextlib.contextmanager
-def namespaced(namespace, new=True):
+def namespaced(namespace, new=True, relative_names=None):
     """Work inside namespace during context
 
     Args:
@@ -916,15 +1181,19 @@ def namespaced(namespace, new=True):
 
     """
     original = cmds.namespaceInfo(cur=True, absoluteName=True)
+    original_relative_names = cmds.namespace(query=True, relativeNames=True)
     if new:
         namespace = unique_namespace(namespace)
         cmds.namespace(add=namespace)
-
+    if relative_names is not None:
+        cmds.namespace(relativeNames=relative_names)
     try:
         cmds.namespace(set=namespace)
         yield namespace
     finally:
         cmds.namespace(set=original)
+        if relative_names is not None:
+            cmds.namespace(relativeNames=original_relative_names)
 
 
 @contextlib.contextmanager
@@ -1392,8 +1661,8 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
         assert asset_doc, "No current asset found in Session"
         asset_id = asset_doc['_id']
@@ -1522,7 +1791,15 @@ def set_attribute(attribute, value, node):
         cmds.addAttr(node, longName=attribute, **kwargs)
 
     node_attr = "{}.{}".format(node, attribute)
-    if "dataType" in kwargs:
+    enum_type = cmds.attributeQuery(attribute, node=node, enum=True)
+    if enum_type and value_type == "str":
+        enum_string_values = cmds.attributeQuery(
+            attribute, node=node, listEnum=True
+        )[0].split(":")
+        cmds.setAttr(
+            "{}.{}".format(node, attribute), enum_string_values.index(value)
+        )
+    elif "dataType" in kwargs:
         attr_type = kwargs["dataType"]
         cmds.setAttr(node_attr, value, type=attr_type)
     else:
@@ -1585,17 +1862,15 @@ def get_container_members(container):
 
 
 # region LOOKDEV
-def list_looks(asset_id):
+def list_looks(project_name, asset_id):
     """Return all look subsets for the given asset
 
     This assumes all look subsets start with "look*" in their names.
     """
-
     # # get all subsets with look leading in
     # the name associated with the asset
     # TODO this should probably look for family 'look' instead of checking
     #   subset name that can not start with family
-    project_name = legacy_io.active_project()
     subset_docs = get_subsets(project_name, asset_ids=[asset_id])
     return [
         subset_doc
@@ -1617,7 +1892,7 @@ def assign_look_by_version(nodes, version_id):
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
 
     # Get representations of shader file and relationships
     look_representation = get_representation_by_name(
@@ -1683,7 +1958,7 @@ def assign_look(nodes, subset="lookDefault"):
         parts = pype_id.split(":", 1)
         grouped[parts[0]].append(node)
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     subset_docs = get_subsets(
         project_name, subset_names=[subset], asset_ids=grouped.keys()
     )
@@ -2197,6 +2472,35 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
+def get_fps_for_current_context():
+    """Get fps that should be set for current context.
+
+    Todos:
+        - Skip project value.
+        - Merge logic with 'get_frame_range' and 'reset_scene_resolution' ->
+            all the values in the functions can be collected at one place as
+            they have same requirements.
+
+    Returns:
+        Union[int, float]: FPS value.
+    """
+
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
+    asset_doc = get_asset_by_name(
+        project_name, asset_name, fields=["data.fps"]
+    ) or {}
+    fps = asset_doc.get("data", {}).get("fps")
+    if not fps:
+        project_doc = get_project(project_name, fields=["data.fps"]) or {}
+        fps = project_doc.get("data", {}).get("fps")
+
+        if not fps:
+            fps = 25
+
+    return convert_to_maya_fps(fps)
+
+
 def get_frame_range(include_animation_range=False):
     """Get the current assets frame range and handles.
 
@@ -2271,10 +2575,7 @@ def reset_frame_range(playback=True, render=True, fps=True):
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
     """
     if fps:
-        fps = convert_to_maya_fps(
-            float(legacy_io.Session.get("AVALON_FPS", 25))
-        )
-        set_scene_fps(fps)
+        set_scene_fps(get_fps_for_current_context())
 
     frame_range = get_frame_range(include_animation_range=True)
     if not frame_range:
@@ -2296,8 +2597,8 @@ def reset_frame_range(playback=True, render=True, fps=True):
         cmds.currentTime(frame_start)
 
     if render:
-        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+        cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
 
 
 def reset_scene_resolution():
@@ -2310,7 +2611,7 @@ def reset_scene_resolution():
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
     asset_data = get_current_project_asset()["data"]
@@ -2343,19 +2644,9 @@ def set_context_settings():
         None
     """
 
-    # Todo (Wijnand): apply renderer and resolution of project
-    project_name = legacy_io.active_project()
-    project_doc = get_project(project_name)
-    project_data = project_doc["data"]
-    asset_doc = get_current_project_asset(fields=["data.fps"])
-    asset_data = asset_doc.get("data", {})
 
     # Set project fps
-    fps = convert_to_maya_fps(
-        asset_data.get("fps", project_data.get("fps", 25))
-    )
-    legacy_io.Session["AVALON_FPS"] = str(fps)
-    set_scene_fps(fps)
+    set_scene_fps(get_fps_for_current_context())
 
     reset_scene_resolution()
 
@@ -2375,9 +2666,7 @@ def validate_fps():
 
     """
 
-    expected_fps = convert_to_maya_fps(
-        get_current_project_asset(fields=["data.fps"])["data"]["fps"]
-    )
+    expected_fps = get_fps_for_current_context()
     current_fps = mel.eval('currentTimeUnitToFPS()')
 
     fps_match = current_fps == expected_fps
@@ -2489,9 +2778,37 @@ def bake_to_world_space(nodes,
          list: The newly created and baked node names.
 
     """
+    @contextlib.contextmanager
+    def _unlock_attr(attr):
+        """Unlock attribute during context if it is locked"""
+        if not cmds.getAttr(attr, lock=True):
+            # If not locked, do nothing
+            yield
+            return
+        try:
+            cmds.setAttr(attr, lock=False)
+            yield
+        finally:
+            cmds.setAttr(attr, lock=True)
 
     def _get_attrs(node):
-        """Workaround for buggy shape attribute listing with listAttr"""
+        """Workaround for buggy shape attribute listing with listAttr
+
+        This will only return keyable settable attributes that have an
+        incoming connections (those that have a reason to be baked).
+
+        Technically this *may* fail to return attributes driven by complex
+        expressions for which maya makes no connections, e.g. doing actual
+        `setAttr` calls in expressions.
+
+        Arguments:
+            node (str): The node to list attributes for.
+
+        Returns:
+            list: Keyable attributes with incoming connections.
+                The attribute may be locked.
+
+        """
         attrs = cmds.listAttr(node,
                               write=True,
                               scalar=True,
@@ -2516,14 +2833,14 @@ def bake_to_world_space(nodes,
 
         return valid_attrs
 
-    transform_attrs = set(["t", "r", "s",
-                           "tx", "ty", "tz",
-                           "rx", "ry", "rz",
-                           "sx", "sy", "sz"])
+    transform_attrs = {"t", "r", "s",
+                       "tx", "ty", "tz",
+                       "rx", "ry", "rz",
+                       "sx", "sy", "sz"}
 
     world_space_nodes = []
-    with delete_after() as delete_bin:
-
+    with ExitStack() as stack:
+        delete_bin = stack.enter_context(delete_after())
         # Create the duplicate nodes that are in world-space connected to
         # the originals
         for node in nodes:
@@ -2533,25 +2850,28 @@ def bake_to_world_space(nodes,
             new_name = "{0}_baked".format(short_name)
             new_node = cmds.duplicate(node,
                                       name=new_name,
-                                      renameChildren=True)[0]
+                                      renameChildren=True)[0]  # noqa
 
-            # Connect all attributes on the node except for transform
-            # attributes
-            attrs = _get_attrs(node)
-            attrs = set(attrs) - transform_attrs if attrs else []
+            # Parent new node to world
+            if cmds.listRelatives(new_node, parent=True):
+                new_node = cmds.parent(new_node, world=True)[0]
 
+            # Temporarily unlock and passthrough connect all attributes
+            # so we can bake them over time
+            # Skip transform attributes because we will constrain them later
+            attrs = set(_get_attrs(node)) - transform_attrs
             for attr in attrs:
-                orig_node_attr = '{0}.{1}'.format(node, attr)
-                new_node_attr = '{0}.{1}'.format(new_node, attr)
+                orig_node_attr = "{}.{}".format(node, attr)
+                new_node_attr = "{}.{}".format(new_node, attr)
 
-                # unlock to avoid connection errors
-                cmds.setAttr(new_node_attr, lock=False)
-
+                # unlock during context to avoid connection errors
+                stack.enter_context(_unlock_attr(new_node_attr))
                 cmds.connectAttr(orig_node_attr,
                                  new_node_attr,
                                  force=True)
 
-            # If shapes are also baked then connect those keyable attributes
+            # If shapes are also baked then also temporarily unlock and
+            # passthrough connect all shape attributes for baking
             if shape:
                 children_shapes = cmds.listRelatives(new_node,
                                                      children=True,
@@ -2566,25 +2886,19 @@ def bake_to_world_space(nodes,
                                                      children_shapes):
                         attrs = _get_attrs(orig_shape)
                         for attr in attrs:
-                            orig_node_attr = '{0}.{1}'.format(orig_shape, attr)
-                            new_node_attr = '{0}.{1}'.format(new_shape, attr)
+                            orig_node_attr = "{}.{}".format(orig_shape, attr)
+                            new_node_attr = "{}.{}".format(new_shape, attr)
 
-                            # unlock to avoid connection errors
-                            cmds.setAttr(new_node_attr, lock=False)
-
+                            # unlock during context to avoid connection errors
+                            stack.enter_context(_unlock_attr(new_node_attr))
                             cmds.connectAttr(orig_node_attr,
                                              new_node_attr,
                                              force=True)
 
-            # Parent to world
-            if cmds.listRelatives(new_node, parent=True):
-                new_node = cmds.parent(new_node, world=True)[0]
-
-            # Unlock transform attributes so constraint can be created
+            # Constraint transforms
             for attr in transform_attrs:
-                cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
-
-            # Constraints
+                transform_attr = "{}.{}".format(new_node, attr)
+                stack.enter_context(_unlock_attr(transform_attr))
             delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
             delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
 
@@ -2601,7 +2915,7 @@ def bake_to_world_space(nodes,
     return world_space_nodes
 
 
-def load_capture_preset(data=None):
+def load_capture_preset(data):
     """Convert OpenPype Extract Playblast settings to `capture` arguments
 
     Input data is the settings from:
@@ -2614,8 +2928,6 @@ def load_capture_preset(data=None):
         dict: `capture.capture` compatible keyword arguments
 
     """
-
-    import capture
 
     options = dict()
     viewport_options = dict()
@@ -2810,19 +3122,22 @@ def get_attr_in_layer(attr, layer):
 
 def fix_incompatible_containers():
     """Backwards compatibility: old containers to use new ReferenceLoader"""
-
+    old_loaders = {
+        "MayaAsciiLoader",
+        "AbcLoader",
+        "ModelLoader",
+        "CameraLoader",
+        "RigLoader",
+        "FBXLoader"
+    }
     host = registered_host()
     for container in host.ls():
         loader = container['loader']
-
-        print(container['loader'])
-
-        if loader in ["MayaAsciiLoader",
-                      "AbcLoader",
-                      "ModelLoader",
-                      "CameraLoader",
-                      "RigLoader",
-                      "FBXLoader"]:
+        if loader in old_loaders:
+            log.info(
+                "Converting legacy container loader {} to "
+                "ReferenceLoader: {}".format(loader, container["objectName"])
+            )
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
 
@@ -2940,194 +3255,6 @@ class shelf():
             cmds.shelfLayout(self.name, p="ShelfLayout")
 
 
-def _get_render_instances():
-    """Return all 'render-like' instances.
-
-    This returns list of instance sets that needs to receive information
-    about render layer changes.
-
-    Returns:
-        list: list of instances
-
-    """
-    objectset = cmds.ls("*.id", long=True, type="objectSet",
-                        recursive=True, objectsOnly=True)
-
-    instances = []
-    for objset in objectset:
-        if not cmds.attributeQuery("id", node=objset, exists=True):
-            continue
-
-        id_attr = "{}.id".format(objset)
-        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-            continue
-
-        has_family = cmds.attributeQuery("family",
-                                         node=objset,
-                                         exists=True)
-        if not has_family:
-            continue
-
-        if cmds.getAttr(
-                "{}.family".format(objset)) in RENDERLIKE_INSTANCE_FAMILIES:
-            instances.append(objset)
-
-    return instances
-
-
-renderItemObserverList = []
-
-
-class RenderSetupListObserver:
-    """Observer to catch changes in render setup layers."""
-
-    def listItemAdded(self, item):
-        print("--- adding ...")
-        self._add_render_layer(item)
-
-    def listItemRemoved(self, item):
-        print("--- removing ...")
-        self._remove_render_layer(item.name())
-
-    def _add_render_layer(self, item):
-        render_sets = _get_render_instances()
-        layer_name = item.name()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True) or []
-
-            namespace_name = "_{}".format(render_set)
-            if not cmds.namespace(exists=namespace_name):
-                index = 1
-                namespace_name = "_{}".format(render_set)
-                try:
-                    cmds.namespace(rm=namespace_name)
-                except RuntimeError:
-                    # namespace is not empty, so we leave it untouched
-                    pass
-                orignal_namespace_name = namespace_name
-                while(cmds.namespace(exists=namespace_name)):
-                    namespace_name = "{}{}".format(
-                        orignal_namespace_name, index)
-                    index += 1
-
-                namespace = cmds.namespace(add=namespace_name)
-
-            if members:
-                # if set already have namespaced members, use the same
-                # namespace as others.
-                namespace = members[0].rpartition(":")[0]
-            else:
-                namespace = namespace_name
-
-            render_layer_set_name = "{}:{}".format(namespace, layer_name)
-            if render_layer_set_name in members:
-                continue
-            print("  - creating set for {}".format(layer_name))
-            maya_set = cmds.sets(n=render_layer_set_name, empty=True)
-            cmds.sets(maya_set, forceElement=render_set)
-            rio = RenderSetupItemObserver(item)
-            print("-   adding observer for {}".format(item.name()))
-            item.addItemObserver(rio.itemChanged)
-            renderItemObserverList.append(rio)
-
-    def _remove_render_layer(self, layer_name):
-        render_sets = _get_render_instances()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True)
-            if not members:
-                continue
-
-            # all sets under set should have the same namespace
-            namespace = members[0].rpartition(":")[0]
-            render_layer_set_name = "{}:{}".format(namespace, layer_name)
-
-            if render_layer_set_name in members:
-                print("  - removing set for {}".format(layer_name))
-                cmds.delete(render_layer_set_name)
-
-
-class RenderSetupItemObserver:
-    """Handle changes in render setup items."""
-
-    def __init__(self, item):
-        self.item = item
-        self.original_name = item.name()
-
-    def itemChanged(self, *args, **kwargs):
-        """Item changed callback."""
-        if self.item.name() == self.original_name:
-            return
-
-        render_sets = _get_render_instances()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True)
-            if not members:
-                continue
-
-            # all sets under set should have the same namespace
-            namespace = members[0].rpartition(":")[0]
-            render_layer_set_name = "{}:{}".format(
-                namespace, self.original_name)
-
-            if render_layer_set_name in members:
-                print(" <> renaming {} to {}".format(self.original_name,
-                                                     self.item.name()))
-                cmds.rename(render_layer_set_name,
-                            "{}:{}".format(
-                                namespace, self.item.name()))
-            self.original_name = self.item.name()
-
-
-renderListObserver = RenderSetupListObserver()
-
-
-def add_render_layer_change_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    rs = renderSetup.instance()
-    render_sets = _get_render_instances()
-
-    layers = rs.getRenderLayers()
-    for render_set in render_sets:
-        members = cmds.sets(render_set, query=True)
-        if not members:
-            continue
-        # all sets under set should have the same namespace
-        namespace = members[0].rpartition(":")[0]
-        for layer in layers:
-            render_layer_set_name = "{}:{}".format(namespace, layer.name())
-            if render_layer_set_name not in members:
-                continue
-            rio = RenderSetupItemObserver(layer)
-            print("-   adding observer for {}".format(layer.name()))
-            layer.addItemObserver(rio.itemChanged)
-            renderItemObserverList.append(rio)
-
-
-def add_render_layer_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    print(">   adding renderSetup observer ...")
-    rs = renderSetup.instance()
-    rs.addListObserver(renderListObserver)
-    pass
-
-
-def remove_render_layer_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    print("<   removing renderSetup observer ...")
-    rs = renderSetup.instance()
-    try:
-        rs.removeListObserver(renderListObserver)
-    except ValueError:
-        # no observer set yet
-        pass
-
-
 def update_content_on_context_change():
     """
     This will update scene content to match new asset on context change
@@ -3237,77 +3364,54 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
 
 
 def set_colorspace():
-    """Set Colorspace from project configuration
-    """
-    project_name = os.getenv("AVALON_PROJECT")
+    """Set Colorspace from project configuration"""
+
+    project_name = get_current_project_name()
     imageio = get_project_settings(project_name)["maya"]["imageio"]
 
-    # Maya 2022+ introduces new OCIO v2 color management settings that
-    # can override the old color managenement preferences. OpenPype has
-    # separate settings for both so we fall back when necessary.
-    use_ocio_v2 = imageio["colorManagementPreference_v2"]["enabled"]
-    required_maya_version = 2022
+    # ocio compatibility variables
+    ocio_v2_maya_version = 2022
     maya_version = int(cmds.about(version=True))
-    maya_supports_ocio_v2 = maya_version >= required_maya_version
-    if use_ocio_v2 and not maya_supports_ocio_v2:
-        # Fallback to legacy behavior with a warning
-        log.warning("Color Management Preference v2 is enabled but not "
-                    "supported by current Maya version: {} (< {}). Falling "
-                    "back to legacy settings.".format(
-                        maya_version, required_maya_version)
-                    )
-        use_ocio_v2 = False
+    ocio_v2_support = use_ocio_v2 = maya_version >= ocio_v2_maya_version
+    is_ocio_set = bool(os.environ.get("OCIO"))
 
-    if use_ocio_v2:
-        root_dict = imageio["colorManagementPreference_v2"]
+    use_workfile_settings = imageio.get("workfile", {}).get("enabled")
+    if use_workfile_settings:
+        root_dict = imageio["workfile"]
     else:
-        root_dict = imageio["colorManagementPreference"]
+        # TODO: deprecated code from 3.15.5 - remove
+        # Maya 2022+ introduces new OCIO v2 color management settings that
+        # can override the old color management preferences. OpenPype has
+        # separate settings for both so we fall back when necessary.
+        use_ocio_v2 = imageio["colorManagementPreference_v2"]["enabled"]
+        if use_ocio_v2 and not ocio_v2_support:
+            # Fallback to legacy behavior with a warning
+            log.warning(
+                "Color Management Preference v2 is enabled but not "
+                "supported by current Maya version: {} (< {}). Falling "
+                "back to legacy settings.".format(
+                    maya_version, ocio_v2_maya_version)
+            )
 
-    if not isinstance(root_dict, dict):
-        msg = "set_colorspace(): argument should be dictionary"
-        log.error(msg)
-
-    log.debug(">> root_dict: {}".format(root_dict))
-
-    # enable color management
-    cmds.colorManagementPrefs(e=True, cmEnabled=True)
-    cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
-
-    # set config path
-    custom_ocio_config = False
-    if root_dict.get("configFilePath"):
-        unresolved_path = root_dict["configFilePath"]
-        ocio_paths = unresolved_path[platform.system().lower()]
-
-        resolved_path = None
-        for ocio_p in ocio_paths:
-            resolved_path = str(ocio_p).format(**os.environ)
-            if not os.path.exists(resolved_path):
-                continue
-
-        if resolved_path:
-            filepath = str(resolved_path).replace("\\", "/")
-            cmds.colorManagementPrefs(e=True, configFilePath=filepath)
-            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
-            log.debug("maya '{}' changed to: {}".format(
-                "configFilePath", resolved_path))
-            custom_ocio_config = True
-        else:
-            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
-            cmds.colorManagementPrefs(e=True, configFilePath="")
-
-    # If no custom OCIO config file was set we make sure that Maya 2022+
-    # either chooses between Maya's newer default v2 or legacy config based
-    # on OpenPype setting to use ocio v2 or not.
-    if maya_supports_ocio_v2 and not custom_ocio_config:
         if use_ocio_v2:
-            # Use Maya 2022+ default OCIO v2 config
-            log.info("Setting default Maya OCIO v2 config")
-            cmds.colorManagementPrefs(edit=True, configFilePath="")
+            root_dict = imageio["colorManagementPreference_v2"]
         else:
-            # Set the Maya default config file path
-            log.info("Setting default Maya OCIO v1 legacy config")
-            cmds.colorManagementPrefs(edit=True, configFilePath="legacy")
+            root_dict = imageio["colorManagementPreference"]
+
+        if not isinstance(root_dict, dict):
+            msg = "set_colorspace(): argument should be dictionary"
+            log.error(msg)
+            return
+
+    # backward compatibility
+    # TODO: deprecated code from 3.15.5 - remove with deprecated code above
+    view_name = root_dict.get("viewTransform")
+    if view_name is None:
+        view_name = root_dict.get("viewName")
+
+    log.debug(">> root_dict: {}".format(pformat(root_dict)))
+    if not root_dict:
+        return
 
     # set color spaces for rendering space and view transforms
     def _colormanage(**kwargs):
@@ -3324,17 +3428,36 @@ def set_colorspace():
         except RuntimeError as exc:
             log.error(exc)
 
+    # enable color management
+    cmds.colorManagementPrefs(edit=True, cmEnabled=True)
+    cmds.colorManagementPrefs(edit=True, ocioRulesEnabled=True)
+
     if use_ocio_v2:
+        log.info("Using Maya OCIO v2")
+        if not is_ocio_set:
+            # Set the Maya 2022+ default OCIO v2 config file path
+            log.info("Setting default Maya OCIO v2 config")
+            # Note: Setting "" as value also sets this default however
+            # introduces a bug where launching a file on startup will prompt
+            # to save the empty scene before it, so we set using the path.
+            # This value has been the same for 2022, 2023 and 2024
+            path = "<MAYA_RESOURCES>/OCIO-configs/Maya2022-default/config.ocio"
+            cmds.colorManagementPrefs(edit=True, configFilePath=path)
+
+        # set rendering space and view transform
         _colormanage(renderingSpaceName=root_dict["renderSpace"])
+        _colormanage(viewName=view_name)
         _colormanage(displayName=root_dict["displayName"])
-        _colormanage(viewName=root_dict["viewName"])
     else:
+        log.info("Using Maya OCIO v1 (legacy)")
+        if not is_ocio_set:
+            # Set the Maya default config file path
+            log.info("Setting default Maya OCIO v1 legacy config")
+            cmds.colorManagementPrefs(edit=True, configFilePath="legacy")
+
+        # set rendering space and view transform
         _colormanage(renderingSpaceName=root_dict["renderSpace"])
-        if maya_supports_ocio_v2:
-            _colormanage(viewName=root_dict["viewTransform"])
-            _colormanage(displayName="legacy")
-        else:
-            _colormanage(viewTransformName=root_dict["viewTransform"])
+        _colormanage(viewTransformName=view_name)
 
 
 @contextlib.contextmanager
@@ -3977,6 +4100,71 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
     return capture_preset or {}
 
 
+def get_reference_node(members, log=None):
+    """Get the reference node from the container members
+    Args:
+        members: list of node names
+
+    Returns:
+        str: Reference node name.
+
+    """
+
+    # Collect the references without .placeHolderList[] attributes as
+    # unique entries (objects only) and skipping the sharedReferenceNode.
+    references = set()
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        references.add(ref)
+
+    assert references, "No reference node found in container"
+
+    # Get highest reference node (least parents)
+    highest = min(references,
+                  key=lambda x: len(get_reference_node_parents(x)))
+
+    # Warn the user when we're taking the highest reference node
+    if len(references) > 1:
+        if not log:
+            log = logging.getLogger(__name__)
+
+        log.warning("More than one reference node found in "
+                    "container, using highest reference node: "
+                    "%s (in: %s)", highest, list(references))
+
+    return highest
+
+
+def get_reference_node_parents(ref):
+    """Return all parent reference nodes of reference node
+
+    Args:
+        ref (str): reference node.
+
+    Returns:
+        list: The upstream parent reference nodes.
+
+    """
+    parent = cmds.referenceQuery(ref,
+                                 referenceNode=True,
+                                 parent=True)
+    parents = []
+    while parent:
+        parents.append(parent)
+        parent = cmds.referenceQuery(parent,
+                                     referenceNode=True,
+                                     parent=True)
+    return parents
+
+
 def create_rig_animation_instance(
     nodes, context, namespace, options=None, log=None
 ):
@@ -3998,14 +4186,19 @@ def create_rig_animation_instance(
     """
     if options is None:
         options = {}
-
+    name = context["representation"]["name"]
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
                      node.endswith("controls_SET")), None)
+    if name != "fbx":
+        assert output, "No out_SET in rig, this is a bug."
+        assert controls, "No controls_SET in rig, this is a bug."
 
-    assert output, "No out_SET in rig, this is a bug."
-    assert controls, "No controls_SET in rig, this is a bug."
+    anim_skeleton = next((node for node in nodes if
+                          node.endswith("skeletonAnim_SET")), None)
+    skeleton_mesh = next((node for node in nodes if
+                          node.endswith("skeletonMesh_SET")), None)
 
     # Find the roots amongst the loaded nodes
     roots = (
@@ -4014,14 +4207,10 @@ def create_rig_animation_instance(
     )
     assert roots, "No root nodes in rig, this is a bug."
 
-    asset = legacy_io.Session["AVALON_ASSET"]
-    dependency = str(context["representation"]["_id"])
-
     custom_subset = options.get("animationSubsetName")
     if custom_subset:
         formatting_data = {
-            "asset_name": context['asset']['name'],
-            "asset_type": context['asset']['type'],
+            "asset": context["asset"],
             "subset": context['subset']['name'],
             "family": (
                 context['subset']['data'].get('family') or
@@ -4037,14 +4226,19 @@ def create_rig_animation_instance(
     if log:
         log.info("Creating subset: {}".format(namespace))
 
+    # Fill creator identifier
+    creator_identifier = "io.openpype.creators.maya.animation"
+
+    host = registered_host()
+    create_context = CreateContext(host)
     # Create the animation instance
-    creator_plugin = get_legacy_creator_by_name("CreateAnimation")
+    rig_sets = [output, controls, anim_skeleton, skeleton_mesh]
+    # Remove sets that this particular rig does not have
+    rig_sets = [s for s in rig_sets if s is not None]
     with maintained_selection():
-        cmds.select([output, controls] + roots, noExpand=True)
-        legacy_create(
-            creator_plugin,
-            name=namespace,
-            asset=asset,
-            options={"useSelection": True},
-            data={"dependencies": dependency}
+        cmds.select(rig_sets + roots, noExpand=True)
+        create_context.create(
+            creator_identifier=creator_identifier,
+            variant=namespace,
+            pre_create_data={"use_selection": True}
         )

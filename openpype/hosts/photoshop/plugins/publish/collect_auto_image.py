@@ -1,13 +1,12 @@
 import pyblish.api
 
+from openpype.client import get_asset_name_identifier
 from openpype.hosts.photoshop import api as photoshop
 from openpype.pipeline.create import get_subset_name
 
 
 class CollectAutoImage(pyblish.api.ContextPlugin):
     """Creates auto image in non artist based publishes (Webpublisher).
-
-    'remotepublish' should be renamed to 'autopublish' or similar in the future
     """
 
     label = "Collect Auto Image"
@@ -15,22 +14,21 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.2
 
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     def process(self, context):
-        family = "image"
         for instance in context:
             creator_identifier = instance.data.get("creator_identifier")
             if creator_identifier and creator_identifier == "auto_image":
                 self.log.debug("Auto image instance found, won't create new")
                 return
 
-        project_name = context.data["anatomyData"]["project"]["name"]
+        project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
-        task_name = context.data["anatomyData"]["task"]["name"]
+        task_name = context.data["task"]
         host_name = context.data["hostName"]
         asset_doc = context.data["assetEntity"]
-        asset_name = asset_doc["name"]
+        asset_name = get_asset_name_identifier(asset_doc)
 
         auto_creator = proj_settings.get(
             "photoshop", {}).get(

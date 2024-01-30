@@ -1,8 +1,9 @@
 import os
 import re
+
 import pyblish.api
 
-VERBOSE = False
+from openpype.pipeline.publish import PublishValidationError
 
 
 def is_cache_resource(resource):
@@ -70,9 +71,6 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
             xml = all_files.pop(0)
             assert xml.endswith(".xml")
 
-            if VERBOSE:
-                cls.log.info("Checking: {0}".format(all_files))
-
             # Ensure all files exist (including ticks)
             # The remainder file paths should be the .mcx or .mcc files
             valdidate_files(all_files)
@@ -126,8 +124,8 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
             # for the frames required by the time range.
             if ticks:
                 ticks = list(sorted(ticks))
-                cls.log.info("Found ticks: {0} "
-                             "(substeps: {1})".format(ticks, len(ticks)))
+                cls.log.debug("Found ticks: {0} "
+                              "(substeps: {1})".format(ticks, len(ticks)))
 
                 # Check all frames except the last since we don't
                 # require subframes after our time range.
@@ -164,5 +162,6 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
 
         if invalid:
             self.log.error("Invalid nodes: {0}".format(invalid))
-            raise RuntimeError("Invalid particle caches in instance. "
-                               "See logs for details.")
+            raise PublishValidationError(
+                ("Invalid particle caches in instance. "
+                 "See logs for details."))

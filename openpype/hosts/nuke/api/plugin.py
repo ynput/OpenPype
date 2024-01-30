@@ -19,7 +19,15 @@ from openpype.pipeline import (
     CreatorError,
     Creator as NewCreator,
     CreatedInstance,
-    legacy_io
+    get_current_task_name
+)
+from openpype.pipeline.colorspace import (
+    get_display_view_colorspace_name,
+    get_colorspace_settings_from_publish_context,
+    set_colorspace_data_to_representation
+)
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS
 )
 from .lib import (
     INSTANCE_DATA_KNOB,
@@ -35,7 +43,8 @@ from .lib import (
     get_node_data,
     get_view_process_node,
     get_viewer_config_from_string,
-    deprecated
+    deprecated,
+    get_filenames_without_hash
 )
 from .pipeline import (
     list_instances,
@@ -74,20 +83,6 @@ class NukeCreator(NewCreator):
         creator_attrs = instance_data["creator_attributes"] = {}
         for pass_key in keys:
             creator_attrs[pass_key] = pre_create_data[pass_key]
-
-    def add_info_knob(self, node):
-        if "OP_info" in node.knobs().keys():
-            return
-
-        # add info text
-        info_knob = nuke.Text_Knob("OP_info", "")
-        info_knob.setValue("""
-<span style=\"color:#fc0303\">
-<p>This node is maintained by <b>OpenPype Publisher</b>.</p>
-<p>To remove it use Publisher gui.</p>
-</span>
-        """)
-        node.addKnob(info_knob)
 
     def check_existing_subset(self, subset_name):
         """Make sure subset name is unique.
@@ -152,8 +147,6 @@ class NukeCreator(NewCreator):
             with parent_node:
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
-
-                self.add_info_knob(created_node)
 
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():
@@ -228,8 +221,14 @@ class NukeCreator(NewCreator):
                 created_instance["creator_attributes"].pop(key)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = created_inst.transient_data["node"]
+
+            # update instance node name if subset name changed
+            if "subset" in changes.changed_keys:
+                instance_node["name"].setValue(
+                    changes["subset"].new_value
+                )
 
             # in case node is not existing anymore (user erased it manually)
             try:
@@ -271,6 +270,17 @@ class NukeWriteCreator(NukeCreator):
     label = "Create Write"
     family = "write"
     icon = "sign-out"
+
+    def get_linked_knobs(self):
+        linked_knobs = []
+        if "channels" in self.instance_attributes:
+            linked_knobs.append("channels")
+        if "ordered" in self.instance_attributes:
+            linked_knobs.append("render_order")
+        if "use_range_limit" in self.instance_attributes:
+            linked_knobs.extend(["___", "first", "last", "use_limit"])
+
+        return linked_knobs
 
     def integrate_links(self, node, outputs=True):
         # skip if no selection
@@ -326,6 +336,7 @@ class NukeWriteCreator(NukeCreator):
             "frames": "Use existing frames"
         }
         if ("farm_rendering" in self.instance_attributes):
+            rendering_targets["frames_farm"] = "Use existing frames - farm"
             rendering_targets["farm"] = "Farm rendering"
 
         return EnumDef(
@@ -377,11 +388,7 @@ class NukeWriteCreator(NukeCreator):
                 sys.exc_info()[2]
             )
 
-    def apply_settings(
-        self,
-        project_settings,
-        system_settings
-    ):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings
@@ -535,6 +542,7 @@ class NukeLoader(LoaderPlugin):
             node.addKnob(knob)
 
     def clear_members(self, parent_node):
+        parent_class = parent_node.Class()
         members = self.get_members(parent_node)
 
         dependent_nodes = None
@@ -547,6 +555,8 @@ class NukeLoader(LoaderPlugin):
             break
 
         for member in members:
+            if member.Class() == parent_class:
+                continue
             self.log.info("removing node: `{}".format(member.name()))
             nuke.delete(member)
 
@@ -582,25 +592,32 @@ class ExporterReview(object):
     def get_file_info(self):
         if self.collection:
             # get path
-            self.fname = os.path.basename(self.collection.format(
-                "{head}{padding}{tail}"))
+            self.fname = os.path.basename(
+                self.collection.format("{head}{padding}{tail}")
+            )
             self.fhead = self.collection.format("{head}")
 
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
+
+            # make sure slate frame is not included
+            frame_start_handle = self.instance.data["frameStartHandle"]
+            if frame_start_handle > self.first_frame:
+                self.first_frame = frame_start_handle
+
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStartHandle", None)
-            self.last_frame = self.instance.data.get("frameEndHandle", None)
+            self.first_frame = self.instance.data["frameStartHandle"]
+            self.last_frame = self.instance.data["frameEndHandle"]
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
 
     def get_representation_data(
         self, tags=None, range=False,
-        custom_tags=None
+        custom_tags=None, colorspace=None
     ):
         """ Add representation data to self.data
 
@@ -629,6 +646,10 @@ class ExporterReview(object):
                 "frameStart": self.first_frame,
                 "frameEnd": self.last_frame,
             })
+        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+            filenames = get_filenames_without_hash(
+                self.file, self.first_frame, self.last_frame)
+            repre["files"] = filenames
 
         if self.multiple_presets:
             repre["outputName"] = self.name
@@ -636,6 +657,14 @@ class ExporterReview(object):
         if self.publish_on_farm:
             repre["tags"].append("publish_on_farm")
 
+        # add colorspace data to representation
+        if colorspace:
+            set_colorspace_data_to_representation(
+                repre,
+                self.instance.context.data,
+                colorspace=colorspace,
+                log=self.log
+            )
         self.data["representations"].append(repre)
 
     def get_imageio_baking_profile(self):
@@ -802,7 +831,20 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.info("File info was set...")
 
-        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        if ".{}".format(self.ext) in VIDEO_EXTENSIONS:
+            self.file = "{}{}.{}".format(
+                self.fhead, self.name, self.ext)
+        else:
+            # Output is image (or image sequence)
+            # When the file is an image it's possible it
+            # has extra information after the `fhead` that
+            # we want to preserve, e.g. like frame numbers
+            # or frames hashes like `####`
+            filename_no_ext = os.path.splitext(
+                os.path.basename(self.path_in))[0]
+            after_head = filename_no_ext[len(self.fhead):]
+            self.file = "{}{}.{}.{}".format(
+                self.fhead, self.name, after_head, self.ext)
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 
@@ -837,44 +879,16 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False, **kwargs):
+        # colorspace data
+        colorspace = None
+        # get colorspace settings
+        # get colorspace data from context
+        config_data, _ = get_colorspace_settings_from_publish_context(
+            self.instance.context.data)
+
         add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
-
-        # TODO: remove this when `reformat_nodes_config`
-        # is changed in settings
-        reformat_node_add = kwargs["reformat_node_add"]
-        reformat_node_config = kwargs["reformat_node_config"]
-
-        # TODO: make this required in future
-        reformat_nodes_config = kwargs.get("reformat_nodes_config", {})
-
-        # TODO: remove this once deprecated is removed
-        # make sure only reformat_nodes_config is used in future
-        if reformat_node_add and reformat_nodes_config.get("enabled"):
-            self.log.warning(
-                "`reformat_node_add` is deprecated. "
-                "Please use only `reformat_nodes_config` instead.")
-            reformat_nodes_config = None
-
-        # TODO: reformat code when backward compatibility is not needed
-        # warning if reformat_nodes_config is not set
-        if not reformat_nodes_config:
-            self.log.warning(
-                "Please set `reformat_nodes_config` in settings. "
-                "Using `reformat_node_config` instead."
-            )
-            reformat_nodes_config = {
-                "enabled": reformat_node_add,
-                "reposition_nodes": [
-                    {
-                        "node_class": "Reformat",
-                        "knobs": reformat_node_config
-                    }
-                ]
-            }
-
-
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -906,6 +920,11 @@ class ExporterReviewMov(ExporterReview):
         r_node["origlast"].setValue(self.last_frame)
         r_node["colorspace"].setValue(self.write_colorspace)
 
+        # do not rely on defaults, set explicitly
+        # to be sure it is set correctly
+        r_node["frame_mode"].setValue("expression")
+        r_node["frame"].setValue("")
+
         if read_raw:
             r_node["raw"].setValue(1)
 
@@ -913,6 +932,7 @@ class ExporterReviewMov(ExporterReview):
         self._shift_to_previous_node_and_temp(subset, r_node, "Read...   `{}`")
 
         # add reformat node
+        reformat_nodes_config = kwargs["reformat_nodes_config"]
         if reformat_nodes_config["enabled"]:
             reposition_nodes = reformat_nodes_config["reposition_nodes"]
             for reposition_node in reposition_nodes:
@@ -951,13 +971,20 @@ class ExporterReviewMov(ExporterReview):
                 # assign viewer
                 dag_node["view"].setValue(viewer)
 
+                if config_data:
+                    # convert display and view to colorspace
+                    colorspace = get_display_view_colorspace_name(
+                        config_path=config_data["path"],
+                        display=display,
+                        view=viewer
+                    )
+
                 self._connect_to_above_nodes(dag_node, subset, "OCIODisplay...   `{}`")
         # Write node
         write_node = nuke.createNode("Write")
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(str(self.path))
         write_node["file_type"].setValue(str(self.ext))
-
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
         # TODO shouldn't this come from settings on outputs?
         try:
@@ -971,7 +998,11 @@ class ExporterReviewMov(ExporterReview):
         except Exception:
             self.log.info("`mov64_codec` knob was not found")
 
-        write_node["mov64_write_timecode"].setValue(1)
+        try:
+            write_node["mov64_write_timecode"].setValue(1)
+        except Exception:
+            self.log.info("`mov64_write_timecode` knob was not found")
+
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
@@ -993,9 +1024,10 @@ class ExporterReviewMov(ExporterReview):
 
         # ---------- generate representation data
         self.get_representation_data(
-            tags=["review", "delete"] + add_tags,
+            tags=["review", "need_thumbnail", "delete"] + add_tags,
             custom_tags=add_custom_tags,
-            range=True
+            range=True,
+            colorspace=colorspace
         )
 
         self.log.debug("Representation...   `{}`".format(self.data))
@@ -1189,7 +1221,7 @@ def convert_to_valid_instaces():
 
     from openpype.hosts.nuke.api import workio
 
-    task_name = legacy_io.Session["AVALON_TASK"]
+    task_name = get_current_task_name()
 
     # save into new workfile
     current_file = workio.current_file()
