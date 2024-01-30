@@ -814,14 +814,6 @@ class SingleSelectAssetsWidget(AssetsWidget):
             return index.data(ASSET_NAME_ROLE)
         return None
 
-    def get_selected_asset_path(self):
-        """Currently selected asset path."""
-        selection_model = self._view.selectionModel()
-        indexes = selection_model.selectedRows()
-        for index in indexes:
-            return index.data(ASSET_PATH_ROLE)
-        return None
-
 
 class MultiSelectAssetsWidget(AssetsWidget):
     """Multiselection asset widget.
