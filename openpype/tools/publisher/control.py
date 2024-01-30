@@ -2346,6 +2346,8 @@ class PublisherController(BasePublisherController):
 
         self._publish_report.add_action_result(action, result)
 
+        self.emit_card_message("Action finished.")
+
     def _publish_next_process(self):
         # Validations of progress before using iterator
         # - same conditions may be inside iterator but they may be used
