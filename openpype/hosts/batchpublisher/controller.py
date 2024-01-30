@@ -59,17 +59,18 @@ PRODUCT_TYPE_TO_EXT_MAP = {
 
 class ProductItem(object):
     def __init__(
-        self,
-        filepath,
-        product_type,
-        representation_name,
-        product_name=None,
-        version=None,
-        comment=None,
-        enabled=True,
-        folder_path=None,
-        task_name=None
-    ):
+            self,
+            filepath,
+            product_type,
+            representation_name,
+            product_name=None,
+            version=None,
+            comment=None,
+            enabled=True,
+            folder_path=None,
+            task_name=None,
+            frame_start=None,
+            frame_end=None):
         self.enabled = enabled
         self.filepath = filepath
         self.product_type = product_type
@@ -79,6 +80,8 @@ class ProductItem(object):
         self.folder_path = folder_path
         self.comment = comment
         self.task_name = task_name
+        self.frame_start = frame_start
+        self.frame_end = frame_end
 
         self.derive_product_name()
 
@@ -87,7 +90,7 @@ class ProductItem(object):
         filename_no_ext, extension = os.path.splitext(filename)
         # Exclude possible frame in product name
         product_name = filename_no_ext.split(".")[0]
-        product_name, _extension = os.path.splitext(filename)
+        product_name, _extension = os.path.splitext(product_name)
         # Add the product type as prefix to product name
         if product_name.startswith("_"):
             product_name = self.product_type + product_name
@@ -223,9 +226,21 @@ class BatchPublisherController(object):
             representation_name = file_mapping.get("representation_name")
             files = glob.glob(glob_full_path, recursive=False)
             for filepath in files:
+                filename = os.path.basename(filepath)
+                frame_start = None
+                frame_end = None
+                if filename.count(".") >= 2:
+                    # Lets add the star in place of the frame number
+                    filepath_parts = filepath.split(".")
+                    filepath_parts[-2] = "#" * len(filepath_parts[-2])
+                    # Replace the file path with the version with star in it
+                    filepath = ".".join(filepath_parts)
+                    frames = self._get_frames_for_filepath(filepath)
+                    frame_start = frames[0]
+                    frame_end = frames[-1]
+                # Do not add ingest file path, if it's already been added
                 if filepath in product_items:
                     continue
-                filename = os.path.basename(filepath)
                 _filename_no_ext, extension = os.path.splitext(filename)
                 # Create representation name from extension
                 representation_name = representation_name or \
@@ -235,7 +250,9 @@ class BatchPublisherController(object):
                 product_item = ProductItem(
                     filepath,
                     product_type,
-                    representation_name)
+                    representation_name,
+                    frame_start=frame_start,
+                    frame_end=frame_end)
                 product_items[filepath] = product_item
 
         # Walk the entire directory structure again
@@ -245,9 +262,22 @@ class BatchPublisherController(object):
         for root, _dirs, filenames in os.walk(directory, topdown=False):
             for filename in filenames:
                 filepath = os.path.join(root, filename)
+                filename = os.path.basename(filepath)
+                # Get frame infomration (if any)
+                frame_start = None
+                frame_end = None
+                if filename.count(".") >= 2:
+                    # Lets add the star in place of the frame number
+                    filepath_parts = filepath.split(".")
+                    filepath_parts[-2] = "*"
+                    # Replace the file path with the version with star in it
+                    filepath = ".".join(filepath_parts)
+                    frames = self._get_frames_for_filepath(filepath)
+                    frame_start = frames[0]
+                    frame_end = frames[-1]
+                # Do not add ingest file path, if it's already been added
                 if filepath in product_items:
                     continue
-                filename = os.path.basename(filepath)
                 _filename_no_ext, extension = os.path.splitext(filename)
                 product_type = None
                 for _product_type, extensions in \
@@ -264,7 +294,9 @@ class BatchPublisherController(object):
                 product_item = ProductItem(
                     filepath,
                     product_type,
-                    representation_name)
+                    representation_name,
+                    frame_start=frame_start,
+                    frame_end=frame_end)
                 product_items[filepath] = product_item
 
         return list(product_items.values())
@@ -288,8 +320,12 @@ Task: {product_item.task_name}
 Product Type (Family): {product_item.product_type}
 Product Name (Subset): {product_item.product_name}
 Representation: {product_item.representation_name}
-Version: {product_item.version}"
-Project: {self._selected_project_name}"""
+Version: {product_item.version}
+Comment: {product_item.comment}
+Frame start: {product_item.frame_start}
+Frame end: {product_item.frame_end}
+Project: {self._selected_project_name}
+"""
         print(msg)
         publish_data = dict()
         publish_data["version"] = product_item.version
@@ -304,7 +340,9 @@ Project: {self._selected_project_name}"""
             product_item.product_type,
             product_item.product_name,
             expected_representations,
-            publish_data)
+            publish_data,
+            frame_start=product_item.frame_start,
+            frame_end=product_item.frame_end)
         # publish.publish_version(
         #     self._selected_project_name,
         #     product_item.folder_path,
@@ -321,3 +359,12 @@ Project: {self._selected_project_name}"""
         #     subset_name,
         #     expected_representations,
         #     publish_data,
+
+    def _get_frames_for_filepath(self, filepath):
+        # Collect all the frames found within the paths of glob search string
+        frames = list()
+        for _filepath in glob.glob(filepath):
+            filepath_parts = _filepath.split(".")
+            frame = int(filepath_parts[-2])
+            frames.append(frame)
+        return sorted(frames)

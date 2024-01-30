@@ -1,5 +1,6 @@
 import os
 import getpass
+import glob
 import json
 
 from openpype.lib import Logger
@@ -28,7 +29,9 @@ def publish_version_pyblish(
         family_name,
         subset_name,
         expected_representations,
-        publish_data):
+        publish_data,
+        frame_start=None,
+        frame_end=None):
 
     os.environ['AVALON_PROJECT'] = project_name
 
@@ -62,21 +65,35 @@ def publish_version_pyblish(
             "subset": subset_name,
             "publish": True,
             "active": True,
-            "source": file_path,
+            # "source": file_path,
             "version": publish_data.get("version"),
             "comment": publish_data.get("comment"),
+            "frameStart": frame_start,
+            "frameEnd": frame_end,
+            "handleStart": frame_start,
+            "handleEnd": frame_end,
         })
 
     directory = os.path.dirname(file_path)
-    file_name = os.path.basename(file_path)
-    extension = os.path.splitext(file_name)[1].lstrip(".")
+    # If file path has star in in lets collect all the file names
+    if "*" in file_path:
+        _filepaths = glob.glob(file_path)
+        file_names = list()
+        for _filepath in _filepaths:
+            file_name = os.path.basename(_filepath)
+            file_names.append(file_name)
+        extension = os.path.splitext(file_names[0])[1].lstrip(".")
+    else:
+        file_name = os.path.basename(file_path)
+        extension = os.path.splitext(file_name)[1].lstrip(".")
+        file_names = file_name
 
     representation = {
         "name": representation_name,
         "ext": extension,
         "preview": True,
         "tags": [],
-        "files": file_name,
+        "files": file_names,
         "stagingDir": directory,
     }
     instance.data.setdefault("representations", [])

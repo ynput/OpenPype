@@ -161,10 +161,12 @@ Enabled: <b>{product_item.enabled}</b>
 <br>Representation: <b>{product_item.representation_name}</b>
 <br>Version: <b>{product_item.version}</b>
 <br>Comment: <b>{product_item.comment}</b>
-<br>Project: <b>{project_name}</b>
+<br>Frame start: <b>{product_item.frame_start}</b>
+<br>Frame end: <b>{product_item.frame_end}</b>
 <br>Defined: <b>{product_item.defined}</b>
 <br>Task Names: <b>{task_names}</b>
-<br>Project: <b>{project_name}</b>"""
+<br>Project: <b>{project_name}</b>
+"""
             return tooltip
 
         elif role == QtCore.Qt.CheckStateRole:
