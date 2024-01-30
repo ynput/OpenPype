@@ -157,7 +157,7 @@ class BatchPublisherController(object):
                 project_name,
                 fields={
                     "name",
-                    "data.visualParent",
+                    # "data.visualParent",
                     "data.parents",
                     "data.tasks",
                 }
