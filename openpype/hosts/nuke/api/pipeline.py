@@ -360,6 +360,8 @@ def add_rv_from_presets():
 
     app_manager = ApplicationManager()
     openrv_app = app_manager.find_latest_available_variant_for_group("openrv")
+    if not openrv_app:
+        return
     rv_exec_path = str(openrv_app.find_executable())
     rv_root = os.path.dirname(os.path.dirname(rv_exec_path))
     rv_nuke_path = os.path.join(rv_root, 'plugins', 'SupportFiles', 'rvnuke')
