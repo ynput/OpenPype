@@ -87,6 +87,13 @@ def _pip_install(python_vendor_dir, requirements_path):
 
 def install_runtime_dependencies(pyproject, openpype_root, platform_name):
     _print("Installing Runtime Dependencies ...")
+
+    python_vendor_dir = openpype_root / "vendor" / "python"
+    if python_vendor_dir.exists():
+        _print("Cleaning existing runtime dependencies...")
+        shutil.rmtree(python_vendor_dir)
+    python_vendor_dir.mkdir(parents=True, exist_ok=True)
+
     runtime_deps = copy.deepcopy(pyproject["openpype"]["runtime-deps"])
 
     qtbinding_def = pyproject["openpype"]["qtbinding"][platform_name]
@@ -109,12 +116,36 @@ def install_runtime_dependencies(pyproject, openpype_root, platform_name):
     with open(requirements_path, "w") as stream:
         stream.write(requirements_content)
 
-    python_vendor_dir = openpype_root / "vendor" / "python"
     _print(f"We'll install\n{requirements_content}")
     try:
         _pip_install(python_vendor_dir, requirements_path)
     finally:
         os.remove(requirements_path)
+
+    # Move site-packages to root dir
+    runtime_site_packages = []
+    to_remove = list(python_vendor_dir.iterdir())
+    if platform.system().lower() == "windows":
+        runtime_site_packages.append(
+            python_vendor_dir / "Lib" / "site-packages"
+        )
+    else:
+        lib_dir = python_vendor_dir / "lib"
+        # linux and macos create python{x}.{y} subfolder with 'site-packages'
+        for lib_subdir in lib_dir.iterdir():
+            site_packages = lib_subdir / "site-packages"
+            if site_packages.exists() and site_packages.is_dir():
+                runtime_site_packages.append(site_packages)
+
+    for runtimedir in runtime_site_packages:
+        for filepath in runtimedir.iterdir():
+            shutil.move(str(filepath), str(python_vendor_dir))
+
+    for filepath in to_remove:
+        if filepath.is_dir():
+            shutil.rmtree(str(filepath))
+        else:
+            os.remove(str(filepath))
 
     # Remove libraries for QtSql which don't have available libraries
     #   by default and Postgre library would require to modify rpath of

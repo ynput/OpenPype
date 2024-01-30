@@ -131,21 +131,7 @@ else:
 # Vendored python modules that must not be in PYTHONPATH environment but
 #   are required for OpenPype processes
 vendor_python_path = os.path.join(OPENPYPE_ROOT, "vendor", "python")
-runtime_site_packages = []
-if platform.system().lower() == "windows":
-    runtime_site_packages.append(os.path.join(
-        vendor_python_path, "Lib", "site-packages"
-    ))
-else:
-    lib_dir = os.path.join(vendor_python_path, "lib")
-    # linux and macos create python{x}.{y} subfolder with 'site-packages'
-    for name in os.listdir(lib_dir):
-        site_packages = os.path.join(lib_dir, name, "site-packages")
-        if os.path.exists(site_packages):
-            runtime_site_packages.append(site_packages)
-
-for runtime_site_package in runtime_site_packages:
-    sys.path.insert(0, runtime_site_package)
+sys.path.insert(0, vendor_python_path)
 
 # Add common package to sys path
 # - common contains common code for bootstraping and OpenPype processes
