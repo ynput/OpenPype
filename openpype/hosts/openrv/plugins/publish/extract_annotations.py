@@ -5,6 +5,7 @@ import ftrack_api
 import rv
 
 from openpype.pipeline import publish
+from openpype.client import get_project
 from openpype.hosts.openrv.api.review import (
     get_path_annotated_frame,
     extract_annotated_frame
@@ -63,7 +64,14 @@ class ExtractOpenRVAnnotatedFrames(publish.Extractor):
         user = session.query("User where username is \"{}\"".format(session.api_user)).first()
 
         # Get the target entity
-        asset_version = session.query('AssetVersion where asset.name is "{0}" and version is {1}'.format(version_context['subset'], version_context['version'])).one()
+        project_id = get_project(version_context['project']['name'])['data']['ftrackId']
+        asset_query = ('AssetVersion where asset.name is "{0}"'
+                       ' and version is {1} and project_id is {2} '
+                       'and asset.parent.name is {3}').format(version_context['subset'],
+                                                              version_context['version'],
+                                                              project_id,
+                                                              version_context['asset'])
+        asset_version = session.query(asset_query).one()
 
         # Set up note details
         properties_name = "{0}.openpype_review.comment".format(node)
