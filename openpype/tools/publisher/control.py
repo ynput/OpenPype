@@ -2332,7 +2332,7 @@ class PublisherController(BasePublisherController):
         exception = result.get("error")
         if exception:
             self._emit_event(
-                "action.failed",
+                "publish.action.failed",
                 {
                     "title": "Action failed",
                     "message": "Action failed.",

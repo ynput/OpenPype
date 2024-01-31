@@ -322,7 +322,7 @@ class PublisherWindow(QtWidgets.QWidget):
             "convertors.find.failed", self._on_convertor_error
         )
         controller.event_system.add_callback(
-            "action.failed", self._on_action_error
+            "publish.action.failed", self._on_action_error
         )
         controller.event_system.add_callback(
             "export_report.request", self._export_report
