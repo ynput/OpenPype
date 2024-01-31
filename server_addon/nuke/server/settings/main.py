@@ -1,7 +1,6 @@
-from pydantic import validator, Field
-
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     ensure_unique_names
 )
 
@@ -44,69 +43,58 @@ from .workfile_builder import (
 from .templated_workfile_build import (
     TemplatedWorkfileBuildModel
 )
-from .filters import PublishGUIFilterItemModel
 
 
 class NukeSettings(BaseSettingsModel):
     """Nuke addon settings."""
 
-    general: GeneralSettings = Field(
+    general: GeneralSettings = SettingsField(
         default_factory=GeneralSettings,
         title="General",
     )
 
-    imageio: ImageIOSettings = Field(
+    imageio: ImageIOSettings = SettingsField(
         default_factory=ImageIOSettings,
         title="Color Management (imageio)",
     )
 
-    dirmap: DirmapSettings = Field(
+    dirmap: DirmapSettings = SettingsField(
         default_factory=DirmapSettings,
         title="Nuke Directory Mapping",
     )
 
-    scriptsmenu: ScriptsmenuSettings = Field(
+    scriptsmenu: ScriptsmenuSettings = SettingsField(
         default_factory=ScriptsmenuSettings,
         title="Scripts Menu Definition",
     )
 
-    gizmo: list[GizmoItem] = Field(
+    gizmo: list[GizmoItem] = SettingsField(
         default_factory=list, title="Gizmo Menu")
 
-    create: CreatorPluginsSettings = Field(
+    create: CreatorPluginsSettings = SettingsField(
         default_factory=CreatorPluginsSettings,
         title="Creator Plugins",
     )
 
-    publish: PublishPuginsModel = Field(
+    publish: PublishPuginsModel = SettingsField(
         default_factory=PublishPuginsModel,
         title="Publish Plugins",
     )
 
-    load: LoaderPuginsModel = Field(
+    load: LoaderPuginsModel = SettingsField(
         default_factory=LoaderPuginsModel,
         title="Loader Plugins",
     )
 
-    workfile_builder: WorkfileBuilderModel = Field(
+    workfile_builder: WorkfileBuilderModel = SettingsField(
         default_factory=WorkfileBuilderModel,
         title="Workfile Builder",
     )
 
-    templated_workfile_build: TemplatedWorkfileBuildModel = Field(
+    templated_workfile_build: TemplatedWorkfileBuildModel = SettingsField(
         title="Templated Workfile Build",
         default_factory=TemplatedWorkfileBuildModel
     )
-
-    filters: list[PublishGUIFilterItemModel] = Field(
-        default_factory=list
-    )
-
-    @validator("filters")
-    def ensure_unique_names(cls, value):
-        """Ensure name fields within the lists have unique names."""
-        ensure_unique_names(value)
-        return value
 
 
 DEFAULT_VALUES = {
@@ -121,6 +109,5 @@ DEFAULT_VALUES = {
     "workfile_builder": DEFAULT_WORKFILE_BUILDER_SETTINGS,
     "templated_workfile_build": {
         "profiles": []
-    },
-    "filters": []
+    }
 }

@@ -1,89 +1,91 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 # Creator Plugins
 class CreatorModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    default_variants: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    default_variants: list[str] = SettingsField(
         title="Default Products",
         default_factory=list,
     )
 
 
 class CreateArnoldAssModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    default_variants: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    default_variants: list[str] = SettingsField(
         title="Default Products",
         default_factory=list,
     )
-    ext: str = Field(Title="Extension")
+    ext: str = SettingsField(Title="Extension")
 
 
 class CreateStaticMeshModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    default_variants: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    default_variants: list[str] = SettingsField(
         default_factory=list,
         title="Default Products"
     )
-    static_mesh_prefix: str = Field("S", title="Static Mesh Prefix")
-    collision_prefixes: list[str] = Field(
+    static_mesh_prefix: str = SettingsField("S", title="Static Mesh Prefix")
+    collision_prefixes: list[str] = SettingsField(
         default_factory=list,
         title="Collision Prefixes"
     )
 
 
 class CreatePluginsModel(BaseSettingsModel):
-    CreateAlembicCamera: CreatorModel = Field(
+    CreateAlembicCamera: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Alembic Camera")
-    CreateArnoldAss: CreateArnoldAssModel = Field(
+    CreateArnoldAss: CreateArnoldAssModel = SettingsField(
         default_factory=CreateArnoldAssModel,
         title="Create Arnold Ass")
-    CreateArnoldRop: CreatorModel = Field(
+    CreateArnoldRop: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Arnold ROP")
-    CreateCompositeSequence: CreatorModel = Field(
+    CreateCompositeSequence: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Composite (Image Sequence)")
-    CreateHDA: CreatorModel = Field(
+    CreateHDA: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Houdini Digital Asset")
-    CreateKarmaROP: CreatorModel = Field(
+    CreateKarmaROP: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Karma ROP")
-    CreateMantraROP: CreatorModel = Field(
+    CreateMantraIFD: CreatorModel = SettingsField(
+        default_factory=CreatorModel,
+        title="Create Mantra IFD")
+    CreateMantraROP: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Mantra ROP")
-    CreatePointCache: CreatorModel = Field(
+    CreatePointCache: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create PointCache (Abc)")
-    CreateBGEO: CreatorModel = Field(
+    CreateBGEO: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create PointCache (Bgeo)")
-    CreateRedshiftProxy: CreatorModel = Field(
+    CreateRedshiftProxy: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Redshift Proxy")
-    CreateRedshiftROP: CreatorModel = Field(
+    CreateRedshiftROP: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Redshift ROP")
-    CreateReview: CreatorModel = Field(
+    CreateReview: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create Review")
     # "-" is not compatible in the new model
-    CreateStaticMesh: CreateStaticMeshModel = Field(
+    CreateStaticMesh: CreateStaticMeshModel = SettingsField(
         default_factory=CreateStaticMeshModel,
         title="Create Static Mesh")
-    CreateUSD: CreatorModel = Field(
+    CreateUSD: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create USD (experimental)")
-    CreateUSDRender: CreatorModel = Field(
+    CreateUSDRender: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create USD render (experimental)")
-    CreateVDBCache: CreatorModel = Field(
+    CreateVDBCache: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create VDB Cache")
-    CreateVrayROP: CreatorModel = Field(
+    CreateVrayROP: CreatorModel = SettingsField(
         default_factory=CreatorModel,
         title="Create VRay ROP")
 
@@ -111,6 +113,10 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
         "default_variants": ["Main"]
     },
     "CreateKarmaROP": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateMantraIFD": {
         "enabled": True,
         "default_variants": ["Main"]
     },

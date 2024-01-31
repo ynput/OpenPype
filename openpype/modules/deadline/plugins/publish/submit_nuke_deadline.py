@@ -47,6 +47,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     env_allowed_keys = []
     env_search_replace_values = {}
     workfile_dependency = True
+    use_published_workfile = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -85,8 +86,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             ),
             BoolDef(
                 "workfile_dependency",
-                default=True,
+                default=cls.workfile_dependency,
                 label="Workfile Dependency"
+            ),
+            BoolDef(
+                "use_published_workfile",
+                default=cls.use_published_workfile,
+                label="Use Published Workfile"
             )
         ]
 
@@ -125,20 +131,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         render_path = instance.data['path']
         script_path = context.data["currentFile"]
 
-        for item_ in context:
-            if "workfile" in item_.data["family"]:
-                template_data = item_.data.get("anatomyData")
-                rep = item_.data.get("representations")[0].get("name")
-                template_data["representation"] = rep
-                template_data["ext"] = rep
-                template_data["comment"] = None
-                anatomy_filled = context.data["anatomy"].format(template_data)
-                template_filled = anatomy_filled["publish"]["path"]
-                script_path = os.path.normpath(template_filled)
-
-                self.log.info(
-                    "Using published scene for render {}".format(script_path)
-                )
+        use_published_workfile = instance.data["attributeValues"].get(
+            "use_published_workfile", self.use_published_workfile
+        )
+        if use_published_workfile:
+            script_path = self._get_published_workfile_path(context)
 
         # only add main rendering job if target is not frames_farm
         r_job_response_json = None
@@ -196,6 +193,44 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             instance.data['family'] = 'write'
             families.insert(0, "prerender")
         instance.data["families"] = families
+
+    def _get_published_workfile_path(self, context):
+        """This method is temporary while the class is not inherited from
+        AbstractSubmitDeadline"""
+        for instance in context:
+            if (
+                instance.data["family"] != "workfile"
+                # Disabled instances won't be integrated
+                or instance.data("publish") is False
+            ):
+                continue
+            template_data = instance.data["anatomyData"]
+            # Expect workfile instance has only one representation
+            representation = instance.data["representations"][0]
+            # Get workfile extension
+            repre_file = representation["files"]
+            self.log.info(repre_file)
+            ext = os.path.splitext(repre_file)[1].lstrip(".")
+
+            # Fill template data
+            template_data["representation"] = representation["name"]
+            template_data["ext"] = ext
+            template_data["comment"] = None
+
+            anatomy = context.data["anatomy"]
+            # WARNING Hardcoded template name 'publish' > may not be used
+            template_obj = anatomy.templates_obj["publish"]["path"]
+
+            template_filled = template_obj.format(template_data)
+            script_path = os.path.normpath(template_filled)
+            self.log.info(
+                "Using published scene for render {}".format(
+                    script_path
+                )
+            )
+            return script_path
+
+        return None
 
     def payload_submit(
         self,

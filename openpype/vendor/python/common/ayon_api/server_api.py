@@ -8,6 +8,7 @@ import collections
 import platform
 import copy
 import uuid
+import warnings
 from contextlib import contextmanager
 
 import six
@@ -1022,17 +1023,10 @@ class ServerAPI(object):
         for attr, filter_value in filters.items():
             query.set_variable_value(attr, filter_value)
 
-        # Backwards compatibility for server 0.3.x
-        #   - will be removed in future releases
-        major, minor, _, _, _ = self.server_version_tuple
-        access_groups_field = "accessGroups"
-        if major == 0 and minor <= 3:
-            access_groups_field = "roles"
-
         for parsed_data in query.continuous_query(self):
             for user in parsed_data["users"]:
-                user[access_groups_field] = json.loads(
-                    user[access_groups_field])
+                user["accessGroups"] = json.loads(
+                    user["accessGroups"])
                 yield user
 
     def get_user(self, username=None):
@@ -2044,14 +2038,6 @@ class ServerAPI(object):
 
         elif entity_type == "user":
             entity_type_defaults = set(DEFAULT_USER_FIELDS)
-            # Backwards compatibility for server 0.3.x
-            #   - will be removed in future releases
-            major, minor, _, _, _ = self.server_version_tuple
-            if major == 0 and minor <= 3:
-                entity_type_defaults.discard("accessGroups")
-                entity_type_defaults.discard("defaultAccessGroups")
-                entity_type_defaults.add("roles")
-                entity_type_defaults.add("defaultRoles")
 
         else:
             raise ValueError("Unknown entity type \"{}\"".format(entity_type))
@@ -2306,125 +2292,8 @@ class ServerAPI(object):
             progress=progress
         )
 
-    def get_dependencies_info(self):
-        """Information about dependency packages on server.
-
-        Example data structure:
-            {
-                "packages": [
-                    {
-                        "name": str,
-                        "platform": str,
-                        "checksum": str,
-                        "sources": list[dict[str, Any]],
-                        "supportedAddons": dict[str, str],
-                        "pythonModules": dict[str, str]
-                    }
-                ],
-                "productionPackage": str
-            }
-
-        Deprecated:
-            Deprecated since server version 0.2.1. Use
-                'get_dependency_packages' instead.
-
-        Returns:
-            dict[str, Any]: Information about dependency packages known for
-                server.
-        """
-
-        major, minor, patch, _, _ = self.server_version_tuple
-        if major == 0 and (minor < 2 or (minor == 2 and patch < 1)):
-            result = self.get("dependencies")
-            return result.data
-        packages = self.get_dependency_packages()
-        packages["productionPackage"] = None
-        return packages
-
-    def update_dependency_info(
-        self,
-        name,
-        platform_name,
-        size,
-        checksum,
-        checksum_algorithm=None,
-        supported_addons=None,
-        python_modules=None,
-        sources=None
-    ):
-        """Update or create dependency package for identifiers.
-
-        The endpoint can be used to create or update dependency package.
-
-
-        Deprecated:
-            Deprecated for server version 0.2.1. Use
-                'create_dependency_pacakge' instead.
-
-        Args:
-            name (str): Name of dependency package.
-            platform_name (Literal["windows", "linux", "darwin"]): Platform
-                for which is dependency package targeted.
-            size (int): Size of dependency package in bytes.
-            checksum (str): Checksum of archive file where dependencies are.
-            checksum_algorithm (Optional[str]): Algorithm used to calculate
-                checksum. By default, is used 'md5' (defined by server).
-            supported_addons (Optional[dict[str, str]]): Name of addons for
-                which was the package created.
-                '{"<addon name>": "<addon version>", ...}'
-            python_modules (Optional[dict[str, str]]): Python modules in
-                dependencies package.
-                '{"<module name>": "<module version>", ...}'
-            sources (Optional[list[dict[str, Any]]]): Information about
-                sources where dependency package is available.
-        """
-
-        kwargs = {
-            key: value
-            for key, value in (
-                ("checksumAlgorithm", checksum_algorithm),
-                ("supportedAddons", supported_addons),
-                ("pythonModules", python_modules),
-                ("sources", sources),
-            )
-            if value
-        }
-
-        response = self.put(
-            "dependencies",
-            name=name,
-            platform=platform_name,
-            size=size,
-            checksum=checksum,
-            **kwargs
-        )
-        response.raise_for_status("Failed to create/update dependency")
-        return response.data
-
-    def _get_dependency_package_route(
-        self, filename=None, platform_name=None
-    ):
-        major, minor, patch, _, _ = self.server_version_tuple
-        if (major, minor, patch) <= (0, 2, 0):
-            # Backwards compatibility for AYON server 0.2.0 and lower
-            self.log.warning((
-                "Using deprecated dependency package route."
-                " Please update your AYON server to version 0.2.1 or higher."
-                " Backwards compatibility for this route will be removed"
-                " in future releases of ayon-python-api."
-            ))
-            if platform_name is None:
-                platform_name = platform.system().lower()
-            base = "dependencies"
-            if not filename:
-                return base
-            return "{}/{}/{}".format(base, filename, platform_name)
-
-        if (major, minor) <= (0, 3):
-            endpoint = "desktop/dependency_packages"
-        else:
-            endpoint = "desktop/dependencyPackages"
-
+    def _get_dependency_package_route(self, filename=None):
+        endpoint = "desktop/dependencyPackages"
         if filename:
             return "{}/{}".format(endpoint, filename)
         return endpoint
@@ -2535,14 +2404,21 @@ class ServerAPI(object):
         """Remove dependency package for specific platform.
 
         Args:
-            filename (str): Filename of dependency package. Or name of package
-                for server version 0.2.0 or lower.
-            platform_name (Optional[str]): Which platform of the package
-                should be removed. Current platform is used if not passed.
-                Deprecated since version 0.2.1
+            filename (str): Filename of dependency package.
+            platform_name (Optional[str]): Deprecated.
         """
 
-        route = self._get_dependency_package_route(filename, platform_name)
+        if platform_name is not None:
+            warnings.warn(
+                (
+                    "Argument 'platform_name' is deprecated in"
+                    " 'delete_dependency_package'. The argument will be"
+                    " removed, please modify your code accordingly."
+                ),
+                DeprecationWarning
+            )
+
+        route = self._get_dependency_package_route(filename)
         response = self.delete(route)
         response.raise_for_status("Failed to delete dependency file")
         return response.data
@@ -2567,18 +2443,25 @@ class ServerAPI(object):
                 to download.
             dst_directory (str): Where the file should be downloaded.
             dst_filename (str): Name of destination filename.
-            platform_name (Optional[str]): Name of platform for which the
-                dependency package is targeted. Default value is
-                current platform. Deprecated since server version 0.2.1.
+            platform_name (Optional[str]): Deprecated.
             chunk_size (Optional[int]): Download chunk size.
             progress (Optional[TransferProgress]): Object that gives ability
                 to track download progress.
 
         Returns:
             str: Filepath to downloaded file.
-       """
+        """
 
-        route = self._get_dependency_package_route(src_filename, platform_name)
+        if platform_name is not None:
+            warnings.warn(
+                (
+                    "Argument 'platform_name' is deprecated in"
+                    " 'download_dependency_package'. The argument will be"
+                    " removed, please modify your code accordingly."
+                ),
+                DeprecationWarning
+            )
+        route = self._get_dependency_package_route(src_filename)
         package_filepath = os.path.join(dst_directory, dst_filename)
         self.download_file(
             route,
@@ -2597,31 +2480,23 @@ class ServerAPI(object):
             src_filepath (str): Path to a package file.
             dst_filename (str): Dependency package filename or name of package
                 for server version 0.2.0 or lower. Must be unique.
-            platform_name (Optional[str]): For which platform is the
-                package targeted. Deprecated since server version 0.2.1.
+            platform_name (Optional[str]): Deprecated.
             progress (Optional[TransferProgress]): Object to keep track about
                 upload state.
         """
 
-        route = self._get_dependency_package_route(dst_filename, platform_name)
+        if platform_name is not None:
+            warnings.warn(
+                (
+                    "Argument 'platform_name' is deprecated in"
+                    " 'upload_dependency_package'. The argument will be"
+                    " removed, please modify your code accordingly."
+                ),
+                DeprecationWarning
+            )
+
+        route = self._get_dependency_package_route(dst_filename)
         self.upload_file(route, src_filepath, progress=progress)
-
-    def create_dependency_package_basename(self, platform_name=None):
-        """Create basename for dependency package file.
-
-        Deprecated:
-            Use 'create_dependency_package_basename' from `ayon_api` or
-                `ayon_api.utils` instead.
-
-        Args:
-            platform_name (Optional[str]): Name of platform for which the
-                bundle is targeted. Default value is current platform.
-
-        Returns:
-            str: Dependency package name with timestamp and platform.
-        """
-
-        return create_dependency_package_basename(platform_name)
 
     def upload_addon_zip(self, src_filepath, progress=None):
         """Upload addon zip file to server.
@@ -2649,14 +2524,6 @@ class ServerAPI(object):
             request_type=RequestTypes.post,
         )
         return response.json()
-
-    def _get_bundles_route(self):
-        major, minor, patch, _, _ = self.server_version_tuple
-        # Backwards compatibility for AYON server 0.3.0
-        # - first version where bundles were available
-        if major == 0 and minor == 3 and patch == 0:
-            return "desktop/bundles"
-        return "bundles"
 
     def get_bundles(self):
         """Server bundles with basic information.
@@ -2688,7 +2555,7 @@ class ServerAPI(object):
             dict[str, Any]: Server bundles with basic information.
         """
 
-        response = self.get(self._get_bundles_route())
+        response = self.get("bundles")
         response.raise_for_status()
         return response.data
 
@@ -2731,7 +2598,7 @@ class ServerAPI(object):
             if value is not None:
                 body[key] = value
 
-        response = self.post(self._get_bundles_route(), **body)
+        response = self.post("bundles", **body)
         response.raise_for_status()
 
     def update_bundle(
@@ -2766,7 +2633,7 @@ class ServerAPI(object):
             if value is not None
         }
         response = self.patch(
-            "{}/{}".format(self._get_bundles_route(), bundle_name),
+            "{}/{}".format("bundles", bundle_name),
             **body
         )
         response.raise_for_status()
@@ -2779,7 +2646,7 @@ class ServerAPI(object):
         """
 
         response = self.delete(
-            "{}/{}".format(self._get_bundles_route(), bundle_name)
+            "{}/{}".format("bundles", bundle_name)
         )
         response.raise_for_status()
 
@@ -3102,16 +2969,13 @@ class ServerAPI(object):
             - test how it behaves if there is not any production/staging
                 bundle.
 
-        Warnings:
-            For AYON server < 0.3.0 bundle name will be ignored.
-
         Example output:
             {
                 "addons": [
                     {
                         "name": "addon-name",
                         "version": "addon-version",
-                        "settings": {...}
+                        "settings": {...},
                         "siteSettings": {...}
                     }
                 ]
@@ -3121,7 +2985,6 @@ class ServerAPI(object):
             dict[str, Any]: All settings for single bundle.
         """
 
-        major, minor, _, _, _ = self.server_version_tuple
         query_values = {
             key: value
             for key, value in (
@@ -3137,21 +3000,8 @@ class ServerAPI(object):
             if site_id:
                 query_values["site_id"] = site_id
 
-        if major == 0 and minor >= 3:
-            url = "settings"
-        else:
-            # Backward compatibility for AYON server < 0.3.0
-            url = "settings/addons"
-            query_values.pop("bundle_name", None)
-            for new_key, old_key in (
-                ("project_name", "project"),
-                ("site_id", "site"),
-            ):
-                if new_key in query_values:
-                    query_values[old_key] = query_values.pop(new_key)
-
         query = prepare_query_string(query_values)
-        response = self.get("{}{}".format(url, query))
+        response = self.get("settings{}".format(query))
         response.raise_for_status()
         return response.data
 
@@ -3194,15 +3044,10 @@ class ServerAPI(object):
             use_site=use_site
         )
         if only_values:
-            major, minor, patch, _, _ = self.server_version_tuple
-            if major == 0 and minor >= 3:
-                output = {
-                    addon["name"]: addon["settings"]
-                    for addon in output["addons"]
-                }
-            else:
-                # Backward compatibility for AYON server < 0.3.0
-                output = output["settings"]
+            output = {
+                addon["name"]: addon["settings"]
+                for addon in output["addons"]
+            }
         return output
 
     def get_addons_project_settings(
@@ -3263,15 +3108,10 @@ class ServerAPI(object):
             use_site=use_site
         )
         if only_values:
-            major, minor, patch, _, _ = self.server_version_tuple
-            if major == 0 and minor >= 3:
-                output = {
-                    addon["name"]: addon["settings"]
-                    for addon in output["addons"]
-                }
-            else:
-                # Backward compatibility for AYON server < 0.3.0
-                output = output["settings"]
+            output = {
+                addon["name"]: addon["settings"]
+                for addon in output["addons"]
+            }
         return output
 
     def get_addons_settings(

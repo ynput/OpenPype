@@ -68,7 +68,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 ]
 
     def process(self, instance):
-
         anatomy = instance.context.data["anatomy"]
 
         template_data = copy.deepcopy(instance.data["anatomyData"])
@@ -79,12 +78,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
             "frame": "FRAME_TEMP",
             "representation": "TEMP"
         })
-
-        # For the first time publish
-        if instance.data.get("hierarchy"):
-            template_data.update({
-                "hierarchy": instance.data["hierarchy"]
-            })
 
         publish_templates = anatomy.templates_obj["publish"]
         if "folder" in publish_templates:
