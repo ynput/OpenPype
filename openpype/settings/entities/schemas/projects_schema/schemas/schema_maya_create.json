@@ -160,9 +160,9 @@
                 },
                 {
                     "type": "enum",
-                    "key": "abc_boolean_args",
+                    "key": "abc_export_flags",
                     "multiselection": true,
-                    "label": "Alembic Boolean Args",
+                    "label": "Export Flags (.abc)",
                     "enum_items": [
                         {"autoSubd": "autoSubd"},
                         {"dontSkipUnwrittenFrames": "dontSkipUnwrittenFrames"},
@@ -186,9 +186,9 @@
                 },
                 {
                     "type": "enum",
-                    "key": "abc_args_overrides",
+                    "key": "abc_export_overrides",
                     "multiselection": true,
-                    "label": "Alembic Arguments Overrides:\nChoose which arguments\nthe user can modify.",
+                    "label": "Export Overrides (.abc)",
                     "enum_items": [
                         {"attr": "attr"},
                         {"attrPrefix": "attrPrefix"},
@@ -319,9 +319,9 @@
                 },
                 {
                     "type": "enum",
-                    "key": "abc_boolean_args",
+                    "key": "abc_export_flags",
                     "multiselection": true,
-                    "label": "Alembic Boolean Args",
+                    "label": "Export Flags (.abc)",
                     "enum_items": [
                         {"autoSubd": "autoSubd"},
                         {"dontSkipUnwrittenFrames": "dontSkipUnwrittenFrames"},
@@ -345,9 +345,9 @@
                 },
                 {
                     "type": "enum",
-                    "key": "abc_args_overrides",
+                    "key": "abc_export_overrides",
                     "multiselection": true,
-                    "label": "Alembic Arguments Overrides:\nChoose which arguments\nthe user can modify.",
+                    "label": "Export Overrides (.abc)",
                     "enum_items": [
                         {"attr": "attr"},
                         {"attrPrefix": "attrPrefix"},

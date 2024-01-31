@@ -150,15 +150,15 @@ class CreateAnimationModel(BaseSettingsModel):
         enum_resolver=alembic_data_formats,
         title="Data Format",
     )
-    abc_boolean_args: list[str] = SettingsField(
+    abc_export_flags: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=alembic_booleans_enum,
-        title="Alembic Boolean Args",
+        title="Export Flags (.abc)",
     )
-    abc_args_overrides: list[str] = SettingsField(
+    abc_export_overrides: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=alembic_arguments_enum,
-        title="Alembic Arguments Overrides",
+        title="Export Overrides (.abc)",
     )
 
 
@@ -187,15 +187,15 @@ class CreatePointCacheModel(BaseSettingsModel):
         enum_resolver=alembic_data_formats,
         title="Data Format",
     )
-    abc_boolean_args: list[str] = SettingsField(
+    abc_export_flags: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=alembic_booleans_enum,
-        title="Alembic Boolean Args",
+        title="Export Flags (.abc)",
     )
-    abc_args_overrides: list[str] = SettingsField(
+    abc_export_overrides: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=alembic_arguments_enum,
-        title="Alembic Arguments Overrides",
+        title="Export Overrides (.abc)",
     )
 
 
@@ -399,13 +399,13 @@ DEFAULT_CREATORS_SETTINGS = {
             "Main"
         ],
         "step": 1.0,
-        "abc_boolean_args": [
+        "abc_export_flags": [
             "writeColorSets",
             "visibleOnly",
             "worldSpace",
             "writeNormals"
         ],
-        "abc_args_overrides": [
+        "abc_export_overrides": [
             "step",
             "includeParentHierarchy",
             "writeNormals",
@@ -439,13 +439,13 @@ DEFAULT_CREATORS_SETTINGS = {
             "Main"
         ],
         "step": 1.0,
-        "abc_boolean_args": [
+        "abc_export_flags": [
             "selection",
             "uvWrite",
             "writeCreases",
             "writeVisibility"
         ],
-        "abc_args_overrides": [
+        "abc_export_overrides": [
             "attr",
             "attrPrefix",
             "step",

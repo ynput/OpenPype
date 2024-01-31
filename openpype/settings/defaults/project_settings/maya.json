@@ -559,12 +559,12 @@
         "CreateAnimation": {
             "default_variants": [],
             "step": 1.0,
-            "abc_boolean_args": [
+            "abc_export_flags": [
                 "writeColorSets",
                 "worldSpace",
                 "writeNormals"
             ],
-            "abc_args_overrides": [
+            "abc_export_overrides": [
                 "step",
                 "includeParentHierarchy",
                 "writeNormals",
@@ -598,13 +598,13 @@
                 "Main"
             ],
             "step": 1.0,
-            "abc_boolean_args": [
+            "abc_export_flags": [
                 "selection",
                 "uvWrite",
                 "writeCreases",
                 "writeVisibility"
             ],
-            "abc_args_overrides": [
+            "abc_export_overrides": [
                 "attr",
                 "attrPrefix",
                 "step",
