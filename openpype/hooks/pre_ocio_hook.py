@@ -19,6 +19,7 @@ class OCIOEnvHook(PreLaunchHook):
         "nuke",
         "hiero",
         "resolve",
+        "openrv"
     }
     launch_types = set()
 
