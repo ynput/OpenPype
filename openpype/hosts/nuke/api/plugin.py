@@ -8,10 +8,14 @@ import string
 from collections import OrderedDict, defaultdict
 from abc import abstractmethod
 
-from openpype.settings import get_current_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_system_settings
+)
 from openpype.lib import (
     BoolDef,
-    EnumDef
+    EnumDef,
+    NumberDef
 )
 from openpype.pipeline import (
     LegacyCreator,
@@ -21,6 +25,8 @@ from openpype.pipeline import (
     CreatedInstance,
     get_current_task_name
 )
+from openpype.pipeline.context_tools import get_current_project_name
+
 from .lib import (
     INSTANCE_DATA_KNOB,
     Knobby,
@@ -315,6 +321,7 @@ class NukeWriteCreator(NukeCreator):
         attr_defs = [
             self._get_render_target_enum(),
         ]
+        attr_defs.extend(self._get_machine_and_group_limit())
         # add reviewable attribute
         if "reviewable" in self.instance_attributes:
             attr_defs.append(self._get_reviewable_bool())
@@ -335,6 +342,45 @@ class NukeWriteCreator(NukeCreator):
             items=rendering_targets,
             label="Render target"
         )
+
+    def _get_machine_and_group_limit(self):
+        from openpype_modules.deadline import (
+            get_deadline_job_settings,
+            get_deadline_limit_groups
+        )
+
+        default_machine_limit = 0
+        default_limit_groups = []
+
+        modules_system_settings = get_system_settings()["modules"]
+        deadline_enabled = modules_system_settings["deadline"]["enabled"]
+        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
+        limit_groups = get_deadline_limit_groups(
+            deadline_enabled, deadline_url, self.log
+        )
+
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+        profile = get_deadline_job_settings(project_settings, "nuke", self.log)
+        if profile:
+            default_machine_limit = profile.get("limit_machines", 0)
+            default_limit_groups = profile.get("limit_plugins", [])
+        return [
+            NumberDef(
+                "machineLimit",
+                label="Machine Limit",
+                default=default_machine_limit,
+                minimum=0,
+                decimals=0
+            ),
+            EnumDef(
+                "limits",
+                label="Limit Groups",
+                items=limit_groups,
+                default=default_limit_groups,
+                multiselection=True
+            ),
+        ]
 
     def _get_reviewable_bool(self):
         return BoolDef(
