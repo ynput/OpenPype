@@ -3,11 +3,11 @@ import os
 from maya import cmds
 
 from openpype.pipeline import publish
-from openpype.hosts.maya.api.alembic import ALEMBIC_ARGS, extract_alembic
+from openpype.hosts.maya.api.alembic import extract_alembic
 from openpype.hosts.maya.api.lib import (
     suspended_refresh,
     maintained_selection,
-    iter_visible_nodes_in_range
+    iter_visible_nodes_in_range,
 )
 
 
@@ -40,14 +40,11 @@ class ExtractAlembic(publish.Extractor):
         # Collect Alembic Arguments
         creator_attributes = instance.data.get("creator_attributes")
         abc_flags = creator_attributes.get(
-            "abcDefaultExportBooleanArguments"
-        ) + creator_attributes.get(
-            "abcExportBooleanArguments"
-        )
+            "abcExportTogglableFlags"
+        ) + creator_attributes.get("abcExportTogglableFlags")
 
         abc_attrs = [
-            attr.strip()
-            for attr in creator_attributes.get("attr", "").split(";")
+            attr.strip() for attr in creator_attributes.get("attr", "").split(";")
         ]
 
         abc_attr_prefixes = [
@@ -88,7 +85,7 @@ class ExtractAlembic(publish.Extractor):
             "preRollStartFrame": creator_attributes.get("preRollStartFrame", 0),
             "renderableOnly": True if "renderableOnly" in abc_flags else False,
             "root": abc_root,
-            "selection": True, # Should this stay like so?
+            "selection": True,  # Should this stay like so?
             "startFrame": start,
             "step": creator_attributes.get("step", 1.0),
             "stripNamespaces": True,
@@ -109,15 +106,17 @@ class ExtractAlembic(publish.Extractor):
             # flag does not filter out those that are only hidden on some
             # frames as it counts "animated" or "connected" visibilities as
             # if it's always visible.
-            nodes = list(iter_visible_nodes_in_range(nodes,
-                                                     start=start,
-                                                     end=end))
+            nodes = list(iter_visible_nodes_in_range(nodes, start=start, end=end))
 
         suspend = not instance.data.get("refresh", False)
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
-                self.log.debug("Running `extract_alembic` with the arguments: {}".format(extract_abc_args))
+                self.log.debug(
+                    "Running `extract_alembic` with the arguments: {}".format(
+                        extract_abc_args
+                    )
+                )
                 extract_alembic(**extract_abc_args)
 
         if "representations" not in instance.data:
@@ -127,7 +126,7 @@ class ExtractAlembic(publish.Extractor):
             "name": "abc",
             "ext": "abc",
             "files": filename,
-            "stagingDir": dirname
+            "stagingDir": dirname,
         }
         instance.data["representations"].append(representation)
 
@@ -159,7 +158,7 @@ class ExtractAlembic(publish.Extractor):
             "ext": "abc",
             "files": os.path.basename(path),
             "stagingDir": dirname,
-            "outputName": "proxy"
+            "outputName": "proxy",
         }
         instance.data["representations"].append(representation)
 
@@ -172,18 +171,18 @@ class ExtractAnimation(ExtractAlembic):
     families = ["animation"]
 
     def get_members_and_roots(self, instance):
-
         # Collect the out set nodes
         out_sets = [node for node in instance if node.endswith("out_SET")]
         if len(out_sets) != 1:
-            raise RuntimeError("Couldn't find exactly one out_SET: "
-                               "{0}".format(out_sets))
+            raise RuntimeError(
+                "Couldn't find exactly one out_SET: " "{0}".format(out_sets)
+            )
         out_set = out_sets[0]
         roots = cmds.sets(out_set, query=True)
 
         # Include all descendants
-        nodes = roots + cmds.listRelatives(roots,
-                                           allDescendents=True,
-                                           fullPath=True) or []
+        nodes = (
+            roots + cmds.listRelatives(roots, allDescendents=True, fullPath=True) or []
+        )
 
         return nodes, roots

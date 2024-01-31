@@ -17,8 +17,8 @@ from openpype.pipeline import CreatedInstance
 def _get_animation_attr_defs(cls):
     """Get Animation generic definitions.
 
-    The line is blurry between what's "Animation" generic and "Alembic" is
-    blurry, but the rule of thumb is that whatever "AlembicExport -h" accepts
+    The line is blurry between what's "Animation" generic and "Alembic",
+    but the rule of thumb is that whatever "AlembicExport -h" accepts
     is "Alembic" and the other ones are "Animation".
     """
     defs = lib.collect_animation_defs()
@@ -36,37 +36,41 @@ def _get_animation_attr_defs(cls):
     return defs
 
 
-def _get_alembic_boolean_arguments(cls):
-    """Get two sets with the Alembic flags.
+def _get_abc_export_flags(cls):
+    """Get two sets with the Alembic Export flags.
 
-    Alembic flags are treted as booleans, so here we get all the possible
-    options, and work out a list with all the ones that can be toggled and the
-    list of defaults (un-toggleable.)
+    Alembic flags are treated as booleans, so here we get all the possible
+    options, and work out a list with all the ones that can be toggled by
+    the user, and the ones defined in the settings.
     """
-    all_alembic_booleans = {
+
+    # The Arguments that can be modified by the Publisher
+    abc_export_overrides = set(getattr(cls, "abc_export_overrides", set()))
+
+    # What we have set in the Settings as defaults.
+    default_abc_export_flags = set(getattr(cls, "abc_export_flags", set()))
+
+    # Set of un-toggleable flags, specified by the settings
+    abc_export_flags = {
+        arg
+        for arg in default_abc_export_flags
+        if arg not in abc_export_overrides
+    }
+
+    # Set of all the available Alembic Export Flags
+    abc_boolean_flags = {
         arg
         for arg, arg_type in ALEMBIC_ARGS.items()
         if arg_type is bool
     }
 
-    # The Arguments that can be modified by the Publisher
-    abc_args_overrides = set(getattr(cls, "abc_args_overrides", set()))
-
-    # What we have set in the Settings as defaults.
-    abc_settings_boolean_args = set(getattr(cls, "abc_boolean_args", set()))
-
-    abc_boolean_args = {
+    # Set of togglable flags
+    abc_export_toggleable_flags = {
         arg
-        for arg in abc_settings_boolean_args
-        if arg not in abc_args_overrides
+        for arg in abc_export_overrides
+        if arg in abc_boolean_flags
     }
-
-    abc_args_overrides = {
-        arg
-        for arg in abc_args_overrides
-        if arg in all_alembic_booleans
-    }
-    return abc_boolean_args, abc_args_overrides
+    return abc_export_flags, abc_export_toggleable_flags
 
 
 def _get_animation_abc_attr_defs(cls):
@@ -98,16 +102,19 @@ def _get_animation_abc_attr_defs(cls):
     # The Arguments that can be modified by the Publisher
     abc_args_overrides = getattr(cls, "abc_args_overrides", None)
 
+    # What we have set in the Settings as defaults.
+    default_abc_export_flags = set(getattr(cls, "abc_export_flags", set()))
+
     (
-        abc_boolean_defaults,
-        abc_boolean_overrides,
-    ) = _get_alembic_boolean_arguments(cls)
+        abc_export_flags,
+        abc_export_toggleable_flags,
+    ) = _get_abc_export_flags(cls)
 
     abc_defs.append(
         EnumDef(
-            "abcDefaultExportBooleanArguments",
-            list(abc_boolean_defaults),
-            default=list(abc_boolean_defaults),
+            "abcExportFlags",
+            list(abc_export_flags),
+            default=list(abc_export_flags),
             multiselection=True,
             label="Settings Defined Arguments",
             disabled=True,
@@ -116,13 +123,18 @@ def _get_animation_abc_attr_defs(cls):
     )
 
     # Only display Boolan flags that the Admin defined as overrideable
+    abc_export_toggleable_defaults = [
+        for arg in abc_export_toggleable_flags
+        if arg in default_abc_export_flags
+    ]
     abc_defs.append(
         EnumDef(
-            "abcExportBooleanArguments",
-            list(abc_boolean_overrides) if abc_boolean_overrides else [""],
+            "abcExportTogglableFlags",
+            list(abc_export_toggleable_flags) if abc_export_toggleable_flags else [""],
+            default=abc_export_toggleable_defaults,
             multiselection=True,
-            label="Arguments Overrides",
-            disabled=True if not abc_boolean_overrides else False,
+            label="Export Flags",
+            disabled=True if not abc_export_toggleable_flags else False,
         )
     )
 
@@ -204,14 +216,14 @@ def _ensure_defaults(cls, instance_data):
     (
         abc_boolean_defaults,
         abc_boolean_overrides,
-    ) = _get_alembic_boolean_arguments(cls)
+    ) = _get_abc_export_flags(cls)
 
-    creator_attr["abcDefaultExportBooleanArguments"] = list(abc_boolean_defaults)
+    creator_attr["abcExportFlags"] = list(abc_boolean_defaults)
 
-    if creator_attr.get("abcExportBooleanArguments", []):
-        abc_boolean_args = creator_attr["abcExportBooleanArguments"].copy()
+    if creator_attr.get("abcExportTogglableFlags", []):
+        abc_boolean_args = creator_attr["abcExportTogglableFlags"].copy()
 
-        creator_attr["abcExportBooleanArguments"] = [
+        creator_attr["abcExportTogglableFlags"] = [
             arg for arg in abc_boolean_args
             if arg not in abc_boolean_overrides
         ]
