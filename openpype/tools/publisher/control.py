@@ -2339,8 +2339,8 @@ class PublisherController(BasePublisherController):
                     "traceback": "".join(
                         traceback.format_exception(exception)
                     ),
-                    "label": "",
-                    "name": action.__name__
+                    "label": action.__name__,
+                    "identifier": action.id
                 }
             )
 
