@@ -1,10 +1,14 @@
-from ayon_server.settings import Field, BaseSettingsModel, task_types_enum
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    task_types_enum,
+)
 
 
 class XMLPresetAttrsFromCommentsModel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field("", title="Attribute name")
-    type: str = Field(
+    name: str = SettingsField("", title="Attribute name")
+    type: str = SettingsField(
         default_factory=str,
         title="Attribute type",
         enum_resolver=lambda: ["number", "float", "string"]
@@ -13,13 +17,13 @@ class XMLPresetAttrsFromCommentsModel(BaseSettingsModel):
 
 class AddTasksModel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field("", title="Task name")
-    type: str = Field(
+    name: str = SettingsField("", title="Task name")
+    type: str = SettingsField(
         default_factory=str,
         title="Task type",
         enum_resolver=task_types_enum
     )
-    create_batch_group: bool = Field(
+    create_batch_group: bool = SettingsField(
         True,
         title="Create batch group"
     )
@@ -28,11 +32,13 @@ class AddTasksModel(BaseSettingsModel):
 class CollectTimelineInstancesModel(BaseSettingsModel):
     _isGroup = True
 
-    xml_preset_attrs_from_comments: list[XMLPresetAttrsFromCommentsModel] = Field(
-        default_factory=list,
-        title="XML presets attributes parsable from segment comments"
+    xml_preset_attrs_from_comments: list[XMLPresetAttrsFromCommentsModel] = (
+        SettingsField(
+            default_factory=list,
+            title="XML presets attributes parsable from segment comments"
+        )
     )
-    add_tasks: list[AddTasksModel] = Field(
+    add_tasks: list[AddTasksModel] = SettingsField(
         default_factory=list,
         title="Add tasks"
     )
@@ -41,22 +47,22 @@ class CollectTimelineInstancesModel(BaseSettingsModel):
 class ExportPresetsMappingModel(BaseSettingsModel):
     _layout = "expanded"
 
-    name: str = Field(
+    name: str = SettingsField(
         ...,
         title="Name"
     )
-    active: bool = Field(True, title="Is active")
-    export_type: str = Field(
+    active: bool = SettingsField(True, title="Is active")
+    export_type: str = SettingsField(
         "File Sequence",
         title="Eport clip type",
         enum_resolver=lambda: ["Movie", "File Sequence", "Sequence Publish"]
     )
-    ext: str = Field("exr", title="Output extension")
-    xml_preset_file: str = Field(
+    ext: str = SettingsField("exr", title="Output extension")
+    xml_preset_file: str = SettingsField(
         "OpenEXR (16-bit fp DWAA).xml",
         title="XML preset file (with ext)"
     )
-    colorspace_out: str = Field(
+    colorspace_out: str = SettingsField(
         "ACES - ACEScg",
         title="Output color (imageio)"
     )
@@ -65,31 +71,31 @@ class ExportPresetsMappingModel(BaseSettingsModel):
     #   created inconsistency with v3 settings and harder conversion handling
     #   - it can be moved back but keep in mind that it must be handled in v3
     #       conversion script too
-    xml_preset_dir: str = Field(
+    xml_preset_dir: str = SettingsField(
         "",
         title="XML preset directory"
     )
-    parsed_comment_attrs: bool = Field(
+    parsed_comment_attrs: bool = SettingsField(
         True,
         title="Parsed comment attributes"
     )
-    representation_add_range: bool = Field(
+    representation_add_range: bool = SettingsField(
         True,
         title="Add range to representation name"
     )
-    representation_tags: list[str] = Field(
+    representation_tags: list[str] = SettingsField(
         default_factory=list,
         title="Representation tags"
     )
-    load_to_batch_group: bool = Field(
+    load_to_batch_group: bool = SettingsField(
         True,
         title="Load to batch group reel"
     )
-    batch_group_loader_name: str = Field(
+    batch_group_loader_name: str = SettingsField(
         "LoadClipBatch",
         title="Use loader name"
     )
-    filter_path_regex: str = Field(
+    filter_path_regex: str = SettingsField(
         ".*",
         title="Regex in clip path"
     )
@@ -98,35 +104,35 @@ class ExportPresetsMappingModel(BaseSettingsModel):
 class ExtractProductResourcesModel(BaseSettingsModel):
     _isGroup = True
 
-    keep_original_representation: bool = Field(
+    keep_original_representation: bool = SettingsField(
         False,
         title="Publish clip's original media"
     )
-    export_presets_mapping: list[ExportPresetsMappingModel] = Field(
+    export_presets_mapping: list[ExportPresetsMappingModel] = SettingsField(
         default_factory=list,
         title="Export presets mapping"
     )
 
 
 class IntegrateBatchGroupModel(BaseSettingsModel):
-    enabled: bool = Field(
+    enabled: bool = SettingsField(
         False,
         title="Enabled"
     )
 
 
 class PublishPuginsModel(BaseSettingsModel):
-    CollectTimelineInstances: CollectTimelineInstancesModel = Field(
+    CollectTimelineInstances: CollectTimelineInstancesModel = SettingsField(
         default_factory=CollectTimelineInstancesModel,
         title="Collect Timeline Instances"
     )
 
-    ExtractProductResources: ExtractProductResourcesModel = Field(
+    ExtractProductResources: ExtractProductResourcesModel = SettingsField(
         default_factory=ExtractProductResourcesModel,
         title="Extract Product Resources"
     )
 
-    IntegrateBatchGroup: IntegrateBatchGroupModel = Field(
+    IntegrateBatchGroup: IntegrateBatchGroupModel = SettingsField(
         default_factory=IntegrateBatchGroupModel,
         title="IntegrateBatchGroup"
     )

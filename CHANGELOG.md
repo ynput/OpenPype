@@ -1,6 +1,622 @@
 # Changelog
 
 
+## [3.18.5](https://github.com/ynput/OpenPype/tree/3.18.5)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.4...3.18.5)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Chore: Add addons dir only if exists <a href="https://github.com/ynput/OpenPype/pull/6140">#6140</a></summary>
+
+Do not add addons directory path for addons discovery if does not exists.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: Effect Categories - OP-7397 <a href="https://github.com/ynput/OpenPype/pull/6143">#6143</a></summary>
+
+This PR introduces `Effect Categories` for the Hiero settings. This allows studios to split effect stacks into meaningful subsets.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Render Workfile Attributes <a href="https://github.com/ynput/OpenPype/pull/6146">#6146</a></summary>
+
+`Workfile Dependency` default value can now be controlled from project settings.`Use Published Workfile` makes using published workfiles for rendering optional.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Attributes are locked after publishing if they are locked in Camera Family <a href="https://github.com/ynput/OpenPype/pull/6073">#6073</a></summary>
+
+This PR is to make sure unlock attributes only during the bake context, make sure attributes are relocked after to preserve the lock state of the original node being baked.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Missing nuke family Windows arguments <a href="https://github.com/ynput/OpenPype/pull/6131">#6131</a></summary>
+
+Default Windows arguments for launching the Nuke family was missing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix the bug on the limit group not being set correctly in Maya Deadline Setting <a href="https://github.com/ynput/OpenPype/pull/6139">#6139</a></summary>
+
+This PR is to bug-fix the limit groups from maya deadline settings errored out when the user tries to edit the setting.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Transcoding extensions add missing '.tif' extension <a href="https://github.com/ynput/OpenPype/pull/6142">#6142</a></summary>
+
+Image extensions in transcoding helper was missing `.tif` extension and had `.tiff` twice.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Use the new API for override context <a href="https://github.com/ynput/OpenPype/pull/6145">#6145</a></summary>
+
+Blender 4.0 disabled the old API to override context. This API updates the code to use the new API.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>BugFix: Include Model in FBX Loader in Houdini <a href="https://github.com/ynput/OpenPype/pull/6150">#6150</a></summary>
+
+A quick bugfig where we can't load fbx exported from blender. The bug was reported here.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Restore actions to objects after update <a href="https://github.com/ynput/OpenPype/pull/6153">#6153</a></summary>
+
+Restore the actions assigned to objects after updating assets from blend files.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Collect template data with hierarchy context <a href="https://github.com/ynput/OpenPype/pull/6154">#6154</a></summary>
+
+Fixed queue loop where is used wrong variable to pop items from queue.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>OP-6382 - Thumbnail Integration Problem <a href="https://github.com/ynput/OpenPype/pull/6156">#6156</a></summary>
+
+This ticket alerted to 3 different cases of integration issues;
+- [x] Using the Tray Publisher with the same image format (extension) for representation and review representation.
+- [x] Clash on publish file path from output definitions in `ExtractOIIOTranscode`.
+- [x] Clash on publish file from thumbnail in `ExtractThumbnail`There might be an issue with this fix, if a studio does not use the `{output}` token in their `render` anatomy template. But thinking if they have customized it, they will be responsible to maintain these edge cases.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Bugfix saving camera scene errored out when creating render instance with multi-camera option turned off  <a href="https://github.com/ynput/OpenPype/pull/6163">#6163</a></summary>
+
+This PR is to make sure the integrator of saving camera scene turned off and the render submitted successfully when multi-camera options being turned off in 3dsmax
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Fix duplicated project name on create project structure <a href="https://github.com/ynput/OpenPype/pull/6166">#6166</a></summary>
+
+Small fix in project folders. It is not used same variable name to change values which breaks values on any next loop.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Maya: Remove duplicate plugin <a href="https://github.com/ynput/OpenPype/pull/6157">#6157</a></summary>
+
+The two plugins below are doing the same work, so we can remove the one focused solely on lookdev.https://github.com/ynput/OpenPype/blob/develop/openpype/hosts/maya/plugins/publish/validate_look_members_unique.pyhttps://github.com/ynput/OpenPype/blob/develop/openpype/hosts/maya/plugins/publish/validate_node_ids_unique.py
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publish report viewer: Report items sorting <a href="https://github.com/ynput/OpenPype/pull/6092">#6092</a></summary>
+
+Proposal of items sorting in Publish report viewer tool. Items are sorted by report creation time. Creation time is also added to publish report data when saved from publisher tool.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Extended error message <a href="https://github.com/ynput/OpenPype/pull/6161">#6161</a></summary>
+
+Added more details to message
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Added settings for Fusion creators to legacy OP <a href="https://github.com/ynput/OpenPype/pull/6162">#6162</a></summary>
+
+Added missing OP variant of setting for new Fusion creator.
+
+
+___
+
+</details>
+
+
+
+
+## [3.18.4](https://github.com/ynput/OpenPype/tree/3.18.4)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.3...3.18.4)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>multiple render camera supports for 3dsmax <a href="https://github.com/ynput/OpenPype/pull/5124">#5124</a></summary>
+
+Supports for rendering with multiple cameras in 3dsmax
+- [x] Add Batch Render Layers functions
+- [x] Rewrite lib.rendersetting and lib.renderproduct
+- [x] Add multi-camera options in creator.
+- [x] Collector with batch render-layer when multi-camera enabled.
+- [x] Add instance plugin for saving scene files with different cameras respectively by using subprocess
+- [x] Refactor submit_max_deadline
+- [x] Check with metadata.json in submit publish job
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: new creator for image product type <a href="https://github.com/ynput/OpenPype/pull/6057">#6057</a></summary>
+
+In many DCC `render` product type is expected to be sequence of files. This PR adds new explicit creator for `image` product type which is focused on single frame image. Workflows for both product types might be a bit different, this gives artists more granularity to choose better workflow.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Account and ignore free image planes. <a href="https://github.com/ynput/OpenPype/pull/5993">#5993</a></summary>
+
+Free image planes do not have the `->` path separator, so we need to account for that.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix long names for instances <a href="https://github.com/ynput/OpenPype/pull/6070">#6070</a></summary>
+
+Changed naming for instances to use only final part of the `folderPath`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Traypublisher & Chore: Instance version on follow workfile version <a href="https://github.com/ynput/OpenPype/pull/6117">#6117</a></summary>
+
+If `follow_workfile_version` is enabled but context does not have filled workfile version, a version on instance is used instead.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Substance Painter: Thumbnail errors with PBR Texture Set <a href="https://github.com/ynput/OpenPype/pull/6127">#6127</a></summary>
+
+When publishing with PBR Metallic Roughness as Output Template, Emissive Map errors out because of the missing channel in the material and the map can't be generated in Substance Painter. This PR is to make sure `imagestance.data["publish"] = False` so that the related "empty" texture instance would be skipped to generate the output.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Transcoding: Fix reading image sequences through oiiotool <a href="https://github.com/ynput/OpenPype/pull/6129">#6129</a></summary>
+
+When transcoding image sequences, the second image onwards includes the invalid xml line of `Reading path/to/file.exr` of the oiiotool output.This is most likely not the best solution, but it fixes the issue and illustrates the problem.Error:
+```
+ERROR:pyblish.plugin:Traceback (most recent call last):
+  File "C:\Users\tokejepsen\AppData\Local\Ynput\AYON\dependency_packages\ayon_2310271602_windows.zip\dependencies\pyblish\plugin.py", line 527, in __explicit_process
+    runner(*args)
+  File "C:\Users\tokejepsen\OpenPype\openpype\plugins\publish\extract_color_transcode.py", line 152, in process
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 1136, in convert_colorspace
+    input_info = get_oiio_info_for_input(input_path, logger=logger)
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 124, in get_oiio_info_for_input
+    output.append(parse_oiio_xml_output(xml_text, logger=logger))
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 276, in parse_oiio_xml_output
+    tree = xml.etree.ElementTree.fromstring(xml_string)
+  File "xml\etree\ElementTree.py", line 1347, in XML
+xml.etree.ElementTree.ParseError: syntax error: line 1, column 0
+Traceback (most recent call last):
+  File "C:\Users\tokejepsen\AppData\Local\Ynput\AYON\dependency_packages\ayon_2310271602_windows.zip\dependencies\pyblish\plugin.py", line 527, in __explicit_process
+    runner(*args)
+  File "<string>", line 152, in process
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 1136, in convert_colorspace
+    input_info = get_oiio_info_for_input(input_path, logger=logger)
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 124, in get_oiio_info_for_input
+    output.append(parse_oiio_xml_output(xml_text, logger=logger))
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 276, in parse_oiio_xml_output
+    tree = xml.etree.ElementTree.fromstring(xml_string)
+  File "xml\etree\ElementTree.py", line 1347, in XML
+xml.etree.ElementTree.ParseError: syntax error: line 1, column 0
+```
+
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Remove 'IntegrateHeroVersion' conversion <a href="https://github.com/ynput/OpenPype/pull/6130">#6130</a></summary>
+
+Remove settings conversion for `IntegrateHeroVersion`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore tools: Make sure style object is not garbage collected <a href="https://github.com/ynput/OpenPype/pull/6136">#6136</a></summary>
+
+Minor fix in tool utils to make sure style C++ object is not garbage collected when not stored into variable.
+
+
+___
+
+</details>
+
+
+
+
+## [3.18.3](https://github.com/ynput/OpenPype/tree/3.18.3)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.2...3.18.3)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Apply initial viewport shader for Redshift Proxy after loading <a href="https://github.com/ynput/OpenPype/pull/6102">#6102</a></summary>
+
+When the published redshift proxy is being loaded, the shader of the proxy is missing. This is different from the manual load through creating redshift proxy for files. This PR is to assign the default lambert to the redshift proxy, which replicates the same approach when the user manually loads the proxy with filepath.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: We should keep current subset version when we switch only the representation type <a href="https://github.com/ynput/OpenPype/pull/4629">#4629</a></summary>
+
+When we switch only the representation type of subsets, we should not get the representation from the last version of the subset.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Add loader for redshift proxy family <a href="https://github.com/ynput/OpenPype/pull/5948">#5948</a></summary>
+
+Loader for Redshift Proxy in Houdini (Thanks for @BigRoy contribution)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: exposing Deadline pools fields in Publisher UI <a href="https://github.com/ynput/OpenPype/pull/6079">#6079</a></summary>
+
+Deadline pools might be adhoc set by an artist during publishing. AfterEffects implementation wasn't providing this.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Event callbacks can have order <a href="https://github.com/ynput/OpenPype/pull/6080">#6080</a></summary>
+
+Event callbacks can have order in which are called, and fixed issue with getting function name and file when using `partial` function as callback.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: OpenPype addon defines runtime dependencies <a href="https://github.com/ynput/OpenPype/pull/6095">#6095</a></summary>
+
+Moved runtime dependencies from ayon-launcher to openpype addon.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: User's setting for scene unit scale  <a href="https://github.com/ynput/OpenPype/pull/6097">#6097</a></summary>
+
+Options for users to set the default scene unit scale for their scenes.AYONLegacy OP
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Remove deprecated templates profiles <a href="https://github.com/ynput/OpenPype/pull/6103">#6103</a></summary>
+
+Remove deprecated usage of template profiles from settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Window is not always on top <a href="https://github.com/ynput/OpenPype/pull/6107">#6107</a></summary>
+
+Goal of this PR is to avoid using `WindowStaysOnTopHint` which causes issues, especially in cases when DCC shows a popup dialog that is behind the window, in that case both Publisher and DCC are frozen and there is nothing to do.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: add split job export support for Redshift ROP <a href="https://github.com/ynput/OpenPype/pull/6108">#6108</a></summary>
+
+This is adding support for splitting of export and render jobs for Redshift as is already implemented for Vray, Mantra and Arnold.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: automatic installation of PySide2 <a href="https://github.com/ynput/OpenPype/pull/6111">#6111</a></summary>
+
+This PR adds hook which tries to check if PySide2 is installed in Python used by Fusion and if not, it tries to install it automatically.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: OpenPype addon dependencies <a href="https://github.com/ynput/OpenPype/pull/6113">#6113</a></summary>
+
+Added `click` and `six` to requirements of openpype addon, and removed `Qt.py` requirement, which is not used anywhere.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Thumbnail representation has 'outputName' <a href="https://github.com/ynput/OpenPype/pull/6114">#6114</a></summary>
+
+Add thumbnail output name to thumbnail representation to prevent same output filename during integration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu: Clear credentials is safe <a href="https://github.com/ynput/OpenPype/pull/6116">#6116</a></summary>
+
+Do not remove not existing keyring items.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: bug fix the playblast without textures <a href="https://github.com/ynput/OpenPype/pull/5942">#5942</a></summary>
+
+Bug fix the texture not being displayed when users enable texture placement in the OP/AYON setting
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Workfile instance update fix <a href="https://github.com/ynput/OpenPype/pull/6048">#6048</a></summary>
+
+Make sure workfile instance has always available 'instance_node' in transient data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix issue with parenting of widgets <a href="https://github.com/ynput/OpenPype/pull/6106">#6106</a></summary>
+
+Don't use publisher window parent (usually main DCC window) as parent for report widget.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>:wrench: fix and update pydocstyle configuration <a href="https://github.com/ynput/OpenPype/pull/6109">#6109</a></summary>
+
+Fix pydocstyle configuration and move it to `pyproject.toml`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Create camera node with the latest camera node class in Nuke 14 <a href="https://github.com/ynput/OpenPype/pull/6118">#6118</a></summary>
+
+Creating instance fails for certain cameras, and it seems to only exist in Nuke 14. The reason of causing that contributes to the new camera node class `Camera4`  while the camera creator is working with the `Camera2` class.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Site Sync: small fixes in Loader <a href="https://github.com/ynput/OpenPype/pull/6119">#6119</a></summary>
+
+Resolves issue:
+- local and studio icons were same, they should be different
+- `TypeError: string indices must be integers` error when downloading/uploading workfiles
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Template data for editorial publishing <a href="https://github.com/ynput/OpenPype/pull/6120">#6120</a></summary>
+
+Template data for editorial publishing are filled during `CollectInstanceAnatomyData`. The structure for editorial is determined, as it's required for ExtractHierarchy AYON/OpenPype plugins.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>SceneInventory: Fix site sync icon conversion <a href="https://github.com/ynput/OpenPype/pull/6123">#6123</a></summary>
+
+Use 'get_qt_icon' to convert icon definitions from site sync.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.2](https://github.com/ynput/OpenPype/tree/3.18.2)
 
 

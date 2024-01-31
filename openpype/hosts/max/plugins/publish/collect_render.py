@@ -4,8 +4,10 @@ import os
 import pyblish.api
 
 from pymxs import runtime as rt
+from openpype.pipeline.publish import KnownPublishError
 from openpype.hosts.max.api import colorspace
 from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
+from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 
 
@@ -23,7 +25,6 @@ class CollectRender(pyblish.api.InstancePlugin):
         file = rt.maxFileName
         current_file = os.path.join(folder, file)
         filepath = current_file.replace("\\", "/")
-
         context.data['currentFile'] = current_file
 
         files_by_aov = RenderProducts().get_beauty(instance.name)
@@ -38,6 +39,28 @@ class CollectRender(pyblish.api.InstancePlugin):
                 camera = camera_list[-1]
 
         instance.data["cameras"] = [camera.name] if camera else None        # noqa
+
+        if instance.data.get("multiCamera"):
+            cameras = instance.data.get("members")
+            if not cameras:
+                raise KnownPublishError("There should be at least"
+                                        " one renderable camera in container")
+            sel_cam = [
+                c.name for c in cameras
+                if rt.classOf(c) in rt.Camera.classes]
+            container_name = instance.data.get("instance_node")
+            render_dir = os.path.dirname(rt.rendOutputFilename)
+            outputs = RenderSettings().batch_render_layer(
+                container_name, render_dir, sel_cam
+            )
+
+            instance.data["cameras"] = sel_cam
+
+            files_by_aov = RenderProducts().get_multiple_beauty(
+                outputs, sel_cam)
+            aovs = RenderProducts().get_multiple_aovs(
+                outputs, sel_cam)
+            files_by_aov.update(aovs)
 
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()

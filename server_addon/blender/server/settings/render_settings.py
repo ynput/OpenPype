@@ -1,7 +1,5 @@
 """Providing models and values for Blender Render Settings."""
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 def aov_separators_enum():
@@ -58,8 +56,8 @@ class CustomPassesModel(BaseSettingsModel):
     """Custom Passes"""
     _layout = "compact"
 
-    attribute: str = Field("", title="Attribute name")
-    value: str = Field(
+    attribute: str = SettingsField("", title="Attribute name")
+    value: str = SettingsField(
         "COLOR",
         title="Type",
         enum_resolver=custom_passes_types_enum
@@ -67,28 +65,28 @@ class CustomPassesModel(BaseSettingsModel):
 
 
 class RenderSettingsModel(BaseSettingsModel):
-    default_render_image_folder: str = Field(
+    default_render_image_folder: str = SettingsField(
         title="Default Render Image Folder"
     )
-    aov_separator: str = Field(
+    aov_separator: str = SettingsField(
         "underscore",
         title="AOV Separator Character",
         enum_resolver=aov_separators_enum
     )
-    image_format: str = Field(
+    image_format: str = SettingsField(
         "exr",
         title="Image Format",
         enum_resolver=image_format_enum
     )
-    multilayer_exr: bool = Field(
+    multilayer_exr: bool = SettingsField(
         title="Multilayer (EXR)"
     )
-    aov_list: list[str] = Field(
+    aov_list: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=aov_list_enum,
         title="AOVs to create"
     )
-    custom_passes: list[CustomPassesModel] = Field(
+    custom_passes: list[CustomPassesModel] = SettingsField(
         default_factory=list,
         title="Custom Passes",
         description=(

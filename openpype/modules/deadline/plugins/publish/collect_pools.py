@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Collect Deadline pools. Choose default one from Settings
-
-"""
 import pyblish.api
 from openpype.lib import TextDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
@@ -9,11 +6,35 @@ from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 class CollectDeadlinePools(pyblish.api.InstancePlugin,
                            OpenPypePyblishPluginMixin):
-    """Collect pools from instance if present, from Setting otherwise."""
+    """Collect pools from instance or Publisher attributes, from Setting
+    otherwise.
+
+    Pools are used to control which DL workers could render the job.
+
+    Pools might be set:
+    - directly on the instance (set directly in DCC)
+    - from Publisher attributes
+    - from defaults from Settings.
+
+    Publisher attributes could be shown even for instances that should be
+    rendered locally as visibility is driven by product type of the instance
+    (which will be `render` most likely).
+    (Might be resolved in the future and class attribute 'families' should
+    be cleaned up.)
+
+    """
 
     order = pyblish.api.CollectorOrder + 0.420
     label = "Collect Deadline Pools"
-    families = ["rendering",
+    hosts = ["aftereffects",
+             "fusion",
+             "harmony"
+             "nuke",
+             "maya",
+             "max"]
+
+    families = ["render",
+                "rendering",
                 "render.farm",
                 "renderFarm",
                 "renderlayer",
@@ -30,7 +51,6 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
         cls.secondary_pool = settings.get("secondary_pool", None)
 
     def process(self, instance):
-
         attr_values = self.get_attr_values_from_data(instance.data)
         if not instance.data.get("primaryPool"):
             instance.data["primaryPool"] = (
@@ -60,8 +80,12 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
         return [
             TextDef("primaryPool",
                     label="Primary Pool",
-                    default=cls.primary_pool),
+                    default=cls.primary_pool,
+                    tooltip="Deadline primary pool, "
+                            "applicable for farm rendering"),
             TextDef("secondaryPool",
                     label="Secondary Pool",
-                    default=cls.secondary_pool)
+                    default=cls.secondary_pool,
+                    tooltip="Deadline secondary pool, "
+                            "applicable for farm rendering")
         ]

@@ -1,6 +1,6 @@
-from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     TemplateWorkfileBaseOptions,
 )
 
@@ -16,38 +16,38 @@ from .render_settings import (
 
 
 class UnitScaleSettingsModel(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
-    apply_on_opening: bool = Field(
+    enabled: bool = SettingsField(True, title="Enabled")
+    apply_on_opening: bool = SettingsField(
         False, title="Apply on Opening Existing Files")
-    base_file_unit_scale: float = Field(
+    base_file_unit_scale: float = SettingsField(
         1.0, title="Base File Unit Scale"
     )
 
 
 class BlenderSettings(BaseSettingsModel):
-    unit_scale_settings: UnitScaleSettingsModel = Field(
+    unit_scale_settings: UnitScaleSettingsModel = SettingsField(
         default_factory=UnitScaleSettingsModel,
         title="Set Unit Scale"
     )
-    set_resolution_startup: bool = Field(
+    set_resolution_startup: bool = SettingsField(
         True,
         title="Set Resolution on Startup"
     )
-    set_frames_startup: bool = Field(
+    set_frames_startup: bool = SettingsField(
         True,
         title="Set Start/End Frames and FPS on Startup"
     )
-    imageio: BlenderImageIOModel = Field(
+    imageio: BlenderImageIOModel = SettingsField(
         default_factory=BlenderImageIOModel,
         title="Color Management (ImageIO)"
     )
-    RenderSettings: RenderSettingsModel = Field(
+    RenderSettings: RenderSettingsModel = SettingsField(
         default_factory=RenderSettingsModel, title="Render Settings")
-    workfile_builder: TemplateWorkfileBaseOptions = Field(
+    workfile_builder: TemplateWorkfileBaseOptions = SettingsField(
         default_factory=TemplateWorkfileBaseOptions,
         title="Workfile Builder"
     )
-    publish: PublishPuginsModel = Field(
+    publish: PublishPuginsModel = SettingsField(
         default_factory=PublishPuginsModel,
         title="Publish Plugins"
     )

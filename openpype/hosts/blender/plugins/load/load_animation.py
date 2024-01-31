@@ -61,5 +61,10 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
         bpy.data.objects.remove(container)
 
-        library = bpy.data.libraries.get(bpy.path.basename(libpath))
+        filename = bpy.path.basename(libpath)
+        # Blender has a limit of 63 characters for any data name.
+        # If the filename is longer, it will be truncated.
+        if len(filename) > 63:
+            filename = filename[:63]
+        library = bpy.data.libraries.get(filename)
         bpy.data.libraries.remove(library)

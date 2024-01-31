@@ -220,22 +220,6 @@ def _convert_deadline_system_settings(
     output["modules"]["deadline"] = deadline_settings
 
 
-def _convert_muster_system_settings(
-    ayon_settings, output, addon_versions, default_settings
-):
-    enabled = addon_versions.get("muster") is not None
-    muster_settings = default_settings["modules"]["muster"]
-    muster_settings["enabled"] = enabled
-    if enabled:
-        ayon_muster = ayon_settings["muster"]
-        muster_settings["MUSTER_REST_URL"] = ayon_muster["MUSTER_REST_URL"]
-        muster_settings["templates_mapping"] = {
-            item["name"]: item["value"]
-            for item in ayon_muster["templates_mapping"]
-        }
-    output["modules"]["muster"] = muster_settings
-
-
 def _convert_royalrender_system_settings(
     ayon_settings, output, addon_versions, default_settings
 ):
@@ -261,7 +245,6 @@ def _convert_modules_system(
         _convert_timers_manager_system_settings,
         _convert_clockify_system_settings,
         _convert_deadline_system_settings,
-        _convert_muster_system_settings,
         _convert_royalrender_system_settings,
     ):
         func(ayon_settings, output, addon_versions, default_settings)
@@ -1236,6 +1219,8 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
     for profile in extract_oiio_transcode_profiles:
         new_outputs = {}
         name_counter = {}
+        if "product_names" in profile:
+            profile["subsets"] = profile.pop("product_names")
         for profile_output in profile["outputs"]:
             if "name" in profile_output:
                 name = profile_output.pop("name")
@@ -1290,12 +1275,6 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             extract_burnin_def.pop("name"): extract_burnin_def
             for extract_burnin_def in extract_burnin_defs
         }
-
-    ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
-    for profile in ayon_integrate_hero["template_name_profiles"]:
-        if "product_types" not in profile:
-            break
-        profile["families"] = profile.pop("product_types")
 
     if "IntegrateProductGroup" in ayon_publish:
         subset_group = ayon_publish.pop("IntegrateProductGroup")
