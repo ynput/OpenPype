@@ -136,26 +136,26 @@ class CreateAnimationModel(BaseSettingsModel):
         default_factory=list,
         title="Default Products"
     )
-    priority: int = Field(
+    priority: int = SettingsField(
         title="Farm Job Priority")
-    pre_roll_start_frame: int = Field(title="Pre Roll Start Frame")
-    refresh: bool = Field(
+    pre_roll_start_frame: int = SettingsField(title="Pre Roll Start Frame")
+    refresh: bool = SettingsField(
         title="Refresh")
-    step: int = Field(title="Step")
-    farm: bool = Field(
+    step: int = SettingsField(title="Step")
+    farm: bool = SettingsField(
         title="Submit to the Farm")
-    attr: str = Field(title="Attributes")
-    attr_prefix: str = Field(title="Attributes Prefix")
-    data_format: AlembicDataFormat = Field(
+    attr: str = SettingsField(title="Attributes")
+    attr_prefix: str = SettingsField(title="Attributes Prefix")
+    data_format: AlembicDataFormat = SettingsField(
         enum_resolver=alembic_data_formats,
         title="Data Format",
     )
-    abc_boolean_args: list[str] = Field(
+    abc_boolean_args: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=alembic_booleans_enum,
         title="Alembic Boolean Args",
     )
-    abc_args_overrides: list[str] = Field(
+    abc_args_overrides: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=alembic_arguments_enum,
         title="Alembic Arguments Overrides",
