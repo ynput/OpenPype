@@ -296,6 +296,7 @@ class ArnoldSettingsModel(BaseSettingsModel):
         title="Additional Arnold Options",
         description=(
             "Add additional options - put attribute and value, like AASamples"
+            " and 4"
         )
     )
 
@@ -323,8 +324,8 @@ class VraySettingsModel(BaseSettingsModel):
         default_factory=list,
         title="Additional Vray Options",
         description=(
-            "Add additional options - put attribute and value,"
-            " like aaFilterSize"
+            "Add additional options - put attribute and value, like "
+            "aaFilterSize and 1.5"
         )
     )
 
@@ -356,8 +357,8 @@ class RedshiftSettingsModel(BaseSettingsModel):
         default_factory=list,
         title="Additional Vray Options",
         description=(
-            "Add additional options - put attribute and value,"
-            " like reflectionMaxTraceDepth"
+            "Add additional options - put attribute and value, like "
+            "reflectionMaxTraceDepth and 3"
         )
     )
 
