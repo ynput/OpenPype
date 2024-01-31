@@ -44,7 +44,8 @@ class ExtractAlembic(publish.Extractor):
         ) + creator_attributes.get("abcExportTogglableFlags")
 
         abc_attrs = [
-            attr.strip() for attr in creator_attributes.get("attr", "").split(";")
+            attr.strip()
+            for attr in creator_attributes.get("attr", "").split(";")
         ]
 
         abc_attr_prefixes = [
@@ -82,7 +83,9 @@ class ExtractAlembic(publish.Extractor):
             "eulerFilter": True if "eulerFilter" in abc_flags else False,
             "noNormals": True if "noNormals" in abc_flags else False,
             "preRoll": True if "preRoll" in abc_flags else False,
-            "preRollStartFrame": creator_attributes.get("preRollStartFrame", 0),
+            "preRollStartFrame": creator_attributes.get(
+                "preRollStartFrame", 0
+            ),
             "renderableOnly": True if "renderableOnly" in abc_flags else False,
             "root": abc_root,
             "selection": True,  # Should this stay like so?
@@ -97,7 +100,9 @@ class ExtractAlembic(publish.Extractor):
             "writeCreases": True if "writeCreases" in abc_flags else False,
             "writeFaceSets": True if "writeFaceSets" in abc_flags else False,
             "writeUVSets": abc_writeUVSets,
-            "writeVisibility": True if "writeVisibility" in abc_flags else False,
+            "writeVisibility": True
+            if "writeVisibility" in abc_flags
+            else False,
         }
 
         if instance.data.get("visibleOnly", False):
@@ -106,7 +111,9 @@ class ExtractAlembic(publish.Extractor):
             # flag does not filter out those that are only hidden on some
             # frames as it counts "animated" or "connected" visibilities as
             # if it's always visible.
-            nodes = list(iter_visible_nodes_in_range(nodes, start=start, end=end))
+            nodes = list(
+                iter_visible_nodes_in_range(nodes, start=start, end=end)
+            )
 
         suspend = not instance.data.get("refresh", False)
         with suspended_refresh(suspend=suspend):
@@ -182,7 +189,9 @@ class ExtractAnimation(ExtractAlembic):
 
         # Include all descendants
         nodes = (
-            roots + cmds.listRelatives(roots, allDescendents=True, fullPath=True) or []
+            roots
+            + cmds.listRelatives(roots, allDescendents=True, fullPath=True)
+            or []
         )
 
         return nodes, roots

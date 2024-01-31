@@ -29,7 +29,7 @@ def _get_animation_attr_defs(cls):
             BoolDef("refresh", label="Refresh viewport during export"),
             BoolDef(
                 "includeParentHierarchy", label="Include Parent Hierarchy"
-            )
+            ),
         ]
     )
 
@@ -59,16 +59,12 @@ def _get_abc_export_flags(cls):
 
     # Set of all the available Alembic Export Flags
     abc_boolean_flags = {
-        arg
-        for arg, arg_type in ALEMBIC_ARGS.items()
-        if arg_type is bool
+        arg for arg, arg_type in ALEMBIC_ARGS.items() if arg_type is bool
     }
 
     # Set of togglable flags
     abc_export_toggleable_flags = {
-        arg
-        for arg in abc_export_overrides
-        if arg in abc_boolean_flags
+        arg for arg in abc_export_overrides if arg in abc_boolean_flags
     }
     return abc_export_flags, abc_export_toggleable_flags
 
@@ -118,19 +114,22 @@ def _get_animation_abc_attr_defs(cls):
             multiselection=True,
             label="Settings Defined Arguments",
             disabled=True,
-            hidden=True
+            hidden=True,
         )
     )
 
     # Only display Boolan flags that the Admin defined as overrideable
     abc_export_toggleable_defaults = [
+        arg
         for arg in abc_export_toggleable_flags
         if arg in default_abc_export_flags
     ]
     abc_defs.append(
         EnumDef(
             "abcExportTogglableFlags",
-            list(abc_export_toggleable_flags) if abc_export_toggleable_flags else [""],
+            list(abc_export_toggleable_flags)
+            if abc_export_toggleable_flags
+            else [""],
             default=abc_export_toggleable_defaults,
             multiselection=True,
             label="Export Flags",
@@ -224,8 +223,7 @@ def _ensure_defaults(cls, instance_data):
         abc_boolean_args = creator_attr["abcExportTogglableFlags"].copy()
 
         creator_attr["abcExportTogglableFlags"] = [
-            arg for arg in abc_boolean_args
-            if arg not in abc_boolean_overrides
+            arg for arg in abc_boolean_args if arg not in abc_boolean_overrides
         ]
 
     return instance_data
