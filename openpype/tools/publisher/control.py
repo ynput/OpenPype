@@ -2340,7 +2340,7 @@ class PublisherController(BasePublisherController):
                         traceback.format_exception(exception)
                     ),
                     "label": "",
-                    "identifier": action.__name__
+                    "name": action.__name__
                 }
             )
 

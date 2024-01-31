@@ -1022,7 +1022,7 @@ class PublisherWindow(QtWidgets.QWidget):
                 "message": event["message"],
                 "traceback": event["traceback"],
                 "label": event["label"],
-                "identifier": event["identifier"]
+                "identifier": event["name"]
             }],
             "Action:"
         )
