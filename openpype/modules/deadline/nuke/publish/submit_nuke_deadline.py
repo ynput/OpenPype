@@ -14,12 +14,16 @@ from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
 )
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import (
+    set_custom_deadline_name,
+    get_deadline_job_settings
+)
 from openpype.tests.lib import is_in_tests
 from openpype.lib import (
     is_running_from_build,
     BoolDef,
-    NumberDef
+    NumberDef,
+    TextDef
 )
 
 
@@ -40,7 +44,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     # presets
+    primary_pool = None
+    secondary_pool = None
     priority = 50
+    machine_limit = 0
+
     chunk_size = 1
     concurrent_tasks = 1
     group = ""
@@ -51,9 +59,34 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     env_search_replace_values = {}
 
     @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        profile = get_deadline_job_settings(
+            project_settings,
+            "nuke",
+            cls.log
+        )
+        if profile:
+            cls.priority = profile.get("priority", cls.priority)
+            cls.primary_pool = profile.get("primary_pool", cls.primary_pool)
+            cls.secondary_pool = profile.get(
+                "secondary_pool",
+                cls.secondary_pool
+            )
+
+    @classmethod
     def get_attribute_defs(cls):
         defs = super(NukeSubmitDeadline, cls).get_attribute_defs()
         defs.extend([
+            TextDef(
+                "primaryPool",
+                label="Primary Pool",
+                default=cls.primary_pool
+            ),
+            TextDef(
+                "secondaryPool",
+                label="Secondary Pool",
+                default=cls.secondary_pool
+            ),
             NumberDef(
                 "priority",
                 label="Priority",
@@ -255,8 +288,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             pass
 
         # resolve any limit groups
-        limit_groups = self.get_limit_groups()
-        self.log.debug("Limit groups: `{}`".format(limit_groups))
+        limits = ",".join(
+            instance.data["creator_attributes"].get('limits')
+        )
 
         payload = {
             "JobInfo": {
@@ -280,8 +314,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
                 "Department": self.department,
 
-                "Pool": instance.data.get("primaryPool"),
-                "SecondaryPool": instance.data.get("secondaryPool"),
+                "Pool": instance.data["attributeValues"].get(
+                    "primary_pool", self.primary_pool),
+                "SecondaryPool": instance.data["attributeValues"].get(
+                    "secondary_pool", self.secondary_pool),
+                "MachineLimit": instance.data["creator_attributes"].get(
+                    "machineLimit", self.machine_limit),
                 "Group": self.group,
 
                 "Plugin": "Nuke",
@@ -296,7 +334,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "OutputFilename0": output_filename_0.replace("\\", "/"),
 
                 # limiting groups
-                "LimitGroups": ",".join(limit_groups)
+                "LimitGroups": limits
 
             },
             "PluginInfo": {
@@ -495,28 +533,3 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         for i in range(start_frame, (end_frame + 1)):
             instance.data["expectedFiles"].append(
                 os.path.join(dirname, (file % i)).replace("\\", "/"))
-
-    def get_limit_groups(self):
-        """Search for limit group nodes and return group name.
-        Limit groups will be defined as pairs in Nuke deadline submitter
-        presents where the key will be name of limit group and value will be
-        a list of plugin's node class names. Thus, when a plugin uses more
-        than one node, these will be captured and the triggered process
-        will add the appropriate limit group to the payload jobinfo attributes.
-        Returning:
-            list: captured groups list
-        """
-        captured_groups = []
-        for lg_name, list_node_class in self.limit_groups.items():
-            for node_class in list_node_class:
-                for node in nuke.allNodes(recurseGroups=True):
-                    # ignore all nodes not member of defined class
-                    if node.Class() not in node_class:
-                        continue
-                    # ignore all disabled nodes
-                    if node["disable"].value():
-                        continue
-                    # add group name if not already added
-                    if lg_name not in captured_groups:
-                        captured_groups.append(lg_name)
-        return captured_groups
