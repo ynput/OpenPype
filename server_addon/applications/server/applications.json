@@ -1225,6 +1225,30 @@
                 }
             ]
         },
+        "openrv": {
+            "enabled": true,
+            "label": "OpenRV",
+            "icon": "{}/app_icons/openrv.png",
+            "host_name": "openrv",
+            "environment": "{\n    \n}",
+            "variants": [
+                {
+                    "name": "1.0.0",
+                    "use_python_2": false,
+                    "executables": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": "{\n   \n}"
+                }
+            ]
+        },
         "additional_apps": []
     }
 }
