@@ -96,7 +96,7 @@ def _get_animation_abc_attr_defs(cls):
     ]
 
     # The Arguments that can be modified by the Publisher
-    abc_args_overrides = getattr(cls, "abc_args_overrides", None)
+    abc_args_overrides = set(getattr(cls, "abc_args_overrides", set()))
 
     # What we have set in the Settings as defaults.
     default_abc_export_flags = set(getattr(cls, "abc_export_flags", set()))
@@ -194,7 +194,7 @@ def _ensure_defaults(cls, instance_data):
     settings) instead of any value that might have been stored in the scene
     when the attribute was modifiable.
     """
-    abc_args_overrides = getattr(cls, "abc_args_overrides", [])
+    abc_args_overrides = set(getattr(cls, "abc_args_overrides", set()))
     creator_attr = instance_data["creator_attributes"]
     attr_default = getattr(cls, "attr", "")
 
