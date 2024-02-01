@@ -1,8 +1,6 @@
 from __future__ import print_function
-import os.path
+import os
 import time
-import sys
-import six
 import platform
 
 from openpype.lib import Logger
@@ -18,11 +16,8 @@ try:
     from googleapiclient import errors
     from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 except (ImportError, SyntaxError):
-    if six.PY3:
-        six.reraise(*sys.exc_info())
-
-    # handle imports from Python 2 hosts - in those only basic methods are used
-    log.warning("Import failed, imported from Python 2, operations will fail.")
+    # TODO raise error in OpenPype process and ignore in other cases
+    log.info("'googleapi' import failed, operations will fail.")
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file',

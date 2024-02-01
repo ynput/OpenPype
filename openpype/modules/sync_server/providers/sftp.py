@@ -14,10 +14,8 @@ try:
     import pysftp
     import paramiko
 except (ImportError, SyntaxError):
-    pass
-
-    # handle imports from Python 2 hosts - in those only basic methods are used
-    log.warning("Import failed, imported from Python 2, operations will fail.")
+    # TODO raise error in OpenPype process and ignore in other cases
+    log.info("'sftp' import failed, operations will fail.")
 
 
 class SFTPHandler(AbstractProvider):
