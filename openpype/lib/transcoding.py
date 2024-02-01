@@ -1232,6 +1232,17 @@ def get_rescaled_command_arguments(
     stream = input_file_metadata["streams"][0]
     input_width = int(stream["width"])
     input_height = int(stream["height"])
+
+    # fallback for weird files with width=0, height=0
+    if (input_width == 0 or input_height == 0) and application == "oiiotool":
+        # Load info about file from oiio tool
+        input_info = get_oiio_info_for_input(input_path, logger=log)
+        if not input_info:
+            raise RuntimeError("Couldn't read {} ".format(input_path) +
+                               "either with ffprobe or oiiotool")
+        input_width = int(input_info["width"])
+        input_height = int(input_info["height"])
+
     stream_input_par = stream.get("sample_aspect_ratio")
     if stream_input_par:
         input_par = (
