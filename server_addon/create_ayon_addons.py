@@ -151,18 +151,33 @@ def create_addon_zip(
     output_dir: Path,
     addon_name: str,
     addon_version: str,
-    keep_source: bool
+    keep_source: bool,
+    rez_package: bool,
 ):
-    zip_filepath = output_dir / f"{addon_name}-{addon_version}.zip"
+    if rez_package:
+        zip_filepath = output_dir / f"{addon_name}-{addon_version}-rez.zip"
+    else:
+        zip_filepath = output_dir / f"{addon_name}-{addon_version}.zip"
     addon_output_dir = output_dir / addon_name / addon_version
+
     with ZipFileLongPaths(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
-        zipf.writestr(
-            "manifest.json",
-            json.dumps({
-                "addon_name": addon_name,
-                "addon_version": addon_version
-            })
-        )
+        if not rez_package:
+            zipf.writestr(
+                "manifest.json",
+                json.dumps({
+                    "addon_name": addon_name,
+                    "addon_version": addon_version
+                })
+            )
+        else:
+            zipf.writestr(
+                "package.py",
+                f"""name = "{addon_name}"
+version = "{addon_version}"
+plugin_for = ["ayon_server"]
+build_command = "python {{root}}/rezbuild.py"
+"""
+            )
         # Add client code content to zip
         src_root = os.path.normpath(str(addon_output_dir.absolute()))
         src_root_offset = len(src_root) + 1
@@ -174,21 +189,28 @@ def create_addon_zip(
             for filename in filenames:
                 src_path = os.path.join(root, filename)
                 if rel_root:
-                    dst_path = os.path.join("addon", rel_root, filename)
+                    if rez_package:
+                        dst_path = os.path.join(rel_root, filename)
+                    else:
+                        dst_path = os.path.join("addon", rel_root, filename)
                 else:
-                    dst_path = os.path.join("addon", filename)
+                    if rez_package:
+                        dst_path = os.path.join(root, filename)
+                    else:
+                        dst_path = os.path.join("addon", filename)
+
                 zipf.write(src_path, dst_path)
 
     if not keep_source:
         shutil.rmtree(str(output_dir / addon_name))
-
 
 def create_openpype_package(
     addon_dir: Path,
     output_dir: Path,
     root_dir: Path,
     create_zip: bool,
-    keep_source: bool
+    keep_source: bool,
+    rez_package: bool,
 ):
     server_dir = addon_dir / "server"
     pyproject_path = addon_dir / "client" / "pyproject.toml"
@@ -198,24 +220,34 @@ def create_openpype_package(
     addon_version = read_addon_version(version_path)
 
     addon_output_dir = output_dir / "openpype" / addon_version
-    private_dir = addon_output_dir / "private"
+    # Clean up any previous "build"
     if addon_output_dir.exists():
         shutil.rmtree(str(addon_output_dir))
-
-    # Make sure dir exists
     addon_output_dir.mkdir(parents=True, exist_ok=True)
-    private_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy version
-    shutil.copy(str(version_path), str(addon_output_dir))
-    for subitem in server_dir.iterdir():
-        shutil.copy(str(subitem), str(addon_output_dir / subitem.name))
+    if not rez_package:
+        # Copy version
+        shutil.copy(str(version_path), str(addon_output_dir))
+        for subitem in server_dir.iterdir():
+            dest = addon_output_dir / subitem.name
+            shutil.copy(str(subitem), str(addon_output_dir / subitem.name))
 
-    # Copy pyproject.toml
-    shutil.copy(
-        str(pyproject_path),
-        (private_dir / pyproject_path.name)
-    )
+        private_dir = addon_output_dir / "private"
+        private_dir.mkdir(parents=True, exist_ok=True)
+        # Copy pyproject.toml
+        shutil.copy(
+            str(pyproject_path),
+            (private_dir / pyproject_path.name)
+        )
+
+    else:
+        shutil.copytree(addon_dir, addon_output_dir, dirs_exist_ok=True)
+        # Copy pyproject.toml
+        shutil.copy(
+            str(pyproject_path),
+            (addon_output_dir / "client" / pyproject_path.name)
+        )
+        
     # Subdirs that won't be added to output zip file
     ignored_subpaths = [
         ["addons"],
@@ -230,50 +262,72 @@ def create_openpype_package(
         for module_name in IGNORED_MODULES
     )
 
-    # Zip client
-    zip_filepath = private_dir / "client.zip"
-    with ZipFileLongPaths(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
-        # Add client code content to zip
+    if not rez_package:
+        # Zip client
+        zip_filepath = private_dir / "client.zip"
+        with ZipFileLongPaths(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
+            # Add client code content to zip
+            for path, sub_path in find_files_in_subdir(
+                str(openpype_dir), ignore_subdirs=ignored_subpaths
+            ):
+                zipf.write(path, f"{openpype_dir.name}/{sub_path}")
+    else:
         for path, sub_path in find_files_in_subdir(
-            str(openpype_dir), ignore_subdirs=ignored_subpaths
-        ):
-            zipf.write(path, f"{openpype_dir.name}/{sub_path}")
+                str(openpype_dir), ignore_subdirs=ignored_subpaths
+            ):
+                dest = addon_output_dir / "client" / sub_path
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                shutil.copy(path, addon_output_dir / "client" / sub_path)
 
     if create_zip:
-        create_addon_zip(output_dir, "openpype", addon_version, keep_source)
-
+        create_addon_zip(output_dir, "openpype", addon_version, keep_source, rez_package)
 
 def create_addon_package(
     addon_dir: Path,
     output_dir: Path,
     create_zip: bool,
-    keep_source: bool
+    keep_source: bool,
+    rez_package: bool,
 ):
     server_dir = addon_dir / "server"
     addon_version = get_addon_version(addon_dir)
 
     addon_output_dir = output_dir / addon_dir.name / addon_version
+
     if addon_output_dir.exists():
         shutil.rmtree(str(addon_output_dir))
     addon_output_dir.mkdir(parents=True)
 
     # Copy server content
-    src_root = os.path.normpath(str(server_dir.absolute()))
-    src_root_offset = len(src_root) + 1
-    for root, _, filenames in os.walk(str(server_dir)):
-        dst_root = addon_output_dir
-        if root != src_root:
-            rel_root = root[src_root_offset:]
-            dst_root = dst_root / rel_root
+    if not rez_package:
+        src_root = os.path.normpath(str(server_dir.absolute()))
+        src_root_offset = len(src_root) + 1
+        for root, _, filenames in os.walk(str(server_dir)):
+            dst_root = addon_output_dir
+            if root != src_root:
+                rel_root = root[src_root_offset:]
+                dst_root = dst_root / rel_root
 
-        dst_root.mkdir(parents=True, exist_ok=True)
-        for filename in filenames:
-            src_path = os.path.join(root, filename)
-            shutil.copy(src_path, str(dst_root))
+            dst_root.mkdir(parents=True, exist_ok=True)
+            for filename in filenames:
+                src_path = os.path.join(root, filename)
+                shutil.copy(src_path, str(dst_root))
+    else:
+        package_py = addon_output_dir / "package.py"
+
+        with open(package_py, "w+") as pkg_py:
+            pkg_py.write(
+                f"""name = "{addon_dir.name}"
+version = "{addon_version}"
+plugin_for = ["ayon_server"]
+build_command = "python {{root}}/rezbuild.py"
+"""
+            )
+        shutil.copytree(server_dir, addon_output_dir / "server", dirs_exist_ok=True)
 
     if create_zip:
         create_addon_zip(
-            output_dir, addon_dir.name, addon_version, keep_source
+            output_dir, addon_dir.name, addon_version, keep_source, rez_package
         )
 
 
@@ -283,6 +337,7 @@ def main(
     keep_source=False,
     clear_output_dir=False,
     addons=None,
+    rez_package=False
 ):
     current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     root_dir = current_dir.parent
@@ -318,12 +373,12 @@ def main(
 
         if addon_dir.name == "openpype":
             create_openpype_package(
-                addon_dir, output_dir, root_dir, create_zip, keep_source
+                addon_dir, output_dir, root_dir, create_zip, keep_source, rez_package
             )
 
         else:
             create_addon_package(
-                addon_dir, output_dir, create_zip, keep_source
+                addon_dir, output_dir, create_zip, keep_source, rez_package
             )
 
         print(f"- package '{addon_dir.name}' created")
@@ -374,6 +429,14 @@ if __name__ == "__main__":
         help="Limit addon creation to given addon name",
     )
 
+    parser.add_argument(
+        "-r",
+        "--rez",
+        dest="rez_package",
+        action="store_true",
+        help="Make it a Rez-compatible package",
+    )
+
     args = parser.parse_args(sys.argv[1:])
     main(
         args.output_dir,
@@ -381,4 +444,5 @@ if __name__ == "__main__":
         args.keep_sources,
         args.clear_output_dir,
         args.addons,
+        args.rez_package
     )
