@@ -396,6 +396,7 @@ DEFAULT_CREATORS_SETTINGS = {
     "CreateAnimation": {
         "write_color_sets": False,
         "write_face_sets": False,
+        "include_user_defined_attributes": False,
         "include_parent_hierarchy": False,
         "default_variants": [
             "Main"
@@ -437,6 +438,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "write_color_sets": False,
         "write_face_sets": False,
+        "include_user_defined_attributes": False,
         "default_variants": [
             "Main"
         ],
