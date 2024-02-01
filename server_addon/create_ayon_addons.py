@@ -17,7 +17,7 @@ IGNORE_DIR_PATTERNS: List[Pattern] = [
         # Skip directories starting with '.'
         r"^\.",
         # Skip any pycache folders
-        "^__pycache__$"
+        "^__pycache__$",
     }
 ]
 
@@ -29,7 +29,7 @@ IGNORE_FILE_PATTERNS: List[Pattern] = [
         # NOTE this could be an issue in some cases
         r"^\.",
         # Skip '.pyc' files
-        r"\.pyc$"
+        r"\.pyc$",
     }
 ]
 
@@ -56,6 +56,7 @@ class ZipFileLongPaths(zipfile.ZipFile):
     That limit can be exceeded by using an extended-length path that
     starts with the '\\?\' prefix.
     """
+
     _is_windows = platform.system().lower() == "windows"
 
     def _extract_member(self, member, tpath, pwd):
@@ -72,17 +73,14 @@ class ZipFileLongPaths(zipfile.ZipFile):
 
 
 def _value_match_regexes(value: str, regexes: Iterable[Pattern]) -> bool:
-    return any(
-        regex.search(value)
-        for regex in regexes
-    )
+    return any(regex.search(value) for regex in regexes)
 
 
 def find_files_in_subdir(
     src_path: str,
     ignore_file_patterns: Optional[List[Pattern]] = None,
     ignore_dir_patterns: Optional[List[Pattern]] = None,
-    ignore_subdirs: Optional[Iterable[Tuple[str]]] = None
+    ignore_subdirs: Optional[Iterable[Tuple[str]]] = None,
 ):
     """Find all files to copy in subdirectories of given path.
 
@@ -164,10 +162,9 @@ def create_addon_zip(
         if not rez_package:
             zipf.writestr(
                 "manifest.json",
-                json.dumps({
-                    "addon_name": addon_name,
-                    "addon_version": addon_version
-                })
+                json.dumps(
+                    {"addon_name": addon_name, "addon_version": addon_version}
+                ),
             )
         else:
             zipf.writestr(
@@ -176,7 +173,7 @@ def create_addon_zip(
 version = "{addon_version}"
 plugin_for = ["ayon_server"]
 build_command = "python {{root}}/rezbuild.py"
-"""
+""",
             )
         # Add client code content to zip
         src_root = os.path.normpath(str(addon_output_dir.absolute()))
@@ -203,6 +200,7 @@ build_command = "python {{root}}/rezbuild.py"
 
     if not keep_source:
         shutil.rmtree(str(output_dir / addon_name))
+
 
 def create_openpype_package(
     addon_dir: Path,
@@ -235,31 +233,26 @@ def create_openpype_package(
         private_dir = addon_output_dir / "private"
         private_dir.mkdir(parents=True, exist_ok=True)
         # Copy pyproject.toml
-        shutil.copy(
-            str(pyproject_path),
-            (private_dir / pyproject_path.name)
-        )
+        shutil.copy(str(pyproject_path), (private_dir / pyproject_path.name))
 
     else:
         shutil.copytree(addon_dir, addon_output_dir, dirs_exist_ok=True)
         # Copy pyproject.toml
         shutil.copy(
             str(pyproject_path),
-            (addon_output_dir / "client" / pyproject_path.name)
+            (addon_output_dir / "client" / pyproject_path.name),
         )
-        
+
     # Subdirs that won't be added to output zip file
     ignored_subpaths = [
         ["addons"],
         ["vendor", "common", "ayon_api"],
     ]
     ignored_subpaths.extend(
-        ["hosts", host_name]
-        for host_name in IGNORED_HOSTS
+        ["hosts", host_name] for host_name in IGNORED_HOSTS
     )
     ignored_subpaths.extend(
-        ["modules", module_name]
-        for module_name in IGNORED_MODULES
+        ["modules", module_name] for module_name in IGNORED_MODULES
     )
 
     if not rez_package:
@@ -273,14 +266,17 @@ def create_openpype_package(
                 zipf.write(path, f"{openpype_dir.name}/{sub_path}")
     else:
         for path, sub_path in find_files_in_subdir(
-                str(openpype_dir), ignore_subdirs=ignored_subpaths
-            ):
-                dest = addon_output_dir / "client" / sub_path
-                os.makedirs(os.path.dirname(dest), exist_ok=True)
-                shutil.copy(path, addon_output_dir / "client" / sub_path)
+            str(openpype_dir), ignore_subdirs=ignored_subpaths
+        ):
+            dest = addon_output_dir / "client" / sub_path
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            shutil.copy(path, addon_output_dir / "client" / sub_path)
 
     if create_zip:
-        create_addon_zip(output_dir, "openpype", addon_version, keep_source, rez_package)
+        create_addon_zip(
+            output_dir, "openpype", addon_version, keep_source, rez_package
+        )
+
 
 def create_addon_package(
     addon_dir: Path,
@@ -323,7 +319,9 @@ plugin_for = ["ayon_server"]
 build_command = "python {{root}}/rezbuild.py"
 """
             )
-        shutil.copytree(server_dir, addon_output_dir / "server", dirs_exist_ok=True)
+        shutil.copytree(
+            server_dir, addon_output_dir / "server", dirs_exist_ok=True
+        )
 
     if create_zip:
         create_addon_zip(
@@ -337,7 +335,7 @@ def main(
     keep_source=False,
     clear_output_dir=False,
     addons=None,
-    rez_package=False
+    rez_package=False,
 ):
     current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     root_dir = current_dir.parent
@@ -373,7 +371,12 @@ def main(
 
         if addon_dir.name == "openpype":
             create_openpype_package(
-                addon_dir, output_dir, root_dir, create_zip, keep_source, rez_package
+                addon_dir,
+                output_dir,
+                root_dir,
+                create_zip,
+                keep_source,
+                rez_package,
             )
 
         else:
@@ -394,32 +397,30 @@ if __name__ == "__main__":
         help=(
             "Skip zipping server package and create only"
             " server folder structure."
-        )
+        ),
     )
     parser.add_argument(
         "--keep-sources",
         dest="keep_sources",
         action="store_true",
-        help=(
-            "Keep folder structure when server package is created."
-        )
+        help=("Keep folder structure when server package is created."),
     )
     parser.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         dest="output_dir",
         default=None,
         help=(
             "Directory path where package will be created"
             " (Will be purged if already exists!)"
-        )
+        ),
     )
     parser.add_argument(
-        "-c", "--clear-output-dir",
+        "-c",
+        "--clear-output-dir",
         dest="clear_output_dir",
         action="store_true",
-        help=(
-            "Clear output directory before package creation."
-        )
+        help=("Clear output directory before package creation."),
     )
     parser.add_argument(
         "-a",
@@ -444,5 +445,5 @@ if __name__ == "__main__":
         args.keep_sources,
         args.clear_output_dir,
         args.addons,
-        args.rez_package
+        args.rez_package,
     )
