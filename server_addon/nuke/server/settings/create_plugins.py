@@ -55,7 +55,10 @@ class CreateWriteRenderModel(BaseSettingsModel):
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
+        default_factory=list
+    )
     prenodes: list[PrenodeModel] = SettingsField(
         default_factory=list,
         title="Preceding nodes",
@@ -81,7 +84,10 @@ class CreateWritePrerenderModel(BaseSettingsModel):
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
+        default_factory=list
+    )
     prenodes: list[PrenodeModel] = SettingsField(
         default_factory=list,
         title="Preceding nodes",
@@ -107,7 +113,10 @@ class CreateWriteImageModel(BaseSettingsModel):
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
+        default_factory=list
+    )
     prenodes: list[PrenodeModel] = SettingsField(
         default_factory=list,
         title="Preceding nodes",
@@ -146,6 +155,7 @@ DEFAULT_CREATE_SETTINGS = {
             "reviewable",
             "farm_rendering"
         ],
+        "exposed_knobs": [],
         "prenodes": [
             {
                 "name": "Reformat01",
@@ -179,6 +189,7 @@ DEFAULT_CREATE_SETTINGS = {
             "farm_rendering",
             "use_range_limit"
         ],
+        "exposed_knobs": [],
         "prenodes": []
     },
     "CreateWriteImage": {
@@ -191,6 +202,7 @@ DEFAULT_CREATE_SETTINGS = {
         "instance_attributes": [
             "use_range_limit"
         ],
+        "exposed_knobs": [],
         "prenodes": [
             {
                 "name": "FrameHold01",
