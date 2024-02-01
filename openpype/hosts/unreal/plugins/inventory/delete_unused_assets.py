@@ -1,8 +1,6 @@
-import unreal
-
-from openpype.hosts.unreal.api.tools_ui import qt_app_context
-from openpype.hosts.unreal.api.pipeline import delete_asset_if_unused
 from openpype.pipeline import InventoryAction
+from openpype.hosts.unreal.api.pipeline import send_request
+from openpype.hosts.unreal.api.tools_ui import qt_app_context
 
 
 class DeleteUnusedAssets(InventoryAction):
@@ -15,22 +13,6 @@ class DeleteUnusedAssets(InventoryAction):
     order = 1
 
     dialog = None
-
-    def _delete_unused_assets(self, containers):
-        allowed_families = ["model", "rig"]
-
-        for container in containers:
-            container_dir = container.get("namespace")
-            if container.get("family") not in allowed_families:
-                unreal.log_warning(
-                    f"Container {container_dir} is not supported.")
-                continue
-
-            asset_content = unreal.EditorAssetLibrary.list_assets(
-                container_dir, recursive=True, include_folder=False
-            )
-
-            delete_asset_if_unused(container, asset_content)
 
     def _show_confirmation_dialog(self, containers):
         from qtpy import QtCore
@@ -51,7 +33,9 @@ class DeleteUnusedAssets(InventoryAction):
         dialog.setButtonText("Delete")
 
         dialog.on_clicked.connect(
-            lambda: self._delete_unused_assets(containers)
+            lambda: send_request(
+                "delete_unused_assets", params={
+                    "containers": containers})
         )
 
         dialog.show()

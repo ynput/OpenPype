@@ -83,7 +83,7 @@ class SkeletalMeshFBXLoader(UnrealBaseLoader):
             root = options["asset_dir"]
         asset = context.get('asset').get('name')
         asset_name = f"{asset}_{name}" if asset else f"{name}"
-        version = context.get('version').get('name')
+        version = context.get('version')
 
         asset_dir, container_name = send_request(
             "create_unique_asset_name", params={
@@ -99,9 +99,6 @@ class SkeletalMeshFBXLoader(UnrealBaseLoader):
 
             self._import_fbx_task(self.fname, asset_dir, asset_name, False)
 
-    def imprint(
-        self, asset, asset_dir, container_name, asset_name, representation
-    ):
         data = {
             "schema": "ayon:container-2.0",
             "id": AYON_CONTAINER_ID,

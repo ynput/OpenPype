@@ -78,7 +78,7 @@ class StaticMeshAlembicLoader(UnrealBaseLoader):
         root = AYON_ASSET_DIR
         asset = context.get('asset').get('name')
         asset_name = f"{asset}_{name}" if asset else f"{name}"
-        version = context.get('version').get('name')
+        version = context.get('version')
 
         default_conversion = options.get("default_conversion") or False
 

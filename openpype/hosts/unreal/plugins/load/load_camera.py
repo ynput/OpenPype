@@ -177,7 +177,7 @@ class CameraLoader(UnrealBaseLoader):
                 "root": hierarchy_dir,
                 "asset": asset,
                 "name": name,
-                "version": unique_number})
+                "version": {"name": unique_number}})
 
         send_request("make_directory", params={"directory_path": asset_dir})
 

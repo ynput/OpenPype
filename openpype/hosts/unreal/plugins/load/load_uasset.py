@@ -95,7 +95,6 @@ class UAssetLoader(UnrealBaseLoader):
                 "include_folder": True})
 
     def update(self, container, representation):
-        filename = get_representation_path(representation)
         asset_dir = container["namespace"]
         name = representation["context"]["subset"]
 

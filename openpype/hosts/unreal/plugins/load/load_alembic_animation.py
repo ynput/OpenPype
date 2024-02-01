@@ -71,7 +71,7 @@ class AnimationAlembicLoader(UnrealBaseLoader):
         root = AYON_ASSET_DIR
         asset = context.get('asset').get('name')
         asset_name = f"{asset}_{name}" if asset else f"{name}"
-        version = context.get('version').get('name')
+        version = context.get('version')
 
         asset_dir, container_name = send_request(
             "create_unique_asset_name", params={
