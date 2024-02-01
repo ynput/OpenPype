@@ -1,3 +1,5 @@
+from typing import Literal
+
 from ayon_server.settings import (
     BaseSettingsModel,
     SettingsField,
