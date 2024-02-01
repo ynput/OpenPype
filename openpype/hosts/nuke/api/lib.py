@@ -3499,3 +3499,27 @@ def create_camera_node_by_version():
         return nuke.createNode("Camera4")
     else:
         return nuke.createNode("Camera2")
+
+
+def link_knobs(knobs, node, group_node):
+    """Link knobs from inside `group_node`"""
+
+    missing_knobs = []
+    for knob in knobs:
+        if knob in group_node.knobs():
+            continue
+
+        if knob not in node.knobs().keys():
+            missing_knobs.append(knob)
+
+        link = nuke.Link_Knob("")
+        link.makeLink(node.name(), knob)
+        link.setName(knob)
+        link.setFlag(0x1000)
+        group_node.addKnob(link)
+
+    if missing_knobs:
+        raise ValueError(
+            "Write node exposed knobs missing:\n\n{}\n\nPlease review"
+            " project settings.".format("\n".join(missing_knobs))
+        )
