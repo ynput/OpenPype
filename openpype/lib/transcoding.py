@@ -1227,23 +1227,8 @@ def get_rescaled_command_arguments(
     target_par = target_par or 1.0
     input_par = 1.0
 
-    # ffmpeg command
-    input_file_metadata = get_ffprobe_data(input_path, logger=log)
-    stream = input_file_metadata["streams"][0]
-    input_width = int(stream["width"])
-    input_height = int(stream["height"])
-
-    # fallback for weird files with width=0, height=0
-    if (input_width == 0 or input_height == 0) and application == "oiiotool":
-        # Load info about file from oiio tool
-        input_info = get_oiio_info_for_input(input_path, logger=log)
-        if not input_info:
-            raise RuntimeError("Couldn't read {} ".format(input_path) +
-                               "either with ffprobe or oiiotool")
-        input_width = int(input_info["width"])
-        input_height = int(input_info["height"])
-
-    stream_input_par = stream.get("sample_aspect_ratio")
+    input_height, input_width, stream_input_par = _get_image_dimensions(
+        application, input_path, log)
     if stream_input_par:
         input_par = (
             float(stream_input_par.split(":")[0])
@@ -1354,6 +1339,40 @@ def get_rescaled_command_arguments(
         )
 
     return command_args
+
+
+def _get_image_dimensions(application, input_path, log):
+    """Uses 'ffprobe' first and then 'oiiotool' if available to get dim.
+
+    Args:
+        application (str): "oiiotool"|"ffmpeg"
+        input_path (str): path to image file
+        log (Optional[logging.Logger]): Logger used for logging.
+    Returns:
+        (tuple) (int, int, dict) - (height, width, sample_aspect_ratio)
+    Raises:
+        RuntimeError if image dimensions couldn't be parsed out.
+    """
+    # ffmpeg command
+    input_file_metadata = get_ffprobe_data(input_path, logger=log)
+    stream = input_file_metadata["streams"][0]
+    input_width = int(stream["width"])
+    input_height = int(stream["height"])
+
+    # fallback for weird files with width=0, height=0
+    if (input_width == 0 or input_height == 0) and application == "oiiotool":
+        # Load info about file from oiio tool
+        input_info = get_oiio_info_for_input(input_path, logger=log)
+        if input_info:
+            input_width = int(input_info["width"])
+            input_height = int(input_info["height"])
+
+    if input_width == 0 or input_height == 0:
+        raise RuntimeError("Couldn't read {} either "
+                           "with ffprobe or oiiotool".format(input_path))
+
+    stream_input_par = stream.get("sample_aspect_ratio")
+    return input_height, input_width, stream_input_par
 
 
 def convert_color_values(application, color_value):
