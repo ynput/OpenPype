@@ -287,6 +287,8 @@ class HoudiniSubmitDeadline(
                         "REDSHIFT_VERSION env variable is not set"
                         " - using version configured in Deadline"
                     ))
+                if plugin_info.Version is None:
+                    delattr(plugin_info, "Version")
 
             else:
                 self.log.error(
