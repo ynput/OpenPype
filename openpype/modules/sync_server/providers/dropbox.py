@@ -1,5 +1,7 @@
 import os
+from openpype.lib import Logger
 
+log = Logger.get_logger("DropboxHandler")
 try:
     import dropbox
 except (ImportError, SyntaxError):
