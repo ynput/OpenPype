@@ -1,6 +1,10 @@
 import os
 
-import dropbox
+try:
+    import dropbox
+except (ImportError, SyntaxError):
+    # TODO raise error in OpenPype process and ignore in other cases
+    log.info("'dropbox' import failed, operations will fail.")
 
 from .abstract_provider import AbstractProvider
 from ..utils import EditableScopes
