@@ -57,28 +57,31 @@ def create_interactive(creator_identifier, **kwargs):
         list: The created instances.
 
     """
-
-    # TODO Use Qt instead
-    result, variant = hou.ui.readInput('Define variant name',
-                                       buttons=("Ok", "Cancel"),
-                                       initial_contents='Main',
-                                       title="Define variant",
-                                       help="Set the variant for the "
-                                            "publish instance",
-                                       close_choice=1)
-    if result == 1:
-        # User interrupted
-        return
-    variant = variant.strip()
-    if not variant:
-        raise RuntimeError("Empty variant value entered.")
-
     host = registered_host()
     context = CreateContext(host)
     creator = context.manual_creators.get(creator_identifier)
     if not creator:
-        raise RuntimeError("Invalid creator identifier: "
-                           "{}".format(creator_identifier))
+        raise RuntimeError("Invalid creator identifier: {}".format(
+            creator_identifier)
+        )
+
+    # TODO Use Qt instead
+    result, variant = hou.ui.readInput(
+        "Define variant name",
+        buttons=("Ok", "Cancel"),
+        initial_contents=creator.get_default_variant(),
+        title="Define variant",
+        help="Set the variant for the publish instance",
+        close_choice=1
+    )
+
+    if result == 1:
+        # User interrupted
+        return
+
+    variant = variant.strip()
+    if not variant:
+        raise RuntimeError("Empty variant value entered.")
 
     # TODO: Once more elaborate unique create behavior should exist per Creator
     #   instead of per network editor area then we should move this from here
@@ -170,6 +173,7 @@ def install():
         os.remove(filepath)
 
     icon = get_openpype_icon_filepath()
+    tab_menu_label = os.environ.get("AVALON_LABEL") or "AYON"
 
     # Create context only to get creator plugins, so we don't reset and only
     # populate what we need to retrieve the list of creator plugins
@@ -194,14 +198,14 @@ def install():
             if not network_categories:
                 continue
 
-            key = "openpype_create.{}".format(identifier)
+            key = "ayon_create.{}".format(identifier)
             log.debug(f"Registering {key}")
             script = CREATE_SCRIPT.format(identifier=identifier)
             data = {
                 "script": script,
                 "language": hou.scriptLanguage.Python,
                 "icon": icon,
-                "help": "Create OpenPype publish instance for {}".format(
+                "help": "Create Ayon publish instance for {}".format(
                     creator.label
                 ),
                 "help_url": None,
@@ -210,7 +214,7 @@ def install():
                 "cop_viewer_categories": [],
                 "network_op_type": None,
                 "viewer_op_type": None,
-                "locations": ["OpenPype"]
+                "locations": [tab_menu_label]
             }
             label = "Create {}".format(creator.label)
             tool = hou.shelves.tool(key)

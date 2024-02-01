@@ -24,10 +24,7 @@ from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.modules import ModulesManager
 
-from .lib import (
-    get_site_icons,
-    walk_hierarchy,
-)
+from .lib import walk_hierarchy
 
 
 class InventoryModel(TreeModel):
@@ -53,8 +50,10 @@ class InventoryModel(TreeModel):
         self._default_icon_color = get_default_entity_icon_color()
 
         manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-        self.sync_enabled = sync_server.enabled
+        sync_server = manager.modules_by_name.get("sync_server")
+        self.sync_enabled = (
+            sync_server is not None and sync_server.enabled
+        )
         self._site_icons = {}
         self.active_site = self.remote_site = None
         self.active_provider = self.remote_provider = None
@@ -84,7 +83,10 @@ class InventoryModel(TreeModel):
         self.active_provider = active_provider
         self.remote_site = remote_site
         self.remote_provider = remote_provider
-        self._site_icons = get_site_icons()
+        self._site_icons = {
+            provider: QtGui.QIcon(icon_path)
+            for provider, icon_path in sync_server.get_site_icons().items()
+        }
         if "active_site" not in self.Columns:
             self.Columns.append("active_site")
         if "remote_site" not in self.Columns:

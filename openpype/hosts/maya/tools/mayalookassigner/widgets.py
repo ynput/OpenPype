@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from qtpy import QtWidgets, QtCore
 
+from openpype.client import get_asset_name_identifier
 from openpype.tools.utils.models import TreeModel
 from openpype.tools.utils.lib import (
     preserve_expanded_rows,
@@ -90,15 +91,13 @@ class AssetOutliner(QtWidgets.QWidget):
     def get_all_assets(self):
         """Add all items from the current scene"""
 
-        items = []
         with preserve_expanded_rows(self.view):
             with preserve_selection(self.view):
                 self.clear()
                 nodes = commands.get_all_asset_nodes()
                 items = commands.create_items_from_nodes(nodes)
                 self.add_items(items)
-
-        return len(items) > 0
+                return len(items) > 0
 
     def get_selected_assets(self):
         """Add all selected items from the current scene"""
@@ -128,7 +127,7 @@ class AssetOutliner(QtWidgets.QWidget):
         asset_namespaces = defaultdict(set)
         for item in items:
             asset_id = str(item["asset"]["_id"])
-            asset_name = item["asset"]["name"]
+            asset_name = get_asset_name_identifier(item["asset"])
             asset_namespaces[asset_name].add(item.get("namespace"))
 
             if asset_name in assets:

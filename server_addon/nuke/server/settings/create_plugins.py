@@ -1,6 +1,7 @@
-from pydantic import validator, Field
+from pydantic import validator
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     ensure_unique_names
 )
 from .common import KnobModel
@@ -16,27 +17,21 @@ def instance_attributes_enum():
 
 
 class PrenodeModel(BaseSettingsModel):
-    # TODO: missing in host api
-    # - good for `dependency`
-    name: str = Field(
+    name: str = SettingsField(
         title="Node name"
     )
 
-    # TODO: `nodeclass` should be renamed to `nuke_node_class`
-    nodeclass: str = Field(
+    nodeclass: str = SettingsField(
         "",
         title="Node class"
     )
-    dependent: str = Field(
+    dependent: str = SettingsField(
         "",
         title="Incoming dependency"
     )
 
-    """# TODO: Changes in host api:
-    - Need complete rework of knob types in nuke integration.
-    - We could not support v3 style of settings.
-    """
-    knobs: list[KnobModel] = Field(
+    knobs: list[KnobModel] = SettingsField(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -48,24 +43,24 @@ class PrenodeModel(BaseSettingsModel):
 
 
 class CreateWriteRenderModel(BaseSettingsModel):
-    temp_rendering_path_template: str = Field(
+    temp_rendering_path_template: str = SettingsField(
         title="Temporary rendering path template"
     )
-    default_variants: list[str] = Field(
+    default_variants: list[str] = SettingsField(
         title="Default variants",
         default_factory=list
     )
-    instance_attributes: list[str] = Field(
+    instance_attributes: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-
-    """# TODO: Changes in host api:
-    - prenodes key was originally dict and now is list
-      (we could not support v3 style of settings)
-    """
-    prenodes: list[PrenodeModel] = Field(
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
+        default_factory=list
+    )
+    prenodes: list[PrenodeModel] = SettingsField(
+        default_factory=list,
         title="Preceding nodes",
     )
 
@@ -77,24 +72,24 @@ class CreateWriteRenderModel(BaseSettingsModel):
 
 
 class CreateWritePrerenderModel(BaseSettingsModel):
-    temp_rendering_path_template: str = Field(
+    temp_rendering_path_template: str = SettingsField(
         title="Temporary rendering path template"
     )
-    default_variants: list[str] = Field(
+    default_variants: list[str] = SettingsField(
         title="Default variants",
         default_factory=list
     )
-    instance_attributes: list[str] = Field(
+    instance_attributes: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-
-    """# TODO: Changes in host api:
-    - prenodes key was originally dict and now is list
-      (we could not support v3 style of settings)
-    """
-    prenodes: list[PrenodeModel] = Field(
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
+        default_factory=list
+    )
+    prenodes: list[PrenodeModel] = SettingsField(
+        default_factory=list,
         title="Preceding nodes",
     )
 
@@ -106,24 +101,24 @@ class CreateWritePrerenderModel(BaseSettingsModel):
 
 
 class CreateWriteImageModel(BaseSettingsModel):
-    temp_rendering_path_template: str = Field(
+    temp_rendering_path_template: str = SettingsField(
         title="Temporary rendering path template"
     )
-    default_variants: list[str] = Field(
+    default_variants: list[str] = SettingsField(
         title="Default variants",
         default_factory=list
     )
-    instance_attributes: list[str] = Field(
+    instance_attributes: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=instance_attributes_enum,
         title="Instance attributes"
     )
-
-    """# TODO: Changes in host api:
-    - prenodes key was originally dict and now is list
-      (we could not support v3 style of settings)
-    """
-    prenodes: list[PrenodeModel] = Field(
+    exposed_knobs: list[str] = SettingsField(
+        title="Write Node Exposed Knobs",
+        default_factory=list
+    )
+    prenodes: list[PrenodeModel] = SettingsField(
+        default_factory=list,
         title="Preceding nodes",
     )
 
@@ -135,15 +130,15 @@ class CreateWriteImageModel(BaseSettingsModel):
 
 
 class CreatorPluginsSettings(BaseSettingsModel):
-    CreateWriteRender: CreateWriteRenderModel = Field(
+    CreateWriteRender: CreateWriteRenderModel = SettingsField(
         default_factory=CreateWriteRenderModel,
         title="Create Write Render"
     )
-    CreateWritePrerender: CreateWritePrerenderModel = Field(
+    CreateWritePrerender: CreateWritePrerenderModel = SettingsField(
         default_factory=CreateWritePrerenderModel,
         title="Create Write Prerender"
     )
-    CreateWriteImage: CreateWriteImageModel = Field(
+    CreateWriteImage: CreateWriteImageModel = SettingsField(
         default_factory=CreateWriteImageModel,
         title="Create Write Image"
     )
@@ -160,6 +155,7 @@ DEFAULT_CREATE_SETTINGS = {
             "reviewable",
             "farm_rendering"
         ],
+        "exposed_knobs": [],
         "prenodes": [
             {
                 "name": "Reformat01",
@@ -193,6 +189,7 @@ DEFAULT_CREATE_SETTINGS = {
             "farm_rendering",
             "use_range_limit"
         ],
+        "exposed_knobs": [],
         "prenodes": []
     },
     "CreateWriteImage": {
@@ -205,6 +202,7 @@ DEFAULT_CREATE_SETTINGS = {
         "instance_attributes": [
             "use_range_limit"
         ],
+        "exposed_knobs": [],
         "prenodes": [
             {
                 "name": "FrameHold01",

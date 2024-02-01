@@ -25,7 +25,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.plugin_discover import DiscoverResult
 
-from .contants import (
+from .constants import (
     DEFAULT_PUBLISH_TEMPLATE,
     DEFAULT_HERO_PUBLISH_TEMPLATE,
     TRANSIENT_DIR_TEMPLATE
@@ -58,41 +58,13 @@ def get_template_name_profiles(
     if not project_settings:
         project_settings = get_project_settings(project_name)
 
-    profiles = (
+    return copy.deepcopy(
         project_settings
         ["global"]
         ["tools"]
         ["publish"]
         ["template_name_profiles"]
     )
-    if profiles:
-        return copy.deepcopy(profiles)
-
-    # Use legacy approach for cases new settings are not filled yet for the
-    #   project
-    legacy_profiles = (
-        project_settings
-        ["global"]
-        ["publish"]
-        ["IntegrateAssetNew"]
-        ["template_name_profiles"]
-    )
-    if legacy_profiles:
-        if not logger:
-            logger = Logger.get_logger("get_template_name_profiles")
-
-        logger.warning((
-            "Project \"{}\" is using legacy access to publish template."
-            " It is recommended to move settings to new location"
-            " 'project_settings/global/tools/publish/template_name_profiles'."
-        ).format(project_name))
-
-    # Replace "tasks" key with "task_names"
-    profiles = []
-    for profile in copy.deepcopy(legacy_profiles):
-        profile["task_names"] = profile.pop("tasks", [])
-        profiles.append(profile)
-    return profiles
 
 
 def get_hero_template_name_profiles(
@@ -121,36 +93,13 @@ def get_hero_template_name_profiles(
     if not project_settings:
         project_settings = get_project_settings(project_name)
 
-    profiles = (
+    return copy.deepcopy(
         project_settings
         ["global"]
         ["tools"]
         ["publish"]
         ["hero_template_name_profiles"]
     )
-    if profiles:
-        return copy.deepcopy(profiles)
-
-    # Use legacy approach for cases new settings are not filled yet for the
-    #   project
-    legacy_profiles = copy.deepcopy(
-        project_settings
-        ["global"]
-        ["publish"]
-        ["IntegrateHeroVersion"]
-        ["template_name_profiles"]
-    )
-    if legacy_profiles:
-        if not logger:
-            logger = Logger.get_logger("get_hero_template_name_profiles")
-
-        logger.warning((
-            "Project \"{}\" is using legacy access to hero publish template."
-            " It is recommended to move settings to new location"
-            " 'project_settings/global/tools/publish/"
-            "hero_template_name_profiles'."
-        ).format(project_name))
-    return legacy_profiles
 
 
 def get_publish_template_name(
@@ -464,9 +413,8 @@ def apply_plugin_settings_automatically(plugin, settings, logger=None):
 
     for option, value in settings.items():
         if logger:
-            logger.debug("Plugin {} - Attr: {} -> {}".format(
-                option, value, plugin.__name__
-            ))
+            logger.debug("Plugin %s - Attr: %s -> %s",
+                         plugin.__name__, option, value)
         setattr(plugin, option, value)
 
 
@@ -537,44 +485,24 @@ def filter_pyblish_plugins(plugins):
             plugins.remove(plugin)
 
 
-def find_close_plugin(close_plugin_name, log):
-    if close_plugin_name:
-        plugins = pyblish.api.discover()
-        for plugin in plugins:
-            if plugin.__name__ == close_plugin_name:
-                return plugin
-
-    log.debug("Close plugin not found, app might not close.")
-
-
-def remote_publish(log, close_plugin_name=None, raise_error=False):
+def remote_publish(log):
     """Loops through all plugins, logs to console. Used for tests.
 
     Args:
         log (Logger)
-        close_plugin_name (str): name of plugin with responsibility to
-            close host app
     """
-    # Error exit as soon as any error occurs.
-    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
-    close_plugin = find_close_plugin(close_plugin_name, log)
+    # Error exit as soon as any error occurs.
+    error_format = "Failed {plugin.__name__}: {error}\n{error.traceback}"
 
     for result in pyblish.util.publish_iter():
-        for record in result["records"]:
-            log.info("{}: {}".format(
-                result["plugin"].label, record.msg))
+        if not result["error"]:
+            continue
 
-        if result["error"]:
-            error_message = error_format.format(**result)
-            log.error(error_message)
-            if close_plugin:  # close host app explicitly after error
-                context = pyblish.api.Context()
-                close_plugin().process(context)
-            if raise_error:
-                # Fatal Error is because of Deadline
-                error_message = "Fatal Error: " + error_format.format(**result)
-                raise RuntimeError(error_message)
+        error_message = error_format.format(**result)
+        log.error(error_message)
+        # 'Fatal Error: ' is because of Deadline
+        raise RuntimeError("Fatal Error: {}".format(error_message))
 
 
 def get_errored_instances_from_context(context, plugin=None):
@@ -973,6 +901,7 @@ def replace_with_published_scene_path(instance, replace_in_path=True):
 
     return file_path
 
+
 def add_repre_files_for_cleanup(instance, repre):
     """ Explicitly mark repre files to be deleted.
 
@@ -981,7 +910,16 @@ def add_repre_files_for_cleanup(instance, repre):
     """
     files = repre["files"]
     staging_dir = repre.get("stagingDir")
-    if not staging_dir or instance.data.get("stagingDir_persistent"):
+
+    # first make sure representation level is not persistent
+    if (
+        not staging_dir
+        or repre.get("stagingDir_persistent")
+    ):
+        return
+
+    # then look into instance level if it's not persistent
+    if instance.data.get("stagingDir_persistent"):
         return
 
     if isinstance(files, str):
@@ -1013,3 +951,27 @@ def get_publish_instance_label(instance):
         or instance.data.get("name")
         or str(instance)
     )
+
+
+def get_publish_instance_families(instance):
+    """Get all families of the instance.
+
+    Look for families under 'family' and 'families' keys in instance data.
+    Value of 'family' is used as first family and then all other families
+    in random order.
+
+    Args:
+        pyblish.api.Instance: Instance to get families from.
+
+    Returns:
+        list[str]: List of families.
+    """
+
+    family = instance.data.get("family")
+    families = set(instance.data.get("families") or [])
+    output = []
+    if family:
+        output.append(family)
+        families.discard(family)
+    output.extend(families)
+    return output

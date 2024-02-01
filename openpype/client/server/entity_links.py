@@ -1,6 +1,4 @@
-import ayon_api
-from ayon_api import get_folder_links, get_versions_links
-
+from .utils import get_ayon_server_api_connection
 from .entities import get_assets, get_representation_by_id
 
 
@@ -28,7 +26,8 @@ def get_linked_asset_ids(project_name, asset_doc=None, asset_id=None):
     if not asset_id:
         asset_id = asset_doc["_id"]
 
-    links = get_folder_links(project_name, asset_id, link_direction="in")
+    con = get_ayon_server_api_connection()
+    links = con.get_folder_links(project_name, asset_id, link_direction="in")
     return [
         link["entityId"]
         for link in links
@@ -115,6 +114,7 @@ def get_linked_representation_id(
     if link_type:
         link_types = [link_type]
 
+    con = get_ayon_server_api_connection()
     # Store already found version ids to avoid recursion, and also to store
     #   output -> Don't forget to remove 'version_id' at the end!!!
     linked_version_ids = {version_id}
@@ -124,29 +124,30 @@ def get_linked_representation_id(
         if not versions_to_check:
             break
 
-        links = get_versions_links(
+        versions_links = con.get_versions_links(
             project_name,
             versions_to_check,
             link_types=link_types,
             link_direction="out")
 
         versions_to_check = set()
-        for link in links:
-            # Care only about version links
-            if link["entityType"] != "version":
-                continue
-            entity_id = link["entityId"]
-            # Skip already found linked version ids
-            if entity_id in linked_version_ids:
-                continue
-            linked_version_ids.add(entity_id)
-            versions_to_check.add(entity_id)
+        for links in versions_links.values():
+            for link in links:
+                # Care only about version links
+                if link["entityType"] != "version":
+                    continue
+                entity_id = link["entityId"]
+                # Skip already found linked version ids
+                if entity_id in linked_version_ids:
+                    continue
+                linked_version_ids.add(entity_id)
+                versions_to_check.add(entity_id)
 
     linked_version_ids.remove(version_id)
     if not linked_version_ids:
         return []
-
-    representations = ayon_api.get_representations(
+    con = get_ayon_server_api_connection()
+    representations = con.get_representations(
         project_name,
         version_ids=linked_version_ids,
         fields=["id"])

@@ -9,7 +9,7 @@ class MatchmoveLoader(load.LoaderPlugin):
 
     families = ["matchmove"]
     representations = ["*"]
-    extension = {"py"}
+    extensions = {"py"}
 
     defaults = ["Camera", "Object"]
 

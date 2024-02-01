@@ -119,7 +119,7 @@ class NukeRenderLocal(publish.Extractor,
 
         instance.data["representations"].append(repre)
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
+        self.log.debug("Extracted instance '{0}' to: {1}".format(
             instance.name,
             out_dir
         ))
@@ -143,7 +143,7 @@ class NukeRenderLocal(publish.Extractor,
         instance.data["families"] = families
 
         collections, remainder = clique.assemble(filenames)
-        self.log.info('collections: {}'.format(str(collections)))
+        self.log.debug('collections: {}'.format(str(collections)))
 
         if collections:
             collection = collections[0]

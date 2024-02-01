@@ -18,6 +18,7 @@ class ValidateColorspace(pyblish.api.InstancePlugin,
     label = "Validate representation colorspace"
     order = pyblish.api.ValidatorOrder
     hosts = ["traypublisher"]
+    families = ["render", "plate", "reference", "image", "online"]
 
     def process(self, instance):
 
@@ -32,7 +33,19 @@ class ValidateColorspace(pyblish.api.InstancePlugin,
             config_path = colorspace_data["config"]["path"]
             if config_path not in config_colorspaces:
                 colorspaces = get_ocio_config_colorspaces(config_path)
-                config_colorspaces[config_path] = set(colorspaces)
+                if not colorspaces.get("colorspaces"):
+                    message = (
+                        f"OCIO config '{config_path}' does not contain any "
+                        "colorspaces. This is an error in the OCIO config. "
+                        "Contact your pipeline TD.",
+                    )
+                    raise PublishValidationError(
+                        title="Colorspace validation",
+                        message=message,
+                        description=message
+                    )
+                config_colorspaces[config_path] = set(
+                    colorspaces["colorspaces"])
 
             colorspace = colorspace_data["colorspace"]
             self.log.debug(

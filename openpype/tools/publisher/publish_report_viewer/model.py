@@ -26,13 +26,13 @@ class InstancesModel(QtGui.QStandardItemModel):
         return self._items_by_id
 
     def set_report(self, report_item):
-        self.clear()
+        root_item = self.invisibleRootItem()
+        if root_item.rowCount() > 0:
+            root_item.removeRows(0, root_item.rowCount())
         self._items_by_id.clear()
         self._plugin_items_by_id.clear()
         if not report_item:
             return
-
-        root_item = self.invisibleRootItem()
 
         families = set(report_item.instance_items_by_family.keys())
         families.remove(None)
@@ -125,13 +125,13 @@ class PluginsModel(QtGui.QStandardItemModel):
         return self._items_by_id
 
     def set_report(self, report_item):
-        self.clear()
+        root_item = self.invisibleRootItem()
+        if root_item.rowCount() > 0:
+            root_item.removeRows(0, root_item.rowCount())
         self._items_by_id.clear()
         self._plugin_items_by_id.clear()
         if not report_item:
             return
-
-        root_item = self.invisibleRootItem()
 
         labels_iter = iter(self.order_label_mapping)
         cur_order, cur_label = next(labels_iter)

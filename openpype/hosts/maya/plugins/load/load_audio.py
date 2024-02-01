@@ -1,12 +1,6 @@
 from maya import cmds, mel
 
-from openpype.client import (
-    get_asset_by_id,
-    get_subset_by_id,
-    get_version_by_id,
-)
 from openpype.pipeline import (
-    get_current_project_name,
     load,
     get_representation_path,
 )
@@ -18,7 +12,7 @@ class AudioLoader(load.LoaderPlugin):
     """Specific loader of audio."""
 
     families = ["audio"]
-    label = "Import audio"
+    label = "Load audio"
     representations = ["wav"]
     icon = "volume-up"
     color = "orange"
@@ -27,10 +21,10 @@ class AudioLoader(load.LoaderPlugin):
 
         start_frame = cmds.playbackOptions(query=True, min=True)
         sound_node = cmds.sound(
-            file=context["representation"]["data"]["path"], offset=start_frame
+            file=self.filepath_from_context(context), offset=start_frame
         )
         cmds.timeControl(
-            mel.eval("$tmpVar=$gPlayBackSlider"),
+            mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
             edit=True,
             sound=sound_node,
             displaySound=True
@@ -59,31 +53,49 @@ class AudioLoader(load.LoaderPlugin):
         assert audio_nodes is not None, "Audio node not found."
         audio_node = audio_nodes[0]
 
+        current_sound = cmds.timeControl(
+            mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
+            query=True,
+            sound=True
+        )
+        activate_sound = current_sound == audio_node
+
         path = get_representation_path(representation)
-        cmds.setAttr("{}.filename".format(audio_node), path, type="string")
+
+        cmds.sound(
+            audio_node,
+            edit=True,
+            file=path
+        )
+
+        # The source start + end does not automatically update itself to the
+        # length of thew new audio file, even though maya does do that when
+        # creating a new audio node. So to update we compute it manually.
+        # This would however override any source start and source end a user
+        # might have done on the original audio node after load.
+        audio_frame_count = cmds.getAttr("{}.frameCount".format(audio_node))
+        audio_sample_rate = cmds.getAttr("{}.sampleRate".format(audio_node))
+        duration_in_seconds = audio_frame_count / audio_sample_rate
+        fps = mel.eval('currentTimeUnitToFPS()')  # workfile FPS
+        source_start = 0
+        source_end = (duration_in_seconds * fps)
+        cmds.setAttr("{}.sourceStart".format(audio_node), source_start)
+        cmds.setAttr("{}.sourceEnd".format(audio_node), source_end)
+
+        if activate_sound:
+            # maya by default deactivates it from timeline on file change
+            cmds.timeControl(
+                mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
+                edit=True,
+                sound=audio_node,
+                displaySound=True
+            )
+
         cmds.setAttr(
             container["objectName"] + ".representation",
             str(representation["_id"]),
             type="string"
         )
-
-        # Set frame range.
-        project_name = get_current_project_name()
-        version = get_version_by_id(
-            project_name, representation["parent"], fields=["parent"]
-        )
-        subset = get_subset_by_id(
-            project_name, version["parent"], fields=["parent"]
-        )
-        asset = get_asset_by_id(
-            project_name, subset["parent"], fields=["parent"]
-        )
-
-        source_start = 1 - asset["data"]["frameStart"]
-        source_end = asset["data"]["frameEnd"]
-
-        cmds.setAttr("{}.sourceStart".format(audio_node), source_start)
-        cmds.setAttr("{}.sourceEnd".format(audio_node), source_end)
 
     def switch(self, container, representation):
         self.update(container, representation)

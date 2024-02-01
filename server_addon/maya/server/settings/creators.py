@@ -1,219 +1,235 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    task_types_enum,
+)
 
 
 class CreateLookModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    make_tx: bool = Field(title="Make tx files")
-    rs_tex: bool = Field(title="Make Redshift texture files")
-    defaults: list[str] = Field(
-        default_factory=["Main"], title="Default Products"
+    enabled: bool = SettingsField(title="Enabled")
+    make_tx: bool = SettingsField(title="Make tx files")
+    rs_tex: bool = SettingsField(title="Make Redshift texture files")
+    default_variants: list[str] = SettingsField(
+        default_factory=list, title="Default Products"
     )
 
 
 class BasicCreatorModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    default_variants: list[str] = SettingsField(
         default_factory=list,
         title="Default Products"
     )
 
 
 class CreateUnrealStaticMeshModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(
-        default_factory=["", "_Main"],
+    enabled: bool = SettingsField(title="Enabled")
+    default_variants: list[str] = SettingsField(
+        default_factory=list,
         title="Default Products"
     )
-    static_mesh_prefixes: str = Field("S", title="Static Mesh Prefix")
-    collision_prefixes: list[str] = Field(
-        default_factory=["UBX", "UCP", "USP", "UCX"],
+    static_mesh_prefix: str = SettingsField("S", title="Static Mesh Prefix")
+    collision_prefixes: list[str] = SettingsField(
+        default_factory=list,
         title="Collision Prefixes"
     )
 
 
 class CreateUnrealSkeletalMeshModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(default_factory=[], title="Default Products")
-    joint_hints: str = Field("jnt_org", title="Joint root hint")
+    enabled: bool = SettingsField(title="Enabled")
+    default_variants: list[str] = SettingsField(
+        default_factory=list, title="Default Products")
+    joint_hints: str = SettingsField("jnt_org", title="Joint root hint")
 
 
 class CreateMultiverseLookModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    publish_mip_map: bool = Field(title="publish_mip_map")
+    enabled: bool = SettingsField(title="Enabled")
+    publish_mip_map: bool = SettingsField(title="publish_mip_map")
 
 
 class BasicExportMeshModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    write_color_sets: bool = Field(title="Write Color Sets")
-    write_face_sets: bool = Field(title="Write Face Sets")
-    defaults: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    write_color_sets: bool = SettingsField(title="Write Color Sets")
+    write_face_sets: bool = SettingsField(title="Write Face Sets")
+    default_variants: list[str] = SettingsField(
         default_factory=list,
         title="Default Products"
     )
 
 
 class CreateAnimationModel(BaseSettingsModel):
-    write_color_sets: bool = Field(title="Write Color Sets")
-    write_face_sets: bool = Field(title="Write Face Sets")
-    include_parent_hierarchy: bool = Field(
+    write_color_sets: bool = SettingsField(title="Write Color Sets")
+    write_face_sets: bool = SettingsField(title="Write Face Sets")
+    include_parent_hierarchy: bool = SettingsField(
         title="Include Parent Hierarchy")
-    include_user_defined_attributes: bool = Field(
+    include_user_defined_attributes: bool = SettingsField(
         title="Include User Defined Attributes")
-    defaults: list[str] = Field(
+    default_variants: list[str] = SettingsField(
         default_factory=list,
         title="Default Products"
     )
 
 
 class CreatePointCacheModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    write_color_sets: bool = Field(title="Write Color Sets")
-    write_face_sets: bool = Field(title="Write Face Sets")
-    include_user_defined_attributes: bool = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    write_color_sets: bool = SettingsField(title="Write Color Sets")
+    write_face_sets: bool = SettingsField(title="Write Face Sets")
+    include_user_defined_attributes: bool = SettingsField(
         title="Include User Defined Attributes"
     )
-    defaults: list[str] = Field(
-        default_factory=["Main"],
+    default_variants: list[str] = SettingsField(
+        default_factory=list,
         title="Default Products"
     )
 
 
 class CreateProxyAlembicModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    write_color_sets: bool = Field(title="Write Color Sets")
-    write_face_sets: bool = Field(title="Write Face Sets")
-    defaults: list[str] = Field(
-        default_factory=["Main"],
+    enabled: bool = SettingsField(title="Enabled")
+    write_color_sets: bool = SettingsField(title="Write Color Sets")
+    write_face_sets: bool = SettingsField(title="Write Face Sets")
+    default_variants: list[str] = SettingsField(
+        default_factory=list,
         title="Default Products"
     )
 
 
 class CreateAssModel(BasicCreatorModel):
-    expandProcedurals: bool = Field(title="Expand Procedurals")
-    motionBlur: bool = Field(title="Motion Blur")
-    motionBlurKeys: int = Field(2, title="Motion Blur Keys")
-    motionBlurLength: float = Field(0.5, title="Motion Blur Length")
-    maskOptions: bool = Field(title="Mask Options")
-    maskCamera: bool = Field(title="Mask Camera")
-    maskLight: bool = Field(title="Mask Light")
-    maskShape: bool = Field(title="Mask Shape")
-    maskShader: bool = Field(title="Mask Shader")
-    maskOverride: bool = Field(title="Mask Override")
-    maskDriver: bool = Field(title="Mask Driver")
-    maskFilter: bool = Field(title="Mask Filter")
-    maskColor_manager: bool = Field(title="Mask Color Manager")
-    maskOperator: bool = Field(title="Mask Operator")
+    expandProcedurals: bool = SettingsField(title="Expand Procedurals")
+    motionBlur: bool = SettingsField(title="Motion Blur")
+    motionBlurKeys: int = SettingsField(2, title="Motion Blur Keys")
+    motionBlurLength: float = SettingsField(0.5, title="Motion Blur Length")
+    maskOptions: bool = SettingsField(title="Mask Options")
+    maskCamera: bool = SettingsField(title="Mask Camera")
+    maskLight: bool = SettingsField(title="Mask Light")
+    maskShape: bool = SettingsField(title="Mask Shape")
+    maskShader: bool = SettingsField(title="Mask Shader")
+    maskOverride: bool = SettingsField(title="Mask Override")
+    maskDriver: bool = SettingsField(title="Mask Driver")
+    maskFilter: bool = SettingsField(title="Mask Filter")
+    maskColor_manager: bool = SettingsField(title="Mask Color Manager")
+    maskOperator: bool = SettingsField(title="Mask Operator")
 
 
 class CreateReviewModel(BasicCreatorModel):
-    useMayaTimeline: bool = Field(title="Use Maya Timeline for Frame Range.")
+    useMayaTimeline: bool = SettingsField(
+        title="Use Maya Timeline for Frame Range."
+    )
 
 
 class CreateVrayProxyModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    vrmesh: bool = Field(title="VrMesh")
-    alembic: bool = Field(title="Alembic")
-    defaults: list[str] = Field(default_factory=list, title="Default Products")
+    enabled: bool = SettingsField(True)
+    vrmesh: bool = SettingsField(title="VrMesh")
+    alembic: bool = SettingsField(title="Alembic")
+    default_variants: list[str] = SettingsField(
+        default_factory=list, title="Default Products")
+
+
+class CreateMultishotLayout(BasicCreatorModel):
+    shotParent: str = SettingsField(title="Shot Parent Folder")
+    groupLoadedAssets: bool = SettingsField(title="Group Loaded Assets")
+    task_type: list[str] = SettingsField(
+        title="Task types",
+        enum_resolver=task_types_enum
+    )
+    task_name: str = SettingsField(title="Task name (regex)")
 
 
 class CreatorsModel(BaseSettingsModel):
-    CreateLook: CreateLookModel = Field(
+    CreateLook: CreateLookModel = SettingsField(
         default_factory=CreateLookModel,
         title="Create Look"
     )
-    CreateRender: BasicCreatorModel = Field(
+    CreateRender: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Render"
     )
     # "-" is not compatible in the new model
-    CreateUnrealStaticMesh: CreateUnrealStaticMeshModel = Field(
+    CreateUnrealStaticMesh: CreateUnrealStaticMeshModel = SettingsField(
         default_factory=CreateUnrealStaticMeshModel,
         title="Create Unreal_Static Mesh"
     )
     # "-" is not compatible in the new model
-    CreateUnrealSkeletalMesh: CreateUnrealSkeletalMeshModel = Field(
+    CreateUnrealSkeletalMesh: CreateUnrealSkeletalMeshModel = SettingsField(
         default_factory=CreateUnrealSkeletalMeshModel,
         title="Create Unreal_Skeletal Mesh"
     )
-    CreateMultiverseLook: CreateMultiverseLookModel = Field(
+    CreateMultiverseLook: CreateMultiverseLookModel = SettingsField(
         default_factory=CreateMultiverseLookModel,
         title="Create Multiverse Look"
     )
-    CreateAnimation: CreateAnimationModel = Field(
+    CreateAnimation: CreateAnimationModel = SettingsField(
         default_factory=CreateAnimationModel,
         title="Create Animation"
     )
-    CreateModel: BasicExportMeshModel = Field(
+    CreateModel: BasicExportMeshModel = SettingsField(
         default_factory=BasicExportMeshModel,
         title="Create Model"
     )
-    CreatePointCache: CreatePointCacheModel = Field(
+    CreatePointCache: CreatePointCacheModel = SettingsField(
         default_factory=CreatePointCacheModel,
         title="Create Point Cache"
     )
-    CreateProxyAlembic: CreateProxyAlembicModel = Field(
+    CreateProxyAlembic: CreateProxyAlembicModel = SettingsField(
         default_factory=CreateProxyAlembicModel,
         title="Create Proxy Alembic"
     )
-    CreateMultiverseUsd: BasicCreatorModel = Field(
+    CreateMultiverseUsd: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Multiverse USD"
     )
-    CreateMultiverseUsdComp: BasicCreatorModel = Field(
+    CreateMultiverseUsdComp: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Multiverse USD Composition"
     )
-    CreateMultiverseUsdOver: BasicCreatorModel = Field(
+    CreateMultiverseUsdOver: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Multiverse USD Override"
     )
-    CreateAss: CreateAssModel = Field(
+    CreateAss: CreateAssModel = SettingsField(
         default_factory=CreateAssModel,
         title="Create Ass"
     )
-    CreateAssembly: BasicCreatorModel = Field(
+    CreateAssembly: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Assembly"
     )
-    CreateCamera: BasicCreatorModel = Field(
+    CreateCamera: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Camera"
     )
-    CreateLayout: BasicCreatorModel = Field(
+    CreateLayout: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Layout"
     )
-    CreateMayaScene: BasicCreatorModel = Field(
+    CreateMayaScene: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Maya Scene"
     )
-    CreateRenderSetup: BasicCreatorModel = Field(
+    CreateRenderSetup: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Render Setup"
     )
-    CreateReview: CreateReviewModel = Field(
+    CreateReview: CreateReviewModel = SettingsField(
         default_factory=CreateReviewModel,
         title="Create Review"
     )
-    CreateRig: BasicCreatorModel = Field(
+    CreateRig: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Rig"
     )
-    CreateSetDress: BasicCreatorModel = Field(
+    CreateSetDress: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Set Dress"
     )
-    CreateVrayProxy: CreateVrayProxyModel = Field(
+    CreateVrayProxy: CreateVrayProxyModel = SettingsField(
         default_factory=CreateVrayProxyModel,
         title="Create VRay Proxy"
     )
-    CreateVRayScene: BasicCreatorModel = Field(
+    CreateVRayScene: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create VRay Scene"
     )
-    CreateYetiRig: BasicCreatorModel = Field(
+    CreateYetiRig: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Yeti Rig"
     )
@@ -224,19 +240,19 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "make_tx": True,
         "rs_tex": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateRender": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateUnrealStaticMesh": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "",
             "_Main"
         ],
@@ -250,7 +266,9 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateUnrealSkeletalMesh": {
         "enabled": True,
-        "defaults": [],
+        "default_variants": [
+            "Main",
+        ],
         "joint_hints": "jnt_org"
     },
     "CreateMultiverseLook": {
@@ -262,7 +280,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "write_face_sets": False,
         "include_parent_hierarchy": False,
         "include_user_defined_attributes": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -270,7 +288,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "write_color_sets": False,
         "write_face_sets": False,
-        "defaults": [
+        "default_variants": [
             "Main",
             "Proxy",
             "Sculpt"
@@ -281,7 +299,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "write_color_sets": False,
         "write_face_sets": False,
         "include_user_defined_attributes": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -289,31 +307,31 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "write_color_sets": False,
         "write_face_sets": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateMultiverseUsd": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateMultiverseUsdComp": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateMultiverseUsdOver": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateAss": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ],
         "expandProcedurals": False,
@@ -333,44 +351,44 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateAssembly": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateCamera": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateLayout": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateMayaScene": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateRenderSetup": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateReview": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ],
         "useMayaTimeline": True
     },
     "CreateRig": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main",
             "Sim",
             "Cloth"
@@ -378,7 +396,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateSetDress": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main",
             "Anim"
         ]
@@ -387,19 +405,19 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "vrmesh": True,
         "alembic": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateVRayScene": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateYetiRig": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     }

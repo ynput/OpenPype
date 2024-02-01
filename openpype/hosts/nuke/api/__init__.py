@@ -43,11 +43,17 @@ from .lib import (
     get_node_data,
     set_node_data,
     update_node_data,
-    create_write_node
+    create_write_node,
+    link_knobs
 )
 from .utils import (
     colorspace_exists_on_node,
     get_colorspace_list
+)
+
+from .actions import (
+    SelectInvalidAction,
+    SelectInstanceNodeAction
 )
 
 __all__ = (
@@ -90,7 +96,11 @@ __all__ = (
     "set_node_data",
     "update_node_data",
     "create_write_node",
+    "link_knobs",
 
     "colorspace_exists_on_node",
-    "get_colorspace_list"
+    "get_colorspace_list",
+
+    "SelectInvalidAction",
+    "SelectInstanceNodeAction"
 )

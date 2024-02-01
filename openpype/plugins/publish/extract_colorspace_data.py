@@ -30,7 +30,7 @@ class ExtractColorspaceData(publish.Extractor,
     def process(self, instance):
         representations = instance.data.get("representations")
         if not representations:
-            self.log.info("No representations at instance : `{}`".format(
+            self.log.debug("No representations at instance : `{}`".format(
                 instance))
             return
 

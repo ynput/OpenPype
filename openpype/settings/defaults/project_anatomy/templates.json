@@ -38,19 +38,14 @@
             "file": "{subset}_{@version}<_{output}><.{@frame}>.{ext}",
             "path": "{@folder}/{@file}"
         },
-        "simpleUnrealTextureHero": {
-            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/hero",
-            "file": "{originalBasename}.{ext}",
-            "path": "{@folder}/{@file}"
-        },
-        "simpleUnrealTexture": {
-            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{@version}",
-            "file": "{originalBasename}_{@version}.{ext}",
-            "path": "{@folder}/{@file}"
-        },
         "online": {
             "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
             "file": "{originalBasename}<.{@frame}><_{udim}>.{ext}",
+            "path": "{@folder}/{@file}"
+        },
+        "tycache": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+            "file": "{originalBasename}.{ext}",
             "path": "{@folder}/{@file}"
         },
         "source": {
@@ -63,9 +58,8 @@
         },
         "__dynamic_keys_labels__": {
             "maya2unreal": "Maya to Unreal",
-            "simpleUnrealTextureHero": "Simple Unreal Texture - Hero",
-            "simpleUnrealTexture": "Simple Unreal Texture",
             "online": "online",
+            "tycache": "tycache",
             "source": "source",
             "transient": "transient"
         }

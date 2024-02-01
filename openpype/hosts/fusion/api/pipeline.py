@@ -287,49 +287,6 @@ def parse_container(tool):
     return container
 
 
-# TODO: Function below is currently unused prototypes
-def list_instances(creator_id=None):
-    """Return created instances in current workfile which will be published.
-    Returns:
-        (list) of dictionaries matching instances format
-    """
-
-    comp = get_current_comp()
-    tools = comp.GetToolList(False).values()
-
-    instance_signature = {
-        "id": "pyblish.avalon.instance",
-        "identifier": creator_id
-    }
-    instances = []
-    for tool in tools:
-
-        data = tool.GetData('openpype')
-        if not isinstance(data, dict):
-            continue
-
-        if data.get("id") != instance_signature["id"]:
-            continue
-
-        if creator_id and data.get("identifier") != creator_id:
-            continue
-
-        instances.append(tool)
-
-    return instances
-
-
-# TODO: Function below is currently unused prototypes
-def remove_instance(instance):
-    """Remove instance from current workfile.
-
-    Args:
-        instance (dict): instance representation from subsetmanager model
-    """
-    # Assume instance is a Fusion tool directly
-    instance["tool"].Delete()
-
-
 class FusionEventThread(QtCore.QThread):
     """QThread which will periodically ping Fusion app for any events.
     The fusion.UIManager must be set up to be notified of events before they'll

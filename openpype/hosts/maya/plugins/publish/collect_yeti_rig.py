@@ -6,6 +6,7 @@ from maya import cmds
 import pyblish.api
 
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import KnownPublishError
 
 
 SETTINGS = {"renderDensity",
@@ -116,9 +117,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         resources = []
 
         image_search_paths = cmds.getAttr("{}.imageSearchPath".format(node))
-        texture_filenames = []
         if image_search_paths:
-
 
             # TODO: Somehow this uses OS environment path separator, `:` vs `;`
             # Later on check whether this is pipeline OS cross-compatible.
@@ -128,20 +127,22 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
             image_search_paths = self._replace_tokens(image_search_paths)
 
-            # List all related textures
-            texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
-            self.log.info("Found %i texture(s)" % len(texture_filenames))
+        # List all related textures
+        texture_nodes = cmds.pgYetiGraph(
+            node, listNodes=True, type="texture")
+        texture_filenames = [
+            cmds.pgYetiGraph(
+                node, node=texture_node,
+                param="file_name", getParamValue=True)
+            for texture_node in texture_nodes
+        ]
+        self.log.debug("Found %i texture(s)" % len(texture_filenames))
 
         # Get all reference nodes
         reference_nodes = cmds.pgYetiGraph(node,
                                            listNodes=True,
                                            type="reference")
-        self.log.info("Found %i reference node(s)" % len(reference_nodes))
-
-        if texture_filenames and not image_search_paths:
-            raise ValueError("pgYetiMaya node '%s' is missing the path to the "
-                             "files in the 'imageSearchPath "
-                             "atttribute'" % node)
+        self.log.debug("Found %i reference node(s)" % len(reference_nodes))
 
         # Collect all texture files
         # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
@@ -162,7 +163,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                         break
 
             if not files:
-                self.log.warning(
+                raise KnownPublishError(
                     "No texture found for: %s "
                     "(searched: %s)" % (texture, image_search_paths))
 

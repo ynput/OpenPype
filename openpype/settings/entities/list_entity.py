@@ -258,7 +258,7 @@ class ListEntity(EndpointEntity):
                 break
 
         if result_idx is None:
-            raise ValueError("Didn't found child {}".format(child_obj))
+            raise ValueError("Didn't find child {}".format(child_obj))
 
         return "/".join([self.path, str(result_idx)])
 

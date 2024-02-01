@@ -69,7 +69,6 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "asset_name": context.data["asset"],
             "task_name": context.data["task"]
         }
-        context.data["previous_context"] = current_context
         self.log.debug("Current context is: {}".format(current_context))
 
         # Collect context from workfile metadata

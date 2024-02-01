@@ -189,6 +189,13 @@ class ExtractOIIOTranscode(publish.Extractor):
                 if len(new_repre["files"]) == 1:
                     new_repre["files"] = new_repre["files"][0]
 
+                # If the source representation has "review" tag, but its not
+                # part of the output defintion tags, then both the
+                # representations will be transcoded in ExtractReview and
+                # their outputs will clash in integration.
+                if "review" in repre.get("tags", []):
+                    added_review = True
+
                 new_representations.append(new_repre)
                 added_representations = True
 
@@ -320,13 +327,12 @@ class ExtractOIIOTranscode(publish.Extractor):
                                   logger=self.log)
 
         if not profile:
-            self.log.info((
+            self.log.debug((
               "Skipped instance. None of profiles in presets are for"
               " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
               " | Task type \"{}\" | Subset \"{}\" "
             ).format(host_name, family, task_name, task_type, subset))
 
-        self.log.debug("profile: {}".format(profile))
         return profile
 
     def _repre_is_valid(self, repre):

@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 from platform import system
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class InstallPySideToBlender(PreLaunchHook):
@@ -16,7 +16,8 @@ class InstallPySideToBlender(PreLaunchHook):
     blender's python packages.
     """
 
-    app_groups = ["blender"]
+    app_groups = {"blender"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # Prelaunch hook is not crucial
@@ -30,7 +31,7 @@ class InstallPySideToBlender(PreLaunchHook):
 
     def inner_execute(self):
         # Get blender's python directory
-        version_regex = re.compile(r"^[2-3]\.[0-9]+$")
+        version_regex = re.compile(r"^[2-4]\.[0-9]+$")
 
         platform = system().lower()
         executable = self.launch_context.executable.executable_path

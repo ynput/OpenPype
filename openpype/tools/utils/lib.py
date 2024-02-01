@@ -91,7 +91,8 @@ def set_style_property(widget, property_name, property_value):
     if cur_value == property_value:
         return
     widget.setProperty(property_name, property_value)
-    widget.style().polish(widget)
+    style = widget.style()
+    style.polish(widget)
 
 
 def paint_image_with_color(image, color):
@@ -170,8 +171,12 @@ def get_openpype_qt_app():
             if attr is not None:
                 QtWidgets.QApplication.setAttribute(attr)
 
-        if hasattr(
-            QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"
+        policy = os.getenv("QT_SCALE_FACTOR_ROUNDING_POLICY")
+        if (
+            hasattr(
+                QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"
+            )
+            and not policy
         ):
             QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
                 QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
@@ -760,20 +765,23 @@ def create_qthread(func, *args, **kwargs):
 
 def get_repre_icons():
     """Returns a dict {'provider_name': QIcon}"""
+    icons = {}
     try:
         from openpype_modules import sync_server
     except Exception:
         # Backwards compatibility
-        from openpype.modules import sync_server
+        try:
+            from openpype.modules import sync_server
+        except Exception:
+            return icons
 
     resource_path = os.path.join(
         os.path.dirname(sync_server.sync_server_module.__file__),
         "providers", "resources"
     )
-    icons = {}
     if not os.path.exists(resource_path):
         print("No icons for Site Sync found")
-        return {}
+        return icons
 
     for file_name in os.listdir(resource_path):
         if file_name and not file_name.endswith("png"):

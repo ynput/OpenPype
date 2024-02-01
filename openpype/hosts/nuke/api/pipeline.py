@@ -34,6 +34,7 @@ from .lib import (
     get_main_window,
     add_publish_knob,
     WorkfileSettings,
+    # TODO: remove this once workfile builder will be removed
     process_workfile_builder,
     start_workfile_template_builder,
     launch_workfiles_app,
@@ -128,9 +129,6 @@ class NukeHost(
         register_event_callback("workio.open_file", check_inventory_versions)
         register_event_callback("taskChanged", change_context_label)
 
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled)
-
         _install_menu()
 
         # add script menu
@@ -155,11 +153,18 @@ def add_nuke_callbacks():
     """
     nuke_settings = get_current_project_settings()["nuke"]
     workfile_settings = WorkfileSettings()
+
     # Set context settings.
     nuke.addOnCreate(
         workfile_settings.set_context_settings, nodeClass="Root")
+
+    # adding favorites to file browser
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
+
+    # template builder callbacks
     nuke.addOnCreate(start_workfile_template_builder, nodeClass="Root")
+
+    # TODO: remove this callback once workfile builder will be removed
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
 
     # fix ffmpeg settings on script
@@ -169,11 +174,12 @@ def add_nuke_callbacks():
     nuke.addOnScriptLoad(check_inventory_versions)
     nuke.addOnScriptSave(check_inventory_versions)
 
-    # # set apply all workfile settings on script load and save
+    # set apply all workfile settings on script load and save
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
+
     if nuke_settings["nuke-dirmap"]["enabled"]:
-        log.info("Added Nuke's dirmaping callback ...")
+        log.info("Added Nuke's dir-mapping callback ...")
         # Add dirmap for file paths.
         nuke.addFilenameFilter(dirmap_file_name_filter)
 
@@ -230,9 +236,13 @@ def _install_menu():
 
     if not ASSIST:
         label = get_context_label()
-        Context.context_label = label
-        context_action = menu.addCommand(label)
-        context_action.setEnabled(False)
+        context_action_item = menu.addCommand("Context")
+        context_action_item.setEnabled(False)
+
+        Context.context_action_item = context_action_item
+
+        context_action = context_action_item.action()
+        context_action.setText(label)
 
         # add separator after context label
         menu.addSeparator()
@@ -249,9 +259,7 @@ def _install_menu():
         menu.addCommand(
             "Create...",
             lambda: host_tools.show_publisher(
-                parent=(
-                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
-                ),
+                parent=main_window,
                 tab="create"
             )
         )
@@ -260,9 +268,7 @@ def _install_menu():
         menu.addCommand(
             "Publish...",
             lambda: host_tools.show_publisher(
-                parent=(
-                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
-                ),
+                parent=main_window,
                 tab="publish"
             )
         )
@@ -342,26 +348,21 @@ def _install_menu():
 
 
 def change_context_label():
-    menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(MENU_LABEL)
+    if ASSIST:
+        return
 
-    label = get_context_label()
+    context_action_item = Context.context_action_item
+    if context_action_item is None:
+        return
+    context_action = context_action_item.action()
 
-    rm_item = [
-        (i, item) for i, item in enumerate(menu.items())
-        if Context.context_label in item.name()
-    ][0]
+    old_label = context_action.text()
+    new_label = get_context_label()
 
-    menu.removeItem(rm_item[1].name())
-
-    context_action = menu.addCommand(
-        label,
-        index=(rm_item[0])
-    )
-    context_action.setEnabled(False)
+    context_action.setText(new_label)
 
     log.info("Task label changed from `{}` to `{}`".format(
-        Context.context_label, label))
+        old_label, new_label))
 
 
 def add_shortcuts_from_presets():
@@ -391,25 +392,6 @@ def add_shortcuts_from_presets():
                 menuitem.setShortcut(shortcut_str)
             except (AttributeError, KeyError) as e:
                 log.error(e)
-
-
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle node passthrough states on instance toggles."""
-
-    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
-        instance, old_value, new_value))
-
-    # Whether instances should be passthrough based on new value
-
-    with viewer_update_and_undo_stop():
-        n = instance[0]
-        try:
-            n["publish"].value()
-        except ValueError:
-            n = add_publish_knob(n)
-            log.info(" `Publish` knob was added to write node..")
-
-        n["publish"].setValue(new_value)
 
 
 def containerise(node,
@@ -469,8 +451,6 @@ def parse_container(node):
     """
     data = read_avalon_data(node)
 
-    # (TODO) Remove key validation when `ls` has re-implemented.
-    #
     # If not all required data return the empty container
     required = ["schema", "id", "name",
                 "namespace", "loader", "representation"]
@@ -478,7 +458,10 @@ def parse_container(node):
         return
 
     # Store the node's name
-    data["objectName"] = node["name"].value()
+    data.update({
+        "objectName": node.fullName(),
+        "node": node,
+    })
 
     return data
 
@@ -534,11 +517,16 @@ def list_instances(creator_id=None):
 
     For SubsetManager
 
+    Args:
+        creator_id (Optional[str]): creator identifier
+
     Returns:
         (list) of dictionaries matching instances format
     """
     instances_by_order = defaultdict(list)
     subset_instances = []
+    instance_ids = set()
+
     for node in nuke.allNodes(recurseGroups=True):
 
         if node.Class() in ["Viewer", "Dot"]:
@@ -564,6 +552,17 @@ def list_instances(creator_id=None):
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
+        instance_id = instance_data.get("instance_id")
+        if not instance_id:
+            pass
+        elif instance_id in instance_ids:
+            instance_data.pop("instance_id")
+        else:
+            instance_ids.add(instance_id)
+
+        # node name could change, so update subset name data
+        _update_subset_name_data(instance_data, node)
+
         if "render_order" not in node.knobs():
             subset_instances.append((node, instance_data))
             continue
@@ -572,21 +571,41 @@ def list_instances(creator_id=None):
         instances_by_order[order].append((node, instance_data))
 
     # Sort instances based on order attribute or subset name.
+    # TODO: remove in future Publisher enhanced with sorting
     ordered_instances = []
     for key in sorted(instances_by_order.keys()):
-        instances_by_subset = {}
-        for node, data in instances_by_order[key]:
-            instances_by_subset[data["subset"]] = (node, data)
+        instances_by_subset = defaultdict(list)
+        for node, data_ in instances_by_order[key]:
+            instances_by_subset[data_["subset"]].append((node, data_))
         for subkey in sorted(instances_by_subset.keys()):
-            ordered_instances.append(instances_by_subset[subkey])
+            ordered_instances.extend(instances_by_subset[subkey])
 
-    instances_by_subset = {}
-    for node, data in subset_instances:
-        instances_by_subset[data["subset"]] = (node, data)
+    instances_by_subset = defaultdict(list)
+    for node, data_ in subset_instances:
+        instances_by_subset[data_["subset"]].append((node, data_))
     for key in sorted(instances_by_subset.keys()):
-        ordered_instances.append(instances_by_subset[key])
+        ordered_instances.extend(instances_by_subset[key])
 
     return ordered_instances
+
+
+def _update_subset_name_data(instance_data, node):
+    """Update subset name data in instance data.
+
+    Args:
+        instance_data (dict): instance creator data
+        node (nuke.Node): nuke node
+    """
+    # make sure node name is subset name
+    old_subset_name = instance_data["subset"]
+    old_variant = instance_data["variant"]
+    subset_name_root = old_subset_name.replace(old_variant, "")
+
+    new_subset_name = node.name()
+    new_variant = new_subset_name.replace(subset_name_root, "")
+
+    instance_data["subset"] = new_subset_name
+    instance_data["variant"] = new_variant
 
 
 def remove_instance(instance):

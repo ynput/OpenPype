@@ -52,6 +52,6 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
 
         renderlayer = instance.data.get("renderlayer")
         with lib.renderlayer(renderlayer):
-            cls.log.info("Enabling Distributed Rendering "
-                         "ignore in batch mode..")
+            cls.log.debug("Enabling Distributed Rendering "
+                          "ignore in batch mode..")
             cmds.setAttr(cls.ignored_attr, True)

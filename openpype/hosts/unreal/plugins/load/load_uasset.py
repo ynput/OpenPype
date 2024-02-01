@@ -11,6 +11,7 @@ from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
     send_request,
     containerise,
+    AYON_ASSET_DIR,
 )
 
 
@@ -22,6 +23,8 @@ class UAssetLoader(UnrealBaseLoader):
     representations = ["uasset"]
     icon = "cube"
     color = "orange"
+
+    extension = "uasset"
 
     def load(self, context, name=None, namespace=None, options=None):
         """Load and containerise representation into Content Browser.
@@ -37,9 +40,10 @@ class UAssetLoader(UnrealBaseLoader):
                             used now, data are imprinted by `containerise()`.
         """
 
-        # Create directory for asset and OpenPype container
-        root = f"{self.root}/Assets"
+        # Create directory for asset and Ayon container
+        root = AYON_ASSET_DIR
         asset = context.get('asset').get('name')
+        suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"
 
         asset_dir, container_name = send_request(
@@ -48,6 +52,15 @@ class UAssetLoader(UnrealBaseLoader):
                 "asset": asset,
                 "name": name})
 
+        unique_number = 1
+        while send_request(
+                "does_directory_exist",
+                params={"directory_path": f"{asset_dir}_{unique_number:02}"}):
+            unique_number += 1
+
+        asset_dir = f"{asset_dir}_{unique_number:02}"
+        container_name = f"{container_name}_{unique_number:02}{suffix}"
+
         send_request(
             "make_directory", params={"directory_path": asset_dir})
 
@@ -55,7 +68,10 @@ class UAssetLoader(UnrealBaseLoader):
         destination_path = asset_dir.replace(
             "/Game", Path(project_content_dir).as_posix(), 1)
 
-        shutil.copy(self.fname, f"{destination_path}/{asset_name}.uasset")
+        path = self.filepath_from_context(context)
+        shutil.copy(
+            path,
+            f"{destination_path}/{name}_{unique_number:02}.{self.extension}")
 
         data = {
             "schema": "ayon:container-2.0",
@@ -81,12 +97,32 @@ class UAssetLoader(UnrealBaseLoader):
     def update(self, container, representation):
         filename = get_representation_path(representation)
         asset_dir = container["namespace"]
-        asset_name = container["asset_name"]
+        name = representation["context"]["subset"]
+
+        unique_number = container["container_name"].split("_")[-2]
 
         project_content_dir = send_request("project_content_dir")
         destination_path = asset_dir.replace(
             "/Game", Path(project_content_dir).as_posix(), 1)
 
-        shutil.copy(filename, f"{destination_path}/{asset_name}.uasset")
+        send_request(
+            "delete_assets_in_dir_but_container",
+            params={"asset_dir": asset_dir})
 
-        super(UnrealBaseLoader, self).update(container, representation)
+        update_filepath = get_representation_path(representation)
+
+        shutil.copy(
+            update_filepath,
+            f"{destination_path}/{name}_{unique_number}.{self.extension}")
+
+        super(UAssetLoader, self).update(container, representation)
+
+
+class UMapLoader(UAssetLoader):
+    """Load Level."""
+
+    families = ["uasset"]
+    label = "Load Level"
+    representations = ["umap"]
+
+    extension = "umap"

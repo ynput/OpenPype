@@ -233,7 +233,7 @@ def get_layers_pre_post_behavior(layer_ids, communicator=None):
 
     Pre and Post behaviors is enumerator of possible values:
     - "none"
-    - "repeat" / "loop"
+    - "repeat"
     - "pingpong"
     - "hold"
 
@@ -242,7 +242,7 @@ def get_layers_pre_post_behavior(layer_ids, communicator=None):
     {
         0: {
             "pre": "none",
-            "post": "loop"
+            "post": "repeat"
         }
     }
     ```

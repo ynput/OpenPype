@@ -54,8 +54,21 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         staging_dir = data_object.get("stagingDir")
         if staging_dir:
             data_object["stagingDir"] = anatomy.fill_root(staging_dir)
+            self.log.debug("Filling stagingDir with root to: %s",
+                           data_object["stagingDir"])
 
     def _process_path(self, data, anatomy):
+        """Process data of a single JSON publish metadata file.
+
+        Args:
+            data: The loaded metadata from the JSON file
+            anatomy: Anatomy for the current context
+
+        Returns:
+            bool: Whether any instance of this particular metadata file
+                has a persistent staging dir.
+
+        """
         # validate basic necessary data
         data_err = "invalid json file - missing data"
         required = ["asset", "user", "comment",
@@ -80,36 +93,34 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         assert ctx.get("user") == data.get("user"), ctx_err % "user"
         assert ctx.get("version") == data.get("version"), ctx_err % "version"
 
-        # ftrack credentials are passed as environment variables by Deadline
-        # to publish job, but Muster doesn't pass them.
-        if data.get("ftrack") and not os.environ.get("FTRACK_API_USER"):
-            ftrack = data.get("ftrack")
-            os.environ["FTRACK_API_USER"] = ftrack["FTRACK_API_USER"]
-            os.environ["FTRACK_API_KEY"] = ftrack["FTRACK_API_KEY"]
-            os.environ["FTRACK_SERVER"] = ftrack["FTRACK_SERVER"]
-
         # now we can just add instances from json file and we are done
+        any_staging_dir_persistent = False
         for instance_data in data.get("instances"):
 
-            self.log.info("  - processing instance for {}".format(
+            self.log.debug("  - processing instance for {}".format(
                 instance_data.get("subset")))
             instance = self._context.create_instance(
                 instance_data.get("subset")
             )
-            self.log.info("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
             instance.data.update(instance_data)
 
             # stash render job id for later validation
             instance.data["render_job_id"] = data.get("job").get("_id")
+            staging_dir_persistent = instance.data.get(
+                "stagingDir_persistent", False
+            )
+            if staging_dir_persistent:
+                any_staging_dir_persistent = True
 
             representations = []
             for repre_data in instance_data.get("representations") or []:
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
 
-                add_repre_files_for_cleanup(instance, repre_data)
+                if not staging_dir_persistent:
+                    add_repre_files_for_cleanup(instance, repre_data)
 
             instance.data["representations"] = representations
 
@@ -121,8 +132,10 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                         "offset": 0
                     }]
                 })
-                self.log.info(
+                self.log.debug(
                     f"Adding audio to instance: {instance.data['audio']}")
+
+        return any_staging_dir_persistent
 
     def process(self, context):
         self._context = context
@@ -137,11 +150,11 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         # Using already collected Anatomy
         anatomy = context.data["anatomy"]
-        self.log.info("Getting root setting for project \"{}\"".format(
+        self.log.debug("Getting root setting for project \"{}\"".format(
             anatomy.project_name
         ))
 
-        self.log.info("anatomy: {}".format(anatomy.roots))
+        self.log.debug("Anatomy roots: {}".format(anatomy.roots))
         try:
             session_is_set = False
             for path in paths:
@@ -156,13 +169,16 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     if remapped:
                         session_data["AVALON_WORKDIR"] = remapped
 
-                    self.log.info("Setting session using data from file")
+                    self.log.debug("Setting session using data from file")
                     legacy_io.Session.update(session_data)
                     os.environ.update(session_data)
                     session_is_set = True
-                self._process_path(data, anatomy)
-                context.data["cleanupFullPaths"].append(path)
-                context.data["cleanupEmptyDirs"].append(os.path.dirname(path))
+                staging_dir_persistent = self._process_path(data, anatomy)
+                if not staging_dir_persistent:
+                    context.data["cleanupFullPaths"].append(path)
+                    context.data["cleanupEmptyDirs"].append(
+                        os.path.dirname(path)
+                    )
         except Exception as e:
             self.log.error(e, exc_info=True)
             raise Exception("Error") from e

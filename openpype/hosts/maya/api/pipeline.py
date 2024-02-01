@@ -28,8 +28,6 @@ from openpype.lib import (
 from openpype.pipeline import (
     legacy_io,
     get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
@@ -97,6 +95,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         self.log.info("Installing callbacks ... ")
         register_event_callback("init", on_init)
 
+        _set_project()
+
         if lib.IS_HEADLESS:
             self.log.info((
                 "Running in headless mode, skipping Maya save/open/new"
@@ -105,10 +105,9 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
             return
 
-        _set_project()
         self._register_callbacks()
 
-        menu.install()
+        menu.install(project_settings)
 
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)
@@ -581,19 +580,10 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
-def _update_render_layer_observers():
-    # Helper to trigger update for all renderlayer observer logic
-    lib.remove_render_layer_observer()
-    lib.add_render_layer_observer()
-    lib.add_render_layer_change_observer()
-
-
 def on_open():
     """On scene open let's assume the containers have changed."""
 
     from openpype.widgets import popup
-
-    utils.executeDeferred(_update_render_layer_observers)
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
@@ -631,7 +621,6 @@ def on_new():
     with lib.suspended_refresh():
         lib.set_context_settings()
 
-    utils.executeDeferred(_update_render_layer_observers)
     _remove_workfile_lock()
 
 
@@ -658,17 +647,6 @@ def on_task_changed():
     with lib.suspended_refresh():
         lib.set_context_settings()
         lib.update_content_on_context_change()
-
-    msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        get_current_project_name(),
-        get_current_asset_name(),
-        get_current_task_name()
-    )
-
-    lib.show_message(
-        "Context was changed",
-        ("Context was changed to:\n{}".format(msg)),
-    )
 
 
 def before_workfile_open():

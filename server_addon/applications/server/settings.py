@@ -1,7 +1,11 @@
 import json
-from pydantic import Field, validator
+from pydantic import validator
 
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    ensure_unique_names,
+)
 from ayon_server.exceptions import BadRequestException
 
 
@@ -23,21 +27,23 @@ def validate_json_dict(value):
 
 
 class MultiplatformStrList(BaseSettingsModel):
-    windows: list[str] = Field(default_factory=list, title="Windows")
-    linux: list[str] = Field(default_factory=list, title="Linux")
-    darwin: list[str] = Field(default_factory=list, title="MacOS")
+    windows: list[str] = SettingsField(default_factory=list, title="Windows")
+    linux: list[str] = SettingsField(default_factory=list, title="Linux")
+    darwin: list[str] = SettingsField(default_factory=list, title="MacOS")
 
 
 class AppVariant(BaseSettingsModel):
-    name: str = Field("", title="Name")
-    label: str = Field("", title="Label")
-    executables: MultiplatformStrList = Field(
+    name: str = SettingsField("", title="Name")
+    label: str = SettingsField("", title="Label")
+    executables: MultiplatformStrList = SettingsField(
         default_factory=MultiplatformStrList, title="Executables"
     )
-    arguments: MultiplatformStrList = Field(
+    arguments: MultiplatformStrList = SettingsField(
         default_factory=MultiplatformStrList, title="Arguments"
     )
-    environment: str = Field("{}", title="Environment", widget="textarea")
+    environment: str = SettingsField(
+        "{}", title="Environment", widget="textarea"
+    )
 
     @validator("environment")
     def validate_json(cls, value):
@@ -45,17 +51,19 @@ class AppVariant(BaseSettingsModel):
 
 
 class AppVariantWithPython(AppVariant):
-    use_python_2: bool = Field(False, title="Use Python 2")
+    use_python_2: bool = SettingsField(False, title="Use Python 2")
 
 
 class AppGroup(BaseSettingsModel):
-    enabled: bool = Field(True)
-    label: str = Field("", title="Label")
-    host_name: str = Field("", title="Host name")
-    icon: str = Field("", title="Icon")
-    environment: str = Field("{}", title="Environment", widget="textarea")
+    enabled: bool = SettingsField(True)
+    label: str = SettingsField("", title="Label")
+    host_name: str = SettingsField("", title="Host name")
+    icon: str = SettingsField("", title="Icon")
+    environment: str = SettingsField(
+        "{}", title="Environment", widget="textarea"
+    )
 
-    variants: list[AppVariant] = Field(
+    variants: list[AppVariant] = SettingsField(
         default_factory=list,
         title="Variants",
         description="Different variants of the applications",
@@ -69,7 +77,7 @@ class AppGroup(BaseSettingsModel):
 
 
 class AppGroupWithPython(AppGroup):
-    variants: list[AppVariantWithPython] = Field(
+    variants: list[AppVariantWithPython] = SettingsField(
         default_factory=list,
         title="Variants",
         description="Different variants of the applications",
@@ -78,14 +86,16 @@ class AppGroupWithPython(AppGroup):
 
 
 class AdditionalAppGroup(BaseSettingsModel):
-    enabled: bool = Field(True)
-    name: str = Field("", title="Name")
-    label: str = Field("", title="Label")
-    host_name: str = Field("", title="Host name")
-    icon: str = Field("", title="Icon")
-    environment: str = Field("{}", title="Environment", widget="textarea")
+    enabled: bool = SettingsField(True)
+    name: str = SettingsField("", title="Name")
+    label: str = SettingsField("", title="Label")
+    host_name: str = SettingsField("", title="Host name")
+    icon: str = SettingsField("", title="Icon")
+    environment: str = SettingsField(
+        "{}", title="Environment", widget="textarea"
+    )
 
-    variants: list[AppVariantWithPython] = Field(
+    variants: list[AppVariantWithPython] = SettingsField(
         default_factory=list,
         title="Variants",
         description="Different variants of the applications",
@@ -99,12 +109,16 @@ class AdditionalAppGroup(BaseSettingsModel):
 
 
 class ToolVariantModel(BaseSettingsModel):
-    name: str = Field("", title="Name")
-    label: str = Field("", title="Label")
-    host_names: list[str] = Field(default_factory=list, title="Hosts")
+    name: str = SettingsField("", title="Name")
+    label: str = SettingsField("", title="Label")
+    host_names: list[str] = SettingsField(default_factory=list, title="Hosts")
     # TODO use applications enum if possible
-    app_variants: list[str] = Field(default_factory=list, title="Applications")
-    environment: str = Field("{}", title="Environments", widget="textarea")
+    app_variants: list[str] = SettingsField(
+        default_factory=list, title="Applications"
+    )
+    environment: str = SettingsField(
+        "{}", title="Environments", widget="textarea"
+    )
 
     @validator("environment")
     def validate_json(cls, value):
@@ -112,12 +126,12 @@ class ToolVariantModel(BaseSettingsModel):
 
 
 class ToolGroupModel(BaseSettingsModel):
-    name: str = Field("", title="Name")
-    label: str = Field("", title="Label")
-    environment: str = Field("{}", title="Environments", widget="textarea")
-    variants: list[ToolVariantModel] = Field(
-        default_factory=ToolVariantModel
+    name: str = SettingsField("", title="Name")
+    label: str = SettingsField("", title="Label")
+    environment: str = SettingsField(
+        "{}", title="Environments", widget="textarea"
     )
+    variants: list[ToolVariantModel] = SettingsField(default_factory=list)
 
     @validator("environment")
     def validate_json(cls, value):
@@ -132,43 +146,47 @@ class ToolGroupModel(BaseSettingsModel):
 class ApplicationsSettings(BaseSettingsModel):
     """Applications settings"""
 
-    maya: AppGroupWithPython = Field(
+    maya: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Autodesk Maya")
-    adsk_3dsmax: AppGroupWithPython = Field(
+    adsk_3dsmax: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Autodesk 3ds Max")
-    flame: AppGroupWithPython = Field(
+    flame: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Autodesk Flame")
-    nuke: AppGroupWithPython = Field(
+    nuke: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Nuke")
-    nukeassist: AppGroupWithPython = Field(
+    nukeassist: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Nuke Assist")
-    nukex: AppGroupWithPython = Field(
+    nukex: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Nuke X")
-    nukestudio: AppGroupWithPython = Field(
+    nukestudio: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Nuke Studio")
-    hiero: AppGroupWithPython = Field(
+    hiero: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Hiero")
-    fusion: AppGroup = Field(
+    fusion: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Fusion")
-    resolve: AppGroupWithPython = Field(
+    resolve: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Resolve")
-    houdini: AppGroupWithPython = Field(
+    houdini: AppGroupWithPython = SettingsField(
         default_factory=AppGroupWithPython, title="Houdini")
-    blender: AppGroup = Field(
+    blender: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Blender")
-    harmony: AppGroup = Field(
+    harmony: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Harmony")
-    tvpaint: AppGroup = Field(
+    tvpaint: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="TVPaint")
-    photoshop: AppGroup = Field(
+    photoshop: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Adobe Photoshop")
-    aftereffects: AppGroup = Field(
+    aftereffects: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Adobe After Effects")
-    celaction: AppGroup = Field(
+    celaction: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Celaction 2D")
-    unreal: AppGroup = Field(
+    substancepainter: AppGroup = SettingsField(
+        default_factory=AppGroupWithPython, title="Substance Painter")
+    unreal: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Unreal Editor")
-    additional_apps: list[AdditionalAppGroup] = Field(
+    wrap: AppGroup = SettingsField(
+        default_factory=AppGroupWithPython, title="Wrap")
+    additional_apps: list[AdditionalAppGroup] = SettingsField(
         default_factory=list, title="Additional Applications")
 
     @validator("additional_apps")
@@ -178,16 +196,16 @@ class ApplicationsSettings(BaseSettingsModel):
 
 
 class ApplicationsAddonSettings(BaseSettingsModel):
-    applications: ApplicationsSettings = Field(
+    applications: ApplicationsSettings = SettingsField(
         default_factory=ApplicationsSettings,
         title="Applications",
         scope=["studio"]
     )
-    tool_groups: list[ToolGroupModel] = Field(
+    tool_groups: list[ToolGroupModel] = SettingsField(
         default_factory=list,
         scope=["studio"]
     )
-    only_available: bool = Field(
+    only_available: bool = SettingsField(
         True, title="Show only available applications")
 
     @validator("tool_groups")
@@ -197,5 +215,5 @@ class ApplicationsAddonSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
-    "only_available": False
+    "only_available": True
 }

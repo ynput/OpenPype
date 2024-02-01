@@ -34,7 +34,6 @@ class BgeoLoader(load.LoaderPlugin):
 
         # Create a new geo node
         container = obj.createNode("geo", node_name=node_name)
-        is_sequence = bool(context["representation"]["context"].get("frame"))
 
         # Remove the file node, it only loads static meshes
         # Houdini 17 has removed the file node from the geo node

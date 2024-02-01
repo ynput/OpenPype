@@ -9,6 +9,7 @@ from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
     send_request,
     containerise,
+    AYON_ASSET_DIR,
 )
 
 
@@ -66,8 +67,8 @@ class AnimationAlembicLoader(UnrealBaseLoader):
                             used now, data are imprinted by `containerise()`.
         """
 
-        # Create directory for asset and openpype container
-        root = f"{self.root}/Assets"
+        # Create directory for asset and ayon container
+        root = AYON_ASSET_DIR
         asset = context.get('asset').get('name')
         asset_name = f"{asset}_{name}" if asset else f"{name}"
         version = context.get('version').get('name')

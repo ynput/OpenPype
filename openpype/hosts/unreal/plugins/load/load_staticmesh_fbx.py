@@ -9,6 +9,7 @@ from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
     send_request,
     containerise,
+    AYON_ASSET_DIR
 )
 
 
@@ -20,6 +21,8 @@ class StaticMeshFBXLoader(UnrealBaseLoader):
     representations = ["fbx"]
     icon = "cube"
     color = "orange"
+
+    root = AYON_ASSET_DIR
 
     @staticmethod
     def _import_fbx_task(
@@ -47,11 +50,6 @@ class StaticMeshFBXLoader(UnrealBaseLoader):
     def load(self, context, name=None, namespace=None, options=None):
         """Load and containerise representation into Content Browser.
 
-        This is two step process. First, import FBX to temporary path and
-        then call `containerise()` on it - this moves all content to new
-        directory and then it will create AssetContainer there and imprint it
-        with metadata. This will mark this path as container.
-
         Args:
             context (dict): application context
             name (str): subset name
@@ -59,11 +57,14 @@ class StaticMeshFBXLoader(UnrealBaseLoader):
                              This is not passed here, so namespace is set
                              by `containerise()` because only then we know
                              real path.
-            options (dict): Those would be data to be imprinted. This is not
-                            used now, data are imprinted by `containerise()`.
+            options (dict): Those would be data to be imprinted.
+
+        Returns:
+            list(str): list of container content
         """
-        # Create directory for asset and OpenPype container
-        root = f"{self.root}/Assets"
+
+        # Create directory for asset and Ayon container
+        root = AYON_ASSET_DIR
         if options and options.get("asset_dir"):
             root = options["asset_dir"]
         asset = context.get('asset').get('name')

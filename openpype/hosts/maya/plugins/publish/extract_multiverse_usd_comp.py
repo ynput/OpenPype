@@ -105,14 +105,14 @@ class ExtractMultiverseUsdComposition(publish.Extractor):
         # Parse export options
         options = self.default_options
         options = self.parse_overrides(instance, options)
-        self.log.info("Export options: {0}".format(options))
+        self.log.debug("Export options: {0}".format(options))
 
         # Perform extraction
-        self.log.info("Performing extraction ...")
+        self.log.debug("Performing extraction ...")
 
         with maintained_selection():
             members = instance.data("setMembers")
-            self.log.info('Collected object {}'.format(members))
+            self.log.debug('Collected object {}'.format(members))
 
             import multiverse
 
@@ -175,5 +175,5 @@ class ExtractMultiverseUsdComposition(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance {} to {}".format(
-            instance.name, file_path))
+        self.log.debug("Extracted instance {} to {}".format(instance.name,
+                                                            file_path))

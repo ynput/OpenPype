@@ -3,9 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    RepairAction,
     ValidateMeshOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction
 )
 
 
@@ -22,8 +23,9 @@ class ValidateColorSets(pyblish.api.Validator,
     hosts = ['maya']
     families = ['model']
     label = 'Mesh ColorSets'
-    actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               RepairAction]
+    actions = [
+        openpype.hosts.maya.api.action.SelectInvalidAction, RepairAction
+    ]
     optional = True
 
     @staticmethod
@@ -48,8 +50,9 @@ class ValidateColorSets(pyblish.api.Validator,
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Meshes found with "
-                             "Color Sets: {0}".format(invalid))
+            raise PublishValidationError(
+                message="Meshes found with Color Sets: {0}".format(invalid)
+            )
 
     @classmethod
     def repair(cls, instance):

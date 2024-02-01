@@ -30,6 +30,8 @@ from ._api import (
     set_client_version,
     get_default_settings_variant,
     set_default_settings_variant,
+    get_sender,
+    set_sender,
 
     get_base_url,
     get_rest_url,
@@ -45,6 +47,11 @@ from ._api import (
     put,
     patch,
     delete,
+
+    get_timeout,
+    set_timeout,
+    get_max_retries,
+    set_max_retries,
 
     get_event,
     get_events,
@@ -68,8 +75,6 @@ from ._api import (
     download_installer,
     upload_installer,
 
-    get_dependencies_info,
-    update_dependency_info,
     get_dependency_packages,
     create_dependency_package,
     update_dependency_package,
@@ -92,6 +97,7 @@ from ._api import (
     get_users,
 
     get_attributes_for_type,
+    get_attributes_fields_for_type,
     get_default_fields_for_type,
 
     get_project_anatomy_preset,
@@ -110,6 +116,11 @@ from ._api import (
     get_addons_project_settings,
     get_addons_settings,
 
+    get_secrets,
+    get_secret,
+    save_secret,
+    delete_secret,
+
     get_project_names,
     get_projects,
     get_project,
@@ -124,6 +135,8 @@ from ._api import (
     get_folders_hierarchy,
 
     get_tasks,
+    get_task_by_id,
+    get_task_by_name,
 
     get_folder_ids_with_products,
     get_product_by_id,
@@ -154,6 +167,7 @@ from ._api import (
     get_workfile_info,
     get_workfile_info_by_id,
 
+    get_thumbnail_by_id,
     get_thumbnail,
     get_folder_thumbnail,
     get_version_thumbnail,
@@ -216,6 +230,8 @@ __all__ = (
     "set_client_version",
     "get_default_settings_variant",
     "set_default_settings_variant",
+    "get_sender",
+    "set_sender",
 
     "get_base_url",
     "get_rest_url",
@@ -231,6 +247,11 @@ __all__ = (
     "put",
     "patch",
     "delete",
+
+    "get_timeout",
+    "set_timeout",
+    "get_max_retries",
+    "set_max_retries",
 
     "get_event",
     "get_events",
@@ -254,8 +275,6 @@ __all__ = (
     "download_installer",
     "upload_installer",
 
-    "get_dependencies_info",
-    "update_dependency_info",
     "get_dependency_packages",
     "create_dependency_package",
     "update_dependency_package",
@@ -278,6 +297,7 @@ __all__ = (
     "get_users",
 
     "get_attributes_for_type",
+    "get_attributes_fields_for_type",
     "get_default_fields_for_type",
 
     "get_project_anatomy_preset",
@@ -295,6 +315,11 @@ __all__ = (
     "get_addons_project_settings",
     "get_addons_settings",
 
+    "get_secrets",
+    "get_secret",
+    "save_secret",
+    "delete_secret",
+
     "get_project_names",
     "get_projects",
     "get_project",
@@ -308,6 +333,8 @@ __all__ = (
     "get_folders",
 
     "get_tasks",
+    "get_task_by_id",
+    "get_task_by_name",
 
     "get_folder_ids_with_products",
     "get_product_by_id",
@@ -338,6 +365,7 @@ __all__ = (
     "get_workfile_info",
     "get_workfile_info_by_id",
 
+    "get_thumbnail_by_id",
     "get_thumbnail",
     "get_folder_thumbnail",
     "get_version_thumbnail",

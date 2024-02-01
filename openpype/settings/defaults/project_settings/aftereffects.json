@@ -12,7 +12,7 @@
     },
     "create": {
         "RenderCreator": {
-            "defaults": [
+            "default_variants": [
                 "Main"
             ],
             "mark_for_review": true

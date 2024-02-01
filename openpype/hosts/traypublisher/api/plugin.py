@@ -1,7 +1,9 @@
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_assets,
     get_subsets,
     get_last_versions,
+    get_asset_name_identifier,
 )
 from openpype.lib.attribute_definitions import (
     FileDef,
@@ -114,7 +116,10 @@ class SettingsCreator(TrayPublishCreator):
 
         # Fill 'version_to_use' if version control is enabled
         if self.allow_version_control:
-            asset_name = data["asset"]
+            if AYON_SERVER_ENABLED:
+                asset_name = data["folderPath"]
+            else:
+                asset_name = data["asset"]
             subset_docs_by_asset_id = self._prepare_next_versions(
                 [asset_name], [subset_name])
             version = subset_docs_by_asset_id[asset_name].get(subset_name)
@@ -162,10 +167,10 @@ class SettingsCreator(TrayPublishCreator):
         asset_docs = get_assets(
             self.project_name,
             asset_names=asset_names,
-            fields=["_id", "name"]
+            fields=["_id", "name", "data.parents"]
         )
         asset_names_by_id = {
-            asset_doc["_id"]: asset_doc["name"]
+            asset_doc["_id"]: get_asset_name_identifier(asset_doc)
             for asset_doc in asset_docs
         }
         subset_docs = list(get_subsets(
@@ -216,9 +221,16 @@ class SettingsCreator(TrayPublishCreator):
             ):
                 filtered_instance_data.append(instance)
 
-        asset_names = {
-            instance["asset"]
-            for instance in filtered_instance_data}
+        if AYON_SERVER_ENABLED:
+            asset_names = {
+                instance["folderPath"]
+                for instance in filtered_instance_data
+            }
+        else:
+            asset_names = {
+                instance["asset"]
+                for instance in filtered_instance_data
+            }
         subset_names = {
             instance["subset"]
             for instance in filtered_instance_data}
@@ -226,7 +238,10 @@ class SettingsCreator(TrayPublishCreator):
             asset_names, subset_names
         )
         for instance in filtered_instance_data:
-            asset_name = instance["asset"]
+            if AYON_SERVER_ENABLED:
+                asset_name = instance["folderPath"]
+            else:
+                asset_name = instance["asset"]
             subset_name = instance["subset"]
             version = subset_docs_by_asset_id[asset_name][subset_name]
             instance["creator_attributes"]["version_to_use"] = version

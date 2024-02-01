@@ -114,6 +114,11 @@ class NukePlaceholderPlugin(PlaceholderPlugin):
             placeholder_data[key] = value
         return placeholder_data
 
+    def delete_placeholder(self, placeholder):
+        """Remove placeholder if building was successful"""
+        placeholder_node = nuke.toNode(placeholder.scene_identifier)
+        nuke.delete(placeholder_node)
+
 
 class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
     identifier = "nuke.load"
@@ -158,8 +163,10 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
             )
         return loaded_representation_ids
 
-    def _before_repre_load(self, placeholder, representation):
+    def _before_placeholder_load(self, placeholder):
         placeholder.data["nodes_init"] = nuke.allNodes()
+
+    def _before_repre_load(self, placeholder, representation):
         placeholder.data["last_repre_id"] = str(representation["_id"])
 
     def collect_placeholders(self):
@@ -192,6 +199,13 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
         return self.get_load_plugin_options(options)
 
     def post_placeholder_process(self, placeholder, failed):
+        """Cleanup placeholder after load of its corresponding representations.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -275,14 +289,6 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         placeholder.data["nb_children"] += 1
         reset_selection()
-
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
 
         # go back to root group
         nuke.root().begin()
@@ -606,6 +612,13 @@ class NukePlaceholderCreatePlugin(
         return self.get_create_plugin_options(options)
 
     def post_placeholder_process(self, placeholder, failed):
+        """Cleanup placeholder after load of its corresponding representations.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -689,14 +702,6 @@ class NukePlaceholderCreatePlugin(
 
         placeholder.data["nb_children"] += 1
         reset_selection()
-
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
 
         # go back to root group
         nuke.root().begin()

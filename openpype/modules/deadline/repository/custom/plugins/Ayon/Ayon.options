@@ -1,0 +1,9 @@
+[Arguments]
+Type=string
+Label=Arguments
+Category=Python Options
+CategoryOrder=0
+Index=1
+Description=The arguments to pass to the script. If no arguments are required, leave this blank.
+Required=false
+DisableIfBlank=true

@@ -196,47 +196,6 @@ def publish(paths, targets, gui):
     PypeCommands.publish(list(paths), targets, gui)
 
 
-@main.command()
-@click.argument("path")
-@click.option("-h", "--host", help="Host")
-@click.option("-u", "--user", help="User email address")
-@click.option("-p", "--project", help="Project")
-@click.option("-t", "--targets", help="Targets", default=None,
-              multiple=True)
-def remotepublishfromapp(project, path, host, user=None, targets=None):
-    """Start CLI publishing.
-
-    Publish collects json from paths provided as an argument.
-    More than one path is allowed.
-    """
-
-    if AYON_SERVER_ENABLED:
-        raise RuntimeError(
-            "AYON does not support 'remotepublishfromapp' command."
-        )
-    PypeCommands.remotepublishfromapp(
-        project, path, host, user, targets=targets
-    )
-
-
-@main.command()
-@click.argument("path")
-@click.option("-u", "--user", help="User email address")
-@click.option("-p", "--project", help="Project")
-@click.option("-t", "--targets", help="Targets", default=None,
-              multiple=True)
-def remotepublish(project, path, user=None, targets=None):
-    """Start CLI publishing.
-
-    Publish collects json from paths provided as an argument.
-    More than one path is allowed.
-    """
-
-    if AYON_SERVER_ENABLED:
-        raise RuntimeError("AYON does not support 'remotepublish' command.")
-    PypeCommands.remotepublish(project, path, user, targets=targets)
-
-
 @main.command(context_settings={"ignore_unknown_options": True})
 def projectmanager():
     if AYON_SERVER_ENABLED:
@@ -323,6 +282,9 @@ def run(script):
               "--app_variant",
               help="Provide specific app variant for test, empty for latest",
               default=None)
+@click.option("--app_group",
+              help="Provide specific app group for test, empty for default",
+              default=None)
 @click.option("-t",
               "--timeout",
               help="Provide specific timeout value for test case",
@@ -331,19 +293,32 @@ def run(script):
               "--setup_only",
               help="Only create dbs, do not run tests",
               default=None)
+@click.option("--mongo_url",
+              help="MongoDB for testing.",
+              default=None)
+@click.option("--dump_databases",
+              help="Dump all databases to data folder.",
+              default=None)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout, setup_only):
+             timeout, setup_only, mongo_url, app_group, dump_databases):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant, timeout, setup_only)
+                             persist, app_variant, timeout, setup_only,
+                             mongo_url, app_group, dump_databases)
 
 
-@main.command()
+@main.command(help="DEPRECATED - run sync server")
+@click.pass_context
 @click.option("-a", "--active_site", required=True,
-              help="Name of active stie")
-def syncserver(active_site):
+              help="Name of active site")
+def syncserver(ctx, active_site):
     """Run sync site server in background.
 
+    Deprecated:
+        This command is deprecated and will be removed in future versions.
+        Use '~/openpype_console module sync_server syncservice' instead.
+
+    Details:
         Some Site Sync use cases need to expose site to another one.
         For example if majority of artists work in studio, they are not using
         SS at all, but if you want to expose published assets to 'studio' site
@@ -359,7 +334,10 @@ def syncserver(active_site):
 
     if AYON_SERVER_ENABLED:
         raise RuntimeError("AYON does not support 'syncserver' command.")
-    PypeCommands().syncserver(active_site)
+
+    from openpype.modules.sync_server.sync_server_module import (
+        syncservice)
+    ctx.invoke(syncservice, active_site=active_site)
 
 
 @main.command()

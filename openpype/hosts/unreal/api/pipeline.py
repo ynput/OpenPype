@@ -13,8 +13,10 @@ from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
+    register_inventory_action_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
+    deregister_inventory_action_path,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
@@ -25,6 +27,7 @@ from openpype.hosts.unreal.api.communication_server import (
 logger = logging.getLogger("openpype.hosts.unreal")
 
 AYON_CONTAINERS = "AyonContainers"
+AYON_ASSET_DIR = "/Game/Ayon/Assets"
 CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = semver.VersionInfo(
     *os.getenv("AYON_UNREAL_VERSION").split(".")
@@ -129,6 +132,7 @@ def install():
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
     register_creator_plugin_path(str(CREATE_PATH))
+    register_inventory_action_path(str(INVENTORY_PATH))
     _register_callbacks()
     _register_events()
 
@@ -138,6 +142,7 @@ def uninstall():
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
     deregister_loader_plugin_path(str(LOAD_PATH))
     deregister_creator_plugin_path(str(CREATE_PATH))
+    deregister_inventory_action_path(str(INVENTORY_PATH))
 
 
 def _register_callbacks():

@@ -1,11 +1,9 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from ayon_server.types import ColorRGBA_uint8
 
 
 class CollectRenderInstancesModel(BaseSettingsModel):
-    ignore_render_pass_transparency: bool = Field(
+    ignore_render_pass_transparency: bool = SettingsField(
         title="Ignore Render Pass opacity"
     )
 
@@ -13,15 +11,15 @@ class CollectRenderInstancesModel(BaseSettingsModel):
 class ExtractSequenceModel(BaseSettingsModel):
     """Review BG color is used for whole scene review and for thumbnails."""
     # TODO Use alpha color
-    review_bg: ColorRGBA_uint8 = Field(
+    review_bg: ColorRGBA_uint8 = SettingsField(
         (255, 255, 255, 1.0),
         title="Review BG color")
 
 
 class ValidatePluginModel(BaseSettingsModel):
     enabled: bool = True
-    optional: bool = Field(True, title="Optional")
-    active: bool = Field(True, title="Active")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 def compression_enum():
@@ -44,7 +42,7 @@ class ExtractConvertToEXRModel(BaseSettingsModel):
     enabled: bool = False
     replace_pngs: bool = True
 
-    exr_compression: str = Field(
+    exr_compression: str = SettingsField(
         "ZIP",
         enum_resolver=compression_enum,
         title="EXR Compression"
@@ -53,46 +51,46 @@ class ExtractConvertToEXRModel(BaseSettingsModel):
 
 class LoadImageDefaultModel(BaseSettingsModel):
     _layout = "expanded"
-    stretch: bool = Field(title="Stretch")
-    timestretch: bool = Field(title="TimeStretch")
-    preload: bool = Field(title="Preload")
+    stretch: bool = SettingsField(title="Stretch")
+    timestretch: bool = SettingsField(title="TimeStretch")
+    preload: bool = SettingsField(title="Preload")
 
 
 class LoadImageModel(BaseSettingsModel):
-    defaults: LoadImageDefaultModel = Field(
+    defaults: LoadImageDefaultModel = SettingsField(
         default_factory=LoadImageDefaultModel
     )
 
 
 class PublishPluginsModel(BaseSettingsModel):
-    CollectRenderInstances: CollectRenderInstancesModel = Field(
+    CollectRenderInstances: CollectRenderInstancesModel = SettingsField(
         default_factory=CollectRenderInstancesModel,
         title="Collect Render Instances")
-    ExtractSequence: ExtractSequenceModel = Field(
+    ExtractSequence: ExtractSequenceModel = SettingsField(
         default_factory=ExtractSequenceModel,
         title="Extract Sequence")
-    ValidateProjectSettings: ValidatePluginModel = Field(
+    ValidateProjectSettings: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate Project Settings")
-    ValidateMarks: ValidatePluginModel = Field(
+    ValidateMarks: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate MarkIn/Out")
-    ValidateStartFrame: ValidatePluginModel = Field(
+    ValidateStartFrame: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate Scene Start Frame")
-    ValidateAssetName: ValidatePluginModel = Field(
+    ValidateAssetName: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate Folder Name")
-    ExtractConvertToEXR: ExtractConvertToEXRModel = Field(
+    ExtractConvertToEXR: ExtractConvertToEXRModel = SettingsField(
         default_factory=ExtractConvertToEXRModel,
         title="Extract Convert To EXR")
 
 
 class LoadPluginsModel(BaseSettingsModel):
-    LoadImage: LoadImageModel = Field(
+    LoadImage: LoadImageModel = SettingsField(
         default_factory=LoadImageModel,
         title="Load Image")
-    ImportImage: LoadImageModel = Field(
+    ImportImage: LoadImageModel = SettingsField(
         default_factory=LoadImageModel,
         title="Import Image")
 

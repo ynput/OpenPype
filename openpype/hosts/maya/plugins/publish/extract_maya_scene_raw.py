@@ -6,9 +6,11 @@ from maya import cmds
 
 from openpype.hosts.maya.api.lib import maintained_selection
 from openpype.pipeline import AVALON_CONTAINER_ID, publish
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
+from openpype.lib import BoolDef
 
 
-class ExtractMayaSceneRaw(publish.Extractor):
+class ExtractMayaSceneRaw(publish.Extractor, OpenPypePyblishPluginMixin):
     """Extract as Maya Scene (raw).
 
     This will preserve all references, construction history, etc.
@@ -23,6 +25,22 @@ class ExtractMayaSceneRaw(publish.Extractor):
                 "camerarig"]
     scene_type = "ma"
 
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            BoolDef(
+                "preserve_references",
+                label="Preserve References",
+                tooltip=(
+                    "When enabled references will still be references "
+                    "in the published file.\nWhen disabled the references "
+                    "are imported into the published file generating a "
+                    "file without references."
+                ),
+                default=True
+            )
+        ]
+
     def process(self, instance):
         """Plugin entry point."""
         ext_mapping = (
@@ -34,7 +52,7 @@ class ExtractMayaSceneRaw(publish.Extractor):
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
                 except KeyError:
@@ -63,14 +81,19 @@ class ExtractMayaSceneRaw(publish.Extractor):
             selection += self._get_loaded_containers(members)
 
         # Perform extraction
-        self.log.info("Performing extraction ...")
+        self.log.debug("Performing extraction ...")
+        attribute_values = self.get_attr_values_from_data(
+            instance.data
+        )
         with maintained_selection():
             cmds.select(selection, noExpand=True)
             cmds.file(path,
                       force=True,
                       typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
                       exportSelected=True,
-                      preserveReferences=True,
+                      preserveReferences=attribute_values[
+                          "preserve_references"
+                      ],
                       constructionHistory=True,
                       shader=True,
                       constraints=True,
@@ -87,7 +110,8 @@ class ExtractMayaSceneRaw(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
+        self.log.debug("Extracted instance '%s' to: %s" % (instance.name,
+                                                           path))
 
     @staticmethod
     def _get_loaded_containers(members):

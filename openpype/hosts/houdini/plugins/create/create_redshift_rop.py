@@ -13,8 +13,10 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
     label = "Redshift ROP"
     family = "redshift_rop"
     icon = "magic"
-    defaults = ["master"]
     ext = "exr"
+
+    # Default to split export and render jobs
+    split_render = True
 
     def create(self, subset_name, instance_data, pre_create_data):
 
@@ -37,12 +39,15 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         # Also create the linked Redshift IPR Rop
         try:
             ipr_rop = instance_node.parent().createNode(
-                "Redshift_IPR", node_name=basename + "_IPR"
+                "Redshift_IPR", node_name=f"{basename}_IPR"
             )
-        except hou.OperationFailed:
+        except hou.OperationFailed as e:
             raise plugin.OpenPypeCreatorError(
-                ("Cannot create Redshift node. Is Redshift "
-                 "installed and enabled?"))
+                (
+                    "Cannot create Redshift node. Is Redshift "
+                    "installed and enabled?"
+                )
+            ) from e
 
         # Move it to directly under the Redshift ROP
         ipr_rop.setPosition(instance_node.position() + hou.Vector2(0, -1))
@@ -75,8 +80,15 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             for node in self.selected_nodes:
                 if node.type().name() == "cam":
                     camera = node.path()
-            parms.update({
-                "RS_renderCamera": camera or ""})
+            parms["RS_renderCamera"] = camera or ""
+
+        export_dir = hou.text.expandString("$HIP/pyblish/rs/")
+        rs_filepath = f"{export_dir}{subset_name}/{subset_name}.$F4.rs"
+        parms["RS_archive_file"] = rs_filepath
+
+        if pre_create_data.get("split_render", self.split_render):
+            parms["RS_archive_enable"] = 1
+
         instance_node.setParms(parms)
 
         # Lock some Avalon attributes
@@ -103,6 +115,9 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             BoolDef("farm",
                     label="Submitting to Farm",
                     default=True),
+            BoolDef("split_render",
+                    label="Split export and render jobs",
+                    default=self.split_render),
             EnumDef("image_format",
                     image_format_enum,
                     default=self.ext,

@@ -9,6 +9,7 @@ from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
     send_request,
     containerise,
+    AYON_ASSET_DIR,
 )
 
 
@@ -77,7 +78,7 @@ class SkeletalMeshFBXLoader(UnrealBaseLoader):
                             used now, data are imprinted by `containerise()`.
         """
         # Create directory for asset and OpenPype container
-        root = f"{self.root}/Assets"
+        root = AYON_ASSET_DIR
         if options and options.get("asset_dir"):
             root = options["asset_dir"]
         asset = context.get('asset').get('name')
@@ -98,6 +99,9 @@ class SkeletalMeshFBXLoader(UnrealBaseLoader):
 
             self._import_fbx_task(self.fname, asset_dir, asset_name, False)
 
+    def imprint(
+        self, asset, asset_dir, container_name, asset_name, representation
+    ):
         data = {
             "schema": "ayon:container-2.0",
             "id": AYON_CONTAINER_ID,

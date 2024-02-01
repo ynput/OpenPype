@@ -18,16 +18,14 @@ class ExtractMaxSceneRaw(publish.Extractor, OptionalPyblishPluginMixin):
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        container = instance.data["instance_node"]
 
         # publish the raw scene for camera
-        self.log.info("Extracting Raw Max Scene ...")
+        self.log.debug("Extracting Raw Max Scene ...")
 
         stagingdir = self.staging_dir(instance)
         filename = "{name}.max".format(**instance.data)
 
         max_path = os.path.join(stagingdir, filename)
-        self.log.info("Writing max file '%s' to '%s'" % (filename, max_path))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

@@ -5,7 +5,6 @@ import platform
 import collections
 import numbers
 
-import ayon_api
 import six
 import time
 
@@ -16,7 +15,7 @@ from openpype.settings.lib import (
 from openpype.settings.constants import (
     DEFAULT_PROJECT_KEY
 )
-from openpype.client import get_project
+from openpype.client import get_project, get_ayon_server_api_connection
 from openpype.lib import Logger, get_local_site_id
 from openpype.lib.path_templates import (
     TemplateUnsolved,
@@ -479,7 +478,8 @@ class Anatomy(BaseAnatomy):
         if AYON_SERVER_ENABLED:
             if not project_name:
                 return
-            return ayon_api.get_project_roots_for_site(
+            con = get_ayon_server_api_connection()
+            return con.get_project_roots_for_site(
                 project_name, get_local_site_id()
             )
 

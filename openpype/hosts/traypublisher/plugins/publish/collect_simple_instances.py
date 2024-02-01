@@ -216,6 +216,11 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             instance.data["thumbnailSource"] = first_filepath
 
         review_representation["tags"].append("review")
+
+        # Adding "review" to representation name since it can clash with main
+        # representation if they share the same extension.
+        review_representation["outputName"] = "review"
+
         self.log.debug("Representation {} was marked for review. {}".format(
             review_representation["name"], review_path
         ))
