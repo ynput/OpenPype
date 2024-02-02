@@ -4,13 +4,19 @@ import getpass
 from datetime import datetime
 
 import requests
-import hou
 
 import pyblish.api
 
 from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
+
+try:
+    import hou
+except ImportError:
+    # Ignoring, we don't want misleading error logs on jobs log on deadline.
+    # Because the farm publish function imports every publish file before filtering.
+    pass
 
 
 class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):

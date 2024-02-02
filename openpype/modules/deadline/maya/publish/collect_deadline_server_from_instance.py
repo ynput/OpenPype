@@ -5,10 +5,15 @@ This is resolving index of server lists stored in `deadlineServers` instance
 attribute or using default server if that attribute doesn't exists.
 
 """
-from maya import cmds
-
 import pyblish.api
 from openpype.pipeline.publish import KnownPublishError
+
+try:
+    from maya import cmds
+except ImportError:
+    # Ignoring, we don't want misleading error logs on jobs log on deadline.
+    # Because the farm publish function imports every publish file before filtering.
+    pass
 
 
 class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):

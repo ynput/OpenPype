@@ -7,8 +7,6 @@ from datetime import datetime
 import requests
 import pyblish.api
 
-import nuke
-
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
@@ -21,6 +19,13 @@ from openpype.lib import (
     BoolDef,
     NumberDef
 )
+
+try:
+    import nuke
+except ImportError:
+    # Ignoring, we don't want misleading error logs on jobs log on deadline.
+    # Because the farm publish function imports every publish file before filtering.
+    pass
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin,
