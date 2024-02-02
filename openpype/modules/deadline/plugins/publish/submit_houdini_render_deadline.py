@@ -45,8 +45,9 @@ class VrayRenderPluginInfo():
 @attr.s
 class RedshiftRenderPluginInfo():
     SceneFile = attr.ib(default=None)
-    # "1" was selected as the default RS version as it's the default
-    #  version in RS deadline plugin.
+    # Use "1" as the default Redshift version just because it
+    # default fallback version in Deadline's Redshift plugin
+    # if no version was specified
     Version = attr.ib(default="1")
 
 
