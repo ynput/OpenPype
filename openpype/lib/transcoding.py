@@ -1355,9 +1355,17 @@ def _get_image_dimensions(application, input_path, log):
     """
     # ffmpeg command
     input_file_metadata = get_ffprobe_data(input_path, logger=log)
-    stream = input_file_metadata["streams"][0]
-    input_width = int(stream["width"])
-    input_height = int(stream["height"])
+    input_width = input_height = 0
+    stream = next(
+        (
+            s for s in input_file_metadata["streams"]
+            if s.get("codec_type") == "video"
+        ),
+        {}
+    )
+    if stream:
+        input_width = int(stream["width"])
+        input_height = int(stream["height"])
 
     # fallback for weird files with width=0, height=0
     if (input_width == 0 or input_height == 0) and application == "oiiotool":
