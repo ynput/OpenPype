@@ -346,38 +346,41 @@ class NukeWriteCreator(NukeCreator):
     def _get_machine_and_group_limit(self):
         from openpype_modules.deadline import (
             get_deadline_job_settings,
-            get_deadline_limit_groups
+            get_deadline_limits_plugin
         )
 
-        default_machine_limit = 0
-        default_limit_groups = []
+        default_limit_machine = 0
+        default_limits_plugin = []
 
         modules_system_settings = get_system_settings()["modules"]
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
-        limit_groups = get_deadline_limit_groups(
+
+        limits_plugin = get_deadline_limits_plugin(
             deadline_enabled, deadline_url, self.log
         )
 
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
         profile = get_deadline_job_settings(project_settings, "nuke", self.log)
+
         if profile:
-            default_machine_limit = profile.get("limit_machines", 0)
-            default_limit_groups = profile.get("limit_plugins", [])
+            default_limit_machine = profile.get("limit_machine", 0)
+            default_limits_plugin = profile.get("limits_plugin", [])
+
         return [
             NumberDef(
                 "machineLimit",
                 label="Machine Limit",
-                default=default_machine_limit,
+                default=default_limit_machine,
                 minimum=0,
                 decimals=0
             ),
             EnumDef(
                 "limits",
-                label="Limit Groups",
-                items=limit_groups,
-                default=default_limit_groups,
+                label="Plugin Limits",
+                items=limits_plugin,
+                default=default_limits_plugin,
                 multiselection=True
             ),
         ]

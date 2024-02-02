@@ -6,9 +6,15 @@ from maya import cmds
 
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io, PublishXmlValidationError
+from openpype.pipeline.context_tools import get_current_project_name
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
-from openpype_modules.deadline import abstract_submit_deadline
+
+from openpype_modules.deadline import (
+    abstract_submit_deadline,
+    get_deadline_job_settings,
+    get_deadline_limit_groups
+)
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.modules.deadline.utils import set_custom_deadline_name
 
@@ -74,6 +80,10 @@ class MayaSubmitRemotePublishDeadline(
         scene = instance.context.data["currentFile"]
         scenename = os.path.basename(scene)
 
+        project_name = get_current_project_name()
+        project_settings = context.data["project_settings"]
+        profile = get_deadline_job_settings(project_settings, "maya", self.log)
+
         job_name = set_custom_deadline_name(
             instance,
             scenename,
@@ -95,13 +105,19 @@ class MayaSubmitRemotePublishDeadline(
         job_info.Comment = context.data.get("comment", "")
 
         # use setting for publish job on farm, no reason to have it separately
-        project_settings = context.data["project_settings"]
         deadline_publish_job_sett = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
-        job_info.Department = deadline_publish_job_sett["deadline_department"]
-        job_info.ChunkSize = deadline_publish_job_sett["deadline_chunk_size"]
-        job_info.Priority = deadline_publish_job_sett["deadline_priority"]
-        job_info.Group = deadline_publish_job_sett["deadline_group"]
-        job_info.Pool = deadline_publish_job_sett["deadline_pool"]
+        job_info.Department = deadline_publish_job_sett["department"]
+        job_info.ChunkSize = deadline_publish_job_sett["chunk_size"]
+        job_info.Priority = profile.get("priority", deadline_publish_job_sett["priority"])
+        job_info.Group = deadline_publish_job_sett["group"]
+        job_info.Pool = profile.get("primary_pool", deadline_publish_job_sett["pool"])
+        if profile:
+            if profile.get("secondary_pool"):
+                job_info.SecondaryPool = profile["secondary_pool"]
+            if profile.get("limit_machine"):
+                job_info.MachineLimit = profile["limit_machine"]
+            if profile.get("limit_plugins"):
+                job_info.LimitGroups = profile["limit_plugins"]
 
         # Include critical environment variables with submission + Session
         keys = [

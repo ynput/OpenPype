@@ -162,11 +162,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # deadline.publish.ProcessSubmittedJobOnFarm
         settings = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
 
-        cls.deadline_department = settings.get("deadline_department", "")
-        cls.deadline_pool = settings.get("deadline_pool", "")
-        cls.deadline_group = settings.get("deadline_group", "")
-        cls.deadline_chunk_size = settings.get("deadline_chunk_size", 1)
-        cls.deadline_priority = settings.get("deadline_priority", None)
+        cls.deadline_department = settings.get("department", "")
+        cls.deadline_pool = settings.get("pool", "")
+        cls.deadline_group = settings.get("group", "")
+        cls.deadline_chunk_size = settings.get("chunk_size", 1)
+        cls.deadline_priority = settings.get("priority", None)
 
     def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.

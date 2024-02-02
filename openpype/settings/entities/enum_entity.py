@@ -541,8 +541,8 @@ class DeadlineUrlEnumEntity(DynamicEnumEntity):
         return enum_items_list, valid_keys
 
 
-class DeadlinePluginLimitEnumEntity(BaseEnumEntity):
-    schema_types = ["deadline-plugin-limit-enum"]
+class DeadlineLimitsPluginEnumEntity(BaseEnumEntity):
+    schema_types = ["deadline-limits-plugin-enum"]
 
     def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
@@ -559,26 +559,26 @@ class DeadlinePluginLimitEnumEntity(BaseEnumEntity):
 
     def _get_enum_values(self):
         # Import here to avoid circular import
-        from openpype.modules.deadline import get_deadline_limit_groups
+        from openpype.modules.deadline import get_deadline_limits_plugin
 
         modules_system_settings = get_system_settings()["modules"]
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")  # noqa
 
-        deadline_groups = get_deadline_limit_groups(
+        limits_plugin = get_deadline_limits_plugin(
             deadline_enabled,
             deadline_url,
             self.log
         )
 
-        if not deadline_groups:
+        if not limits_plugin:
             return [], set()
 
         valid_keys = set()
         enum_items = []
-        for task_type in deadline_groups:
-            enum_items.append({task_type: task_type})
-            valid_keys.add(task_type)
+        for plugin_name in limits_plugin:
+            enum_items.append({plugin_name: plugin_name})
+            valid_keys.add(plugin_name)
 
         return enum_items, valid_keys
 
@@ -599,7 +599,7 @@ class DeadlinePluginLimitEnumEntity(BaseEnumEntity):
         return source_value
 
     def set_override_state(self, *args, **kwargs):
-        super(DeadlinePluginLimitEnumEntity, self).set_override_state(*args, **kwargs)
+        super(DeadlineLimitsPluginEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
 

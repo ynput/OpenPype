@@ -487,7 +487,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         # TODO: This should be a new publisher attribute definition
         pool = instance.context.data["project_settings"]["deadline"]
-        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["deadline_pool"]
+        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["pool"]
         assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
 
         assembly_plugin_info = {

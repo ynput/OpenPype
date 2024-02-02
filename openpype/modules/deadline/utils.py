@@ -63,21 +63,21 @@ def set_custom_deadline_name(instance, filename, setting):
     return custom_name
 
 
-def get_deadline_limit_groups(deadline_enabled, deadline_url, log):
+def get_deadline_limits_plugin(deadline_enabled, deadline_url, log):
     manager = _get_modules_manager()
     deadline_module = manager.modules_by_name["deadline"]
 
-    limit_groups = []
+    limits_plugin = []
     if deadline_enabled:
         requested_arguments = {"NamesOnly": True}
-        limit_groups = deadline_module.get_deadline_data(
+        limits_plugin = deadline_module.get_deadline_data(
             deadline_url,
             "limitgroups",
             log=log,
             **requested_arguments
         )
 
-    return limit_groups
+    return limits_plugin
 
 
 def get_deadline_job_settings(project_settings, host, log):

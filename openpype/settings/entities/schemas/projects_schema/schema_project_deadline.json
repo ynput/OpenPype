@@ -36,28 +36,28 @@
                         "type": "dict",
                         "children": [
                             {
+                                "type": "task-types-enum",
                                 "key": "task_types",
-                                "label": "Task types",
-                                "type": "task-types-enum"
+                                "label": "Task types"
                             },
                             {
+                                "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Host names",
-                                "type": "hosts-enum",
                                 "multiselection": true
                             },
                             {
                                 "type": "splitter"
                             },
                             {
+                                "type": "text",
                                 "key": "primary_pool",
-                                "label": "Primary pool",
-                                "type": "text"
+                                "label": "Primary pool"
                             },
                             {
+                                "type": "text",
                                 "key": "secondary_pool",
-                                "label": "Secondary Pool",
-                                "type": "text"
+                                "label": "Secondary Pool"
                             },
                             {
                                 "type": "number",
@@ -66,13 +66,13 @@
                             },
                             {
                                 "type": "number",
-                                "key": "limit_machines",
+                                "key": "limit_machine",
                                 "label": "Machine Limit"
                             },
                             {
-                                "type": "deadline-plugin-limit-enum",
-                                "key": "limit_plugins",
-                                "label": "Plugins Limit"
+                                "type": "deadline-limits-plugin-enum",
+                                "key": "limits_plugin",
+                                "label": "Plugin Limits"
                             }
                         ]
                     }
@@ -501,22 +501,22 @@
                         },
                         {
                             "type": "text",
-                            "key": "deadline_department",
+                            "key": "department",
                             "label": "Deadline apartment"
                         },
                         {
                             "type": "text",
-                            "key": "deadline_group",
+                            "key": "group",
                             "label": "Deadline Group"
                         },
                         {
                             "type": "number",
-                            "key": "deadline_chunk_size",
+                            "key": "chunk_size",
                             "label": "Deadline Chunk size"
                         },
                         {
                             "type": "text",
-                            "key": "deadline_job_delay",
+                            "key": "job_delay",
                             "label": "Delay job (timecode dd:hh:mm:ss)"
                         }
                     ]
@@ -536,17 +536,17 @@
                         },
                         {
                             "type": "text",
-                            "key": "deadline_department",
+                            "key": "department",
                             "label": "Deadline department"
                         },
                         {
                             "type": "text",
-                            "key": "deadline_group",
+                            "key": "group",
                             "label": "Deadline Group"
                         },
                         {
                             "type": "number",
-                            "key": "deadline_chunk_size",
+                            "key": "chunk_size",
                             "label": "Deadline Chunk Size"
                         },
                         {

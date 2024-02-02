@@ -53,7 +53,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     concurrent_tasks = 1
     group = ""
     department = ""
-    limit_groups = {}
+    limits_plugin = {}
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}

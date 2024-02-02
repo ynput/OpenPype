@@ -115,12 +115,12 @@ class EnvSearchReplaceSubmodel(BaseSettingsModel):
     value: str = Field(title="Value")
 
 
-class LimitGroupsSubmodel(BaseSettingsModel):
+class LimitsPluginSubmodel(BaseSettingsModel):
     _layout = "expanded"
     name: str = Field(title="Name")
     value: list[str] = Field(
         default_factory=list,
-        title="Limit Groups"
+        title="Plugin Limits"
     )
 
 
@@ -157,12 +157,12 @@ class NukeSubmitDeadlineModel(BaseSettingsModel):
         title="Search & replace in environment values",
     )
 
-    limit_groups: list[LimitGroupsSubmodel] = Field(
+    limits_plugin: list[LimitsPluginSubmodel] = Field(
         default_factory=list,
-        title="Limit Groups",
+        title="Plugin Limits",
     )
 
-    @validator("limit_groups", "env_allowed_keys", "env_search_replace_values")
+    @validator("limits_plugin", "env_allowed_keys", "env_search_replace_values")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
@@ -246,9 +246,6 @@ class PublishPluginsModel(BaseSettingsModel):
     CollectDefaultDeadlineServer: CollectDefaultDeadlineServerModel = Field(
         default_factory=CollectDefaultDeadlineServerModel,
         title="Default Deadline Webservice")
-    CollectDefaultDeadlineServer: CollectDefaultDeadlineServerModel = Field(
-        default_factory=CollectDefaultDeadlineServerModel,
-        title="Default Deadline Webservice")
     CollectDeadlinePools: CollectDeadlinePoolsModel = Field(
         default_factory=CollectDeadlinePoolsModel,
         title="Default Pools")
@@ -314,7 +311,8 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "priority": 50,
         "tile_priority": 50,
         "group": "none",
-        "limit": [],
+        "limit_machine": 0,
+        "limits_plugin": [],
         # this used to be empty dict
         "jobInfo": "",
         # this used to be empty dict
@@ -351,7 +349,8 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "use_gpu": True,
         "env_allowed_keys": [],
         "env_search_replace_values": [],
-        "limit_groups": []
+        "limit_machine": 0,
+        "limits_plugin": []
     },
     "HarmonySubmitDeadline": {
         "enabled": True,
@@ -376,21 +375,25 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
     },
     "CelactionSubmitDeadline": {
         "enabled": True,
-        "deadline_department": "",
-        "deadline_priority": 50,
-        "deadline_pool": "",
-        "deadline_pool_secondary": "",
-        "deadline_group": "",
-        "deadline_chunk_size": 10,
-        "deadline_job_delay": "00:00:00:00"
+        "optional": False,
+        "active": True,
+        "department": "",
+        "priority": 50,
+        "pool": "",
+        "pool_secondary": "",
+        "group": "",
+        "chunk_size": 10,
+        "job_delay": "00:00:00:00"
     },
     "ProcessSubmittedJobOnFarm": {
         "enabled": True,
-        "deadline_department": "",
-        "deadline_pool": "",
-        "deadline_group": "",
-        "deadline_chunk_size": 1,
-        "deadline_priority": 50,
+        "optional": False,
+        "active": True,
+        "department": "",
+        "pool": "",
+        "group": "",
+        "chunk_size": 1,
+        "priority": 50,
         "publishing_script": "",
         "skip_integration_repre_list": [],
         "aov_filter": [
