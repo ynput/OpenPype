@@ -1,4 +1,4 @@
-from .pype_tray import main
+from .tray import main
 
 __all__ = (
     "main",

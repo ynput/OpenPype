@@ -1,7 +1,7 @@
 try:
-    from . import pype_tray
+    from . import tray
 except ImportError:
-    import pype_tray
+    import tray
 
 
-pype_tray.main()
+tray.main()

@@ -40,7 +40,7 @@ from openpype.tools.utils import (
     get_openpype_qt_app,
 )
 
-from .pype_info_widget import PypeInfoWidget
+from .info_widget import PypeInfoWidget
 
 
 # TODO PixmapLabel should be moved to 'utils' in other future PR so should be
