@@ -16,10 +16,17 @@ from openpype.pipeline.publish import (
 class ValidateModelName(pyblish.api.InstancePlugin,
                         OptionalPyblishPluginMixin):
     """Validate Model Name
-    Validation regex is (?P<subset>.*)_(GEO) by default.
-    e.g. (subset_name)_GEO should be your model name
+    Validation regex is (.*)_(?P<subset>.*)_(GEO) by default.
+    e.g. {SOME_RANDOM_NAME}_{YOUR_SUBSET_NAME}_GEO should be your
+        default model name
 
-    starts with (somename)_GEO
+    The regex of (?P<subset>.*) can be replaced by (?P<asset>.*)
+    and (?P<project>.*).
+    e.g.
+    - (.*)_(?P<asset>.*)_(GEO) check if your model name is
+        {SOME_RANDOM_NAME}_{CURRENT_ASSET_NAME}_GEO
+    - (.*)_(?P<project>.*)_(GEO) check if your model name is
+        {SOME_RANDOM_NAME}_{CURRENT_PROJECT_NAME}_GEO
 
     """
     optional = True
