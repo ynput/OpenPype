@@ -102,30 +102,27 @@ class VersionUpdateDialog(QtWidgets.QDialog):
         self._restart_accepted = False
         self._current_is_higher = False
 
+        self._close_silently = False
+
         self.setStyleSheet(style.load_stylesheet())
 
-    def _get_gift_pixmap(self):
-        image_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "images",
-            "gifts.png"
-        )
-        src_image = QtGui.QImage(image_path)
-        color_value = style.get_objected_colors("font")
-
-        return paint_image_with_color(
-            src_image,
-            color_value.get_qcolor()
-        )
+    def close_silently(self):
+        self._close_silently = True
+        self.close()
 
     def showEvent(self, event):
         super(VersionUpdateDialog, self).showEvent(event)
+        self._close_silently = False
         self._restart_accepted = False
 
     def closeEvent(self, event):
         super(VersionUpdateDialog, self).closeEvent(event)
         if self._restart_accepted or self._current_is_higher:
             return
+
+        if self._close_silently:
+            return
+
         # Trigger ignore requested only if restart was not clicked and current
         #   version is lower
         self.ignore_requested.emit()
@@ -169,6 +166,20 @@ class VersionUpdateDialog(QtWidgets.QDialog):
         self._restart_accepted = True
         self.restart_requested.emit()
         self.accept()
+
+    def _get_gift_pixmap(self):
+        image_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "images",
+            "gifts.png"
+        )
+        src_image = QtGui.QImage(image_path)
+        color_value = style.get_objected_colors("font")
+
+        return paint_image_with_color(
+            src_image,
+            color_value.get_qcolor()
+        )
 
 
 class ProductionStagingDialog(QtWidgets.QDialog):
