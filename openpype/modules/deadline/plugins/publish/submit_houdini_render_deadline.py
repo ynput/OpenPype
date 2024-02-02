@@ -47,7 +47,6 @@ class RedshiftRenderPluginInfo():
     SceneFile = attr.ib(default=None)
     # "1" was selected as the default RS version as it's the default
     #  version in RS deadline plugin.
-    # https://docs.thinkboxsoftware.com/products/deadline/10.1/1_User%20Manual/manual/app-redshift.html#plug-in-configuration
     Version = attr.ib(default="1")
 
 
