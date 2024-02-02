@@ -84,6 +84,8 @@
         },
         "CelactionSubmitDeadline": {
             "enabled": true,
+            "optional": false,
+            "active": true,
             "department": "",
             "group": "",
             "chunk_size": 10,
@@ -91,6 +93,8 @@
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
+            "optional": false,
+            "active": true,
             "department": "",
             "pool": "",
             "group": "",
