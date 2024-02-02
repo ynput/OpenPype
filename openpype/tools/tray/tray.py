@@ -382,6 +382,12 @@ class TrayManager:
         """
 
         self._closing = True
+        if AYON_SERVER_ENABLED:
+            self._restart_ayon()
+        else:
+            self._restart_openpype(use_expected_version, reset_version)
+
+    def _restart_openpype(self, use_expected_version, reset_version):
         args = get_openpype_execute_args()
         envs = dict(os.environ.items())
 
@@ -417,6 +423,39 @@ class TrayManager:
             additional_args = _additional_args
 
         args.extend(additional_args)
+        run_detached_process(args, env=envs)
+        self.exit()
+
+    def _restart_ayon(self):
+        from ayon_common import is_dev_mode_enabled
+
+        args = get_openpype_execute_args()
+
+        # Create a copy of sys.argv
+        additional_args = list(sys.argv)
+        # Remove first argument from 'sys.argv'
+        # - when running from code the first argument is 'start.py'
+        # - when running from build the first argument is executable
+        additional_args.pop(0)
+        additional_args = [
+            arg
+            for arg in additional_args
+            if arg not in {"--use-staging", "--use-dev"}
+        ]
+
+        if is_dev_mode_enabled():
+            additional_args.append("--use-dev")
+        elif is_staging_enabled():
+            additional_args.append("--use-staging")
+
+        args.extend(additional_args)
+
+        envs = dict(os.environ.items())
+        for key in {
+            "AYON_BUNDLE_NAME",
+        }:
+            envs.pop(key, None)
+
         run_detached_process(args, env=envs)
         self.exit()
 
