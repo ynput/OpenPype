@@ -10,8 +10,7 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     PlaceholderCreateMixin,
 )
 from openpype.tools.workfile_template_build import (
-    WorkfileBuildPlaceholderDialog,
-    open_template_ui
+    WorkfileBuildPlaceholderDialog
 )
 from .lib import (
     find_free_space_to_paste_nodes,
@@ -969,10 +968,6 @@ def build_workfile_template(*args, **kwargs):
 def update_workfile_template(*args):
     builder = NukeTemplateBuilder(registered_host())
     builder.rebuild_template()
-
-
-def open_template(*args):
-    open_template_ui(NukeTemplateBuilder(registered_host()), get_main_window())
 
 
 def create_placeholder(*args):

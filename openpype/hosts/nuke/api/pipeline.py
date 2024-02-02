@@ -22,9 +22,11 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     get_current_asset_name,
     get_current_task_name,
+    registered_host,
 )
 from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
+from openpype.tools.workfile_template_build import open_template_ui
 
 from .command import viewer_update_and_undo_stop
 from .lib import (
@@ -52,9 +54,9 @@ from .workfile_template_builder import (
     NukePlaceholderLoadPlugin,
     NukePlaceholderCreatePlugin,
     build_workfile_template,
-    open_template,
     create_placeholder,
     update_placeholder,
+    NukeTemplateBuilder,
 )
 from .workio import (
     open_file,
@@ -326,7 +328,9 @@ def _install_menu():
         menu_template.addSeparator()
         menu_template.addCommand(
             "Open template",
-            lambda: open_template()
+            lambda: open_template_ui(
+                NukeTemplateBuilder(registered_host()), get_main_window()
+            )
         )
         menu_template.addCommand(
             "Create Place Holder",
