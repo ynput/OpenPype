@@ -152,10 +152,25 @@ class VersionUpdateDialog(QtWidgets.QDialog):
 
         self._update_ui(title, label_message, ignore_label)
 
+    def update_bundles(self):
+        # TODO move this titles and messages to initialization when OpenPype
+        #   compatibility will be removed
+        title = "AYON update"
+        label_message = (
+            "Your AYON needs to update."
+            "<br/><br/>Please restart AYON launcher and all running"
+            " applications as soon as possible."
+        )
+
+        self._gift_icon_label.setVisible(True)
+
+        self._update_ui(title, label_message)
+
     def _update_ui(self, title, label_message, ignore_label=None):
         if not ignore_label:
             ignore_label = "Ignore"
         self.setWindowTitle(title)
+
         self._label_widget.setText(label_message)
         self._ignore_btn.setText(ignore_label)
 
