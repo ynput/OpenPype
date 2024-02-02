@@ -535,7 +535,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         QtCore.QCoreApplication.exit()
 
 
-class PypeTrayStarter(QtCore.QObject):
+class TrayStarter(QtCore.QObject):
     def __init__(self, app):
         app.setQuitOnLastWindowClosed(False)
         self._app = app
@@ -594,7 +594,7 @@ class PypeTrayStarter(QtCore.QObject):
 def main():
     app = get_openpype_qt_app()
 
-    starter = PypeTrayStarter(app)
+    starter = TrayStarter(app)
 
     # TODO remove when pype.exe will have an icon
     if os.name == "nt":
