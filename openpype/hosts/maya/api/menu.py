@@ -9,7 +9,8 @@ import maya.cmds as cmds
 
 from openpype.pipeline import (
     get_current_asset_name,
-    get_current_task_name
+    get_current_task_name,
+    registered_host
 )
 from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
@@ -21,9 +22,10 @@ from .workfile_template_builder import (
     create_placeholder,
     update_placeholder,
     build_workfile_template,
-    update_workfile_template,
-    open_template,
+    update_workfile_template
 )
+from openpype.tools.workfile_template_build import open_template_ui
+from .workfile_template_builder import MayaTemplateBuilder
 
 log = logging.getLogger(__name__)
 
@@ -185,7 +187,9 @@ def install(project_settings):
         cmds.menuItem(
             "Open Template",
             parent=builder_menu,
-            command=open_template,
+            command=lambda *args: open_template_ui(
+                MayaTemplateBuilder(registered_host()), get_main_window()
+            ),
         )
         cmds.menuItem(
             "Create Placeholder",
