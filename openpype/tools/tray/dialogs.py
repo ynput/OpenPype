@@ -133,6 +133,7 @@ class VersionUpdateDialog(QtWidgets.QDialog):
     def update_versions(
         self, current_version, expected_version, current_is_higher
     ):
+        ignore_label = None
         if not current_is_higher:
             title = "OpenPype update is needed"
             label_message = (
@@ -147,14 +148,17 @@ class VersionUpdateDialog(QtWidgets.QDialog):
                 "Running OpenPype version is <b>{}</b>."
                 " Your production uses version <b>{}</b>."
             ).format(str(current_version), str(expected_version))
-            ignore_label = "Ignore"
-
-        self.setWindowTitle(title)
 
         self._current_is_higher = current_is_higher
 
         self._gift_icon_label.setVisible(not current_is_higher)
 
+        self._update_ui(title, label_message, ignore_label)
+
+    def _update_ui(self, title, label_message, ignore_label=None):
+        if not ignore_label:
+            ignore_label = "Ignore"
+        self.setWindowTitle(title)
         self._label_widget.setText(label_message)
         self._ignore_btn.setText(ignore_label)
 
