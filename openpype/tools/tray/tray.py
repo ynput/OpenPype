@@ -94,6 +94,115 @@ class TrayManager:
         if callback:
             self.execute_in_main_thread(callback)
 
+    def show_tray_message(self, title, message, icon=None, msecs=None):
+        """Show tray message.
+
+        Args:
+            title (str): Title of message.
+            message (str): Content of message.
+            icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
+                Information icon, may differ by Qt version.
+            msecs (int): Duration of message visibility in milliseconds.
+                Default is 10000 msecs, may differ by Qt version.
+        """
+        args = [title, message]
+        kwargs = {}
+        if icon:
+            kwargs["icon"] = icon
+        if msecs:
+            kwargs["msecs"] = msecs
+
+        self.tray_widget.showMessage(*args, **kwargs)
+
+    def initialize_modules(self):
+        """Add modules to tray."""
+        from openpype.modules import (
+            ITrayAction,
+            ITrayService
+        )
+
+        self.modules_manager.initialize(self, self.tray_widget.menu)
+
+        admin_submenu = ITrayAction.admin_submenu(self.tray_widget.menu)
+        self.tray_widget.menu.addMenu(admin_submenu)
+
+        # Add services if they are
+        services_submenu = ITrayService.services_submenu(
+            self.tray_widget.menu
+        )
+        self.tray_widget.menu.addMenu(services_submenu)
+
+        # Add separator
+        self.tray_widget.menu.addSeparator()
+
+        self._add_version_item()
+
+        # Add Exit action to menu
+        exit_action = QtWidgets.QAction("Exit", self.tray_widget)
+        exit_action.triggered.connect(self.tray_widget.exit)
+        self.tray_widget.menu.addAction(exit_action)
+
+        # Tell each module which modules were imported
+        self.modules_manager.start_modules()
+
+        # Print time report
+        self.modules_manager.print_report()
+
+        # create timer loop to check callback functions
+        main_thread_timer = QtCore.QTimer()
+        main_thread_timer.setInterval(300)
+        main_thread_timer.timeout.connect(self._main_thread_execution)
+        main_thread_timer.start()
+
+        self._main_thread_timer = main_thread_timer
+
+        version_check_timer = QtCore.QTimer()
+        if self._version_check_interval > 0:
+            version_check_timer.timeout.connect(self._on_version_check_timer)
+            version_check_timer.setInterval(self._version_check_interval)
+            version_check_timer.start()
+        self._version_check_timer = version_check_timer
+
+        # For storing missing settings dialog
+        self._settings_validation_dialog = None
+
+        self.execute_in_main_thread(self._startup_validations)
+
+    def restart(self, use_expected_version=False, reset_version=False):
+        """Restart Tray tool.
+
+        First creates new process with same argument and close current tray.
+
+        Args:
+            use_expected_version(bool): OpenPype version is set to expected
+                version.
+            reset_version(bool): OpenPype version is cleaned up so igniters
+                logic will decide which version will be used.
+        """
+
+        self._closing = True
+        if AYON_SERVER_ENABLED:
+            self._restart_ayon()
+        else:
+            self._restart_openpype(use_expected_version, reset_version)
+
+    def exit(self):
+        self._closing = True
+        self.tray_widget.exit()
+
+    def on_exit(self):
+        self.modules_manager.on_exit()
+
+    def execute_in_main_thread(self, callback, *args, **kwargs):
+        if isinstance(callback, WrappedCallbackItem):
+            item = callback
+        else:
+            item = WrappedCallbackItem(callback, *args, **kwargs)
+
+        self._main_thread_callbacks.append(item)
+
+        return item
+
     def _on_version_check_timer(self):
         if AYON_SERVER_ENABLED:
             self._validate_ayon_updates()
@@ -238,16 +347,6 @@ class TrayManager:
             )
         self.show_tray_message(title, message)
 
-    def execute_in_main_thread(self, callback, *args, **kwargs):
-        if isinstance(callback, WrappedCallbackItem):
-            item = callback
-        else:
-            item = WrappedCallbackItem(callback, *args, **kwargs)
-
-        self._main_thread_callbacks.append(item)
-
-        return item
-
     def _main_thread_execution(self):
         if self._execution_in_progress:
             return
@@ -258,60 +357,6 @@ class TrayManager:
                 item.execute()
 
         self._execution_in_progress = False
-
-    def initialize_modules(self):
-        """Add modules to tray."""
-        from openpype.modules import (
-            ITrayAction,
-            ITrayService
-        )
-
-        self.modules_manager.initialize(self, self.tray_widget.menu)
-
-        admin_submenu = ITrayAction.admin_submenu(self.tray_widget.menu)
-        self.tray_widget.menu.addMenu(admin_submenu)
-
-        # Add services if they are
-        services_submenu = ITrayService.services_submenu(
-            self.tray_widget.menu
-        )
-        self.tray_widget.menu.addMenu(services_submenu)
-
-        # Add separator
-        self.tray_widget.menu.addSeparator()
-
-        self._add_version_item()
-
-        # Add Exit action to menu
-        exit_action = QtWidgets.QAction("Exit", self.tray_widget)
-        exit_action.triggered.connect(self.tray_widget.exit)
-        self.tray_widget.menu.addAction(exit_action)
-
-        # Tell each module which modules were imported
-        self.modules_manager.start_modules()
-
-        # Print time report
-        self.modules_manager.print_report()
-
-        # create timer loop to check callback functions
-        main_thread_timer = QtCore.QTimer()
-        main_thread_timer.setInterval(300)
-        main_thread_timer.timeout.connect(self._main_thread_execution)
-        main_thread_timer.start()
-
-        self._main_thread_timer = main_thread_timer
-
-        version_check_timer = QtCore.QTimer()
-        if self._version_check_interval > 0:
-            version_check_timer.timeout.connect(self._on_version_check_timer)
-            version_check_timer.setInterval(self._version_check_interval)
-            version_check_timer.start()
-        self._version_check_timer = version_check_timer
-
-        # For storing missing settings dialog
-        self._settings_validation_dialog = None
-
-        self.execute_in_main_thread(self._startup_validations)
 
     def _startup_validations(self):
         """Run possible startup validations."""
@@ -370,26 +415,6 @@ class TrayManager:
         widget = self._settings_validation_dialog
         self._settings_validation_dialog = None
         widget.deleteLater()
-
-    def show_tray_message(self, title, message, icon=None, msecs=None):
-        """Show tray message.
-
-        Args:
-            title (str): Title of message.
-            message (str): Content of message.
-            icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
-                Information icon, may differ by Qt version.
-            msecs (int): Duration of message visibility in milliseconds.
-                Default is 10000 msecs, may differ by Qt version.
-        """
-        args = [title, message]
-        kwargs = {}
-        if icon:
-            kwargs["icon"] = icon
-        if msecs:
-            kwargs["msecs"] = msecs
-
-        self.tray_widget.showMessage(*args, **kwargs)
 
     def _add_version_item(self):
         if AYON_SERVER_ENABLED:
@@ -455,24 +480,6 @@ class TrayManager:
 
     def _on_restart_action(self):
         self.restart(use_expected_version=True)
-
-    def restart(self, use_expected_version=False, reset_version=False):
-        """Restart Tray tool.
-
-        First creates new process with same argument and close current tray.
-
-        Args:
-            use_expected_version(bool): OpenPype version is set to expected
-                version.
-            reset_version(bool): OpenPype version is cleaned up so igniters
-                logic will decide which version will be used.
-        """
-
-        self._closing = True
-        if AYON_SERVER_ENABLED:
-            self._restart_ayon()
-        else:
-            self._restart_openpype(use_expected_version, reset_version)
 
     def _restart_openpype(self, use_expected_version, reset_version):
         args = get_openpype_execute_args()
@@ -545,13 +552,6 @@ class TrayManager:
 
         run_detached_process(args, env=envs)
         self.exit()
-
-    def exit(self):
-        self._closing = True
-        self.tray_widget.exit()
-
-    def on_exit(self):
-        self.modules_manager.on_exit()
 
     def _on_version_action(self):
         if self._info_widget is None:
