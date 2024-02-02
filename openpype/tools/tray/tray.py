@@ -1,10 +1,11 @@
-import collections
 import os
 import sys
+import collections
 import atexit
 
 import platform
 
+import ayon_api
 from qtpy import QtCore, QtGui, QtWidgets
 
 import openpype.version
@@ -94,12 +95,77 @@ class TrayManager:
             self.execute_in_main_thread(callback)
 
     def _on_version_check_timer(self):
+        if AYON_SERVER_ENABLED:
+            self._validate_ayon_updates()
+            return
+
         # Check if is running from build and stop future validations if yes
         if not is_running_from_build() or not op_version_control_available():
             self._version_check_timer.stop()
             return
 
         self._validate_openpype_version()
+
+    def _validate_ayon_updates(self):
+        from ayon_common import is_dev_mode_enabled
+
+        try:
+            bundles = ayon_api.get_bundles()
+            user = ayon_api.get_user()
+            # This is a workaround for bug in ayon-python-api
+            if user.get("code") == 401:
+                raise Exception("Unauthorized")
+        except Exception:
+            self._revalidate_ayon_auth()
+            if self._closing:
+                return
+
+        if is_dev_mode_enabled():
+            return
+
+        bundle_type = (
+            "stagingBundle"
+            if is_staging_enabled()
+            else "productionBundle"
+        )
+
+        expected_bundle = bundles.get(bundle_type)
+        current_bundle = os.environ.get("AYON_BUNDLE_NAME")
+        is_expected = expected_bundle == current_bundle
+        if is_expected or expected_bundle is None:
+            self._restart_action.setVisible(False)
+            if (
+                self._version_dialog is not None
+                and self._version_dialog.isVisible()
+            ):
+                self._version_dialog.close_silently()
+            return
+
+        self._restart_action.setVisible(True)
+
+        if self._version_dialog is None:
+            self._version_dialog = VersionUpdateDialog()
+            self._version_dialog.restart_requested.connect(
+                self._restart_and_install
+            )
+            self._version_dialog.ignore_requested.connect(
+                self._outdated_version_ignored
+            )
+
+        self._version_dialog.update_bundles()
+        self._version_dialog.show()
+        self._version_dialog.raise_()
+        self._version_dialog.activateWindow()
+
+    def _revalidate_ayon_auth(self):
+        result = self._show_ayon_login(restart_on_token_change=False)
+        if self._closing:
+            return False
+
+        if not result.new_token:
+            self.exit()
+            return False
+        return True
 
     def _validate_openpype_version(self):
         using_requested = is_current_version_studio_latest()
@@ -358,16 +424,24 @@ class TrayManager:
         self._restart_action = restart_action
 
     def _on_ayon_login(self):
-        self.execute_in_main_thread(self._show_ayon_login)
+        self.execute_in_main_thread(
+            self._show_ayon_login,
+            restart_on_token_change=True
+        )
 
-    def _show_ayon_login(self):
+    def _show_ayon_login(self, restart_on_token_change):
         from ayon_common.connection.credentials import change_user_ui
 
         result = change_user_ui()
         if result.shutdown:
             self.exit()
+            return result
 
-        elif result.restart or result.token_changed:
+        restart = result.restart
+        if restart_on_token_change and result.token_changed:
+            restart = True
+
+        if restart:
             # Remove environment variables from current connection
             # - keep develop, staging, headless values
             for key in {
@@ -377,6 +451,7 @@ class TrayManager:
             }:
                 os.environ.pop(key, None)
             self.restart()
+        return result
 
     def _on_restart_action(self):
         self.restart(use_expected_version=True)
