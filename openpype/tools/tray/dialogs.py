@@ -78,7 +78,7 @@ class VersionUpdateDialog(QtWidgets.QDialog):
         top_layout.addWidget(label_widget, 1)
 
         ignore_btn = QtWidgets.QPushButton(self)
-        restart_btn = QtWidgets.QPushButton(self)
+        restart_btn = QtWidgets.QPushButton("Restart && Change", self)
         restart_btn.setObjectName("TrayRestartButton")
 
         btns_layout = QtWidgets.QHBoxLayout()
@@ -140,7 +140,7 @@ class VersionUpdateDialog(QtWidgets.QDialog):
                 " Your production has been updated to version <b>{}</b>."
             ).format(str(current_version), str(expected_version))
             ignore_label = "Later"
-            restart_label = "Restart && Update"
+
         else:
             title = "OpenPype version is higher"
             label_message = (
@@ -148,7 +148,6 @@ class VersionUpdateDialog(QtWidgets.QDialog):
                 " Your production uses version <b>{}</b>."
             ).format(str(current_version), str(expected_version))
             ignore_label = "Ignore"
-            restart_label = "Restart && Change"
 
         self.setWindowTitle(title)
 
@@ -158,7 +157,6 @@ class VersionUpdateDialog(QtWidgets.QDialog):
 
         self._label_widget.setText(label_message)
         self._ignore_btn.setText(ignore_label)
-        self._restart_btn.setText(restart_label)
 
     def _on_ignore(self):
         self.reject()
