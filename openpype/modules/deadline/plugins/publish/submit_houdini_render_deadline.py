@@ -45,7 +45,7 @@ class VrayRenderPluginInfo():
 @attr.s
 class RedshiftRenderPluginInfo():
     SceneFile = attr.ib(default=None)
-    Version = attr.ib(default=None)
+    Version = attr.ib(default="1")
 
 
 class HoudiniSubmitDeadline(
