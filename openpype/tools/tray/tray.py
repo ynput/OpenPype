@@ -76,9 +76,10 @@ class TrayManager:
         self._version_check_timer = None
         self._version_dialog = None
 
-        self.main_thread_timer = None
+        self._main_thread_timer = None
         self._main_thread_callbacks = collections.deque()
         self._execution_in_progress = None
+        self._closing = False
 
     @property
     def doubleclick_callback(self):
@@ -98,9 +99,9 @@ class TrayManager:
             self._version_check_timer.stop()
             return
 
-        self.validate_openpype_version()
+        self._validate_openpype_version()
 
-    def validate_openpype_version(self):
+    def _validate_openpype_version(self):
         using_requested = is_current_version_studio_latest()
         # TODO Handle situations when version can't be detected
         if using_requested is None:
@@ -112,7 +113,7 @@ class TrayManager:
                 self._version_dialog is not None
                 and self._version_dialog.isVisible()
             ):
-                self._version_dialog.close()
+                self._version_dialog.close_silently()
             return
 
         installed_version = get_installed_version()
@@ -128,7 +129,7 @@ class TrayManager:
                 self._version_dialog is not None
                 and self._version_dialog.isVisible()
             ):
-                self._version_dialog.close()
+                self._version_dialog.close_silently()
 
             dialog = BuildVersionDialog()
             dialog.exec_()
@@ -224,7 +225,7 @@ class TrayManager:
         main_thread_timer.timeout.connect(self._main_thread_execution)
         main_thread_timer.start()
 
-        self.main_thread_timer = main_thread_timer
+        self._main_thread_timer = main_thread_timer
 
         version_check_timer = QtCore.QTimer()
         if self._version_check_interval > 0:
@@ -317,19 +318,17 @@ class TrayManager:
             login_action = QtWidgets.QAction("Login", self.tray_widget)
             login_action.triggered.connect(self._on_ayon_login)
             self.tray_widget.menu.addAction(login_action)
-
-        subversion = os.environ.get("OPENPYPE_SUBVERSION")
-        client_name = os.environ.get("OPENPYPE_CLIENT")
-
-        if AYON_SERVER_ENABLED:
             version_string = os.getenv("AYON_VERSION", "AYON Info")
-        else:
-            version_string = openpype.version.__version__
-        if subversion:
-            version_string += " ({})".format(subversion)
 
-        if client_name:
-            version_string += ", {}".format(client_name)
+        else:
+            subversion = os.environ.get("OPENPYPE_SUBVERSION")
+            client_name = os.environ.get("OPENPYPE_CLIENT")
+            version_string = openpype.version.__version__
+            if subversion:
+                version_string += " ({})".format(subversion)
+
+            if client_name:
+                version_string += ", {}".format(client_name)
 
         version_action = QtWidgets.QAction(version_string, self.tray_widget)
         version_action.triggered.connect(self._on_version_action)
@@ -381,6 +380,8 @@ class TrayManager:
             reset_version(bool): OpenPype version is cleaned up so igniters
                 logic will decide which version will be used.
         """
+
+        self._closing = True
         args = get_openpype_execute_args()
         envs = dict(os.environ.items())
 
@@ -420,6 +421,7 @@ class TrayManager:
         self.exit()
 
     def exit(self):
+        self._closing = True
         self.tray_widget.exit()
 
     def on_exit(self):
