@@ -9,10 +9,6 @@
         "CollectDefaultDeadlineServer": {
             "pass_mongo_url": true
         },
-        "CollectDeadlinePools": {
-            "primary_pool": "",
-            "secondary_pool": ""
-        },
         "ValidateExpectedFiles": {
             "enabled": true,
             "active": true,

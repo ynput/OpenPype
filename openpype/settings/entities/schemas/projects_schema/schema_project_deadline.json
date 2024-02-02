@@ -101,24 +101,6 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "CollectDeadlinePools",
-                    "label": "Default Deadline Pools",
-                    "children": [
-                        {
-                            "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
                     "key": "ValidateExpectedFiles",
                     "label": "Validate Expected Files",
                     "checkbox_key": "enabled",
