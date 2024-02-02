@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ExtensionList>
-    <Extension Id="com.openpype.PS.panel">
+    <Extension Id="io.ynput.PS.panel">
         <HostList>
             <Host Name="PHXS" Port="8078"/>
             <Host Name="FLPR" Port="8078"/>

@@ -34,6 +34,11 @@ class ExtractReviewIntermediates(publish.Extractor):
         nuke_publish = project_settings["nuke"]["publish"]
         deprecated_setting = nuke_publish["ExtractReviewDataMov"]
         current_setting = nuke_publish.get("ExtractReviewIntermediates")
+        if not deprecated_setting["enabled"] and (
+            not current_setting["enabled"]
+        ):
+            cls.enabled = False
+
         if deprecated_setting["enabled"]:
             # Use deprecated settings if they are still enabled
             cls.viewer_lut_raw = deprecated_setting["viewer_lut_raw"]

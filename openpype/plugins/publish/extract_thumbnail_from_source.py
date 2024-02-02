@@ -65,7 +65,8 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             "files": dst_filename,
             "stagingDir": dst_staging,
             "thumbnail": True,
-            "tags": ["thumbnail"]
+            "tags": ["thumbnail"],
+            "outputName": "thumbnail",
         }
 
         # adding representation

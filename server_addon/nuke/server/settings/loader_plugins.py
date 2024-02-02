@@ -1,54 +1,53 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class LoadImageModel(BaseSettingsModel):
-    enabled: bool = Field(
+    enabled: bool = SettingsField(
         title="Enabled"
     )
-    representations_include: list[str] = Field(
+    representations_include: list[str] = SettingsField(
         default_factory=list,
         title="Include representations"
     )
 
-    node_name_template: str = Field(
+    node_name_template: str = SettingsField(
         title="Read node name template"
     )
 
 
 class LoadClipOptionsModel(BaseSettingsModel):
-    start_at_workfile: bool = Field(
+    start_at_workfile: bool = SettingsField(
         title="Start at workfile's start frame"
     )
-    add_retime: bool = Field(
+    add_retime: bool = SettingsField(
         title="Add retime"
     )
 
 
 class LoadClipModel(BaseSettingsModel):
-    enabled: bool = Field(
+    enabled: bool = SettingsField(
         title="Enabled"
     )
-    representations_include: list[str] = Field(
+    representations_include: list[str] = SettingsField(
         default_factory=list,
         title="Include representations"
     )
 
-    node_name_template: str = Field(
+    node_name_template: str = SettingsField(
         title="Read node name template"
     )
-    options_defaults: LoadClipOptionsModel = Field(
+    options_defaults: LoadClipOptionsModel = SettingsField(
         default_factory=LoadClipOptionsModel,
         title="Loader option defaults"
     )
 
 
 class LoaderPuginsModel(BaseSettingsModel):
-    LoadImage: LoadImageModel = Field(
+    LoadImage: LoadImageModel = SettingsField(
         default_factory=LoadImageModel,
         title="Load Image"
     )
-    LoadClip: LoadClipModel = Field(
+    LoadClip: LoadClipModel = SettingsField(
         default_factory=LoadClipModel,
         title="Load Clip"
     )

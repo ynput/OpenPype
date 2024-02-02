@@ -436,7 +436,7 @@
             "viewTransform": "sRGB gamma"
         }
     },
-    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders/maya\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\n",
+    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders/maya\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\nworkspace -fr \"autoSave\" \"autosave\";",
     "ext_mapping": {
         "model": "ma",
         "mayaAscii": "ma",
@@ -1289,6 +1289,7 @@
                     "twoSidedLighting": true,
                     "lineAAEnable": true,
                     "multiSample": 8,
+                    "loadTextures": false,
                     "useDefaultMaterial": false,
                     "wireframeOnShaded": false,
                     "xray": false,
@@ -1608,14 +1609,5 @@
     },
     "templated_workfile_build": {
         "profiles": []
-    },
-    "filters": {
-        "preset 1": {
-            "ValidateNoAnimation": false,
-            "ValidateShapeDefaultNames": false
-        },
-        "preset 2": {
-            "ValidateNoAnimation": false
-        }
     }
 }

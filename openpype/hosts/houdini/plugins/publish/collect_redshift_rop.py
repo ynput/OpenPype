@@ -31,7 +31,6 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
     families = ["redshift_rop"]
 
     def process(self, instance):
-
         rop = hou.node(instance.data.get("instance_node"))
 
         # Collect chunkSize
@@ -43,13 +42,29 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
 
         default_prefix = evalParmNoFrame(rop, "RS_outputFileNamePrefix")
         beauty_suffix = rop.evalParm("RS_outputBeautyAOVSuffix")
-        render_products = []
+        # Store whether we are splitting the render job (export + render)
+        split_render = bool(rop.parm("RS_archive_enable").eval())
+        instance.data["splitRender"] = split_render
+        export_products = []
+        if split_render:
+            export_prefix = evalParmNoFrame(
+                rop, "RS_archive_file", pad_character="0"
+            )
+            beauty_export_product = self.get_render_product_name(
+                prefix=export_prefix,
+                suffix=None)
+            export_products.append(beauty_export_product)
+            self.log.debug(
+                "Found export product: {}".format(beauty_export_product)
+            )
+            instance.data["ifdFile"] = beauty_export_product
+            instance.data["exportFiles"] = list(export_products)
 
         # Default beauty AOV
         beauty_product = self.get_render_product_name(
             prefix=default_prefix, suffix=beauty_suffix
         )
-        render_products.append(beauty_product)
+        render_products = [beauty_product]
         files_by_aov = {
             "_": self.generate_expected_files(instance,
                                               beauty_product)}
@@ -59,11 +74,11 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             i = index + 1
 
             # Skip disabled AOVs
-            if not rop.evalParm("RS_aovEnable_%s" % i):
+            if not rop.evalParm(f"RS_aovEnable_{i}"):
                 continue
 
-            aov_suffix = rop.evalParm("RS_aovSuffix_%s" % i)
-            aov_prefix = evalParmNoFrame(rop, "RS_aovCustomPrefix_%s" % i)
+            aov_suffix = rop.evalParm(f"RS_aovSuffix_{i}")
+            aov_prefix = evalParmNoFrame(rop, f"RS_aovCustomPrefix_{i}")
             if not aov_prefix:
                 aov_prefix = default_prefix
 
@@ -85,7 +100,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["attachTo"] = []      # stub required data
 
         if "expectedFiles" not in instance.data:
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
         instance.data["expectedFiles"].append(files_by_aov)
 
         # update the colorspace data

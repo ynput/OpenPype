@@ -30,8 +30,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         if not AYON_SERVER_ENABLED:
             return
 
-        hierarchy_context = context.data.get("hierarchyContext")
-        if not hierarchy_context:
+        if not context.data.get("hierarchyContext"):
             self.log.debug("Skipping ExtractHierarchyToAYON")
             return
 
@@ -204,7 +203,8 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
 
         project_item = None
         project_children_context = None
-        for key, value in context.data["hierarchyContext"].items():
+        hierarchy_context = copy.deepcopy(context.data["hierarchyContext"])
+        for key, value in hierarchy_context.items():
             project_item = copy.deepcopy(value)
             project_children_context = project_item.pop("childs", None)
             project_item["name"] = key
