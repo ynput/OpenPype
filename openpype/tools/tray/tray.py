@@ -158,13 +158,19 @@ class TrayManager:
         self.restart(use_expected_version=True)
 
     def _outdated_version_ignored(self):
-        self.show_tray_message(
-            "OpenPype version is outdated",
-            (
+        if AYON_SERVER_ENABLED:
+            title = "AYON update ignored"
+            message = (
+                "Please restart AYON launcher as soon as possible"
+                " to propagate updates."
+            )
+        else:
+            title = "OpenPype version is outdated"
+            message = (
                 "Please update your OpenPype as soon as possible."
                 " To update, restart OpenPype Tray application."
             )
-        )
+        self.show_tray_message(title, message)
 
     def execute_in_main_thread(self, callback, *args, **kwargs):
         if isinstance(callback, WrappedCallbackItem):
@@ -200,7 +206,9 @@ class TrayManager:
         self.tray_widget.menu.addMenu(admin_submenu)
 
         # Add services if they are
-        services_submenu = ITrayService.services_submenu(self.tray_widget.menu)
+        services_submenu = ITrayService.services_submenu(
+            self.tray_widget.menu
+        )
         self.tray_widget.menu.addMenu(services_submenu)
 
         # Add separator
@@ -243,6 +251,10 @@ class TrayManager:
         """Run possible startup validations."""
         # Trigger version validation on start
         self._version_check_timer.timeout.emit()
+
+        # Skip other validations if running AYON
+        if AYON_SERVER_ENABLED:
+            return
 
         self._validate_settings_defaults()
 
