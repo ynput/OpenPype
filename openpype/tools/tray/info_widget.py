@@ -208,11 +208,11 @@ class CollapsibleWidget(QtWidgets.QWidget):
             self.content_widget.updateGeometry()
 
 
-class PypeInfoWidget(QtWidgets.QWidget):
+class InfoWidget(QtWidgets.QWidget):
     _resized = QtCore.Signal()
 
     def __init__(self, parent=None):
-        super(PypeInfoWidget, self).__init__(parent)
+        super(InfoWidget, self).__init__(parent)
 
         self._scroll_at_bottom = False
 
@@ -225,7 +225,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
         )
 
         scroll_area = QtWidgets.QScrollArea(self)
-        info_widget = PypeInfoSubWidget(scroll_area)
+        info_widget = InfoSubWidget(scroll_area)
 
         scroll_area.setWidget(info_widget)
         scroll_area.setWidgetResizable(True)
@@ -255,14 +255,14 @@ class PypeInfoWidget(QtWidgets.QWidget):
         vertical_bar.setValue(vertical_bar.maximum())
 
     def resizeEvent(self, event):
-        super(PypeInfoWidget, self).resizeEvent(event)
+        super(InfoWidget, self).resizeEvent(event)
         self._resized.emit()
         self.info_widget.set_content_height(
             self.scroll_area.height()
         )
 
     def showEvent(self, event):
-        super(PypeInfoWidget, self).showEvent(event)
+        super(InfoWidget, self).showEvent(event)
         self.info_widget.set_content_height(
             self.scroll_area.height()
         )
@@ -319,18 +319,18 @@ class PypeInfoWidget(QtWidgets.QWidget):
         )
 
 
-class PypeInfoSubWidget(QtWidgets.QWidget):
+class InfoSubWidget(QtWidgets.QWidget):
     not_applicable = "N/A"
 
     def __init__(self, parent=None):
-        super(PypeInfoSubWidget, self).__init__(parent)
+        super(InfoSubWidget, self).__init__(parent)
 
         self.env_view = None
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
-        main_layout.addWidget(self._create_openpype_info_widget(), 0)
+        main_layout.addWidget(self._create_info_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_workstation_widget(), 0)
         if not AYON_SERVER_ENABLED:
@@ -429,7 +429,7 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
 
         return env_widget
 
-    def _create_openpype_info_widget(self):
+    def _create_info_widget(self):
         """Create widget with information about OpenPype application."""
 
         if AYON_SERVER_ENABLED:

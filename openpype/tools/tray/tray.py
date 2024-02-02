@@ -40,7 +40,7 @@ from openpype.tools.utils import (
     get_openpype_qt_app,
 )
 
-from .info_widget import PypeInfoWidget
+from .info_widget import InfoWidget
 
 
 # TODO PixmapLabel should be moved to 'utils' in other future PR so should be
@@ -332,7 +332,7 @@ class TrayManager:
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
-        self.pype_info_widget = None
+        self._info_widget = None
         self._restart_action = None
 
         self.log = Logger.get_logger(self.__class__.__name__)
@@ -704,12 +704,12 @@ class TrayManager:
         self.modules_manager.on_exit()
 
     def _on_version_action(self):
-        if self.pype_info_widget is None:
-            self.pype_info_widget = PypeInfoWidget()
+        if self._info_widget is None:
+            self._info_widget = InfoWidget()
 
-        self.pype_info_widget.show()
-        self.pype_info_widget.raise_()
-        self.pype_info_widget.activateWindow()
+        self._info_widget.show()
+        self._info_widget.raise_()
+        self._info_widget.activateWindow()
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
