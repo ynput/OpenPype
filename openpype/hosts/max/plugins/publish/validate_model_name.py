@@ -3,7 +3,6 @@
 import re
 
 import pyblish.api
-from pymxs import runtime as rt
 
 from openpype.hosts.max.api.action import SelectInvalidAction
 
@@ -62,7 +61,7 @@ class ValidateModelName(pyblish.api.InstancePlugin,
         if matched_name is None:
             cls.log.error("invalid model name on: {}".format(name))
             cls.log.error("name doesn't match regex {}".format(regex))
-            invalid.append((name,"Model name doesn't match regex"))
+            invalid.append((name, "Model name doesn't match regex"))
         else:
             if "asset" in reg.groupindex:
                 if matched_name.group("asset") != current_asset_name:
