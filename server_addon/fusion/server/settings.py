@@ -57,9 +57,9 @@ class CreateSaverPluginModel(BaseSettingsModel):
         enum_resolver=_create_saver_instance_attributes_enum,
         title="Instance attributes"
     )
-    output_formats: list[str] = SettingsField(
-        default_factory=list,
-        title="Output formats"
+    image_format: str = SettingsField(
+        enum_resolver=_image_format_enum,
+        title="Output Image Format"
     )
 
 
@@ -90,6 +90,8 @@ class CreateImageSaverModel(CreateSaverPluginModel):
         0,
         title="Default rendered frame"
     )
+
+
 class CreatPluginsModel(BaseSettingsModel):
     CreateSaver: CreateSaverModel = SettingsField(
         default_factory=CreateSaverModel,
