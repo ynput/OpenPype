@@ -173,8 +173,38 @@ class OpenPypeMenu(QtWidgets.QWidget):
         set_asset_framerange()
 
 
+def get_qt_app():
+    """Main Qt application."""
+
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        for attr_name in (
+            "AA_EnableHighDpiScaling",
+            "AA_UseHighDpiPixmaps",
+        ):
+            attr = getattr(QtCore.Qt, attr_name, None)
+            if attr is not None:
+                QtWidgets.QApplication.setAttribute(attr)
+
+        policy = os.getenv("QT_SCALE_FACTOR_ROUNDING_POLICY")
+        if (
+            hasattr(
+                QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"
+            )
+            and not policy
+        ):
+            QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
+                QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+            )
+
+        app = QtWidgets.QApplication(sys.argv)
+
+    return app
+
+
 def launch_openpype_menu():
-    app = QtWidgets.QApplication(sys.argv)
+
+    app = get_qt_app()
 
     pype_menu = OpenPypeMenu()
 
