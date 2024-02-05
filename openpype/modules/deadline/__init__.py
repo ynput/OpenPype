@@ -1,7 +1,7 @@
 from .deadline_module import DeadlineModule
 
 from .utils import (
-    get_deadline_job_settings,
+    get_deadline_job_profile,
     get_deadline_limits_plugin
 
 )
@@ -10,6 +10,6 @@ from .utils import (
 __all__ = (
     "DeadlineModule",
 
-    "get_deadline_job_settings",
+    "get_deadline_job_profile",
     "get_deadline_limits_plugin"
 )

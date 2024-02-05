@@ -2,7 +2,14 @@
     "deadline_servers": [],
     "deadline_batch_name": "{asset}_{task[name]}_{version}_{subversion}.{ext}",
     "deadline_job_name": "{asset}_{task[name]}_{version}_{subversion}.{ext} - {inst_name}",
-    "DefaultJobSettings": {
+    "JobAttrsValues": {
+        "DefaultValues": {
+            "pool": "",
+            "pool_secondary": "",
+            "priority": 50,
+            "limit_machine": 0,
+            "limits_plugin": [],
+        },
         "profiles": []
     },
     "publish": {

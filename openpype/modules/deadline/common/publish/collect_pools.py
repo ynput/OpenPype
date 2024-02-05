@@ -6,7 +6,7 @@ import pyblish.api
 from openpype.lib import TextDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 from openpype.pipeline.context_tools import get_current_host_name
-from openpype_modules.deadline import get_deadline_job_settings
+from openpype_modules.deadline import get_deadline_job_profile
 
 
 class CollectDeadlinePools(pyblish.api.InstancePlugin,
@@ -29,7 +29,7 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
     def apply_settings(cls, project_settings, system_settings):
         # deadline.publish.CollectDeadlinePools
         host = get_current_host_name()
-        profile = get_deadline_job_settings(project_settings, host)
+        profile = get_deadline_job_profile(project_settings, host)
         cls.primary_pool = profile.get("pool", cls.pool)
         cls.secondary_pool = profile.get("pool_secondary", cls.pool_secondary)
 

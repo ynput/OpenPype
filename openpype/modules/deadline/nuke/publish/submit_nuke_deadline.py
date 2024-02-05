@@ -16,7 +16,7 @@ from openpype.pipeline.publish import (
 )
 from openpype.modules.deadline.utils import (
     set_custom_deadline_name,
-    get_deadline_job_settings
+    get_deadline_job_profile
 )
 from openpype.tests.lib import is_in_tests
 from openpype.lib import (
@@ -60,7 +60,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
-        profile = get_deadline_job_settings(project_settings, cls.hosts[0])
+        profile = get_deadline_job_profile(project_settings, cls.hosts[0])
         cls.priority = profile.get("priority", cls.priority)
         cls.pool = profile.get("pool", cls.pool)
         cls.secondary_pool = profile.get(

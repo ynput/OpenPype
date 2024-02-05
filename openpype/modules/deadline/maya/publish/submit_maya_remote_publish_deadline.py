@@ -12,7 +12,7 @@ from openpype.lib import is_running_from_build
 
 from openpype_modules.deadline import (
     abstract_submit_deadline,
-    get_deadline_job_settings,
+    get_deadline_job_profile,
     get_deadline_limit_groups
 )
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
@@ -82,7 +82,7 @@ class MayaSubmitRemotePublishDeadline(
 
         project_name = get_current_project_name()
         project_settings = context.data["project_settings"]
-        profile = get_deadline_job_settings(project_settings, self.hosts[0])
+        profile = get_deadline_job_profile(project_settings, self.hosts[0])
 
         job_name = set_custom_deadline_name(
             instance,

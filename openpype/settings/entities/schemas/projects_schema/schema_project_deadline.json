@@ -24,10 +24,47 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "DefaultJobSettings",
-            "label": "Default Job Settings",
+            "key": "JobAttrsValues",
+            "label": "Job Attributes Values",
             "is_group": true,
             "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "collapsed": true,
+                    "key": "DefaultValues",
+                    "label": "Default Values",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "pool",
+                            "label": "Primary pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "pool_secondary",
+                            "label": "Secondary Pool"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "limit_machine",
+                            "label": "Machine Limit"
+                        },
+                        {
+                            "type": "deadline-limits-plugin-enum",
+                            "key": "limits_plugin",
+                            "label": "Plugin Limits"
+                        }
+                    ]
+                },
+                {
+                    "type": "separator"
+                },
                 {
                     "type": "list",
                     "key": "profiles",

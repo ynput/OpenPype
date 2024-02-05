@@ -345,7 +345,7 @@ class NukeWriteCreator(NukeCreator):
 
     def _get_limits_machine_and_plugin(self):
         from openpype_modules.deadline import (
-            get_deadline_job_settings,
+            get_deadline_job_profile,
             get_deadline_limits_plugin
         )
 
@@ -359,7 +359,7 @@ class NukeWriteCreator(NukeCreator):
 
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
-        profile = get_deadline_job_settings(project_settings, "nuke")
+        profile = get_deadline_job_profile(project_settings, "nuke")
 
         default_limit_machine = profile.get("limit_machine", 0)
         default_limits_plugin = profile.get("limits_plugin", [])

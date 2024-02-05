@@ -45,7 +45,7 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import (
     abstract_submit_deadline,
-    get_deadline_job_settings
+    get_deadline_job_profile
 )
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.modules.deadline.utils import set_custom_deadline_name
@@ -130,7 +130,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
 
         # Default values from profile
-        profile = get_deadline_job_settings(project_settings, cls.hosts[0])
+        profile = get_deadline_job_profile(project_settings, cls.hosts[0])
 
         cls.priority = profile.get("priority", cls.priority)
         cls.pool = profile.get("pool", cls.pool)
