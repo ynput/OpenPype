@@ -1,9 +1,9 @@
 """Kitsu module."""
 
-import click
 import os
 
 from openpype.modules import (
+    click_wrap,
     OpenPypeModule,
     IPluginPaths,
     ITrayAction,
@@ -98,17 +98,17 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         }
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
 
-@click.group(KitsuModule.name, help="Kitsu dynamic cli commands.")
+@click_wrap.group(KitsuModule.name, help="Kitsu dynamic cli commands.")
 def cli_main():
     pass
 
 
 @cli_main.command()
-@click.option("--login", envvar="KITSU_LOGIN", help="Kitsu login")
-@click.option(
+@click_wrap.option("--login", envvar="KITSU_LOGIN", help="Kitsu login")
+@click_wrap.option(
     "--password", envvar="KITSU_PWD", help="Password for kitsu username"
 )
 def push_to_zou(login, password):
@@ -124,11 +124,11 @@ def push_to_zou(login, password):
 
 
 @cli_main.command()
-@click.option("-l", "--login", envvar="KITSU_LOGIN", help="Kitsu login")
-@click.option(
+@click_wrap.option("-l", "--login", envvar="KITSU_LOGIN", help="Kitsu login")
+@click_wrap.option(
     "-p", "--password", envvar="KITSU_PWD", help="Password for kitsu username"
 )
-@click.option(
+@click_wrap.option(
     "-prj",
     "--project",
     "projects",
@@ -136,7 +136,7 @@ def push_to_zou(login, password):
     default=[],
     help="Sync specific kitsu projects",
 )
-@click.option(
+@click_wrap.option(
     "-lo",
     "--listen-only",
     "listen_only",
