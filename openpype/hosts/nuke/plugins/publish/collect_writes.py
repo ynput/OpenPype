@@ -107,6 +107,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 for filename in os.listdir(output_dir)
                 #if filename in expected_filenames Hornet - allow any frame range
             ]
+            if len(collected_frames)<=2:
+                collected_frames = [x for x in collected_frames if not x.endswith('_metadata.json')]
 
             if collected_frames:
                 collected_frames_len = len(collected_frames)
