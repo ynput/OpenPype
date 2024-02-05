@@ -15,6 +15,7 @@ from openpype.hosts.fusion.api.lib import (
 )
 from openpype.pipeline import get_current_asset_name
 from openpype.resources import get_openpype_icon_filepath
+from openpype.tools.utils import get_qt_app
 
 from .pipeline import FusionEventHandler
 from .pulse import FusionPulse
@@ -171,35 +172,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_set_framerange_clicked(self):
         set_asset_framerange()
-
-
-def get_qt_app():
-    """Main Qt application."""
-
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        for attr_name in (
-            "AA_EnableHighDpiScaling",
-            "AA_UseHighDpiPixmaps",
-        ):
-            attr = getattr(QtCore.Qt, attr_name, None)
-            if attr is not None:
-                QtWidgets.QApplication.setAttribute(attr)
-
-        policy = os.getenv("QT_SCALE_FACTOR_ROUNDING_POLICY")
-        if (
-            hasattr(
-                QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"
-            )
-            and not policy
-        ):
-            QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
-                QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-            )
-
-        app = QtWidgets.QApplication(sys.argv)
-
-    return app
 
 
 def launch_openpype_menu():
