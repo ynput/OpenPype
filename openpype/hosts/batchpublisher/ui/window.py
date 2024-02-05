@@ -117,9 +117,15 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
             dir=directory)
         if not directory:
             return
+        # Lets insure text changes even if the directory picked
+        # is the same as before
+        self._dir_input.blockSignals(True)
         self._dir_input.setText(directory)
+        self._dir_input.blockSignals(False)
+        self._dir_input.textChanged.emit(directory)
 
     def _on_dir_change(self, directory):
+        print("_on_dir_changed")
         self._table_view.set_current_directory(directory)
 
     def _on_publish_button_clicked(self):

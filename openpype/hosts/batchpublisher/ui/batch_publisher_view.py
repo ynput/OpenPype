@@ -43,6 +43,7 @@ class BatchPublisherTableView(QtWidgets.QTableView):
         self._controller = controller
 
     def set_current_directory(self, directory):
+        print("view set_current_directory", directory)
         self._model.set_current_directory(directory)
 
     def get_product_items(self):

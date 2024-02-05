@@ -193,6 +193,7 @@ Enabled: <b>{product_item.enabled}</b>
         return flags
 
     def _populate_from_directory(self, directory):
+        print("model set_current_directory", directory)
         self.beginResetModel()
         self._product_items = self._controller.get_product_items(
             directory
