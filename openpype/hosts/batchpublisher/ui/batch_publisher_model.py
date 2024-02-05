@@ -90,9 +90,9 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                     roles = [QtCore.Qt.DisplayRole]
                     self.dataChanged.emit(
                         self.index(
-                            row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
+                            row, BatchPublisherModel.COLUMN_OF_ENABLED),
                         self.index(
-                            row, BatchPublisherModel.COLUMN_OF_PRODUCT_NAME),
+                            row, BatchPublisherModel.COLUMN_OF_COMMENT),
                         roles)
             elif column == BatchPublisherModel.COLUMN_OF_PRODUCT_NAME:
                 product_item.product_name = value

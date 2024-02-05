@@ -1,6 +1,7 @@
 import collections
 import glob
 import os
+import re
 
 # from openpype.settings import get_project_settings
 from openpype.client.entities import (
@@ -95,7 +96,13 @@ class ProductItem(object):
             product_name = self.product_type + product_name
         else:
             product_name = self.product_type + "_" + product_name
-        self.product_name = product_name
+        # Try to extract version number from filename
+        self.version = None
+        results = re.findall("_v[0-9]*", self.filepath)
+        if results:
+            self.version = int(results[0].replace("_v", ""))
+        # Remove version from product name
+        self.product_name = re.sub("_v[0-9]*", "", product_name)
         return self.product_name
 
     @property
@@ -290,6 +297,11 @@ class BatchPublisherController(object):
                 representation_name = EXT_TO_REP_NAME_MAP.get(extension)
                 if not representation_name:
                     representation_name = extension.lstrip(".")
+                # Try to extract version number from filename
+                version = None
+                results = re.findall("_v[0-9]*", filepath)
+                if results:
+                    version = int(results[0].replace("_v", ""))
                 product_item = ProductItem(
                     filepath,
                     product_type,
