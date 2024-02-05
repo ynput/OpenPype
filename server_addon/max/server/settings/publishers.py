@@ -123,7 +123,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": False,
-        "regex": "*_(?P<subset>.*)_(GEO)"
+        "regex": "(.*)_(?P<subset>.*)_(GEO)"
     },
     "ValidateLoadedPlugin": {
         "enabled": False,
