@@ -12,7 +12,7 @@ How to use it? If you already have cli commands defined in addon, just replace
 'click' with 'click_wrap' and it should work and modify your addon's cli
 method to convert 'click_wrap' object to 'click' object.
 
-# Before
+Before
 ```python
 import click
 from openpype.modules import OpenPypeModule
@@ -37,7 +37,7 @@ def mycommand(arg1, arg2):
     print(arg1, arg2)
 ```
 
-# Now
+Now
 ```
 from openpype import click_wrap
 from openpype.modules import OpenPypeModule
@@ -133,7 +133,6 @@ class Command(object):
         Returns:
             click.Command: Click command object.
         """
-
         return convert_to_click(self)
 
     # --- Methods for 'convert_to_click' function ---
@@ -142,7 +141,6 @@ class Command(object):
         Returns:
             tuple: Command definition arguments.
         """
-
         return self._args
 
     def get_kwargs(self):
@@ -150,7 +148,6 @@ class Command(object):
         Returns:
             dict[str, Any]: Command definition kwargs.
         """
-
         return self._kwargs
 
     def get_func(self):
@@ -158,7 +155,6 @@ class Command(object):
         Returns:
             Function: Function to invoke on command trigger.
         """
-
         return self._func
 
     def iter_options(self):
@@ -166,7 +162,6 @@ class Command(object):
         Yields:
             tuple[str, tuple, dict]: Option type name with args and kwargs.
         """
-
         for item in self._options:
             yield item
     # -----------------------------------------------
@@ -203,7 +198,6 @@ class Group(Command):
         Args:
             command (Command): Prepared command object.
         """
-
         if command not in self._commands:
             self._commands.append(command)
 
@@ -213,7 +207,6 @@ class Group(Command):
         Args:
             group (Group): Prepared group object.
         """
-
         if group not in self._commands:
             self._commands.append(group)
 
@@ -223,7 +216,6 @@ class Group(Command):
         Returns:
             Union[Command, Function]: New command object, or wrapper function.
         """
-
         return self._add_new(Command, *args, **kwargs)
 
     def group(self, *args, **kwargs):
@@ -232,7 +224,6 @@ class Group(Command):
         Returns:
             Union[Group, Function]: New group object, or wrapper function.
         """
-
         return self._add_new(Group, *args, **kwargs)
 
     def _add_new(self, target_cls, *args, **kwargs):
@@ -261,7 +252,6 @@ def convert_to_click(obj_to_convert):
     Returns:
         click.Command: Click command object.
     """
-
     import click
 
     commands_queue = collections.deque()
