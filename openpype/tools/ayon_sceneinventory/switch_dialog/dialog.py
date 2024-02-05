@@ -1214,9 +1214,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         version_ids = set()
         version_docs_by_parent_id_and_name = collections.defaultdict(dict)
         for version_doc in version_docs:
-            subset_id = version_doc["parent"]
+            version_ids.add(version_doc["_id"])
+            product_id = version_doc["parent"]
             name = version_doc["name"]
-            version_docs_by_parent_id_and_name[subset_id][name] = version_doc
+            version_docs_by_parent_id_and_name[product_id][name] = version_doc
 
         hero_version_docs_by_parent_id = {}
         for hero_version_doc in hero_version_docs:
