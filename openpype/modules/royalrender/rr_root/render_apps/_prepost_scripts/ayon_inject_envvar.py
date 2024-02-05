@@ -1,10 +1,16 @@
 import os
+import sys
 import json
 import glob
 from datetime import datetime
 import tempfile
 import subprocess
 import uuid
+import argparse
+
+modPath = rrGlobal.rrModPyrrPath()
+sys.path.append(modPath)
+import libpyRR39 as rr
 
 logs = []
 
@@ -30,7 +36,7 @@ class InjectEnvironment:
     variables (separated by ';') - will be filtered out from created .rrEnv.
 
     Ayon submission job must be adding this line to .xml submission file:
-    <SubmitterParameter>OSperjob_ayon_inject_envvar=1~1</SubmitterParameter>
+    <SubmitterParameter>PPAyoninjectenvvar=1~1</SubmitterParameter>
 
     Scripts logs into folder with metadata json - could be removed if there
     is a way how to log into RR output.
@@ -72,7 +78,7 @@ class InjectEnvironment:
         logs.append("InjectEnvironment ending")
 
     def _get_metadata_dir(self):
-        job = rr.getJob()
+        job = self._get_job()
         image_dir = job.imageDir
         logs.append(f"_get_metadata_dir::{image_dir}")
 
@@ -106,13 +112,32 @@ class InjectEnvironment:
                 "app": envs["AVALON_APP_NAME"],
                 "envgroup": "farm"}
 
+    def _get_job(self):
+        logs.append("get_jobs")
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-jid")
+        parser.add_argument("-authStr")
+        args = parser.parse_args()
+
+        # print("Set up server and login info")
+        tcp = rr._rrTCP("")
+        tcp.setServer(rrGlobal.rrServer(), 7773)
+        # tcp.setLogin(args.authStr, "")
+        tcp.setLogin("", "")
+
+        if not tcp.jobList_GetInfo(int(args.jid)):
+            print("Error jobList_GetInfo: " + tcp.errorMessage())
+            sys.exit()
+
+        return tcp.jobs.getJobSend(int(args.jid))
+
     def _get_job_environments(self):
         """Gets environments set on job.
 
         It seems that it is not possible to query "rrEnvList" on job directly,
         it must be parsed from .json document.
         """
-        job = rr.getJob()
+        job = self._get_job()
         env_list = job.customData_Str('rrEnvList')
         envs = {}
         for env in env_list.split("~~~"):
@@ -148,6 +173,8 @@ class InjectEnvironment:
         output, error = proc.communicate()
 
         if not os.path.exists(export_url):
+            logs.append("output::{}".format(output))
+            logs.append("error::{}".format(error))
             raise RuntimeError("Extract failed with {}".format(error))
 
         with open(export_url) as json_file:
@@ -196,7 +223,7 @@ class InjectEnvironment:
 
     def _set_rrEnv_to_job(self, rrEnv_path):
         logs.append(f"_set_rrEnv_to_job::{rrEnv_path}")
-        job = rr.getJob()
+        job = self._get_job()
 
         job.customDataSet_Str("rrEnvFile", rrEnv_path)
         rr.setJob(job)
