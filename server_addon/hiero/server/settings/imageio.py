@@ -1,7 +1,8 @@
-from pydantic import Field, validator
+from pydantic import validator
 
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     ensure_unique_names,
 )
 
@@ -39,34 +40,34 @@ class WorkfileColorspaceSettings(BaseSettingsModel):
     thumbnail_name = thumbnailLut
     """
 
-    ocioConfigName: str = Field(
+    ocioConfigName: str = SettingsField(
         title="OpenColorIO Config",
         description="Switch between OCIO configs",
         enum_resolver=ocio_configs_switcher_enum,
         conditionalEnum=True
     )
-    workingSpace: str = Field(
+    workingSpace: str = SettingsField(
         title="Working Space"
     )
-    viewerLut: str = Field(
+    viewerLut: str = SettingsField(
         title="Viewer"
     )
-    eightBitLut: str = Field(
+    eightBitLut: str = SettingsField(
         title="8-bit files"
     )
-    sixteenBitLut: str = Field(
+    sixteenBitLut: str = SettingsField(
         title="16-bit files"
     )
-    logLut: str = Field(
+    logLut: str = SettingsField(
         title="Log files"
     )
-    floatLut: str = Field(
+    floatLut: str = SettingsField(
         title="Float files"
     )
-    thumbnailLut: str = Field(
+    thumbnailLut: str = SettingsField(
         title="Thumnails"
     )
-    monitorOutLut: str = Field(
+    monitorOutLut: str = SettingsField(
         title="Monitor"
     )
 
@@ -74,38 +75,38 @@ class WorkfileColorspaceSettings(BaseSettingsModel):
 class ClipColorspaceRulesItems(BaseSettingsModel):
     _layout = "expanded"
 
-    regex: str = Field("", title="Regex expression")
-    colorspace: str = Field("", title="Colorspace")
+    regex: str = SettingsField("", title="Regex expression")
+    colorspace: str = SettingsField("", title="Colorspace")
 
 
 class RegexInputsModel(BaseSettingsModel):
-    inputs: list[ClipColorspaceRulesItems] = Field(
+    inputs: list[ClipColorspaceRulesItems] = SettingsField(
         default_factory=list,
         title="Inputs"
     )
 
 
 class ImageIOConfigModel(BaseSettingsModel):
-    override_global_config: bool = Field(
+    override_global_config: bool = SettingsField(
         False,
         title="Override global OCIO config"
     )
-    filepath: list[str] = Field(
+    filepath: list[str] = SettingsField(
         default_factory=list,
         title="Config path"
     )
 
 
 class ImageIOFileRuleModel(BaseSettingsModel):
-    name: str = Field("", title="Rule name")
-    pattern: str = Field("", title="Regex pattern")
-    colorspace: str = Field("", title="Colorspace name")
-    ext: str = Field("", title="File extension")
+    name: str = SettingsField("", title="Rule name")
+    pattern: str = SettingsField("", title="Regex pattern")
+    colorspace: str = SettingsField("", title="Colorspace name")
+    ext: str = SettingsField("", title="File extension")
 
 
 class ImageIOFileRulesModel(BaseSettingsModel):
-    activate_host_rules: bool = Field(False)
-    rules: list[ImageIOFileRuleModel] = Field(
+    activate_host_rules: bool = SettingsField(False)
+    rules: list[ImageIOFileRuleModel] = SettingsField(
         default_factory=list,
         title="Rules"
     )
@@ -119,18 +120,18 @@ class ImageIOFileRulesModel(BaseSettingsModel):
 class ImageIOSettings(BaseSettingsModel):
     """Hiero color management project settings. """
     _isGroup: bool = True
-    activate_host_color_management: bool = Field(
+    activate_host_color_management: bool = SettingsField(
         True, title="Enable Color Management"
     )
-    ocio_config: ImageIOConfigModel = Field(
+    ocio_config: ImageIOConfigModel = SettingsField(
         default_factory=ImageIOConfigModel,
         title="OCIO config"
     )
-    file_rules: ImageIOFileRulesModel = Field(
+    file_rules: ImageIOFileRulesModel = SettingsField(
         default_factory=ImageIOFileRulesModel,
         title="File Rules"
     )
-    workfile: WorkfileColorspaceSettings = Field(
+    workfile: WorkfileColorspaceSettings = SettingsField(
         default_factory=WorkfileColorspaceSettings,
         title="Workfile"
     )
@@ -140,7 +141,7 @@ class ImageIOSettings(BaseSettingsModel):
     - no need for `inputs` middle part. It can stay
       directly on `regex_inputs`
     """
-    regexInputs: RegexInputsModel = Field(
+    regexInputs: RegexInputsModel = SettingsField(
         default_factory=RegexInputsModel,
         title="Assign colorspace to clips via rules"
     )

@@ -10,7 +10,7 @@ from openpype.hosts.nuke.api.lib import (
 
 from openpype.pipeline.publish import (
     PublishXmlValidationError,
-    OptionalPyblishPluginMixin,
+    OptionalPyblishPluginMixin
 )
 
 

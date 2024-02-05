@@ -1,6 +1,7 @@
-from pydantic import validator, Field
+from pydantic import validator
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     ensure_unique_names,
     task_types_enum
 )
@@ -28,18 +29,18 @@ def nuke_product_types_enum():
 
 
 class NodeModel(BaseSettingsModel):
-    name: str = Field(
+    name: str = SettingsField(
         title="Node name"
     )
-    nodeclass: str = Field(
+    nodeclass: str = SettingsField(
         "",
         title="Node class"
     )
-    dependent: str = Field(
+    dependent: str = SettingsField(
         "",
         title="Incoming dependency"
     )
-    knobs: list[KnobModel] = Field(
+    knobs: list[KnobModel] = SettingsField(
         default_factory=list,
         title="Knobs",
     )
@@ -52,7 +53,7 @@ class NodeModel(BaseSettingsModel):
 
 
 class CollectInstanceDataModel(BaseSettingsModel):
-    sync_workfile_version_on_product_types: list[str] = Field(
+    sync_workfile_version_on_product_types: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=nuke_product_types_enum,
         title="Sync workfile versions for familes"
@@ -60,14 +61,14 @@ class CollectInstanceDataModel(BaseSettingsModel):
 
 
 class OptionalPluginModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
 
 
 class ValidateKnobsModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    knobs: str = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    knobs: str = SettingsField(
         "{}",
         title="Knobs",
         widget="textarea",
@@ -79,31 +80,31 @@ class ValidateKnobsModel(BaseSettingsModel):
 
 
 class ExtractReviewDataModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
+    enabled: bool = SettingsField(title="Enabled")
 
 
 class ExtractReviewDataLutModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
+    enabled: bool = SettingsField(title="Enabled")
 
 
 class BakingStreamFilterModel(BaseSettingsModel):
-    task_types: list[str] = Field(
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=nuke_render_publish_types_enum,
         title="Sync workfile versions for familes"
     )
-    product_names: list[str] = Field(
+    product_names: list[str] = SettingsField(
         default_factory=list, title="Product names")
 
 
 class ReformatNodesRepositionNodes(BaseSettingsModel):
-    node_class: str = Field(title="Node class")
-    knobs: list[KnobModel] = Field(
+    node_class: str = SettingsField(title="Node class")
+    knobs: list[KnobModel] = SettingsField(
         default_factory=list,
         title="Node knobs")
 
@@ -115,41 +116,41 @@ class ReformatNodesConfigModel(BaseSettingsModel):
     Order of reformat nodes is important. First reformat node will
     be applied first and last reformat node will be applied last.
     """
-    enabled: bool = Field(False)
-    reposition_nodes: list[ReformatNodesRepositionNodes] = Field(
+    enabled: bool = SettingsField(False)
+    reposition_nodes: list[ReformatNodesRepositionNodes] = SettingsField(
         default_factory=list,
         title="Reposition knobs"
     )
 
 
 class IntermediateOutputModel(BaseSettingsModel):
-    name: str = Field(title="Output name")
-    filter: BakingStreamFilterModel = Field(
+    name: str = SettingsField(title="Output name")
+    filter: BakingStreamFilterModel = SettingsField(
         title="Filter", default_factory=BakingStreamFilterModel)
-    read_raw: bool = Field(
+    read_raw: bool = SettingsField(
         False,
         title="Read raw switch"
     )
-    viewer_process_override: str = Field(
+    viewer_process_override: str = SettingsField(
         "",
         title="Viewer process override"
     )
-    bake_viewer_process: bool = Field(
+    bake_viewer_process: bool = SettingsField(
         True,
         title="Bake viewer process"
     )
-    bake_viewer_input_process: bool = Field(
+    bake_viewer_input_process: bool = SettingsField(
         True,
         title="Bake viewer input process node (LUT)"
     )
-    reformat_nodes_config: ReformatNodesConfigModel = Field(
+    reformat_nodes_config: ReformatNodesConfigModel = SettingsField(
         default_factory=ReformatNodesConfigModel,
         title="Reformat Nodes")
-    extension: str = Field(
+    extension: str = SettingsField(
         "mov",
         title="File extension"
     )
-    add_custom_tags: list[str] = Field(
+    add_custom_tags: list[str] = SettingsField(
         title="Custom tags", default_factory=list)
 
 
@@ -157,123 +158,125 @@ class ExtractReviewDataMovModel(BaseSettingsModel):
     """[deprecated] use Extract Review Data Baking
     Streams instead.
     """
-    enabled: bool = Field(title="Enabled")
-    viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    outputs: list[IntermediateOutputModel] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    viewer_lut_raw: bool = SettingsField(title="Viewer lut raw")
+    outputs: list[IntermediateOutputModel] = SettingsField(
         default_factory=list,
         title="Baking streams"
     )
 
 
 class ExtractReviewIntermediatesModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    outputs: list[IntermediateOutputModel] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    viewer_lut_raw: bool = SettingsField(title="Viewer lut raw")
+    outputs: list[IntermediateOutputModel] = SettingsField(
         default_factory=list,
         title="Baking streams"
     )
 
 
 class FSubmissionNoteModel(BaseSettingsModel):
-    enabled: bool = Field(title="enabled")
-    template: str = Field(title="Template")
+    enabled: bool = SettingsField(title="enabled")
+    template: str = SettingsField(title="Template")
 
 
 class FSubmistingForModel(BaseSettingsModel):
-    enabled: bool = Field(title="enabled")
-    template: str = Field(title="Template")
+    enabled: bool = SettingsField(title="enabled")
+    template: str = SettingsField(title="Template")
 
 
 class FVFXScopeOfWorkModel(BaseSettingsModel):
-    enabled: bool = Field(title="enabled")
-    template: str = Field(title="Template")
+    enabled: bool = SettingsField(title="enabled")
+    template: str = SettingsField(title="Template")
 
 
 class ExctractSlateFrameParamModel(BaseSettingsModel):
-    f_submission_note: FSubmissionNoteModel = Field(
+    f_submission_note: FSubmissionNoteModel = SettingsField(
         title="f_submission_note",
         default_factory=FSubmissionNoteModel
     )
-    f_submitting_for: FSubmistingForModel = Field(
+    f_submitting_for: FSubmistingForModel = SettingsField(
         title="f_submitting_for",
         default_factory=FSubmistingForModel
     )
-    f_vfx_scope_of_work: FVFXScopeOfWorkModel = Field(
+    f_vfx_scope_of_work: FVFXScopeOfWorkModel = SettingsField(
         title="f_vfx_scope_of_work",
         default_factory=FVFXScopeOfWorkModel
     )
 
 
 class ExtractSlateFrameModel(BaseSettingsModel):
-    viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    key_value_mapping: ExctractSlateFrameParamModel = Field(
+    viewer_lut_raw: bool = SettingsField(title="Viewer lut raw")
+    key_value_mapping: ExctractSlateFrameParamModel = SettingsField(
         title="Key value mapping",
         default_factory=ExctractSlateFrameParamModel
     )
 
 
 class IncrementScriptVersionModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
 
 
 class PublishPuginsModel(BaseSettingsModel):
-    CollectInstanceData: CollectInstanceDataModel = Field(
+    CollectInstanceData: CollectInstanceDataModel = SettingsField(
         title="Collect Instance Version",
         default_factory=CollectInstanceDataModel,
         section="Collectors"
     )
-    ValidateCorrectAssetContext: OptionalPluginModel = Field(
+    ValidateCorrectAssetContext: OptionalPluginModel = SettingsField(
         title="Validate Correct Folder Name",
         default_factory=OptionalPluginModel,
         section="Validators"
     )
-    ValidateContainers: OptionalPluginModel = Field(
+    ValidateContainers: OptionalPluginModel = SettingsField(
         title="Validate Containers",
         default_factory=OptionalPluginModel
     )
-    ValidateKnobs: ValidateKnobsModel = Field(
+    ValidateKnobs: ValidateKnobsModel = SettingsField(
         title="Validate Knobs",
         default_factory=ValidateKnobsModel
     )
-    ValidateOutputResolution: OptionalPluginModel = Field(
+    ValidateOutputResolution: OptionalPluginModel = SettingsField(
         title="Validate Output Resolution",
         default_factory=OptionalPluginModel
     )
-    ValidateGizmo: OptionalPluginModel = Field(
+    ValidateGizmo: OptionalPluginModel = SettingsField(
         title="Validate Gizmo",
         default_factory=OptionalPluginModel
     )
-    ValidateBackdrop: OptionalPluginModel = Field(
+    ValidateBackdrop: OptionalPluginModel = SettingsField(
         title="Validate Backdrop",
         default_factory=OptionalPluginModel
     )
-    ValidateScriptAttributes: OptionalPluginModel = Field(
+    ValidateScriptAttributes: OptionalPluginModel = SettingsField(
         title="Validate workfile attributes",
         default_factory=OptionalPluginModel
     )
-    ExtractReviewData: ExtractReviewDataModel = Field(
+    ExtractReviewData: ExtractReviewDataModel = SettingsField(
         title="Extract Review Data",
         default_factory=ExtractReviewDataModel
     )
-    ExtractReviewDataLut: ExtractReviewDataLutModel = Field(
+    ExtractReviewDataLut: ExtractReviewDataLutModel = SettingsField(
         title="Extract Review Data Lut",
         default_factory=ExtractReviewDataLutModel
     )
-    ExtractReviewDataMov: ExtractReviewDataMovModel = Field(
+    ExtractReviewDataMov: ExtractReviewDataMovModel = SettingsField(
         title="Extract Review Data Mov",
         default_factory=ExtractReviewDataMovModel
     )
-    ExtractReviewIntermediates: ExtractReviewIntermediatesModel = Field(
-        title="Extract Review Intermediates",
-        default_factory=ExtractReviewIntermediatesModel
+    ExtractReviewIntermediates: ExtractReviewIntermediatesModel = (
+        SettingsField(
+            title="Extract Review Intermediates",
+            default_factory=ExtractReviewIntermediatesModel
+        )
     )
-    ExtractSlateFrame: ExtractSlateFrameModel = Field(
+    ExtractSlateFrame: ExtractSlateFrameModel = SettingsField(
         title="Extract Slate Frame",
         default_factory=ExtractSlateFrameModel
     )
-    IncrementScriptVersion: IncrementScriptVersionModel = Field(
+    IncrementScriptVersion: IncrementScriptVersionModel = SettingsField(
         title="Increment Workfile Version",
         default_factory=IncrementScriptVersionModel,
         section="Integrators"

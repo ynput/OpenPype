@@ -1,23 +1,22 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class LoadClipModel(BaseSettingsModel):
-    enabled: bool = Field(
+    enabled: bool = SettingsField(
         True,
         title="Enabled"
     )
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types"
     )
-    clip_name_template: str = Field(
+    clip_name_template: str = SettingsField(
         title="Clip name template"
     )
 
 
 class LoaderPuginsModel(BaseSettingsModel):
-    LoadClip: LoadClipModel = Field(
+    LoadClip: LoadClipModel = SettingsField(
         default_factory=LoadClipModel,
         title="Load Clip"
     )

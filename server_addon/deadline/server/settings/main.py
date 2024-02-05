@@ -1,6 +1,10 @@
-from pydantic import Field, validator
+from pydantic import validator
 
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    ensure_unique_names,
+)
 
 from .publish_plugins import (
     PublishPluginsModel,
@@ -10,8 +14,8 @@ from .publish_plugins import (
 
 class ServerListSubmodel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: str = Field(title="Value")
+    name: str = SettingsField(title="Name")
+    value: str = SettingsField(title="Value")
 
 
 async def defined_deadline_ws_name_enum_resolver(
@@ -33,18 +37,18 @@ async def defined_deadline_ws_name_enum_resolver(
 
 
 class DeadlineSettings(BaseSettingsModel):
-    deadline_urls: list[ServerListSubmodel] = Field(
+    deadline_urls: list[ServerListSubmodel] = SettingsField(
         default_factory=list,
         title="System Deadline Webservice URLs",
         scope=["studio"],
     )
-    deadline_server: str = Field(
+    deadline_server: str = SettingsField(
         title="Project deadline server",
         section="---",
         scope=["project"],
         enum_resolver=defined_deadline_ws_name_enum_resolver
     )
-    publish: PublishPluginsModel = Field(
+    publish: PublishPluginsModel = SettingsField(
         default_factory=PublishPluginsModel,
         title="Publish Plugins",
     )
