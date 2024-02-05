@@ -244,7 +244,9 @@ def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
     # and link it
     for rpass in passes:
         if rpass.name == "Image":
-            pass_name = "rgba" if multi_exr else "beauty"
+            if not multi_exr:
+                continue
+            pass_name = "rgba"
         else:
             pass_name = rpass.name
         filename = f"{name}{aov_sep}{pass_name}.####"
@@ -263,6 +265,7 @@ def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
     pass_name = "composite"
     filename = f"{name}{aov_sep}{pass_name}.####"
     comp_socket = slots.new(pass_name if multi_exr else filename)
+    filepath = str(output_path / filename.lstrip("/"))
     aov_file_products.append(("Composite", filepath))
 
     for link in tree.links:
