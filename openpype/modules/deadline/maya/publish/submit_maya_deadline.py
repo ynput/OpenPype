@@ -130,7 +130,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
 
         # Default values from profile
-        profile = get_deadline_job_settings(project_settings, cls.hosts[0], cls.log)
+        profile = get_deadline_job_settings(project_settings, cls.hosts[0])
 
         cls.priority = profile.get("priority", cls.priority)
         cls.pool = profile.get("pool", cls.pool)

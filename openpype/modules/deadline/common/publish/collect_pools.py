@@ -30,12 +30,8 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
         # deadline.publish.CollectDeadlinePools
         host = get_current_host_name()
         profile = get_deadline_job_settings(project_settings, host)
-        if profile:
-            cls.primary_pool = profile.get("pool", cls.pool)
-            cls.secondary_pool = profile.get(
-                "pool_secondary",
-                cls.pool_secondary
-            )
+        cls.primary_pool = profile.get("pool", cls.pool)
+        cls.secondary_pool = profile.get("pool_secondary", cls.pool_secondary)
 
     def process(self, instance):
         attr_values = self.get_attr_values_from_data(instance.data)

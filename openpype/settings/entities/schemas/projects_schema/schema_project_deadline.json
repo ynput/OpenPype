@@ -51,12 +51,12 @@
                             },
                             {
                                 "type": "text",
-                                "key": "primary_pool",
+                                "key": "pool",
                                 "label": "Primary pool"
                             },
                             {
                                 "type": "text",
-                                "key": "secondary_pool",
+                                "key": "pool_secondary",
                                 "label": "Secondary Pool"
                             },
                             {

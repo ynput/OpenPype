@@ -82,7 +82,7 @@ class MayaSubmitRemotePublishDeadline(
 
         project_name = get_current_project_name()
         project_settings = context.data["project_settings"]
-        profile = get_deadline_job_settings(project_settings, "maya", self.log)
+        profile = get_deadline_job_settings(project_settings, self.hosts[0])
 
         job_name = set_custom_deadline_name(
             instance,
@@ -104,20 +104,16 @@ class MayaSubmitRemotePublishDeadline(
         job_info.UserName = context.data.get("user")
         job_info.Comment = context.data.get("comment", "")
 
-        # use setting for publish job on farm, no reason to have it separately
+        # Use setting for publish job on farm, no reason to have it separately
         deadline_publish_job_sett = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
         job_info.Department = deadline_publish_job_sett["department"]
         job_info.ChunkSize = deadline_publish_job_sett["chunk_size"]
-        job_info.Priority = profile.get("priority", deadline_publish_job_sett["priority"])
+        job_info.Priority = profile.get("priority", 50)
         job_info.Group = deadline_publish_job_sett["group"]
-        job_info.Pool = profile.get("primary_pool", deadline_publish_job_sett["pool"])
-        if profile:
-            if profile.get("secondary_pool"):
-                job_info.SecondaryPool = profile["secondary_pool"]
-            if profile.get("limit_machine"):
-                job_info.MachineLimit = profile["limit_machine"]
-            if profile.get("limit_plugins"):
-                job_info.LimitGroups = profile["limit_plugins"]
+        job_info.Pool = profile.get("primary_pool", "")
+        job_info.SecondaryPool = profile.get("secondary_pool", "")
+        job_info.MachineLimit = profile.get("limit_machine", 0)
+        job_info.LimitGroups = profile.get("limit_plugins", "")
 
         # Include critical environment variables with submission + Session
         keys = [

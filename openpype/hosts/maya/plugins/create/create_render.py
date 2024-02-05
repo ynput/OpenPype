@@ -63,8 +63,6 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
 
     def get_instance_attr_defs(self):
         """Create instance settings."""
-        default_limit_machine = 0
-        default_limits_plugin = []
         modules_system_settings = get_system_settings()["modules"]
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
@@ -75,11 +73,10 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
 
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
-        profile = get_deadline_job_settings(project_settings, "maya", self.log)
+        profile = get_deadline_job_settings(project_settings, "maya")
 
-        if profile:
-            default_limit_machine = profile.get("limit_machine", 0)
-            default_limits_plugin = profile.get("limits_plugin", [])
+        default_limit_machine = profile.get("limit_machine", 0)
+        default_limits_plugin = profile.get("limits_plugin", [])
 
         return [
             BoolDef("review",
@@ -101,12 +98,12 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
                     tooltip="Override existing rendered frames "
                             "(if they exist).",
                     default=True),
-            NumberDef("machineLimit",
+            NumberDef("limit_machine",
                       label="Machine Limit",
                       default=default_limit_machine,
                       minimum=0,
                       decimals=0),
-            EnumDef("limits",
+            EnumDef("limits_plugin",
                     label="Limit Groups",
                     items=limits_plugin,
                     default=default_limits_plugin,
