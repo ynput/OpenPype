@@ -96,10 +96,8 @@
             "optional": false,
             "active": true,
             "department": "",
-            "pool": "",
             "group": "",
             "chunk_size": 1,
-            "priority": 50,
             "publishing_script": "",
             "skip_integration_repre_list": [],
             "aov_filter": {

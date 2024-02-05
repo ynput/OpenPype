@@ -44,34 +44,29 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     # presets
-    primary_pool = None
-    secondary_pool = None
+    pool = ""
+    pool_secondary = ""
     priority = 50
-    machine_limit = 0
+    limit_machine = 0
+    limits_plugin = []
 
     chunk_size = 1
     concurrent_tasks = 1
     group = ""
     department = ""
-    limits_plugin = {}
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
-        profile = get_deadline_job_settings(
-            project_settings,
-            "nuke",
-            cls.log
+        profile = get_deadline_job_settings(project_settings, "nuke")
+        cls.priority = profile.get("priority", cls.priority)
+        cls.pool = profile.get("pool", cls.pool)
+        cls.secondary_pool = profile.get(
+            "pool_secondary",
+            cls.pool_secondary
         )
-        if profile:
-            cls.priority = profile.get("priority", cls.priority)
-            cls.primary_pool = profile.get("primary_pool", cls.primary_pool)
-            cls.secondary_pool = profile.get(
-                "secondary_pool",
-                cls.secondary_pool
-            )
 
     @classmethod
     def get_attribute_defs(cls):
@@ -80,12 +75,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             TextDef(
                 "primaryPool",
                 label="Primary Pool",
-                default=cls.primary_pool
+                default=cls.pool
             ),
             TextDef(
                 "secondaryPool",
                 label="Secondary Pool",
-                default=cls.secondary_pool
+                default=cls.pool_secondary
             ),
             NumberDef(
                 "priority",
@@ -315,11 +310,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "Department": self.department,
 
                 "Pool": instance.data["attributeValues"].get(
-                    "primary_pool", self.primary_pool),
+                    "primary_pool", self.pool),
                 "SecondaryPool": instance.data["attributeValues"].get(
-                    "secondary_pool", self.secondary_pool),
+                    "secondary_pool", self.pool),
                 "MachineLimit": instance.data["creator_attributes"].get(
-                    "machineLimit", self.machine_limit),
+                    "machineLimit", self.limit_machine),
                 "Group": self.group,
 
                 "Plugin": "Nuke",

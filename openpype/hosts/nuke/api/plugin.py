@@ -321,7 +321,7 @@ class NukeWriteCreator(NukeCreator):
         attr_defs = [
             self._get_render_target_enum(),
         ]
-        attr_defs.extend(self._get_machine_and_group_limit())
+        attr_defs.extend(self._get_limits_machine_and_plugin())
         # add reviewable attribute
         if "reviewable" in self.instance_attributes:
             attr_defs.append(self._get_reviewable_bool())
@@ -343,7 +343,7 @@ class NukeWriteCreator(NukeCreator):
             label="Render target"
         )
 
-    def _get_machine_and_group_limit(self):
+    def _get_limits_machine_and_plugin(self):
         from openpype_modules.deadline import (
             get_deadline_job_settings,
             get_deadline_limits_plugin
@@ -370,14 +370,14 @@ class NukeWriteCreator(NukeCreator):
 
         return [
             NumberDef(
-                "machineLimit",
+                "limit_machine",
                 label="Machine Limit",
                 default=default_limit_machine,
                 minimum=0,
                 decimals=0
             ),
             EnumDef(
-                "limits",
+                "limits_plugin",
                 label="Plugin Limits",
                 items=limits_plugin,
                 default=default_limits_plugin,

@@ -14,7 +14,7 @@ from openpype.client import (
     get_last_version_by_subset_name,
 )
 from openpype.pipeline import publish, legacy_io
-from openpype.lib import EnumDef, is_running_from_build
+from openpype.lib import EnumDef
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.version_start import get_versioning_start
 
@@ -127,13 +127,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "KITSU_PWD"
     ]
 
-    # custom deadline attributes
-    deadline_department = ""
-    deadline_pool = ""
-    deadline_pool_secondary = ""
-    deadline_group = ""
-    deadline_chunk_size = 1
-    deadline_priority = None
+    # Deadline attributes
+    priority = 50
+    pool = ""
+    pool_secondary = ""
+    limit_machine = 0
+    limits_plugins = []
+    department = ""
+    group = ""
+    chunk_size = 1
 
     # regex for finding frame number in string
     R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
@@ -163,10 +165,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         settings = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
 
         cls.deadline_department = settings.get("department", "")
-        cls.deadline_pool = settings.get("pool", "")
         cls.deadline_group = settings.get("group", "")
         cls.deadline_chunk_size = settings.get("chunk_size", 1)
-        cls.deadline_priority = settings.get("priority", None)
 
     def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
@@ -246,14 +246,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if mongo_url:
                 environment["OPENPYPE_MONGO"] = mongo_url
 
-        # Using instance priority, OR if not set, project priority
-        priority = instance.data.get("priority", self.deadline_priority)
-        if priority is None:
-            # This shouldn't happen, but let's be extra careful
-            priority = 50
-            self.log.warning("Job priority isn't set on instance and project settings, "
-                             "this shouldn't happen, using fallback value ({}).".format(priority))
-
         instance_settings = self.get_attr_values_from_data(instance.data)
         initial_status = instance_settings.get("publishJobState", "Active")
         # TODO: Remove this backwards compatibility of `suspend_publish`
@@ -272,9 +264,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             args.append("--automatic-tests")
 
         # Generate the payload for Deadline submission
-        secondary_pool = (
-            self.deadline_pool_secondary or instance.data.get("secondaryPool")
-        )
         payload = {
             "JobInfo": {
                 "Plugin": deadline_plugin,
@@ -285,12 +274,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
                 "Department": self.deadline_department,
                 "ChunkSize": self.deadline_chunk_size,
-                "Priority": priority,
+                "Priority": instance.data.get("priority", 50),
                 "InitialStatus": initial_status,
 
                 "Group": self.deadline_group,
-                "Pool": self.deadline_pool or instance.data.get("primaryPool"),
-                "SecondaryPool": secondary_pool,
+                "Pool": instance.data.get("primaryPool", ""),
+                "SecondaryPool": instance.data.get("secondaryPool", ""),
                 # ensure the outputdirectory with correct slashes
                 "OutputDirectory0": output_dir.replace("\\", "/")
             },

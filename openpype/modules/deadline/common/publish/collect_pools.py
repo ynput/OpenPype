@@ -22,38 +22,33 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
                 "renderlayer",
                 "maxrender"]
 
-    primary_pool = None
-    secondary_pool = None
+    pool = ""
+    pool_secondary = ""
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         # deadline.publish.CollectDeadlinePools
         host = get_current_host_name()
-        profile = get_deadline_job_settings(project_settings, host, cls.log)
+        profile = get_deadline_job_settings(project_settings, host)
         if profile:
-            cls.primary_pool = profile.get("primary_pool", cls.primary_pool)
+            cls.primary_pool = profile.get("pool", cls.pool)
             cls.secondary_pool = profile.get(
-                "secondary_pool",
-                cls.secondary_pool
+                "pool_secondary",
+                cls.pool_secondary
             )
 
     def process(self, instance):
-
         attr_values = self.get_attr_values_from_data(instance.data)
+
         if not instance.data.get("primaryPool"):
-            instance.data["primaryPool"] = (
-                attr_values.get("primaryPool") or self.primary_pool or "none"
-            )
-        if instance.data["primaryPool"] == "-":
-            instance.data["primaryPool"] = None
+            instance.data["primaryPool"] = attr_values.get("primaryPool", self.primary_pool)
+        elif instance.data["primaryPool"] == "-":
+            instance.data["primaryPool"] = ""
 
         if not instance.data.get("secondaryPool"):
-            instance.data["secondaryPool"] = (
-                attr_values.get("secondaryPool") or self.secondary_pool or "none"  # noqa
-            )
-
-        if instance.data["secondaryPool"] == "-":
-            instance.data["secondaryPool"] = None
+            instance.data["secondaryPool"] = attr_values.get("secondaryPool", self.secondary_pool)
+        elif instance.data["secondaryPool"] == "-":
+            instance.data["secondaryPool"] = ""
 
     @classmethod
     def get_attribute_defs(cls):

@@ -116,7 +116,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     tile_assembler_plugin = "OpenPypeTileAssembler"
     priority = 50
     tile_priority = 50
-    limit = []  # limit groups
+    pool = ""
+    pool_secondary = ""
+    limit_machine = 0
+    limits_plugins = []
     jobInfo = {}
     pluginInfo = {}
     group = "none"
@@ -125,9 +128,15 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
-        profile = get_deadline_job_settings(project_settings, "maya", cls.log)
-        if profile:
-            cls.priority = profile.get("priority", cls.priority)
+
+        # Default values from profile
+        profile = get_deadline_job_settings(project_settings, cls.hosts[0], cls.log)
+
+        cls.priority = profile.get("priority", cls.priority)
+        cls.pool = profile.get("pool", cls.pool)
+        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
+        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
+        cls.limits_plugins = profile.get("limits_plugin", cls.limits_plugins)
 
         # Take some defaults from settings
         cls.asset_dependencies = settings.get("asset_dependencies",
@@ -136,7 +145,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                             cls.import_reference)
         cls.use_published = settings.get("use_published", cls.use_published)
         cls.tile_priority = settings.get("tile_priority", cls.tile_priority)
-        cls.limit = settings.get("limit", cls.limit)
         cls.group = settings.get("group", cls.group)
         cls.strict_error_checking = settings.get("strict_error_checking",
                                                  cls.strict_error_checking)
@@ -187,18 +195,18 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
-        job_info.Pool = instance.data.get("primaryPool")
-        job_info.SecondaryPool = instance.data.get("secondaryPool")
+        job_info.Pool = instance.data.get("primaryPool", self.pool)
+        job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
         job_info.Comment = context.data.get("comment")
         job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.MachineLimit = instance.data.get("machineLimit", 0)
+        job_info.MachineLimit = instance.data.get("machineLimit", self.limit_machine)
 
         if self.group != "none" and self.group:
             job_info.Group = self.group
 
-        self.limit = instance.data.get("limits")
-        if self.limit:
-            job_info.LimitGroups = ",".join(self.limit)
+        limits_plugin = instance.data.get("limits", self.limits_plugins)
+        if limits_plugin:
+            job_info.LimitGroups = ",".join(limits_plugin)
 
         attr_values = self.get_attr_values_from_data(instance.data)
         render_globals = instance.data.setdefault("renderGlobals", dict())
@@ -485,10 +493,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                                      self.tile_priority)
         assembly_job_info.TileJob = False
 
-        # TODO: This should be a new publisher attribute definition
-        pool = instance.context.data["project_settings"]["deadline"]
-        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["pool"]
-        assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
+        assembly_job_info.Pool = instance.data.get("primaryPool", self.pool)
+        assembly_job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
 
         assembly_plugin_info = {
             "CleanupTiles": 1,

@@ -65,13 +65,8 @@ class MayaSubmitDeadlineModel(BaseSettingsModel):
     use_published: bool = Field(title="Use Published scene")
     import_reference: bool = Field(title="Use Scene with Imported Reference")
     asset_dependencies: bool = Field(title="Use Asset dependencies")
-    priority: int = Field(title="Priority")
     tile_priority: int = Field(title="Tile Priority")
     group: str = Field(title="Group")
-    limit: list[str] = Field(
-        default_factory=list,
-        title="Limit Groups"
-    )
     tile_assembler_plugin: str = Field(
         title="Tile Assembler Plugin",
         enum_resolver=tile_assembler_enum,
@@ -93,7 +88,7 @@ class MayaSubmitDeadlineModel(BaseSettingsModel):
         title="Disable Strict Error Check profiles"
     )
 
-    @validator("limit", "scene_patches")
+    @validator("scene_patches")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
@@ -197,13 +192,13 @@ class AfterEffectsSubmitDeadlineModel(BaseSettingsModel):
 
 class CelactionSubmitDeadlineModel(BaseSettingsModel):
     enabled: bool = Field(True, title="Enabled")
-    deadline_department: str = Field("", title="Deadline apartment")
-    deadline_priority: int = Field(50, title="Deadline priority")
-    deadline_pool: str = Field("", title="Deadline pool")
-    deadline_pool_secondary: str = Field("", title="Deadline pool (secondary)")
-    deadline_group: str = Field("", title="Deadline Group")
-    deadline_chunk_size: int = Field(10, title="Deadline Chunk size")
-    deadline_job_delay: str = Field(
+    department: str = Field("", title="Department")
+    priority: int = Field(50, title="Priority")
+    pool: str = Field("", title="Pool")
+    pool_secondary: str = Field("", title="Pool (secondary)")
+    group: str = Field("", title="Group")
+    chunk_size: int = Field(10, title="Chunk size")
+    job_delay: str = Field(
         "", title="Delay job (timecode dd:hh:mm:ss)"
     )
 
@@ -221,11 +216,12 @@ class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
     """Process submitted job on farm."""
 
     enabled: bool = Field(title="Enabled")
-    deadline_department: str = Field(title="Department")
-    deadline_pool: str = Field(title="Pool")
-    deadline_group: str = Field(title="Group")
-    deadline_chunk_size: int = Field(title="Chunk Size")
-    deadline_priority: int = Field(title="Priority")
+    department: str = Field(title="Department")
+    pool: str = Field(title="Pool")
+    pool_secondary: str = Field("", title="Pool (secondary)")
+    group: str = Field(title="Group")
+    chunk_size: int = Field(title="Chunk Size")
+    priority: int = Field(title="Priority")
     publishing_script: str = Field(title="Publishing script path")
     skip_integration_repre_list: list[str] = Field(
         default_factory=list,
