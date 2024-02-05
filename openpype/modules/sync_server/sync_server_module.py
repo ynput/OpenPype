@@ -7,7 +7,6 @@ import copy
 import signal
 from collections import deque, defaultdict
 
-import click
 from bson.objectid import ObjectId
 
 from openpype.client import (
@@ -15,7 +14,12 @@ from openpype.client import (
     get_representations,
     get_representation_by_id,
 )
-from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
+from openpype.modules import (
+    OpenPypeModule,
+    ITrayModule,
+    IPluginPaths,
+    click_wrap,
+)
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -2405,7 +2409,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
         return presets[project_name]['sites'][site_name]['root']
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
     # Webserver module implementation
     def webserver_initialization(self, server_manager):
@@ -2417,13 +2421,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
             )
 
 
-@click.group(SyncServerModule.name, help="SyncServer module related commands.")
+@click_wrap.group(
+    SyncServerModule.name,
+    help="SyncServer module related commands.")
 def cli_main():
     pass
 
 
 @cli_main.command()
-@click.option(
+@click_wrap.option(
     "-a",
     "--active_site",
     required=True,
