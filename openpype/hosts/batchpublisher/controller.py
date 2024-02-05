@@ -297,11 +297,6 @@ class BatchPublisherController(object):
                 representation_name = EXT_TO_REP_NAME_MAP.get(extension)
                 if not representation_name:
                     representation_name = extension.lstrip(".")
-                # Try to extract version number from filename
-                version = None
-                results = re.findall("_v[0-9]*", filepath)
-                if results:
-                    version = int(results[0].replace("_v", ""))
                 product_item = ProductItem(
                     filepath,
                     product_type,
