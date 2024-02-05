@@ -11,7 +11,7 @@ def open_template_ui(builder, main_window):
 
     result = message_window.message(
         title="Opening template",
-        message="Caution! This will overwrite your current scene.\n"
+        message="Caution! You will loose unsaved changes.\n"
         "Do you want to continue?",
         parent=main_window,
         level="question",
