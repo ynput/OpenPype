@@ -13,7 +13,7 @@ class ValidateShotsContinous(
     """Ensure shots are continous without gaps."""
 
     order = ValidateContentsOrder
-    label = "Shots Continous"
+    label = "Shots Continuous"
     hosts = ["maya"]
     families = ["shot"]
     optional = True
