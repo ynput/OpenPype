@@ -162,6 +162,7 @@ class TimersManager(
     def tray_start(self, *_a, **_kw):
         if self._idle_manager:
             self._idle_manager.start()
+        self.show_message()
 
     def tray_exit(self):
         if self._idle_manager:
@@ -373,8 +374,8 @@ class TimersManager(
                     ).format(module.name))
 
     def show_message(self):
-        if self.is_running is False:
-            return
+        # if self.is_running is False:
+        #     return
         if not self._widget_user_idle.is_showed():
             self._widget_user_idle.reset_countdown()
             self._widget_user_idle.show()
