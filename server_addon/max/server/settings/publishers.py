@@ -96,6 +96,11 @@ class PublishersModel(BaseSettingsModel):
 
 
 DEFAULT_PUBLISH_SETTINGS = {
+    "ValidateInstanceInContext": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
     "ValidateFrameRange": {
         "enabled": True,
         "optional": True,
