@@ -10,7 +10,7 @@ from openpype.pipeline.publish import (
 class ValidateShotsContinuous(
     pyblish.api.InstancePlugin, OptionalPyblishPluginMixin
 ):
-    """Ensure shots are continous without gaps."""
+    """Ensure shots are continuous without gaps."""
 
     order = ValidateContentsOrder
     label = "Shots Continuous"
