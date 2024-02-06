@@ -50,6 +50,7 @@ configuration in project settings.
             instance_data (dict): The instance data.
             pre_create_data (dict):
         """
+
         csv_filepath_data = pre_create_data.get("csv_filepath_data", {})
 
         folder = csv_filepath_data.get("directory", "")
@@ -252,6 +253,8 @@ configuration in project settings.
                         and not thumbnails_processed
                         or not reviewable
                     ):
+                        if not thumbnails:
+                            continue
                         # here we will use only one thumbnail for
                         # all representations
                         relative_thumbnail_path = repre_data["thumbnailPath"]
@@ -280,7 +283,7 @@ configuration in project settings.
                     )
 
                     new_instance["prepared_data_for_repres"].append(
-                        (repre_data["color"], representation_data)
+                        (repre_data["colorspace"], representation_data)
                     )
 
     def _get_refactor_thumbnail_path(
