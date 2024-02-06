@@ -19,7 +19,7 @@ class CreateShot(plugin.MayaCreator):
                 "use_selection", label="Use timeline selection", default=True
             ),
             TextDef(
-                "prefix", label="Custom Prefix", placeholder="sh_"
+                "prefix", label="Custom Prefix", placeholder="{subset_name}_"
             )
         ]
 
