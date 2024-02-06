@@ -116,6 +116,17 @@
                                 {"tif": "tif"},
                                 {"jpg": "jpg"}
                             ]
+                        },
+                        {
+                            "key": "default_frame_range_option",
+                            "label": "Default frame range source",
+                            "type": "enum",
+                            "multiselect": false,
+                            "enum_items": [
+                                {"asset_db": "Current asset context"},
+                                {"render_range": "From render in/out"},
+                                {"comp_range": "From composition timeline"}
+                            ]
                         }
                     ]
                 },
@@ -165,6 +176,11 @@
                                 {"tif": "tif"},
                                 {"jpg": "jpg"}
                             ]
+                        },
+                        {
+                            "type": "number",
+                            "key": "default_frame",
+                            "label": "Default rendered frame"
                         }
                     ]
                 }

@@ -1,11 +1,14 @@
 import os
 
-import click
-
 from openpype import AYON_SERVER_ENABLED
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
-from openpype.modules import OpenPypeModule, ITrayAction, IHostAddon
+from openpype.modules import (
+    click_wrap,
+    OpenPypeModule,
+    ITrayAction,
+    IHostAddon,
+)
 
 TRAYPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,10 +42,12 @@ class TrayPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
         run_detached_process(args)
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
 
-@click.group(TrayPublishAddon.name, help="TrayPublisher related commands.")
+@click_wrap.group(
+    TrayPublishAddon.name,
+    help="TrayPublisher related commands.")
 def cli_main():
     pass
 
@@ -57,31 +62,31 @@ def launch():
 
 
 @cli_main.command()
-@click.option(
+@click_wrap.option(
     "--csv-filepath",
     help="Full path to CSV file with data",
     type=click.Path(exists=True),
     required=True
 )
-@click.option(
+@click_wrap.option(
     "--project-name",
     help="Project name in which the context will be used",
     type=str,
     required=True
 )
-@click.option(
+@click_wrap.option(
     "--asset-name",
     help="Asset name in which the context will be used",
     type=str,
     required=True
 )
-@click.option(
+@click_wrap.option(
     "--task-name",
     help="Task name under Asset in which the context will be used",
     type=str,
     required=False
 )
-@click.option(
+@click_wrap.option(
     "--ignore-validators",
     help="Option to ignore validators",
     type=bool,

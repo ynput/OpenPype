@@ -1,6 +1,6 @@
-from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     ensure_unique_names,
 )
 
@@ -15,23 +15,23 @@ from .publish_plugins import (
 
 
 class TvpaintSettings(BaseSettingsModel):
-    imageio: TVPaintImageIOModel = Field(
+    imageio: TVPaintImageIOModel = SettingsField(
         default_factory=TVPaintImageIOModel,
         title="Color Management (ImageIO)"
     )
-    stop_timer_on_application_exit: bool = Field(
+    stop_timer_on_application_exit: bool = SettingsField(
         title="Stop timer on application exit")
-    create: CreatePluginsModel = Field(
+    create: CreatePluginsModel = SettingsField(
         default_factory=CreatePluginsModel,
         title="Create plugins"
     )
-    publish: PublishPluginsModel = Field(
+    publish: PublishPluginsModel = SettingsField(
         default_factory=PublishPluginsModel,
         title="Publish plugins")
-    load: LoadPluginsModel = Field(
+    load: LoadPluginsModel = SettingsField(
         default_factory=LoadPluginsModel,
         title="Load plugins")
-    workfile_builder: WorkfileBuilderPlugin = Field(
+    workfile_builder: WorkfileBuilderPlugin = SettingsField(
         default_factory=WorkfileBuilderPlugin,
         title="Workfile Builder"
     )

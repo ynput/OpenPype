@@ -8,9 +8,9 @@ in global space here until are required or used.
 """
 
 import os
-import click
 
 from openpype.modules import (
+    click_wrap,
     JsonFilesSettingsDef,
     OpenPypeAddOn,
     ModulesManager,
@@ -115,10 +115,12 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
         }
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
 
-@click.group(ExampleAddon.name, help="Example addon dynamic cli commands.")
+@click_wrap.group(
+    ExampleAddon.name,
+    help="Example addon dynamic cli commands.")
 def cli_main():
     pass
 

@@ -1299,15 +1299,21 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
                 # If asset or subset are selected for switching, we use latest
                 # version else we try to keep the current container version.
+                version_name = None
                 if (
-                    selected_asset not in (None, container_asset_name)
-                    or selected_subset not in (None, container_subset_name)
+                    selected_asset in (None, container_asset_name)
+                    and selected_subset in (None, container_subset_name)
                 ):
-                    version_name = max(version_docs_by_name)
-                else:
-                    version_name = container_version["name"]
+                    version_name = container_version.get("name")
 
-                version_doc = version_docs_by_name[version_name]
+                version_doc = None
+                if version_name is not None:
+                    version_doc = version_docs_by_name.get(version_name)
+
+                if version_doc is None:
+                    version_name = max(version_docs_by_name)
+                    version_doc = version_docs_by_name[version_name]
+
                 version_id = version_doc["_id"]
                 repres_docs_by_name = repre_docs_by_parent_id_by_name[
                     version_id
