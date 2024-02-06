@@ -1,5 +1,6 @@
 import os
 
+from pathlib import Path
 from openpype import AYON_SERVER_ENABLED
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
@@ -65,7 +66,7 @@ def launch():
 @click_wrap.option(
     "--csv-filepath",
     help="Full path to CSV file with data",
-    type=click.Path(exists=True),
+    type=str,
     required=True
 )
 @click_wrap.option(
@@ -112,6 +113,10 @@ def ingestcsv(
         )
 
     from .csv_publish import csvpublish
+
+    # use Path to check if csv_filepath exists
+    if not Path(csv_filepath).exists():
+        raise FileNotFoundError(f"File {csv_filepath} does not exist.")
 
     csvpublish(
         csv_filepath,
