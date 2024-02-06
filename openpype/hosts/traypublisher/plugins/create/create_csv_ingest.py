@@ -38,8 +38,9 @@ configuration in project settings.
     order = 10
 
     # settings for this creator
-    column_config = {}
-    representation_config = {}
+    columns_config = {}
+    representations_config = {}
+
 
     def create(self, subset_name, instance_data, pre_create_data):
         """Create an product from each row found in the CSV.
@@ -308,7 +309,7 @@ configuration in project settings.
         _, extension = os.path.splitext(filepath)
 
         # validate filepath is having correct extension based on output
-        config_repre_data = self.representation_config["representations"]
+        config_repre_data = self.representations_config["representations"]
         repre_name = repre_data["representationName"]
         if repre_name not in config_repre_data:
             raise KeyError(
@@ -409,13 +410,13 @@ configuration in project settings.
 
         # make sure csv file contains columns from following list
         required_columns = [
-            name for name, value in self.column_config["columns"].items()
+            name for name, value in self.columns_config["columns"].items()
             if value["required"]
         ]
         # get data from csv file
         with open(csv_file_path, "r") as csv_file:
             csv_reader = csv.DictReader(
-                csv_file, delimiter=self.column_config["csv_delimiter"])
+                csv_file, delimiter=self.columns_config["csv_delimiter"])
 
             # fix fieldnames
             # sometimes someone can keep extra space at the start or end of
@@ -546,17 +547,17 @@ configuration in project settings.
             "Representation Tags", row_data)
 
         # convert tags value to list
-        tags_list = copy(self.representation_config["default_tags"])
+        tags_list = copy(self.representations_config["default_tags"])
         if repre_tags:
             tags_list = []
-            tags_delimiter = self.representation_config["tags_delimiter"]
+            tags_delimiter = self.representations_config["tags_delimiter"]
             # strip spaces from repre_tags
             if tags_delimiter in repre_tags:
                 tags = repre_tags.split(tags_delimiter)
                 for _tag in tags:
                     tags_list.append(("".join(_tag.strip())).lower())
             else:
-                tags_list.append(("".join(tags.strip())).lower())
+                tags_list.append(repre_tags)
 
         representation_data = {
             "colorspace": colorspace,
@@ -578,9 +579,9 @@ configuration in project settings.
         self, column_name, row_data, default_value=None
     ):
         """Get row value with validation"""
-        column_config = self.column_config["columns"]
+        columns_config = self.columns_config["columns"]
         # get column data from column config
-        column_data = column_config.get(column_name)
+        column_data = columns_config.get(column_name)
         if not column_data:
             raise KeyError(
                 f"Column '{column_name}' not found in column config."
