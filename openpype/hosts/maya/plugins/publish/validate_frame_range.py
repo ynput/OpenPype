@@ -53,12 +53,32 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
             )
             return
 
-        frame_start_handle = int(context.data.get("frameStartHandle"))
-        frame_end_handle = int(context.data.get("frameEndHandle"))
-        handle_start = int(context.data.get("handleStart"))
-        handle_end = int(context.data.get("handleEnd"))
-        frame_start = int(context.data.get("frameStart"))
-        frame_end = int(context.data.get("frameEnd"))
+        # Get to the task doc of the project, folder path and task
+        project_name = instance.context.data["projectEntity"]["name"]
+        folder_path = instance.context.data["asset"]
+        task_name = instance.context.data["task"]
+        from ayon_api import get_task_by_name, get_folder_by_path
+        folder = get_folder_by_path(project_name, folder_path)
+        asset_id = folder["id"]
+        task = get_task_by_name(project_name, asset_id, task_name)
+
+        # Get frame information from task context
+        # NOTE: there is no "frameStartHandle" and "frameEndHandle" on task.
+        # NOTE: So im making the frame start handle equal to the handleStart.
+        frame_start_handle = task["attrib"]["handleStart"]
+        frame_end_handle = task["attrib"]["handleStart"]
+        handle_start = task["attrib"]["handleStart"]
+        handle_end = task["attrib"]["handleEnd"]
+        frame_start = task["attrib"]["frameStart"]
+        frame_end = task["attrib"]["frameEnd"]
+
+        # Get frame information from asset context
+        # frame_start_handle = int(context.data.get("frameStartHandle"))
+        # frame_end_handle = int(context.data.get("frameEndHandle"))
+        # handle_start = int(context.data.get("handleStart"))
+        # handle_end = int(context.data.get("handleEnd"))
+        # frame_start = int(context.data.get("frameStart"))
+        # frame_end = int(context.data.get("frameEnd"))
 
         inst_start = int(instance.data.get("frameStartHandle"))
         inst_end = int(instance.data.get("frameEndHandle"))
