@@ -445,9 +445,12 @@ class LoadClip(plugin.NukeLoader):
             "representation": representation["name"],
             "ext": repre_cont["representation"],
             "id": representation["_id"],
-            "class_name": self.__class__.__name__
+            "class_name": self.__class__.__name__,
+            "product": {
+                "name": repre_cont["subset"],
+                "type": repre_cont["family"],
+            },
         }
-
         return self.node_name_template.format(**name_data)
 
     def _set_colorspace(self, node, version_data, repre_data, path):
