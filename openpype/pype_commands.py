@@ -147,9 +147,6 @@ class PypeCommands:
         for plugin in plugins:
             print(plugin)
 
-        print("HELLO?? why is gui being true")
-        print(gui)
-        log.warning(gui)
         if gui:
             from openpype.tools.utils.host_tools import show_publish
             from openpype.tools.utils.lib import qt_app_context
