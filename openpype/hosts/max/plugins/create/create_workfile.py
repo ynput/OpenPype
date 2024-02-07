@@ -38,6 +38,9 @@ class CreateWorkfile(plugin.MaxCreatorBase, AutoCreator):
 
         if current_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
+            subset_name = self.get_subset_name(
+                variant, task_name, asset_doc, project_name, host_name
+            )
             data = {
                 "task": task_name,
                 "variant": variant
@@ -51,9 +54,6 @@ class CreateWorkfile(plugin.MaxCreatorBase, AutoCreator):
                 self.get_dynamic_data(
                     variant, task_name, asset_doc,
                     project_name, host_name, current_instance)
-            )
-            subset_name = self.get_subset_name(
-                variant, task_name, asset_doc, project_name, host_name
             )
             self.log.info("Auto-creating workfile instance...")
             instance_node = self.create_node(subset_name)
