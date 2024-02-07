@@ -1,23 +1,22 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class MenuShortcut(BaseSettingsModel):
     """Nuke general project settings."""
 
-    create: str = Field(
+    create: str = SettingsField(
         title="Create..."
     )
-    publish: str = Field(
+    publish: str = SettingsField(
         title="Publish..."
     )
-    load: str = Field(
+    load: str = SettingsField(
         title="Load..."
     )
-    manage: str = Field(
+    manage: str = SettingsField(
         title="Manage..."
     )
-    build_workfile: str = Field(
+    build_workfile: str = SettingsField(
         title="Build Workfile..."
     )
 
@@ -25,7 +24,7 @@ class MenuShortcut(BaseSettingsModel):
 class GeneralSettings(BaseSettingsModel):
     """Nuke general project settings."""
 
-    menu: MenuShortcut = Field(
+    menu: MenuShortcut = SettingsField(
         default_factory=MenuShortcut,
         title="Menu Shortcuts",
     )

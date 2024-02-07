@@ -3483,3 +3483,43 @@ def get_filenames_without_hash(filename, frame_start, frame_end):
             new_filename = filename_without_hashes.format(frame)
             filenames.append(new_filename)
     return filenames
+
+
+def create_camera_node_by_version():
+    """Function to create the camera with the latest node class
+    For Nuke version 14.0 or later, the Camera4 camera node class
+        would be used
+    For the version before, the Camera2 camera node class
+        would be used
+    Returns:
+        Node: camera node
+    """
+    nuke_number_version = nuke.NUKE_VERSION_MAJOR
+    if nuke_number_version >= 14:
+        return nuke.createNode("Camera4")
+    else:
+        return nuke.createNode("Camera2")
+
+
+def link_knobs(knobs, node, group_node):
+    """Link knobs from inside `group_node`"""
+
+    missing_knobs = []
+    for knob in knobs:
+        if knob in group_node.knobs():
+            continue
+
+        if knob not in node.knobs().keys():
+            missing_knobs.append(knob)
+
+        link = nuke.Link_Knob("")
+        link.makeLink(node.name(), knob)
+        link.setName(knob)
+        link.setFlag(0x1000)
+        group_node.addKnob(link)
+
+    if missing_knobs:
+        raise ValueError(
+            "Write node exposed knobs missing:\n\n{}\n\nPlease review"
+            " project settings.".format("\n".join(missing_knobs))
+        )

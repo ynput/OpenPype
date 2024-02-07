@@ -3,9 +3,8 @@ import json
 import collections
 import platform
 
-import click
-
 from openpype.modules import (
+    click_wrap,
     OpenPypeModule,
     ITrayModule,
     IPluginPaths,
@@ -489,7 +488,7 @@ class FtrackModule(
         return cred.get("username"), cred.get("api_key")
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
 
 def _check_ftrack_url(url):
@@ -540,24 +539,24 @@ def resolve_ftrack_url(url, logger=None):
     return ftrack_url
 
 
-@click.group(FtrackModule.name, help="Ftrack module related commands.")
+@click_wrap.group(FtrackModule.name, help="Ftrack module related commands.")
 def cli_main():
     pass
 
 
 @cli_main.command()
-@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
-@click.option("--ftrack-url", envvar="FTRACK_SERVER",
+@click_wrap.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click_wrap.option("--ftrack-url", envvar="FTRACK_SERVER",
               help="Ftrack server url")
-@click.option("--ftrack-user", envvar="FTRACK_API_USER",
+@click_wrap.option("--ftrack-user", envvar="FTRACK_API_USER",
               help="Ftrack api user")
-@click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
+@click_wrap.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
               help="Ftrack api key")
-@click.option("--legacy", is_flag=True,
+@click_wrap.option("--legacy", is_flag=True,
               help="run event server without mongo storing")
-@click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
+@click_wrap.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
               help="Clockify API key.")
-@click.option("--clockify-workspace", envvar="CLOCKIFY_WORKSPACE",
+@click_wrap.option("--clockify-workspace", envvar="CLOCKIFY_WORKSPACE",
               help="Clockify workspace")
 def eventserver(
     debug,

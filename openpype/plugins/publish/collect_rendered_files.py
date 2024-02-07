@@ -93,14 +93,6 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         assert ctx.get("user") == data.get("user"), ctx_err % "user"
         assert ctx.get("version") == data.get("version"), ctx_err % "version"
 
-        # ftrack credentials are passed as environment variables by Deadline
-        # to publish job, but Muster doesn't pass them.
-        if data.get("ftrack") and not os.environ.get("FTRACK_API_USER"):
-            ftrack = data.get("ftrack")
-            os.environ["FTRACK_API_USER"] = ftrack["FTRACK_API_USER"]
-            os.environ["FTRACK_API_KEY"] = ftrack["FTRACK_API_KEY"]
-            os.environ["FTRACK_SERVER"] = ftrack["FTRACK_SERVER"]
-
         # now we can just add instances from json file and we are done
         any_staging_dir_persistent = False
         for instance_data in data.get("instances"):

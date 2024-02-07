@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from . import click_wrap
 from .interfaces import (
     ILaunchHookPaths,
     IPluginPaths,
@@ -28,6 +29,8 @@ from .base import (
 
 
 __all__ = (
+    "click_wrap",
+
     "ILaunchHookPaths",
     "IPluginPaths",
     "ITrayModule",
