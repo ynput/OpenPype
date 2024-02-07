@@ -93,7 +93,7 @@ class CreateWorkfile(plugin.MaxCreatorBase, AutoCreator):
 
     def update_instances(self, update_list):
         for created_inst, _ in update_list:
-            instance_node =  created_inst.get("instance_node")
+            instance_node = created_inst.get("instance_node")
             imprint(
                 instance_node,
                 created_inst.data_to_store()
