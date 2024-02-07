@@ -97,8 +97,6 @@ class PypeCommands:
             install_openpype_plugins,
             get_global_context,
         )
-        from openpype.tools.utils.host_tools import show_publish
-        from openpype.tools.utils.lib import qt_app_context
 
         # Register target and host
         import pyblish.api
@@ -149,7 +147,12 @@ class PypeCommands:
         for plugin in plugins:
             print(plugin)
 
+        print("HELLO?? why is gui being true")
+        print(gui)
+        log.warning(gui)
         if gui:
+            from openpype.tools.utils.host_tools import show_publish
+            from openpype.tools.utils.lib import qt_app_context
             with qt_app_context():
                 show_publish()
         else:
