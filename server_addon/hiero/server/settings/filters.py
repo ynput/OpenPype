@@ -1,17 +1,23 @@
-from pydantic import Field, validator
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
+from pydantic import validator
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    ensure_unique_names,
+)
 
 
 class PublishGUIFilterItemModel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: bool = Field(True, title="Active")
+    name: str = SettingsField(title="Name")
+    value: bool = SettingsField(True, title="Active")
 
 
 class PublishGUIFiltersModel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: list[PublishGUIFilterItemModel] = Field(default_factory=list)
+    name: str = SettingsField(title="Name")
+    value: list[PublishGUIFilterItemModel] = SettingsField(
+        default_factory=list
+    )
 
     @validator("value")
     def validate_unique_outputs(cls, value):
