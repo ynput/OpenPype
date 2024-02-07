@@ -44,7 +44,8 @@ from .lib import (
     get_view_process_node,
     get_viewer_config_from_string,
     deprecated,
-    get_filenames_without_hash
+    get_filenames_without_hash,
+    link_knobs
 )
 from .pipeline import (
     list_instances,
@@ -1344,3 +1345,11 @@ def _remove_old_knobs(node):
                 node.removeKnob(knob)
         except ValueError:
             pass
+
+
+def exposed_write_knobs(settings, plugin_name, instance_node):
+    exposed_knobs = settings["nuke"]["create"][plugin_name]["exposed_knobs"]
+    if exposed_knobs:
+        instance_node.addKnob(nuke.Text_Knob('', 'Write Knobs'))
+    write_node = nuke.allNodes(group=instance_node, filter="Write")[0]
+    link_knobs(exposed_knobs, write_node, instance_node)

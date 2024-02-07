@@ -1458,7 +1458,7 @@ class _AyonSettingsCache:
 
             variant = "production"
             if is_dev_mode_enabled():
-                variant = cls._get_dev_mode_settings_variant()
+                variant = cls._get_bundle_name()
             elif is_staging_enabled():
                 variant = "staging"
 
@@ -1473,28 +1473,6 @@ class _AyonSettingsCache:
     @classmethod
     def _get_bundle_name(cls):
         return os.environ["AYON_BUNDLE_NAME"]
-
-    @classmethod
-    def _get_dev_mode_settings_variant(cls):
-        """Develop mode settings variant.
-
-        Returns:
-            str: Name of settings variant.
-        """
-
-        con = get_ayon_server_api_connection()
-        bundles = con.get_bundles()
-        user = con.get_user()
-        username = user["name"]
-        for bundle in bundles["bundles"]:
-            if (
-                bundle.get("isDev")
-                and bundle.get("activeUser") == username
-            ):
-                return bundle["name"]
-        # Return fake variant - distribution logic will tell user that he
-        #   does not have set any dev bundle
-        return "dev"
 
     @classmethod
     def get_value_by_project(cls, project_name):

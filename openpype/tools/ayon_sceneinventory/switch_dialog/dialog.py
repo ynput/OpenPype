@@ -1212,12 +1212,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         ))
 
         version_ids = set()
-        version_docs_by_parent_id = {}
+        version_docs_by_parent_id_and_name = collections.defaultdict(dict)
         for version_doc in version_docs:
-            parent_id = version_doc["parent"]
-            if parent_id not in version_docs_by_parent_id:
-                version_ids.add(version_doc["_id"])
-                version_docs_by_parent_id[parent_id] = version_doc
+            version_ids.add(version_doc["_id"])
+            product_id = version_doc["parent"]
+            name = version_doc["name"]
+            version_docs_by_parent_id_and_name[product_id][name] = version_doc
 
         hero_version_docs_by_parent_id = {}
         for hero_version_doc in hero_version_docs:
@@ -1242,7 +1242,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 selected_product_name,
                 selected_representation,
                 product_docs_by_parent_and_name,
-                version_docs_by_parent_id,
+                version_docs_by_parent_id_and_name,
                 hero_version_docs_by_parent_id,
                 repre_docs_by_parent_id_by_name,
             )
@@ -1256,10 +1256,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         container,
         loader,
         selected_folder_id,
-        product_name,
+        selected_product_name,
         selected_representation,
         product_docs_by_parent_and_name,
-        version_docs_by_parent_id,
+        version_docs_by_parent_id_and_name,
         hero_version_docs_by_parent_id,
         repre_docs_by_parent_id_by_name,
     ):
@@ -1272,15 +1272,18 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         container_product_id = container_version["parent"]
         container_product = self._product_docs_by_id[container_product_id]
+        container_product_name = container_product["name"]
+
+        container_folder_id = container_product["parent"]
 
         if selected_folder_id:
             folder_id = selected_folder_id
         else:
-            folder_id = container_product["parent"]
+            folder_id = container_folder_id
 
         products_by_name = product_docs_by_parent_and_name[folder_id]
-        if product_name:
-            product_doc = products_by_name[product_name]
+        if selected_product_name:
+            product_doc = products_by_name[selected_product_name]
         else:
             product_doc = products_by_name[container_product["name"]]
 
@@ -1300,7 +1303,26 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                     repre_doc = _repres.get(container_repre_name)
 
         if not repre_doc:
-            version_doc = version_docs_by_parent_id[product_id]
+            version_docs_by_name = (
+                version_docs_by_parent_id_and_name[product_id]
+            )
+            # If asset or subset are selected for switching, we use latest
+            # version else we try to keep the current container version.
+            version_name = None
+            if (
+                selected_folder_id in (None, container_folder_id)
+                and selected_product_name in (None, container_product_name)
+            ):
+                version_name = container_version.get("name")
+
+            version_doc = None
+            if version_name is not None:
+                version_doc = version_docs_by_name.get(version_name)
+
+            if version_doc is None:
+                version_name = max(version_docs_by_name)
+                version_doc = version_docs_by_name[version_name]
+
             version_id = version_doc["_id"]
             repres_by_name = repre_docs_by_parent_id_by_name[version_id]
             if selected_representation:

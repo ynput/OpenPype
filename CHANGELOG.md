@@ -1,6 +1,132 @@
 # Changelog
 
 
+## [3.18.6](https://github.com/ynput/OpenPype/tree/3.18.6)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.5...3.18.6)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>AYON: Use `SettingsField` from ayon server <a href="https://github.com/ynput/OpenPype/pull/6173">#6173</a></summary>
+
+This is preparation for new version of pydantic which will require to customize the field class for AYON purposes as raw pydantic Field could not be used.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Expose write knobs - OP-7592 <a href="https://github.com/ynput/OpenPype/pull/6137">#6137</a></summary>
+
+This PR adds `exposed_knobs` to the creator plugins settings at `ayon+settings://nuke/create/CreateWriteRender/exposed_knobs`.When exposed knobs will be linked from the write node to the outside publish group, for users to adjust.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Remove kitsu addon <a href="https://github.com/ynput/OpenPype/pull/6172">#6172</a></summary>
+
+Removed kitsu addon from server addons because already has own repository.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Fusion: provide better logging for validate saver crash due type error <a href="https://github.com/ynput/OpenPype/pull/6082">#6082</a></summary>
+
+Handles reported issue for `NoneType` error thrown in conversion `int(tool["Comments"][frame])`. It is most likely happening when saver node has no input connections.There is a validator for that, but it might be not obvious, that this error is caused by missing input connections and it has been already reported by `"Validate Saver Has Input"`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Workfile Template Builder: Use correct variable in create placeholder <a href="https://github.com/ynput/OpenPype/pull/6141">#6141</a></summary>
+
+Use correct variable where failed instances are stored for validation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>ExtractOIIOTranscode: Missing product_names to subsets conversion <a href="https://github.com/ynput/OpenPype/pull/6159">#6159</a></summary>
+
+The `Product Names` filtering should be fixed with this.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix missing animation data when updating blend assets <a href="https://github.com/ynput/OpenPype/pull/6165">#6165</a></summary>
+
+Fix missing animation data when updating blend assets.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: Pre-fill of version works in AYON <a href="https://github.com/ynput/OpenPype/pull/6180">#6180</a></summary>
+
+Use `folderPath` instead of `asset` in AYON mode to calculate next available version.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Chore: remove Muster <a href="https://github.com/ynput/OpenPype/pull/6085">#6085</a></summary>
+
+Muster isn't maintained for a long time and it wasn't working anyway. This is removing related code from the code base. If there is renewed interest in Muster, it needs to be re-implemented in modern AYON compatible way.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Maya: change label in the render settings to be more readable <a href="https://github.com/ynput/OpenPype/pull/6134">#6134</a></summary>
+
+AYON replacement for #5713.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.5](https://github.com/ynput/OpenPype/tree/3.18.5)
 
 
