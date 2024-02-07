@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating workfiles."""
 from openpype import AYON_SERVER_ENABLED
-from openpype.pipeline import CreatedInstance, AutoCreator, CreatorError
+from openpype.pipeline import CreatedInstance, AutoCreator
 from openpype.client import get_asset_by_name, get_asset_name_identifier
 from openpype.hosts.max.api import plugin
 from openpype.hosts.max.api.lib import read, imprint
@@ -91,15 +91,9 @@ class CreateWorkfile(plugin.MaxCreatorBase, AutoCreator):
             )
             self._add_instance_to_context(created_instance)
 
-
     def update_instances(self, update_list):
         for created_inst, changes in update_list:
             instance_node =  created_inst.get("instance_node")
-            new_values = {
-                key: changes[key].new_value
-                for key in changes.changed_keys
-            }
-
             imprint(
                 instance_node,
                 created_inst.data_to_store()
@@ -119,7 +113,6 @@ class CreateWorkfile(plugin.MaxCreatorBase, AutoCreator):
                 rt.Delete(instance_node)
 
             self._remove_instance_from_context(instance)
-
 
     def create_node(self, subset_name):
         if rt.getNodeByName(subset_name):
