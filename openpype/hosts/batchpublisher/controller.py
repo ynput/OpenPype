@@ -240,10 +240,12 @@ class BatchPublisherController(object):
                     filepath_parts = filepath.split(".")
                     filepath_parts[-2] = "#" * len(filepath_parts[-2])
                     # Replace the file path with the version with star in it
-                    filepath = ".".join(filepath_parts)
-                    frames = self._get_frames_for_filepath(filepath)
-                    frame_start = frames[0]
-                    frame_end = frames[-1]
+                    _filepath = ".".join(filepath_parts)
+                    frames = self._get_frames_for_filepath(_filepath)
+                    if frames:
+                        filepath = _filepath
+                        frame_start = frames[0]
+                        frame_end = frames[-1]
                 # Do not add ingest file path, if it's already been added
                 if filepath in product_items:
                     continue
@@ -277,10 +279,12 @@ class BatchPublisherController(object):
                     filepath_parts = filepath.split(".")
                     filepath_parts[-2] = "*"
                     # Replace the file path with the version with star in it
-                    filepath = ".".join(filepath_parts)
-                    frames = self._get_frames_for_filepath(filepath)
-                    frame_start = frames[0]
-                    frame_end = frames[-1]
+                    _filepath = ".".join(filepath_parts)
+                    frames = self._get_frames_for_filepath(_filepath)
+                    if frames:
+                        filepath = _filepath
+                        frame_start = frames[0]
+                        frame_end = frames[-1]
                 # Do not add ingest file path, if it's already been added
                 if filepath in product_items:
                     continue
@@ -371,6 +375,9 @@ Project: {self._selected_project_name}
         frames = list()
         for _filepath in glob.glob(filepath):
             filepath_parts = _filepath.split(".")
-            frame = int(filepath_parts[-2])
+            try:
+                frame = int(filepath_parts[-2])
+            except Exception:
+                continue
             frames.append(frame)
         return sorted(frames)
