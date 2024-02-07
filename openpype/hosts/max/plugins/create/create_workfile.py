@@ -92,7 +92,7 @@ class CreateWorkfile(plugin.MaxCreatorBase, AutoCreator):
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
-        for created_inst, changes in update_list:
+        for created_inst, _ in update_list:
             instance_node =  created_inst.get("instance_node")
             imprint(
                 instance_node,
