@@ -6,9 +6,9 @@
         "DefaultValues": {
             "pool": "",
             "pool_secondary": "",
-            "priority": 50,
+            "priority": 96,
             "limit_machine": 0,
-            "limits_plugin": [],
+            "limits_plugin": []
         },
         "profiles": []
     },

@@ -1,12 +1,21 @@
 import os
 import re
 
-from openpype.settings import get_current_project_settings
+from openpype.settings.lib import get_default_project_settings
 from openpype.lib import filter_profiles
 from openpype.pipeline.context_tools import (
     _get_modules_manager,
     get_current_task_name
 )
+
+
+class DeadlineDefaultJobAttrs(object):
+    deadline_job_attrs_global_settings = get_default_project_settings()['deadline']['JobAttrsValues']
+    pool = deadline_job_attrs_global_settings['DefaultValues']['pool']
+    pool_secondary = deadline_job_attrs_global_settings['DefaultValues']['pool_secondary']
+    priority = deadline_job_attrs_global_settings['DefaultValues']['priority']
+    limit_machine = deadline_job_attrs_global_settings['DefaultValues']['limit_machine']
+    limits_plugin = deadline_job_attrs_global_settings['DefaultValues']['limits_plugin']
 
 
 class SafeDict(dict):

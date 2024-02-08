@@ -48,7 +48,7 @@ from openpype_modules.deadline import (
     get_deadline_job_profile
 )
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -106,7 +106,8 @@ class ArnoldPluginInfo(object):
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
-                         OpenPypePyblishPluginMixin):
+                         OpenPypePyblishPluginMixin,
+                         DeadlineDefaultJobAttrs):
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
@@ -114,16 +115,12 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     targets = ["local"]
 
     tile_assembler_plugin = "OpenPypeTileAssembler"
-    priority = 50
     tile_priority = 50
-    pool = ""
-    pool_secondary = ""
-    limit_machine = 0
-    limits_plugins = []
     jobInfo = {}
     pluginInfo = {}
     group = "none"
     strict_error_checking = True
+
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
