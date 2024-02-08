@@ -77,13 +77,15 @@ class ValidateModelName(pyblish.api.InstancePlugin,
                     cls.log.error(
                         "Invalid subset name of the model {}.".format(name)
                     )
-                    invalid.append((rt.getNodeByName(name), "Model with invalid subset name"))
+                    invalid.append((rt.getNodeByName(name),
+                                    "Model with invalid subset name"))
             if "project" in reg.groupindex:
                 if matched_name.group("project") != project_name:
                     cls.log.error(
                         "Invalid project name of the model {}.".format(name)
                     )
-                    invalid.append((rt.getNodeByName(name), "Model with invalid project name"))
+                    invalid.append((rt.getNodeByName(name),
+                                    "Model with invalid project name"))
         return invalid
 
     def process(self, instance):
