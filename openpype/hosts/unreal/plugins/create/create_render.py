@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
-
-import unreal
-
-from openpype.hosts.unreal.api.pipeline import (
-    UNREAL_VERSION,
-    create_folder,
-    get_subsequences,
-)
 from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator
 )
+from openpype.hosts.unreal.api.pipeline import (
+    send_request
+)
+from openpype.pipeline import CreatorError
 from openpype.lib import (
     UILabelDef,
     UISeparatorDef,
@@ -49,178 +44,48 @@ class CreateRender(UnrealAssetCreator):
     ):
         # If the option to create a new level sequence is selected,
         # create a new level sequence and a master level.
+        root = "/Game/Ayon/Sequences"
+        sequence_dir = f"{root}/{subset_name}"
 
-        root = f"/Game/Ayon/Sequences"
+        master_lvl, sequence, seq_data = send_request(
+            "create_render_with_new_sequence",
+            params={
+                "sequence_dir": sequence_dir,
+                "subset_name": subset_name,
+                "start_frame": pre_create_data.get("start_frame"),
+                "end_frame": pre_create_data.get("end_frame")
+            })
 
-        # Create a new folder for the sequence in root
-        sequence_dir_name = create_folder(root, subset_name)
-        sequence_dir = f"{root}/{sequence_dir_name}"
-
-        unreal.log_warning(f"sequence_dir: {sequence_dir}")
-
-        # Create the level sequence
-        asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-        seq = asset_tools.create_asset(
-            asset_name=subset_name,
-            package_path=sequence_dir,
-            asset_class=unreal.LevelSequence,
-            factory=unreal.LevelSequenceFactoryNew())
-
-        seq.set_playback_start(pre_create_data.get("start_frame"))
-        seq.set_playback_end(pre_create_data.get("end_frame"))
-
-        pre_create_data["members"] = [seq.get_path_name()]
-
-        unreal.EditorAssetLibrary.save_asset(seq.get_path_name())
-
-        # Create the master level
-        if UNREAL_VERSION.major >= 5:
-            curr_level = unreal.LevelEditorSubsystem().get_current_level()
-        else:
-            world = unreal.EditorLevelLibrary.get_editor_world()
-            levels = unreal.EditorLevelUtils.get_levels(world)
-            curr_level = levels[0] if len(levels) else None
-            if not curr_level:
-                raise RuntimeError("No level loaded.")
-        curr_level_path = curr_level.get_outer().get_path_name()
-
-        # If the level path does not start with "/Game/", the current
-        # level is a temporary, unsaved level.
-        if curr_level_path.startswith("/Game/"):
-            if UNREAL_VERSION.major >= 5:
-                unreal.LevelEditorSubsystem().save_current_level()
-            else:
-                unreal.EditorLevelLibrary.save_current_level()
-
-        ml_path = f"{sequence_dir}/{subset_name}_MasterLevel"
-
-        if UNREAL_VERSION.major >= 5:
-            unreal.LevelEditorSubsystem().new_level(ml_path)
-        else:
-            unreal.EditorLevelLibrary.new_level(ml_path)
-
-        seq_data = {
-            "sequence": seq,
-            "output": f"{seq.get_name()}",
-            "frame_range": (
-                seq.get_playback_start(),
-                seq.get_playback_end())}
+        pre_create_data["members"] = [sequence]
 
         self.create_instance(
             instance_data, subset_name, pre_create_data,
-            seq.get_path_name(), seq.get_path_name(), ml_path, seq_data)
+            sequence, sequence, master_lvl, seq_data)
 
     def create_from_existing_sequence(
             self, subset_name, instance_data, pre_create_data
     ):
-        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        sel_objects = send_request("get_selected_assets")
 
-        sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
-        selection = [
-            a.get_path_name() for a in sel_objects
-            if a.get_class().get_name() == "LevelSequence"]
+        if not sel_objects:
+            raise CreatorError("Please select at least one Level Sequence.")
 
-        if len(selection) == 0:
-            raise RuntimeError("Please select at least one Level Sequence.")
-
-        seq_data = None
-
-        for sel in selection:
-            selected_asset = ar.get_asset_by_object_path(sel).get_asset()
-            selected_asset_path = selected_asset.get_path_name()
-
-            # Check if the selected asset is a level sequence asset.
-            if selected_asset.get_class().get_name() != "LevelSequence":
-                unreal.log_warning(
-                    f"Skipping {selected_asset.get_name()}. It isn't a Level "
-                    "Sequence.")
-
-            if pre_create_data.get("use_hierarchy"):
-                # The asset name is the the third element of the path which
-                # contains the map.
-                # To take the asset name, we remove from the path the prefix
-                # "/Game/OpenPype/" and then we split the path by "/".
-                sel_path = selected_asset_path
-                asset_name = sel_path.replace(
-                    "/Game/Ayon/", "").split("/")[0]
-
-                search_path = f"/Game/Ayon/{asset_name}"
-            else:
-                search_path = Path(selected_asset_path).parent.as_posix()
-
-            # Get the master sequence and the master level.
-            # There should be only one sequence and one level in the directory.
-            try:
-                ar_filter = unreal.ARFilter(
-                    class_names=["LevelSequence"],
-                    package_paths=[search_path],
-                    recursive_paths=False)
-                sequences = ar.get_assets(ar_filter)
-                master_seq = sequences[0].get_asset().get_path_name()
-                master_seq_obj = sequences[0].get_asset()
-                ar_filter = unreal.ARFilter(
-                    class_names=["World"],
-                    package_paths=[search_path],
-                    recursive_paths=False)
-                levels = ar.get_assets(ar_filter)
-                master_lvl = levels[0].get_asset().get_path_name()
-            except IndexError:
-                raise RuntimeError(
-                    f"Could not find the hierarchy for the selected sequence.")
-
-            # If the selected asset is the master sequence, we get its data
-            # and then we create the instance for the master sequence.
-            # Otherwise, we cycle from the master sequence to find the selected
-            # sequence and we get its data. This data will be used to create
-            # the instance for the selected sequence. In particular,
-            # we get the frame range of the selected sequence and its final
-            # output path.
-            master_seq_data = {
-                "sequence": master_seq_obj,
-                "output": f"{master_seq_obj.get_name()}",
-                "frame_range": (
-                    master_seq_obj.get_playback_start(),
-                    master_seq_obj.get_playback_end())}
-
-            if (selected_asset_path == master_seq or
-                    pre_create_data.get("use_hierarchy")):
-                seq_data = master_seq_data
-            else:
-                seq_data_list = [master_seq_data]
-
-                for seq in seq_data_list:
-                    subscenes = get_subsequences(seq.get('sequence'))
-
-                    for sub_seq in subscenes:
-                        sub_seq_obj = sub_seq.get_sequence()
-                        curr_data = {
-                            "sequence": sub_seq_obj,
-                            "output": (f"{seq.get('output')}/"
-                                       f"{sub_seq_obj.get_name()}"),
-                            "frame_range": (
-                                sub_seq.get_start_frame(),
-                                sub_seq.get_end_frame() - 1)}
-
-                        # If the selected asset is the current sub-sequence,
-                        # we get its data and we break the loop.
-                        # Otherwise, we add the current sub-sequence data to
-                        # the list of sequences to check.
-                        if sub_seq_obj.get_path_name() == selected_asset_path:
-                            seq_data = curr_data
-                            break
-
-                        seq_data_list.append(curr_data)
-
-                    # If we found the selected asset, we break the loop.
-                    if seq_data is not None:
-                        break
+        for selected_asset_path in sel_objects:
+            master_lvl, master_seq, seq_data = send_request(
+                "create_render_from_existing_sequence",
+                params={
+                    "selected_asset_path": selected_asset_path,
+                    "use_hierarchy": pre_create_data.get("use_hierarchy")
+                })
 
             # If we didn't find the selected asset, we don't create the
             # instance.
             if not seq_data:
-                unreal.log_warning(
-                    f"Skipping {selected_asset.get_name()}. It isn't a "
-                    "sub-sequence of the master sequence.")
+                message = (f"Skipping {selected_asset_path}. It isn't a "
+                           "sub-sequence of the master sequence.")
+                send_request(
+                    "log", params={"message": message, "level": "warning"})
+
                 continue
 
             self.create_instance(

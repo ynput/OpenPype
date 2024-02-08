@@ -68,7 +68,7 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                     new_data["setMembers"] = seq_name
                     new_data["family"] = "render"
                     new_data["families"] = ["render", "review"]
-                    new_data["parent"] = data.get("parent")
+                    new_data["version_id"] = data.get("version_id")
                     new_data["subset"] = f"{data.get('subset')}_{seq_name}"
                     new_data["level"] = data.get("level")
                     new_data["output"] = s.get('output')

@@ -4,46 +4,44 @@
 from .plugin import (
     UnrealActorCreator,
     UnrealAssetCreator,
-    Loader
+    UnrealBaseLoader,
 )
 
 from .pipeline import (
     install,
     uninstall,
+    imprint,
     ls,
+    ls_inst,
     publish,
-    containerise,
     show_creator,
     show_loader,
     show_publisher,
     show_manager,
     show_experimental_tools,
-    show_tools_dialog,
-    show_tools_popup,
+    containerise,
     instantiate,
     UnrealHost,
-    set_sequence_hierarchy,
-    generate_sequence,
     maintained_selection
 )
 
 __all__ = [
     "install",
     "uninstall",
-    "Loader",
+    "UnrealActorCreator",
+    "UnrealAssetCreator",
+    "UnrealBaseLoader",
+    "imprint",
     "ls",
+    "ls_inst",
     "publish",
-    "containerise",
     "show_creator",
     "show_loader",
     "show_publisher",
     "show_manager",
     "show_experimental_tools",
-    "show_tools_dialog",
-    "show_tools_popup",
+    "containerise",
     "instantiate",
     "UnrealHost",
-    "set_sequence_hierarchy",
-    "generate_sequence",
     "maintained_selection"
 ]

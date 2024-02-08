@@ -314,8 +314,8 @@ def create_unreal_project(project_name: str,
         raise NotImplementedError("Unsupported platform")
     if not python_path.exists():
         raise RuntimeError(f"Unreal Python not found at {python_path}")
-    subprocess.check_call(
-        [python_path.as_posix(), "-m", "pip", "install", "pyside2"])
+    # subprocess.check_call(
+    #     [python_path.as_posix(), "-m", "pip", "install", "pyside2"])
 
 
 def get_path_to_uat(engine_path: Path) -> Path:
