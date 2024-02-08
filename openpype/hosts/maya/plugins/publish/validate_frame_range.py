@@ -57,8 +57,16 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         project_name = instance.context.data["projectEntity"]["name"]
         folder_path = instance.context.data["asset"]
         task_name = instance.context.data["task"]
-        from ayon_api import get_task_by_name, get_folder_by_path
-        folder = get_folder_by_path(project_name, folder_path)
+        from ayon_api import (
+            get_task_by_name,
+            get_folder_by_path,
+            get_folder_by_name)
+        if "/" in folder_path:
+            folder = get_folder_by_path(project_name, folder_path)
+        else:
+            folder = get_folder_by_name(
+                project_name, folder_name=folder_path)
+
         asset_id = folder["id"]
         task = get_task_by_name(project_name, asset_id, task_name)
 
