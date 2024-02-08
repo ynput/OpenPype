@@ -95,13 +95,6 @@ Disable/Enable Standalone Publisher option
 **`Deadline Rest URL`** - URL to deadline webservice that. This URL must be reachable from every
 workstation that should be submitting render jobs to deadline via OpenPype.
 
-### Muster
-
-**`Muster Rest URL`** - URL to Muster webservice that. This URL must be reachable from every
-workstation that should be submitting render jobs to muster via OpenPype.
-
-**`templates mapping`** - you can customize Muster templates to match your existing setup here.
-
 ### Royal Render
 
 **`Royal Render Root Paths`** - multi platform paths to Royal Render installation.

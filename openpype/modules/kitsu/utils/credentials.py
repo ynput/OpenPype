@@ -64,8 +64,10 @@ def clear_credentials():
     user_registry = OpenPypeSecureRegistry("kitsu_user")
 
     # Set local settings
-    user_registry.delete_item("login")
-    user_registry.delete_item("password")
+    if user_registry.get_item("login", None) is not None:
+        user_registry.delete_item("login")
+    if user_registry.get_item("password", None) is not None:
+        user_registry.delete_item("password")
 
 
 def save_credentials(login: str, password: str):
@@ -92,8 +94,9 @@ def load_credentials() -> Tuple[str, str]:
     # Get user registry
     user_registry = OpenPypeSecureRegistry("kitsu_user")
 
-    return user_registry.get_item("login", None), user_registry.get_item(
-        "password", None
+    return (
+        user_registry.get_item("login", None),
+        user_registry.get_item("password", None)
     )
 
 

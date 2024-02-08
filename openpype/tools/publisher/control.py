@@ -10,6 +10,7 @@ import inspect
 from abc import ABCMeta, abstractmethod
 
 import six
+import arrow
 import pyblish.api
 
 from openpype import AYON_SERVER_ENABLED
@@ -285,6 +286,8 @@ class PublishReportMaker:
 
     def get_report(self, publish_plugins=None):
         """Report data with all details of current state."""
+
+        now = arrow.utcnow().to("local")
         instances_details = {}
         for instance in self._all_instances_by_id.values():
             instances_details[instance.id] = self._extract_instance_data(
@@ -334,7 +337,8 @@ class PublishReportMaker:
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
             "id": uuid.uuid4().hex,
-            "report_version": "1.0.0"
+            "created_at": now.isoformat(),
+            "report_version": "1.0.1",
         }
 
     def _extract_context_data(self, context):
@@ -2325,7 +2329,24 @@ class PublisherController(BasePublisherController):
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id
         )
+        exception = result.get("error")
+        if exception:
+            self._emit_event(
+                "publish.action.failed",
+                {
+                    "title": "Action failed",
+                    "message": "Action failed.",
+                    "traceback": "".join(
+                        traceback.format_exception(exception)
+                    ),
+                    "label": action.__name__,
+                    "identifier": action.id
+                }
+            )
+
         self._publish_report.add_action_result(action, result)
+
+        self.emit_card_message("Action finished.")
 
     def _publish_next_process(self):
         # Validations of progress before using iterator
