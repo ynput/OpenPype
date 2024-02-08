@@ -9,8 +9,13 @@ OpenPype
 
 ## Important Notice!
 
-OpenPype as a standalone product has reach end of it's life and this repository is now used as a pipeline core code for [AYON](https://ynput.io/ayon/). You can read more details about the end of life process here https://community.ynput.io/t/openpype-end-of-life-timeline/877
+OpenPype as a standalone product has reach end of it's life and this repository is now being phased out in favour of [ayon-core](https://github.com/ynput/ayon-core). You can read more details about the end of life process here https://community.ynput.io/t/openpype-end-of-life-timeline/877
 
+As such, we no longer accept Pull Requests that are not ported to AYON at the same time!
+
+```
+Please refer to https://github.com/ynput/OpenPype/blob/develop/CONTRIBUTING.md for more information about the current PR process. 
+```
 
 Introduction
 ------------
