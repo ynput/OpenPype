@@ -1,6 +1,4 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 def image_format_enum():
@@ -57,27 +55,27 @@ def anti_aliasing_enum():
 
 
 class CreateReviewModel(BaseSettingsModel):
-    review_width: int = Field(1920, title="Review Width")
-    review_height: int = Field(1080, title="Review Height")
-    percentSize: float = Field(100.0, title="Percent of Output")
-    keep_images: bool = Field(False, title="Keep Image Sequences")
-    image_format: str = Field(
+    review_width: int = SettingsField(1920, title="Review Width")
+    review_height: int = SettingsField(1080, title="Review Height")
+    percentSize: float = SettingsField(100.0, title="Percent of Output")
+    keep_images: bool = SettingsField(False, title="Keep Image Sequences")
+    image_format: str = SettingsField(
         enum_resolver=image_format_enum,
         title="Image Format Options"
     )
-    visual_style: str = Field(
+    visual_style: str = SettingsField(
         enum_resolver=visual_style_enum,
         title="Preference"
     )
-    viewport_preset: str = Field(
+    viewport_preset: str = SettingsField(
         enum_resolver=preview_preset_enum,
         title="Preview Preset"
     )
-    anti_aliasing: str = Field(
+    anti_aliasing: str = SettingsField(
         enum_resolver=anti_aliasing_enum,
         title="Anti-aliasing Quality"
     )
-    vp_texture: bool = Field(True, title="Viewport Texture")
+    vp_texture: bool = SettingsField(True, title="Viewport Texture")
 
 
 DEFAULT_CREATE_REVIEW_SETTINGS = {

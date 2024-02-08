@@ -2,32 +2,36 @@
 
 Note: Names were changed to get rid of the versions in class names.
 """
-from pydantic import Field, validator
+from pydantic import validator
 
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    ensure_unique_names,
+)
 
 
 class ImageIOConfigModel(BaseSettingsModel):
-    override_global_config: bool = Field(
+    override_global_config: bool = SettingsField(
         False,
         title="Override global OCIO config"
     )
-    filepath: list[str] = Field(
+    filepath: list[str] = SettingsField(
         default_factory=list,
         title="Config path"
     )
 
 
 class ImageIOFileRuleModel(BaseSettingsModel):
-    name: str = Field("", title="Rule name")
-    pattern: str = Field("", title="Regex pattern")
-    colorspace: str = Field("", title="Colorspace name")
-    ext: str = Field("", title="File extension")
+    name: str = SettingsField("", title="Rule name")
+    pattern: str = SettingsField("", title="Regex pattern")
+    colorspace: str = SettingsField("", title="Colorspace name")
+    ext: str = SettingsField("", title="File extension")
 
 
 class ImageIOFileRulesModel(BaseSettingsModel):
-    activate_host_rules: bool = Field(False)
-    rules: list[ImageIOFileRuleModel] = Field(
+    activate_host_rules: bool = SettingsField(False)
+    rules: list[ImageIOFileRuleModel] = SettingsField(
         default_factory=list,
         title="Rules"
     )
@@ -44,25 +48,27 @@ class ColorManagementPreferenceV2Model(BaseSettingsModel):
     Please migrate all to 'imageio/workfile' and enable it.
     """
 
-    enabled: bool = Field(True, title="Use Color Management Preference v2")
+    enabled: bool = SettingsField(
+        True, title="Use Color Management Preference v2"
+    )
 
-    renderSpace: str = Field(title="Rendering Space")
-    displayName: str = Field(title="Display")
-    viewName: str = Field(title="View")
+    renderSpace: str = SettingsField(title="Rendering Space")
+    displayName: str = SettingsField(title="Display")
+    viewName: str = SettingsField(title="View")
 
 
 class ColorManagementPreferenceModel(BaseSettingsModel):
     """Color Management Preference (legacy)."""
 
-    renderSpace: str = Field(title="Rendering Space")
-    viewTransform: str = Field(title="Viewer Transform ")
+    renderSpace: str = SettingsField(title="Rendering Space")
+    viewTransform: str = SettingsField(title="Viewer Transform ")
 
 
 class WorkfileImageIOModel(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
-    renderSpace: str = Field(title="Rendering Space")
-    displayName: str = Field(title="Display")
-    viewName: str = Field(title="View")
+    enabled: bool = SettingsField(True, title="Enabled")
+    renderSpace: str = SettingsField(title="Rendering Space")
+    displayName: str = SettingsField(title="Display")
+    viewName: str = SettingsField(title="View")
 
 
 class ImageIOSettings(BaseSettingsModel):
@@ -72,27 +78,29 @@ class ImageIOSettings(BaseSettingsModel):
     """
 
     _isGroup: bool = True
-    activate_host_color_management: bool = Field(
+    activate_host_color_management: bool = SettingsField(
         True, title="Enable Color Management"
     )
-    ocio_config: ImageIOConfigModel = Field(
+    ocio_config: ImageIOConfigModel = SettingsField(
         default_factory=ImageIOConfigModel,
         title="OCIO config"
     )
-    file_rules: ImageIOFileRulesModel = Field(
+    file_rules: ImageIOFileRulesModel = SettingsField(
         default_factory=ImageIOFileRulesModel,
         title="File Rules"
     )
-    workfile: WorkfileImageIOModel = Field(
+    workfile: WorkfileImageIOModel = SettingsField(
         default_factory=WorkfileImageIOModel,
         title="Workfile"
     )
     # Deprecated
-    colorManagementPreference_v2: ColorManagementPreferenceV2Model = Field(
-        default_factory=ColorManagementPreferenceV2Model,
-        title="DEPRECATED: Color Management Preference v2 (Maya 2022+)"
+    colorManagementPreference_v2: ColorManagementPreferenceV2Model = (
+        SettingsField(
+            default_factory=ColorManagementPreferenceV2Model,
+            title="DEPRECATED: Color Management Preference v2 (Maya 2022+)"
+        )
     )
-    colorManagementPreference: ColorManagementPreferenceModel = Field(
+    colorManagementPreference: ColorManagementPreferenceModel = SettingsField(
         default_factory=ColorManagementPreferenceModel,
         title="DEPRECATED: Color Management Preference (legacy)"
     )
