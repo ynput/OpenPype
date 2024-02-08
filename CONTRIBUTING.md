@@ -9,4 +9,4 @@ OpenPype has reached the end of its life and is now in a limited maintenance mod
 
 Inside each PR, put a link to the corresponding PR from the other product. OpenPype PRs should point to AYON PR and vice versa.
 
-AYON repository structure is a lot more granular compared to OpenPype. If you're unsure what repository you AYON equivalent PR should target, feel free to make OpenPype PR first and ask.
+AYON repository structure is a lot more granular compared to OpenPype. If you're unsure what repository your AYON equivalent PR should target, feel free to make OpenPype PR first and ask.
