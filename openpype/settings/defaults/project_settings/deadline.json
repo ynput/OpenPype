@@ -6,7 +6,7 @@
         "DefaultValues": {
             "pool": "",
             "pool_secondary": "",
-            "priority": 96,
+            "priority": 50,
             "limit_machine": 0,
             "limits_plugin": []
         },

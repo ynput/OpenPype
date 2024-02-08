@@ -106,8 +106,8 @@ class ArnoldPluginInfo(object):
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
-                         OpenPypePyblishPluginMixin,
-                         DeadlineDefaultJobAttrs):
+                         OpenPypePyblishPluginMixin, DeadlineDefaultJobAttrs
+                         ):
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
@@ -125,15 +125,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
-
-        # Default values from profile
-        profile = get_deadline_job_profile(project_settings, cls.hosts[0])
-
-        cls.priority = profile.get("priority", cls.priority)
-        cls.pool = profile.get("pool", cls.pool)
-        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
-        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
-        cls.limits_plugins = profile.get("limits_plugin", cls.limits_plugins)
 
         # Take some defaults from settings
         cls.asset_dependencies = settings.get("asset_dependencies",
@@ -214,7 +205,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             else:
                 machine_list_key = "Blacklist"
             render_globals[machine_list_key] = machine_list
-
         job_info.Priority = attr_values.get("priority")
         job_info.ChunkSize = attr_values.get("chunkSize")
 

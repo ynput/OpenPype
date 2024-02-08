@@ -1,16 +1,16 @@
 import os
 import re
 
-from openpype.settings.lib import get_default_project_settings
 from openpype.lib import filter_profiles
 from openpype.pipeline.context_tools import (
     _get_modules_manager,
     get_current_task_name
 )
+from openpype.settings.lib import load_openpype_default_settings
 
 
-class DeadlineDefaultJobAttrs(object):
-    deadline_job_attrs_global_settings = get_default_project_settings()['deadline']['JobAttrsValues']
+class DeadlineDefaultJobAttrs:
+    deadline_job_attrs_global_settings = load_openpype_default_settings()['project_settings']['deadline']['JobAttrsValues']
     pool = deadline_job_attrs_global_settings['DefaultValues']['pool']
     pool_secondary = deadline_job_attrs_global_settings['DefaultValues']['pool_secondary']
     priority = deadline_job_attrs_global_settings['DefaultValues']['priority']
