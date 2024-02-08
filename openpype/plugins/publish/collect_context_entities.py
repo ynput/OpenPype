@@ -14,6 +14,8 @@ Provides:
 
 import pyblish.api
 
+from ayon_api import get_task_by_name
+
 from openpype.client import get_project, get_asset_by_name
 from openpype.pipeline import KnownPublishError
 
@@ -51,12 +53,17 @@ class CollectContextEntities(pyblish.api.ContextPlugin):
 
         context.data["assetEntity"] = asset_entity
 
+        task_entity = get_task_by_name(
+            project_name, asset_entity["_id"], task_name)
+        context.data["taskEntity"] = task_entity
+
         data = asset_entity['data']
 
         # Task type
         asset_tasks = data.get("tasks") or {}
         task_info = asset_tasks.get(task_name) or {}
         task_type = task_info.get("type")
+        print("TASK INFO", task_info)
         context.data["taskType"] = task_type
 
         frame_start = data.get("frameStart")

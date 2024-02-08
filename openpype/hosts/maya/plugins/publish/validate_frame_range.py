@@ -53,34 +53,35 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
             )
             return
 
-        # Get to the task doc of the project, folder path and task
-        project_name = instance.context.data["projectEntity"]["name"]
-        folder_path = instance.context.data["asset"]
-        task_name = instance.context.data["task"]
-        from ayon_api import (
-            get_task_by_name,
-            get_folder_by_path,
-            get_folder_by_name)
-        if "/" in folder_path:
-            folder = get_folder_by_path(project_name, folder_path)
-        else:
-            folder = get_folder_by_name(
-                project_name, folder_name=folder_path)
+        task_entity = instance.context.data["taskEntity"]
 
-        asset_id = folder["id"]
-        task = get_task_by_name(project_name, asset_id, task_name)
+        # # Get to the task doc of the project, folder path and task
+        # asset_id = instance.context.data["assetEntity"]["_id"]
+        # project_name = instance.context.data["projectEntity"]["name"]
+        # task_name = instance.context.data["task"]
+        # from ayon_api import get_task_by_name
+        # # folder_path = instance.context.data["asset"]
+        # # if "/" in folder_path:
+        # #     folder = get_folder_by_path(project_name, folder_path)
+        # # else:
+        # #     folder = get_folder_by_name(
+        # #         project_name, folder_name=folder_path)
+        # # asset_id = folder["id"]
+        # task_entity = get__entity_by_name(project_name, asset_id, _entity_name)
+
+
 
         # Get frame information from task context
         # NOTE: there is no "frameStartHandle" and "frameEndHandle" on task.
         # NOTE: So im making the frame start handle equal to the handleStart.
-        frame_start_handle = task["attrib"]["frameStart"] - \
-            task["attrib"]["handleStart"]
-        frame_end_handle = task["attrib"]["frameEnd"] + \
-            task["attrib"]["handleEnd"]
-        handle_start = task["attrib"]["handleStart"]
-        handle_end = task["attrib"]["handleEnd"]
-        frame_start = task["attrib"]["frameStart"]
-        frame_end = task["attrib"]["frameEnd"]
+        frame_start_handle = task_entity["attrib"]["frameStart"] - \
+            task_entity["attrib"]["handleStart"]
+        frame_end_handle = task_entity["attrib"]["frameEnd"] + \
+            task_entity["attrib"]["handleEnd"]
+        handle_start = task_entity["attrib"]["handleStart"]
+        handle_end = task_entity["attrib"]["handleEnd"]
+        frame_start = task_entity["attrib"]["frameStart"]
+        frame_end = task_entity["attrib"]["frameEnd"]
 
         # Get frame information from asset context
         # frame_start_handle = int(context.data.get("frameStartHandle"))
