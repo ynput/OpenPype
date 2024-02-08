@@ -54,6 +54,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
             return
 
         # Get frame information from task entity
+        # NOTE: If there is no task override then the asset
+        # value is automatically returned instead
         task_entity = instance.context.data["taskEntity"]
         frame_start_handle = task_entity["attrib"]["frameStart"] - \
             task_entity["attrib"]["handleStart"]
