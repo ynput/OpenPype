@@ -63,7 +63,6 @@ class CollectContextEntities(pyblish.api.ContextPlugin):
         asset_tasks = data.get("tasks") or {}
         task_info = asset_tasks.get(task_name) or {}
         task_type = task_info.get("type")
-        print("TASK INFO", task_info)
         context.data["taskType"] = task_type
 
         frame_start = data.get("frameStart")
