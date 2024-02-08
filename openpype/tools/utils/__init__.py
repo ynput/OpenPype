@@ -32,6 +32,7 @@ from .lib import (
     set_style_property,
     DynamicQThread,
     qt_app_context,
+    get_qt_app,
     get_openpype_qt_app,
     get_asset_icon,
     get_asset_icon_by_name,

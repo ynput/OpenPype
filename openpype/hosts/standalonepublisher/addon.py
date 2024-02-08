@@ -1,10 +1,13 @@
 import os
 
-import click
-
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
-from openpype.modules import OpenPypeModule, ITrayAction, IHostAddon
+from openpype.modules import (
+    click_wrap,
+    OpenPypeModule,
+    ITrayAction,
+    IHostAddon,
+)
 
 STANDALONEPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -37,10 +40,10 @@ class StandAlonePublishAddon(OpenPypeModule, ITrayAction, IHostAddon):
         run_detached_process(args)
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
 
-@click.group(
+@click_wrap.group(
     StandAlonePublishAddon.name,
     help="StandalonePublisher related commands.")
 def cli_main():

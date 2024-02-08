@@ -154,11 +154,15 @@ def qt_app_context():
         yield app
 
 
-def get_openpype_qt_app():
-    """Main Qt application initialized for OpenPype processed.
+def get_qt_app():
+    """Get Qt application.
 
-    This function should be used only inside OpenPype process and never inside
-        other processes.
+    The function initializes new Qt application if it is not already
+    initialized. It also sets some attributes to the application to
+    ensure that it will work properly on high DPI displays.
+
+    Returns:
+        QtWidgets.QApplication: Current Qt application.
     """
 
     app = QtWidgets.QApplication.instance()
@@ -184,6 +188,17 @@ def get_openpype_qt_app():
 
         app = QtWidgets.QApplication(sys.argv)
 
+    return app
+
+
+def get_openpype_qt_app():
+    """Main Qt application initialized for OpenPype processed.
+
+    This function should be used only inside OpenPype process and never inside
+        other processes.
+    """
+
+    app = get_qt_app()
     app.setWindowIcon(QtGui.QIcon(get_app_icon_path()))
     return app
 

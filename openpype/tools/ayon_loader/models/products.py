@@ -179,11 +179,14 @@ class ProductsModel:
         """Product type items for project.
 
         Args:
-            project_name (str): Project name.
+            project_name (Union[str, None]): Project name.
 
         Returns:
             list[ProductTypeItem]: Product type items.
         """
+
+        if not project_name:
+            return []
 
         cache = self._product_type_items_cache[project_name]
         if not cache.is_valid:
