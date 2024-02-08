@@ -3,6 +3,7 @@
 import re
 
 import pyblish.api
+from pymxs import runtime as rt
 
 from openpype.hosts.max.api.action import SelectInvalidAction
 
@@ -61,26 +62,28 @@ class ValidateModelName(pyblish.api.InstancePlugin,
         if matched_name is None:
             cls.log.error("invalid model name on: {}".format(name))
             cls.log.error("name doesn't match regex {}".format(regex))
-            invalid.append((name, "Model name doesn't match regex"))
+            invalid.append((rt.getNodeByName(name),
+                            "Model name doesn't match regex"))
         else:
             if "asset" in reg.groupindex:
                 if matched_name.group("asset") != current_asset_name:
                     cls.log.error(
                         "Invalid asset name of the model {}.".format(name)
                     )
-                    invalid.append((name, "Model with invalid asset name"))
+                    invalid.append((rt.getNodeByName(name),
+                                    "Model with invalid asset name"))
             if "subset" in reg.groupindex:
                 if matched_name.group("subset") != instance.name:
                     cls.log.error(
                         "Invalid subset name of the model {}.".format(name)
                     )
-                    invalid.append((name, "Model with invalid subset name"))
+                    invalid.append((rt.getNodeByName(name), "Model with invalid subset name"))
             if "project" in reg.groupindex:
                 if matched_name.group("project") != project_name:
                     cls.log.error(
                         "Invalid project name of the model {}.".format(name)
                     )
-                    invalid.append((name, "Model with invalid project name"))
+                    invalid.append((rt.getNodeByName(name), "Model with invalid project name"))
         return invalid
 
     def process(self, instance):
