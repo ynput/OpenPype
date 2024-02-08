@@ -1543,7 +1543,7 @@ def set_attribute(attribute, value, node):
     value_type = type(value).__name__
     kwargs = ATTRIBUTE_DICT.get(value_type)
     if not kwargs:
-        log.debug("Attribute type is not supported for {}".format(attribute))
+        log.debug("Attribute type '{}' is not supported for {}".format(value_type, attribute))
         return
 
     if not cmds.attributeQuery(attribute, node=node, exists=True):
