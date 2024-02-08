@@ -73,8 +73,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         # Get frame information from task context
         # NOTE: there is no "frameStartHandle" and "frameEndHandle" on task.
         # NOTE: So im making the frame start handle equal to the handleStart.
-        frame_start_handle = task["attrib"]["handleStart"]
-        frame_end_handle = task["attrib"]["handleStart"]
+        frame_start_handle = task["attrib"]["frameStart"] - task["attrib"]["handleStart"]
+        frame_end_handle = task["attrib"]["frameEnd"] + task["attrib"]["handleEnd"]
         handle_start = task["attrib"]["handleStart"]
         handle_end = task["attrib"]["handleEnd"]
         frame_start = task["attrib"]["frameStart"]
