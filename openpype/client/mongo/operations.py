@@ -606,6 +606,8 @@ def create_project(
     #   and Anatomy
     try:
         project_settings_entity = ProjectSettings(project_name)
+        # Add a flag to be able to bypass the enabled protection for the anatomy attrs
+        project_settings_entity["project_anatomy"]._current_metadata["bypass_protect_anatomy_attributes"] = True
         project_settings_entity.save()
     except SaveWarningExc as exc:
         print(str(exc))
