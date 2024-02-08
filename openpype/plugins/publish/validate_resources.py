@@ -17,7 +17,7 @@ class ValidateResources(pyblish.api.InstancePlugin):
     """
 
     order = ValidateContentsOrder
-    label = "Resources"
+    label = "Validate Resources"
 
     def process(self, instance):
 

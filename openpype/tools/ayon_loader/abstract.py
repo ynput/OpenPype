@@ -531,6 +531,9 @@ class FrontendLoaderController(_BaseLoaderController):
 
         Product types have defined if are checked for filtering or not.
 
+        Args:
+            project_name (Union[str, None]): Project name.
+
         Returns:
             list[ProductTypeItem]: List of product type items for a project.
         """
