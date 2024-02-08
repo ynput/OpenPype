@@ -1,6 +1,6 @@
 ## How to contribute to OpenPype
 
-OpenPype has reached the end of its life and is now in a limited maintenance mode (read more at https://community.ynput.io/t/openpype-end-of-life-timeline/877). As such we're no longer accepting contributions unless they are also ported to AYON a the same time. 
+OpenPype has reached the end of its life and is now in a limited maintenance mode (read more at https://community.ynput.io/t/openpype-end-of-life-timeline/877). As such we're no longer accepting contributions unless they are also ported to AYON at the same time. 
 
 ## Getting my PR merged during this period
 
