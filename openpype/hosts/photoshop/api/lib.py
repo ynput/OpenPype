@@ -3,12 +3,11 @@ import sys
 import contextlib
 import traceback
 
-from qtpy import QtWidgets
-
 from openpype.lib import env_value_to_bool, Logger
 from openpype.modules import ModulesManager
 from openpype.pipeline import install_host
 from openpype.tools.utils import host_tools
+from openpype.tools.utils import get_openpype_qt_app
 from openpype.tests.lib import is_in_tests
 
 from .launch_logic import ProcessLauncher, stub
@@ -30,7 +29,7 @@ def main(*subprocess_args):
 
     # coloring in StdOutBroker
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
-    app = QtWidgets.QApplication([])
+    app = get_openpype_qt_app()
     app.setQuitOnLastWindowClosed(False)
 
     launcher = ProcessLauncher(subprocess_args)
