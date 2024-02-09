@@ -6,6 +6,7 @@ import pyblish.api
 from openpype.lib import (
     get_ffmpeg_tool_args,
     is_oiio_supported,
+    get_rescaled_command_arguments,
 
     run_subprocess,
     path_to_subprocess_arg,
@@ -25,7 +26,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
-    # presetable attribute
+    # attribute presets from settings
+    target_size = {
+        "type": "resize",
+        "width": 1920,
+        "height": 1080
+    }
+    background_color = None
     ffmpeg_args = None
 
     def process(self, instance):
@@ -200,6 +207,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         view
     ):
         self.log.info("Extracting thumbnail {}".format(dst_path))
+        resolution_arg = self._get_resolution_arg("oiiotool", src_path)
 
         convert_colorspace(
             src_path,
@@ -208,7 +216,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             source_colorspace,
             view=view,
             display=display,
-            input_args=["-i:ch=R,G,B"]
+            input_args=["-i:ch=R,G,B"],
+            additional_command_args=resolution_arg
         )
 
         return dst_path
@@ -216,6 +225,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
 
+        resolution_arg = self._get_resolution_arg("ffmpeg", src_path)
         ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
@@ -237,6 +247,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         jpeg_items.extend(ffmpeg_args.get("output") or [])
         # we just want one frame from movie files
         jpeg_items.extend(["-vframes", "1"])
+
+        if resolution_arg:
+            jpeg_items.extend(resolution_arg)
+
         # output file
         jpeg_items.append(path_to_subprocess_arg(dst_path))
         subprocess_command = " ".join(jpeg_items)
@@ -251,3 +265,24 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 exc_info=True
             )
             return False
+
+    def _get_resolution_arg(
+        self,
+        application,
+        input_path,
+    ):
+        # get settings
+        if self.target_size.get("type") == "source":
+            return []
+
+        target_width = self.target_size["width"]
+        target_height = self.target_size["height"]
+
+        return get_rescaled_command_arguments(
+            application,
+            input_path,
+            target_width,
+            target_height,
+            bg_color=self.background_color,
+            log=self.log
+        )

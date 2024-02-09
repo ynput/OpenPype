@@ -59,7 +59,8 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 "fps": instance.data["fps"],
                 "resolutionWidth": instance.data["resolutionWidth"],
                 "resolutionHeight": instance.data["resolutionHeight"],
-                "pixelAspect": instance.data["pixelAspect"]
+                "pixelAspect": instance.data["pixelAspect"],
+                "tools_env": context.data["tools_env"]
             }
 
             actual = {instance.data["asset"]: shot_data}

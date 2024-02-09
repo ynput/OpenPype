@@ -299,15 +299,33 @@
                     ]
                 },
                 {
-                  "type": "schema_template",
-                  "name": "template_publish_plugin",
-                  "template_data": [
-                      {
-                          "key": "ValidateStartFrame",
-                          "label": "Validate Scene Start Frame",
-                          "docstring": "Validate first frame of scene is set to '0'."
-                      }
-                  ]
+                    "type": "dict",
+                    "key": "ValidateStartFrame",
+                    "label": "Validate Start Frame",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "text",
+                            "key": "start_frame",
+                            "label": "Start frame"
+                        }
+                    ]
                 },
                 {
                     "type": "schema_template",
