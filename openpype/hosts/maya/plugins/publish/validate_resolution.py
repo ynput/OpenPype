@@ -84,9 +84,13 @@ class ValidateResolution(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_db_resolution(cls, instance):
+        task_doc = instance.context.data["taskEntity"]
         asset_doc = instance.data["assetEntity"]
         project_doc = instance.context.data["projectEntity"]
-        for data in [asset_doc["data"], project_doc["data"]]:
+        for data in [
+                task_doc["attrib"],
+                asset_doc["data"],
+                project_doc["data"]]:
             if (
                 "resolutionWidth" in data and
                 "resolutionHeight" in data and
