@@ -6,7 +6,6 @@ from openpype.modules import OpenPypeModule, IPluginPaths
 from openpype import AYON_SERVER_ENABLED
 from openpype.lib import Logger
 
-log = Logger.get_logger("SyncServer")
 
 
 class RoyalRenderModule(OpenPypeModule, IPluginPaths):
