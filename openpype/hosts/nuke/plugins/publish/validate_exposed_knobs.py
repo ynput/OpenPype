@@ -65,7 +65,7 @@ class ValidateExposedKnobs(
         group_node = instance.data["transientData"]["node"]
         nuke_settings = instance.context.data["project_settings"]["nuke"]
         create_settings = nuke_settings["create"][plugin]
-        exposed_knobs = create_settings["exposed_knobs"]
+        exposed_knobs = create_settings.get("exposed_knobs", [])
         unexposed_knobs = []
         for knob in exposed_knobs:
             if knob not in group_node.knobs():
