@@ -129,7 +129,7 @@ class ValidateNukeWriteNode(
                 and key != "file"
                 and key != "tile_color"
             ):
-                check.append([key, node_value, write_node[key].value()])
+                check.append([key, fixed_values, write_node[key].value()])
 
         if check:
             self._make_error(check)
@@ -137,7 +137,7 @@ class ValidateNukeWriteNode(
     def _make_error(self, check):
         # sourcery skip: merge-assign-and-aug-assign, move-assign-in-block
         dbg_msg = "Write node's knobs values are not correct!\n"
-        msg_add = "Knob '{0}' > Correct: `{1}` > Wrong: `{2}`"
+        msg_add = "Knob '{0}' > Expected: `{1}` > Current: `{2}`"
 
         details = [
             msg_add.format(item[0], item[1], item[2])
