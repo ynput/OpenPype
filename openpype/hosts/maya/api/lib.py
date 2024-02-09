@@ -2633,13 +2633,16 @@ def reset_scene_resolution():
     # value is automatically returned instead
     width = task_entity["attrib"].get(
         width_key,
-        asset_data.get(width_key, project_data.get(width_key, 1920)))
+        asset_data.get(
+            width_key, project_data.get(width_key, 1920)))
     height = task_entity["attrib"].get(
         height_key,
-        asset_data.get(height_key, project_data.get(height_key, 1080)))
+        asset_data.get(
+            height_key, project_data.get(height_key, 1080)))
     pixelAspect = task_entity["attrib"].get(
         pixelAspect_key,
-        asset_data.get(pixelAspect_key, project_data.get(pixelAspect_key, 1080)))
+        asset_data.get(
+            pixelAspect_key, project_data.get(pixelAspect_key, 1080)))
 
     set_scene_resolution(width, height, pixelAspect)
 
