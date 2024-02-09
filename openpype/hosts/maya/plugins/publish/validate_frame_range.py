@@ -131,7 +131,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
     @classmethod
     def repair(cls, instance):
         """
-        Repair instance container to match asset data.
+        Repair instance container to match task / asset data.
         """
 
         if "renderlayer" in instance.data.get("families"):
@@ -142,12 +142,26 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         node = instance.data["name"]
         context = instance.context
 
-        frame_start_handle = int(context.data.get("frameStartHandle"))
-        frame_end_handle = int(context.data.get("frameEndHandle"))
-        handle_start = int(context.data.get("handleStart"))
-        handle_end = int(context.data.get("handleEnd"))
-        frame_start = int(context.data.get("frameStart"))
-        frame_end = int(context.data.get("frameEnd"))
+        # Get frame information from task entity
+        # NOTE: If there is no task override then the asset
+        # value is automatically returned instead
+        task_entity = instance.context.data["taskEntity"]
+        frame_start_handle = task_entity["attrib"]["frameStart"] - \
+            task_entity["attrib"]["handleStart"]
+        frame_end_handle = task_entity["attrib"]["frameEnd"] + \
+            task_entity["attrib"]["handleEnd"]
+        handle_start = task_entity["attrib"]["handleStart"]
+        handle_end = task_entity["attrib"]["handleEnd"]
+        frame_start = task_entity["attrib"]["frameStart"]
+        frame_end = task_entity["attrib"]["frameEnd"]
+
+        # Get frame information from asset context
+        # frame_start_handle = int(context.data.get("frameStartHandle"))
+        # frame_end_handle = int(context.data.get("frameEndHandle"))
+        # handle_start = int(context.data.get("handleStart"))
+        # handle_end = int(context.data.get("handleEnd"))
+        # frame_start = int(context.data.get("frameStart"))
+        # frame_end = int(context.data.get("frameEnd"))
 
         # Start
         if cmds.attributeQuery("handleStart", node=node, exists=True):

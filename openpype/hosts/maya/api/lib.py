@@ -19,6 +19,7 @@ from six import string_types
 from maya import cmds, mel
 from maya.api import OpenMaya
 
+from ayon_api import get_task_by_name
 from openpype.client import (
     get_project,
     get_asset_by_name,
@@ -2614,17 +2615,31 @@ def reset_scene_resolution():
     project_name = get_current_project_name()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = get_current_project_asset()["data"]
+    asset_data_root = get_current_project_asset()
+    asset_data = asset_data_root["data"]
+
+    task_name = get_current_task_name()
+    task_entity = get_task_by_name(
+        project_name, asset_data_root["_id"], task_name)
+
 
     # Set project resolution
     width_key = "resolutionWidth"
     height_key = "resolutionHeight"
     pixelAspect_key = "pixelAspect"
 
-    width = asset_data.get(width_key, project_data.get(width_key, 1920))
-    height = asset_data.get(height_key, project_data.get(height_key, 1080))
-    pixelAspect = asset_data.get(pixelAspect_key,
-                                 project_data.get(pixelAspect_key, 1))
+    # Get frame information from task entity
+    # NOTE: If there is no task override then the asset
+    # value is automatically returned instead
+    width = task_entity["attrib"].get(
+        width_key,
+        asset_data.get(width_key, project_data.get(width_key, 1920)))
+    height = task_entity["attrib"].get(
+        height_key,
+        asset_data.get(height_key, project_data.get(height_key, 1080)))
+    pixelAspect = task_entity["attrib"].get(
+        pixelAspect_key,
+        asset_data.get(pixelAspect_key, project_data.get(pixelAspect_key, 1080)))
 
     set_scene_resolution(width, height, pixelAspect)
 
