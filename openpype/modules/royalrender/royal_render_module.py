@@ -36,7 +36,7 @@ class RoyalRenderModule(OpenPypeModule, IPluginPaths):
 
         # Ayon only
         if not AYON_SERVER_ENABLED:
-            log.info("RoyalRender is not implemented for Openpype")
+            self.log.info("RoyalRender is not implemented for Openpype")
             self.enabled = False
 
     @staticmethod
