@@ -2,11 +2,12 @@ import os
 import tempfile
 import functools
 import logging
-import re
 import uuid
 from enum import Enum
 
 import bpy
+
+from libs import filepath
 
 
 logging.basicConfig(level=logging.INFO)
@@ -134,6 +135,7 @@ class PrepareAndRenderScene(bpy.types.Panel):
     bl_label = "Prepare Scene for render with Deadline"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_category = "Quad"
 
     def draw(self, context):
         layout = self.layout
@@ -263,7 +265,7 @@ def set_global_output_path():
 
 
 def set_render_nodes_output_path():
-    version = _extract_version_number_from_filepath(bpy.data.filepath)
+    version = filepath.extract_version(bpy.data.filepath)
     for output_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == NodesNames.OUTPUT_FILE.value]:
         render_node = _browse_render_nodes(output_node.inputs)
         render_layer_name = render_node.layer
@@ -286,12 +288,6 @@ def _browse_render_nodes(nodes_inputs):
 
         target_node = _browse_render_nodes(target_node.inputs)
         if target_node: return target_node
-
-
-def _extract_version_number_from_filepath(filepath):
-    version_regex = r'[^a-zA-Z\d](v\d{3})[^a-zA-Z\d]'
-    results = re.search(version_regex, filepath)
-    return results.groups()[-1]
 
 
 class LoadPreviousScene(bpy.types.Operator):
