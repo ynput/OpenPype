@@ -47,10 +47,18 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
             collection = collections[0]
             repres_frames = list(collection.indexes)
 
+            try:
+                fps = instance.context.data["assetEntity"]["data"]["fps"]
+            except KeyError:
+                try:
+                    fps = instance.context.data["projectEntity"]["data"]["fps"]
+                except KeyError:
+                    fps = None
+
             return {
                 "frameStart": repres_frames[0],
                 "frameEnd": repres_frames[-1],
                 "handleStart": 0,
                 "handleEnd": 0,
-                "fps": instance.context.data["assetEntity"]["data"]["fps"]
+                "fps": fps
             }
