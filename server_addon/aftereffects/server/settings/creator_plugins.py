@@ -7,6 +7,8 @@ class CreateRenderPlugin(BaseSettingsModel):
         default_factory=list,
         title="Default Variants"
     )
+    force_setting_values: bool = SettingsField(
+        True, title="Force resolution and duration values from Asset")
 
 
 class AfterEffectsCreatorPlugins(BaseSettingsModel):
