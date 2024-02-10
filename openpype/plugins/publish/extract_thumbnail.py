@@ -35,6 +35,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "traypublisher",
         "substancepainter",
         "nuke",
+        "aftereffects"
     ]
     enabled = False
 
