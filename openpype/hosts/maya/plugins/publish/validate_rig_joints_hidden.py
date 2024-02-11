@@ -39,7 +39,8 @@ class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise PublishValidationError("Visible joints found: {0}".format(invalid))
+            raise PublishValidationError(
+                "Visible joints found: {0}".format(invalid))
 
     @classmethod
     def repair(cls, instance):
