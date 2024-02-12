@@ -7,7 +7,7 @@ from enum import Enum
 
 import bpy
 
-from libs import filepath
+from libs import paths
 
 
 logging.basicConfig(level=logging.INFO)
@@ -265,7 +265,7 @@ def set_global_output_path():
 
 
 def set_render_nodes_output_path():
-    version = filepath.extract_version(bpy.data.filepath)
+    version = paths.extract_version(bpy.data.filepath)
     for output_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == NodesNames.OUTPUT_FILE.value]:
         render_node = _browse_render_nodes(output_node.inputs)
         render_layer_name = render_node.layer
