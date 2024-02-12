@@ -102,4 +102,7 @@ class CollectContextEntities(pyblish.api.ContextPlugin):
 
         context.data["fps"] = data["fps"]
 
+        if "tools_env" not in data:
+            data["tools_env"] = []
+
         context.data["tools_env"] = data["tools_env"]
