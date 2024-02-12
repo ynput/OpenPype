@@ -161,7 +161,7 @@
                 "Administrator"
             ]
         },
-        "store_thubmnail_to_avalon": {
+        "store_thumbnail_to_avalon": {
             "enabled": true,
             "role_list": [
                 "Pypeclub",

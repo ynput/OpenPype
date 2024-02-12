@@ -40,7 +40,6 @@ from openpype.settings import (
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
-    get_current_project_name,
     discover_legacy_creator_plugins,
     Anatomy,
     get_current_host_name,

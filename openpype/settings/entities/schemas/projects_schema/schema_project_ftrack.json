@@ -547,7 +547,7 @@
                 },
                 {
                     "type": "dict",
-                    "key": "store_thubmnail_to_avalon",
+                    "key": "store_thumbnail_to_avalon",
                     "label": "Store Thumbnails to avalon",
                     "checkbox_key": "enabled",
                     "children": [

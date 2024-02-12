@@ -5,15 +5,22 @@ import platform
 
 import click
 
+from openpype.lib import register_event_callback
 from openpype.modules import (
     OpenPypeModule,
     ITrayModule,
     IPluginPaths,
     ISettingsChangeListener
 )
-from openpype.settings import SaveWarningExc
+from openpype.settings import SaveWarningExc, get_project_settings
 from openpype.settings.lib import get_system_settings
 from openpype.lib import Logger
+
+from openpype.pipeline import (
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name
+)
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 _URL_NOT_SET = object()
@@ -63,6 +70,113 @@ class FtrackModule(
         # TimersManager connection
         self.timers_manager_connector = None
         self._timers_manager_module = None
+
+        # Hooks when a file has been opened or saved
+        register_event_callback("open", self.after_file_open)
+        register_event_callback("after.save", self.after_file_save)
+
+    def find_ftrack_task_entity(
+        self, session, project_name, asset_name, task_name
+    ):
+        project_entity = session.query(
+            "Project where full_name is \"{}\"".format(project_name)
+        ).first()
+        if not project_entity:
+            self.log.warning(
+                "Couldn't find project \"{}\" in Ftrack.".format(project_name)
+            )
+            return
+
+        potential_task_entities = session.query((
+            "TypedContext where parent.name is \"{}\" and project_id is \"{}\""
+        ).format(asset_name, project_entity["id"])).all()
+        filtered_entities = []
+        for _entity in potential_task_entities:
+            if (
+                _entity.entity_type.lower() == "task"
+                and _entity["name"] == task_name
+            ):
+                filtered_entities.append(_entity)
+
+        if not filtered_entities:
+            self.log.warning((
+                "Couldn't find task \"{}\" under parent \"{}\" in Ftrack."
+            ).format(task_name, asset_name))
+            return
+
+        if len(filtered_entities) > 1:
+            self.log.warning((
+                "Found more than one task \"{}\""
+                " under parent \"{}\" in Ftrack."
+            ).format(task_name, asset_name))
+            return
+
+        return filtered_entities[0]
+
+    def after_file_open(self, event):
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+
+        # Do we want to update the status ? ----------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------------------------------
+        change_task_status = project_settings["ftrack"]["application_handlers"]["change_task_status"]
+        if not change_task_status["enabled"]:
+            self.log.debug("Status changes are disabled for project \"{}\"".format(project_name))
+            return
+        # --------------------------------------------------------------------------------------------------------------
+
+        asset_name = get_current_asset_name()
+        task_name = get_current_task_name()
+
+        # Create session -----------------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------------------------------
+        try:
+            session = self.create_ftrack_session()
+        except Exception: # noqa
+            self.log.warning("Couldn't create ftrack session.", exc_info=True)
+            return
+        # --------------------------------------------------------------------------------------------------------------
+
+        # Find entity --------------------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------------------------------
+        entity = self.find_ftrack_task_entity(session, project_name, asset_name, task_name)
+        if not entity:
+            # No valid entity found, quit.
+            return
+
+        ent_path = "/".join([ent["name"] for ent in entity["link"]])
+        actual_status = entity["status"]["name"].lower()
+        # --------------------------------------------------------------------------------------------------------------
+
+        # Find next status ---------------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------------------------------
+        next_status = file_open_next_status(actual_status)
+
+        if not next_status:
+            # No valid next status found, skip.
+            return
+        # --------------------------------------------------------------------------------------------------------------
+
+        # Change status on ftrack --------------------------------------------------------------------------------------
+        # --------------------------------------------------------------------------------------------------------------
+        try:
+            query = "Status where name is \"{}\"".format(next_status)
+            next_status_obj = session.query(query).one()
+
+            entity["status"] = next_status_obj
+            session.commit()
+            self.log.debug("Changing status to \"{}\" <{}>".format(next_status, ent_path))
+        except Exception:  # noqa
+            session.rollback()
+            msg = "Status \"{}\" in presets wasn't found on Ftrack entity type \"{}\"".format(next_status,
+                                                                                              entity.entity_type)
+            self.log.warning(msg)
+
+    def after_file_save(self, event):
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        print(json.dumps(event.to_data()))
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 
     def get_ftrack_url(self):
         """Resolved ftrack url.
