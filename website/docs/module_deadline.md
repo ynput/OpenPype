@@ -37,6 +37,7 @@ Here's the keys you can use for your batch name
 
 | Context key     | Description                                      |
 |-----------------|--------------------------------------------------|
+| `workfile`      | Workfile name without the extension              |
 | `project[name]` | Project's full name                              |
 | `project[code]` | Project's code                                   |
 | `asset`         | Name of asset or shot                            |
