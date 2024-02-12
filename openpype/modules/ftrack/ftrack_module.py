@@ -117,11 +117,16 @@ class FtrackModule(
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
 
-        # Do we want to update the status ? ----------------------------------------------------------------------------
+        # Do we want/need/can to update the status ? -------------------------------------------------------------------
         # --------------------------------------------------------------------------------------------------------------
         change_task_status = project_settings["ftrack"]["application_handlers"]["change_task_status"]
         if not change_task_status["enabled"]:
             self.log.debug("Status changes are disabled for project \"{}\"".format(project_name))
+            return
+
+        mapping = change_task_status["status_change_on_file_open"]
+        if not mapping:
+            # No rules registered, skip.
             return
         # --------------------------------------------------------------------------------------------------------------
 
@@ -150,7 +155,28 @@ class FtrackModule(
 
         # Find next status ---------------------------------------------------------------------------------------------
         # --------------------------------------------------------------------------------------------------------------
-        next_status = file_open_next_status(actual_status)
+        if "__ignore__" in mapping:
+            ignored_statuses = [status.lower() for status in mapping["__ignore__"]]
+            if actual_status in ignored_statuses:
+                # We can exit the status is flagged to be ignored
+                return
+
+            # Removing to avoid looping on it
+            mapping.pop("__ignore__")
+
+        next_status = None
+
+        for to_status, from_statuses in mapping.items():
+            from_statuses = [status.lower() for status in from_statuses]
+            if "__any__" in from_statuses:
+                next_status = to_status
+                # Not breaking in case a better mapping is set after.
+                continue
+
+            if actual_status in from_statuses:
+                next_status = to_status
+                # We found a valid mapping (other that __any__) we stop looking.
+                break
 
         if not next_status:
             # No valid next status found, skip.
