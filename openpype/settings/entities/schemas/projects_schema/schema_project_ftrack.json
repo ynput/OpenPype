@@ -147,28 +147,6 @@
                 },
                 {
                     "type": "dict",
-                    "key": "status_update",
-                    "label": "Update status on task action",
-                    "is_group": true,
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "key": "mapping",
-                            "type": "dict-modifiable",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
                     "key": "status_task_to_parent",
                     "label": "Sync status from Task to Parent",
                     "checkbox_key": "enabled",
@@ -449,44 +427,6 @@
             "children": [
                 {
                     "type": "dict",
-                    "key": "change_task_status",
-                    "is_group": true,
-                    "label": "Status change",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b>On Open</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
-                        },
-                        {
-                            "type": "dict-modifiable",
-                            "key": "status_change_on_open",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b>On Save</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
-                        },
-                        {
-                            "type": "dict-modifiable",
-                            "key": "status_change_on_save",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
                     "key": "create_update_attributes",
                     "label": "Create/Update Avalon Attributes",
                     "children": [
@@ -706,6 +646,53 @@
                             "key": "role_list",
                             "label": "Roles",
                             "object_type": "text"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "application_handlers",
+            "label": "Application Events",
+            "children": [
+                {
+                    "type": "dict",
+                    "key": "change_task_status",
+                    "is_group": true,
+                    "label": "Status change",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>On Open</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "status_change_on_file_open",
+                            "label": "Status change on file open",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>On Save</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "status_change_on_file_save",
+                            "label": "Status change on file save",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "text"
+                            }
                         }
                     ]
                 }

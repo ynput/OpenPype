@@ -47,22 +47,6 @@
         "user_assignment": {
             "enabled": true
         },
-        "status_update": {
-            "enabled": true,
-            "mapping": {
-                "In Progress": [
-                    "__any__"
-                ],
-                "Ready": [
-                    "Not Ready"
-                ],
-                "__ignore__": [
-                    "in progress",
-                    "omitted",
-                    "on hold"
-                ]
-            }
-        },
         "status_task_to_parent": {
             "enabled": true,
             "parent_object_types": [
@@ -130,21 +114,6 @@
         }
     },
     "user_handlers": {
-        "change_task_status": {
-            "enabled": true,
-            "status_change_on_open": {
-                "role_list": [
-                    "Pypeclub",
-                    "Administrator"
-                ]
-            },
-            "status_change_on_save": {
-                "role_list": [
-                    "Pypeclub",
-                    "Administrator"
-                ]
-            }
-        },
         "create_update_attributes": {
             "role_list": [
                 "Pypeclub",
@@ -224,6 +193,31 @@
             "role_list": [
                 "Pypeclub"
             ]
+        }
+    },
+    "application_handlers": {
+        "change_task_status": {
+            "enabled": true,
+            "status_change_on_file_open": {
+                "In Progress": [
+                    "__any__"
+                ],
+                "__ignore__": [
+                    "in progress",
+                    "omitted",
+                    "on hold"
+                ]
+            },
+            "status_change_on_file_save": {
+                "In Progress": [
+                    "__any__"
+                ],
+                "__ignore__": [
+                    "in progress",
+                    "omitted",
+                    "on hold"
+                ]
+            }
         }
     },
     "publish": {
