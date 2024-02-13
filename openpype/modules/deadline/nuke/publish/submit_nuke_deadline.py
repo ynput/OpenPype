@@ -282,7 +282,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             pass
 
         # resolve any limit groups
-        print('++++++++++++++++++++++++++++++++++++')
         limits = ",".join(
             instance.data["creator_attributes"].get('limits', self.limits_plugin)
         )
