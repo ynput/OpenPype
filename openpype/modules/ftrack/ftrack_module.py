@@ -114,51 +114,52 @@ class FtrackModule(
         return filtered_entities[0]
 
     def after_file_open(self, event):
+        self._auto_update_task_status("status_change_on_file_open")
+
+    def after_file_save(self, event):
+        self._auto_update_task_status("status_change_on_file_save")
+
+    def _auto_update_task_status(self, setting_mapping_section):
+        # Create ftrack session
+        try:
+            session = self.create_ftrack_session()
+        except Exception:  # noqa
+            self.log.warning("Couldn't create ftrack session.", exc_info=True)
+            return
+        # ----------------------
+
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
 
-        # Do we want/need/can to update the status ? -------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------------------------------
+        # Do we want/need/can update the status?
         change_task_status = project_settings["ftrack"]["application_handlers"]["change_task_status"]
         if not change_task_status["enabled"]:
-            self.log.debug("Status changes are disabled for project \"{}\"".format(project_name))
             return
 
-        mapping = change_task_status["status_change_on_file_open"]
+        mapping = change_task_status[setting_mapping_section]
         if not mapping:
             # No rules registered, skip.
             return
-        # --------------------------------------------------------------------------------------------------------------
+        # --------------------------------------
 
         asset_name = get_current_asset_name()
         task_name = get_current_task_name()
 
-        # Create session -----------------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------------------------------
-        try:
-            session = self.create_ftrack_session()
-        except Exception: # noqa
-            self.log.warning("Couldn't create ftrack session.", exc_info=True)
-            return
-        # --------------------------------------------------------------------------------------------------------------
-
-        # Find entity --------------------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------------------------------
+        # Find the entity
         entity = self.find_ftrack_task_entity(session, project_name, asset_name, task_name)
         if not entity:
             # No valid entity found, quit.
             return
+        # ---------------
 
         ent_path = "/".join([ent["name"] for ent in entity["link"]])
         actual_status = entity["status"]["name"].lower()
-        # --------------------------------------------------------------------------------------------------------------
 
-        # Find next status ---------------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------------------------------
+        # Find the next status
         if "__ignore__" in mapping:
             ignored_statuses = [status.lower() for status in mapping["__ignore__"]]
             if actual_status in ignored_statuses:
-                # We can exit the status is flagged to be ignored
+                # We can exit, the status is flagged to be ignored.
                 return
 
             # Removing to avoid looping on it
@@ -181,28 +182,21 @@ class FtrackModule(
         if not next_status:
             # No valid next status found, skip.
             return
-        # --------------------------------------------------------------------------------------------------------------
+        # --------------------
 
-        # Change status on ftrack --------------------------------------------------------------------------------------
-        # --------------------------------------------------------------------------------------------------------------
+        # Change the status on ftrack
         try:
             query = "Status where name is \"{}\"".format(next_status)
             next_status_obj = session.query(query).one()
 
             entity["status"] = next_status_obj
             session.commit()
-            self.log.debug("Changing status to \"{}\" <{}>".format(next_status, ent_path))
+            self.log.debug("Changing current task status to \"{}\" <{}>".format(next_status, ent_path))
         except Exception:  # noqa
             session.rollback()
             msg = "Status \"{}\" in presets wasn't found on Ftrack entity type \"{}\"".format(next_status,
                                                                                               entity.entity_type)
             self.log.warning(msg)
-
-    def after_file_save(self, event):
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-        print(json.dumps(event.to_data()))
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 
     def get_ftrack_url(self):
         """Resolved ftrack url.
