@@ -9,14 +9,45 @@ from openpype.pipeline.context_tools import (
 from openpype.settings.lib import load_openpype_default_settings
 from openpype.settings import get_current_project_settings
 
+class RecalculateOnAccess:
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, instance, owner):
+        return self.fget(instance)
 
 class DeadlineDefaultJobAttrs:
     deadline_job_attrs_global_settings = load_openpype_default_settings()['project_settings']['deadline']['JobAttrsValues']
-    pool = deadline_job_attrs_global_settings['DefaultValues']['pool']
-    pool_secondary = deadline_job_attrs_global_settings['DefaultValues']['pool_secondary']
-    priority = deadline_job_attrs_global_settings['DefaultValues']['priority']
-    limit_machine = deadline_job_attrs_global_settings['DefaultValues']['limit_machine']
-    limits_plugin = deadline_job_attrs_global_settings['DefaultValues']['limits_plugin']
+    _pool = deadline_job_attrs_global_settings['DefaultValues']['pool']
+    _pool_secondary = deadline_job_attrs_global_settings['DefaultValues']['pool_secondary']
+    _priority = deadline_job_attrs_global_settings['DefaultValues']['priority']
+    _limit_machine = deadline_job_attrs_global_settings['DefaultValues']['limit_machine']
+    _limits_plugin = deadline_job_attrs_global_settings['DefaultValues']['limits_plugin']
+
+    @RecalculateOnAccess
+    def pool(self):
+        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool']
+                or self._pool)
+
+    @RecalculateOnAccess
+    def pool_secondary(self):
+        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool_secondary']
+                or self._pool_secondary)
+
+    @RecalculateOnAccess
+    def priority(self):
+        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['priority']
+                or self._priority)
+
+    @RecalculateOnAccess
+    def limit_machine(self):
+        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limit_machine']
+                or self._limit_machine)
+
+    @RecalculateOnAccess
+    def limits_plugin(self):
+        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
+                or self._limits_plugin)
 
 
 class SafeDict(dict):
