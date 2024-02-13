@@ -4141,7 +4141,7 @@ def create_rig_animation_instance(
         log (logging.Logger, optional): Logger to log to if provided
 
     Returns:
-        None
+        instance
 
     """
     if options is None:
