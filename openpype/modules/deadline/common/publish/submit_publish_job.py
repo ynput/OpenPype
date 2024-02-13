@@ -17,7 +17,7 @@ from openpype.pipeline import publish, legacy_io
 from openpype.lib import EnumDef
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.version_start import get_versioning_start
-
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
     create_instances_for_aov,
@@ -56,7 +56,8 @@ def get_resource_files(resources, frame_range=None):
 
 class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                                 publish.OpenPypePyblishPluginMixin,
-                                publish.ColormanagedPyblishPluginMixin):
+                                publish.ColormanagedPyblishPluginMixin,
+                                DeadlineDefaultJobAttrs):
     """Process Job submitted on farm.
 
     These jobs are dependent on a deadline or muster job
@@ -128,11 +129,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     ]
 
     # Deadline attributes
-    priority = 50
-    pool = ""
-    pool_secondary = ""
-    limit_machine = 0
-    limits_plugins = []
     department = ""
     group = ""
     chunk_size = 1
@@ -274,12 +270,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
                 "Department": self.deadline_department,
                 "ChunkSize": self.deadline_chunk_size,
-                "Priority": instance.data.get("priority", 50),
+                "Priority": instance.data.get("priority", self.priority),
                 "InitialStatus": initial_status,
 
                 "Group": self.deadline_group,
-                "Pool": instance.data.get("primaryPool", ""),
-                "SecondaryPool": instance.data.get("secondaryPool", ""),
+                "Pool": instance.data.get("primaryPool", self.pool),
+                "SecondaryPool": instance.data.get("secondaryPool", self.pool_secondary),
                 # ensure the outputdirectory with correct slashes
                 "OutputDirectory0": output_dir.replace("\\", "/")
             },
@@ -319,8 +315,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     )
                 }
             )
-        # remove secondary pool
-        payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.debug("Submitting Deadline publish job ...")
 

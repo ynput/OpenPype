@@ -14,12 +14,13 @@ from openpype.lib import (
     BoolDef,
     NumberDef
 )
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 
 
 class FusionSubmitDeadline(
     pyblish.api.InstancePlugin,
-    OpenPypePyblishPluginMixin
+    OpenPypePyblishPluginMixin,
+    DeadlineDefaultJobAttrs
 ):
     """Submit current Comp to Deadline
 
@@ -35,7 +36,6 @@ class FusionSubmitDeadline(
     targets = ["local"]
 
     # presets
-    priority = 50
     chunk_size = 1
     concurrent_tasks = 1
     group = ""

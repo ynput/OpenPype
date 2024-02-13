@@ -7,6 +7,7 @@ from openpype.pipeline.context_tools import (
     get_current_task_name
 )
 from openpype.settings.lib import load_openpype_default_settings
+from openpype.settings import get_current_project_settings
 
 
 class DeadlineDefaultJobAttrs:

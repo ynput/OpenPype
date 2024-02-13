@@ -45,7 +45,6 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import (
     abstract_submit_deadline,
-    get_deadline_job_profile
 )
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
@@ -106,8 +105,8 @@ class ArnoldPluginInfo(object):
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
-                         OpenPypePyblishPluginMixin, DeadlineDefaultJobAttrs
-                         ):
+                         OpenPypePyblishPluginMixin,
+                         DeadlineDefaultJobAttrs):
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
@@ -192,7 +191,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if self.group != "none" and self.group:
             job_info.Group = self.group
 
-        limits_plugin = instance.data.get("limits", self.limits_plugins)
+        limits_plugin = instance.data.get("limits", self.limits_plugin)
         if limits_plugin:
             job_info.LimitGroups = ",".join(limits_plugin)
 

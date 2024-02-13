@@ -16,7 +16,7 @@ from openpype_modules.deadline import (
     get_deadline_limit_groups
 )
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 
 import pyblish.api
 
@@ -35,7 +35,7 @@ class MayaPluginInfo(object):
 
 
 class MayaSubmitRemotePublishDeadline(
-        abstract_submit_deadline.AbstractSubmitDeadline):
+        abstract_submit_deadline.AbstractSubmitDeadline, DeadlineDefaultJobAttrs):
     """Submit Maya scene to perform a local publish in Deadline.
 
     Publishing in Deadline can be helpful for scenes that publish very slow.

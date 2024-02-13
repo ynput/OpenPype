@@ -14,21 +14,24 @@ from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
 )
+from openpype.pipeline.context_tools import _get_modules_manager
 from openpype.modules.deadline.utils import (
     set_custom_deadline_name,
-    get_deadline_job_profile
+    get_deadline_job_profile,
+    DeadlineDefaultJobAttrs
 )
 from openpype.tests.lib import is_in_tests
 from openpype.lib import (
     is_running_from_build,
     BoolDef,
     NumberDef,
-    TextDef
+    EnumDef
 )
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin,
-                         OpenPypePyblishPluginMixin):
+                         OpenPypePyblishPluginMixin,
+                         DeadlineDefaultJobAttrs):
     """Submit write to Deadline
 
     Renders are submitted to a Deadline Web Service as
@@ -42,13 +45,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     families = ["render", "prerender"]
     optional = True
     targets = ["local"]
-
-    # presets
-    pool = ""
-    pool_secondary = ""
-    priority = 50
-    limit_machine = 0
-    limits_plugin = []
 
     chunk_size = 1
     concurrent_tasks = 1
@@ -71,17 +67,20 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     @classmethod
     def get_attribute_defs(cls):
         defs = super(NukeSubmitDeadline, cls).get_attribute_defs()
+        manager = _get_modules_manager()
+        deadline_module = manager.modules_by_name["deadline"]
+        deadline_url = deadline_module.deadline_urls["default"]
+        pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
+
         defs.extend([
-            TextDef(
-                "primaryPool",
-                label="Primary Pool",
-                default=cls.pool
-            ),
-            TextDef(
-                "secondaryPool",
-                label="Secondary Pool",
-                default=cls.pool_secondary
-            ),
+            EnumDef("primary_pool",
+                    label="Primary Pool",
+                    items=pools,
+                    default=cls.pool),
+            EnumDef("secondary_pool",
+                    label="Secondary Pool",
+                    items=pools,
+                    default=cls.pool_secondary),
             NumberDef(
                 "priority",
                 label="Priority",
@@ -283,8 +282,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             pass
 
         # resolve any limit groups
+        print('++++++++++++++++++++++++++++++++++++')
         limits = ",".join(
-            instance.data["creator_attributes"].get('limits')
+            instance.data["creator_attributes"].get('limits', self.limits_plugin)
         )
 
         payload = {
@@ -312,7 +312,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "Pool": instance.data["attributeValues"].get(
                     "primary_pool", self.pool),
                 "SecondaryPool": instance.data["attributeValues"].get(
-                    "secondary_pool", self.pool),
+                    "secondary_pool", self.pool_secondary),
                 "MachineLimit": instance.data["creator_attributes"].get(
                     "machineLimit", self.limit_machine),
                 "Group": self.group,
