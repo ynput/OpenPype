@@ -1203,6 +1203,9 @@
             "optional": false,
             "validate_shapes": true
         },
+        "ValidateLookSets": {
+            "exclude_sets_with_suffix": []
+        },
         "ExtractPlayblast": {
             "capture_preset": {
                 "Codec": {
