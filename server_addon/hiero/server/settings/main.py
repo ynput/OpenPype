@@ -1,6 +1,4 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 from .imageio import (
     ImageIOSettings,
@@ -28,28 +26,28 @@ from .filters import PublishGUIFilterItemModel
 class HieroSettings(BaseSettingsModel):
     """Nuke addon settings."""
 
-    imageio: ImageIOSettings = Field(
+    imageio: ImageIOSettings = SettingsField(
         default_factory=ImageIOSettings,
         title="Color Management (imageio)",
     )
 
-    create: CreatorPluginsSettings = Field(
+    create: CreatorPluginsSettings = SettingsField(
         default_factory=CreatorPluginsSettings,
         title="Creator Plugins",
     )
-    load: LoaderPuginsModel = Field(
+    load: LoaderPuginsModel = SettingsField(
         default_factory=LoaderPuginsModel,
         title="Loader plugins"
     )
-    publish: PublishPuginsModel = Field(
+    publish: PublishPuginsModel = SettingsField(
         default_factory=PublishPuginsModel,
         title="Publish plugins"
     )
-    scriptsmenu: ScriptsmenuSettings = Field(
+    scriptsmenu: ScriptsmenuSettings = SettingsField(
         default_factory=ScriptsmenuSettings,
         title="Scripts Menu Definition",
     )
-    filters: list[PublishGUIFilterItemModel] = Field(
+    filters: list[PublishGUIFilterItemModel] = SettingsField(
         default_factory=list
     )
 

@@ -200,9 +200,15 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             self._fill_task_data(instance, project_task_types, anatomy_data)
 
             # Define version
+            version_number = None
             if self.follow_workfile_version:
                 version_number = context.data("version")
-            else:
+
+            # Even if 'follow_workfile_version' is enabled, it may not be set
+            #   because workfile version was not collected to 'context.data'
+            # - that can happen e.g. in 'traypublisher' or other hosts without
+            #   a workfile
+            if version_number is None:
                 version_number = instance.data.get("version")
 
             # use latest version (+1) if already any exist
@@ -404,9 +410,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         """
 
         hierarchy_queue = collections.deque()
-        hierarchy_queue.append(hierarchy_context)
+        hierarchy_queue.append(copy.deepcopy(hierarchy_context))
         while hierarchy_queue:
-            item = hierarchy_context.popleft()
+            item = hierarchy_queue.popleft()
             if asset_name in item:
                 return item[asset_name].get("tasks") or {}
 

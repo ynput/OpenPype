@@ -2778,9 +2778,37 @@ def bake_to_world_space(nodes,
          list: The newly created and baked node names.
 
     """
+    @contextlib.contextmanager
+    def _unlock_attr(attr):
+        """Unlock attribute during context if it is locked"""
+        if not cmds.getAttr(attr, lock=True):
+            # If not locked, do nothing
+            yield
+            return
+        try:
+            cmds.setAttr(attr, lock=False)
+            yield
+        finally:
+            cmds.setAttr(attr, lock=True)
 
     def _get_attrs(node):
-        """Workaround for buggy shape attribute listing with listAttr"""
+        """Workaround for buggy shape attribute listing with listAttr
+
+        This will only return keyable settable attributes that have an
+        incoming connections (those that have a reason to be baked).
+
+        Technically this *may* fail to return attributes driven by complex
+        expressions for which maya makes no connections, e.g. doing actual
+        `setAttr` calls in expressions.
+
+        Arguments:
+            node (str): The node to list attributes for.
+
+        Returns:
+            list: Keyable attributes with incoming connections.
+                The attribute may be locked.
+
+        """
         attrs = cmds.listAttr(node,
                               write=True,
                               scalar=True,
@@ -2805,14 +2833,14 @@ def bake_to_world_space(nodes,
 
         return valid_attrs
 
-    transform_attrs = set(["t", "r", "s",
-                           "tx", "ty", "tz",
-                           "rx", "ry", "rz",
-                           "sx", "sy", "sz"])
+    transform_attrs = {"t", "r", "s",
+                       "tx", "ty", "tz",
+                       "rx", "ry", "rz",
+                       "sx", "sy", "sz"}
 
     world_space_nodes = []
-    with delete_after() as delete_bin:
-
+    with ExitStack() as stack:
+        delete_bin = stack.enter_context(delete_after())
         # Create the duplicate nodes that are in world-space connected to
         # the originals
         for node in nodes:
@@ -2824,23 +2852,26 @@ def bake_to_world_space(nodes,
                                       name=new_name,
                                       renameChildren=True)[0]  # noqa
 
-            # Connect all attributes on the node except for transform
-            # attributes
-            attrs = _get_attrs(node)
-            attrs = set(attrs) - transform_attrs if attrs else []
+            # Parent new node to world
+            if cmds.listRelatives(new_node, parent=True):
+                new_node = cmds.parent(new_node, world=True)[0]
 
+            # Temporarily unlock and passthrough connect all attributes
+            # so we can bake them over time
+            # Skip transform attributes because we will constrain them later
+            attrs = set(_get_attrs(node)) - transform_attrs
             for attr in attrs:
-                orig_node_attr = '{0}.{1}'.format(node, attr)
-                new_node_attr = '{0}.{1}'.format(new_node, attr)
+                orig_node_attr = "{}.{}".format(node, attr)
+                new_node_attr = "{}.{}".format(new_node, attr)
 
-                # unlock to avoid connection errors
-                cmds.setAttr(new_node_attr, lock=False)
-
+                # unlock during context to avoid connection errors
+                stack.enter_context(_unlock_attr(new_node_attr))
                 cmds.connectAttr(orig_node_attr,
                                  new_node_attr,
                                  force=True)
 
-            # If shapes are also baked then connect those keyable attributes
+            # If shapes are also baked then also temporarily unlock and
+            # passthrough connect all shape attributes for baking
             if shape:
                 children_shapes = cmds.listRelatives(new_node,
                                                      children=True,
@@ -2855,25 +2886,19 @@ def bake_to_world_space(nodes,
                                                      children_shapes):
                         attrs = _get_attrs(orig_shape)
                         for attr in attrs:
-                            orig_node_attr = '{0}.{1}'.format(orig_shape, attr)
-                            new_node_attr = '{0}.{1}'.format(new_shape, attr)
+                            orig_node_attr = "{}.{}".format(orig_shape, attr)
+                            new_node_attr = "{}.{}".format(new_shape, attr)
 
-                            # unlock to avoid connection errors
-                            cmds.setAttr(new_node_attr, lock=False)
-
+                            # unlock during context to avoid connection errors
+                            stack.enter_context(_unlock_attr(new_node_attr))
                             cmds.connectAttr(orig_node_attr,
                                              new_node_attr,
                                              force=True)
 
-            # Parent to world
-            if cmds.listRelatives(new_node, parent=True):
-                new_node = cmds.parent(new_node, world=True)[0]
-
-            # Unlock transform attributes so constraint can be created
+            # Constraint transforms
             for attr in transform_attrs:
-                cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
-
-            # Constraints
+                transform_attr = "{}.{}".format(new_node, attr)
+                stack.enter_context(_unlock_attr(transform_attr))
             delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
             delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
 
@@ -3115,119 +3140,6 @@ def fix_incompatible_containers():
             )
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
-
-
-def _null(*args):
-    pass
-
-
-class shelf():
-    '''A simple class to build shelves in maya. Since the build method is empty,
-    it should be extended by the derived class to build the necessary shelf
-    elements. By default it creates an empty shelf called "customShelf".'''
-
-    ###########################################################################
-    '''This is an example shelf.'''
-    # class customShelf(_shelf):
-    #     def build(self):
-    #         self.addButon(label="button1")
-    #         self.addButon("button2")
-    #         self.addButon("popup")
-    #         p = cmds.popupMenu(b=1)
-    #         self.addMenuItem(p, "popupMenuItem1")
-    #         self.addMenuItem(p, "popupMenuItem2")
-    #         sub = self.addSubMenu(p, "subMenuLevel1")
-    #         self.addMenuItem(sub, "subMenuLevel1Item1")
-    #         sub2 = self.addSubMenu(sub, "subMenuLevel2")
-    #         self.addMenuItem(sub2, "subMenuLevel2Item1")
-    #         self.addMenuItem(sub2, "subMenuLevel2Item2")
-    #         self.addMenuItem(sub, "subMenuLevel1Item2")
-    #         self.addMenuItem(p, "popupMenuItem3")
-    #         self.addButon("button3")
-    # customShelf()
-    ###########################################################################
-
-    def __init__(self, name="customShelf", iconPath="", preset={}):
-        self.name = name
-
-        self.iconPath = iconPath
-
-        self.labelBackground = (0, 0, 0, 0)
-        self.labelColour = (.9, .9, .9)
-
-        self.preset = preset
-
-        self._cleanOldShelf()
-        cmds.setParent(self.name)
-        self.build()
-
-    def build(self):
-        '''This method should be overwritten in derived classes to actually
-        build the shelf elements. Otherwise, nothing is added to the shelf.'''
-        for item in self.preset['items']:
-            if not item.get('command'):
-                item['command'] = self._null
-            if item['type'] == 'button':
-                self.addButon(item['name'],
-                              command=item['command'],
-                              icon=item['icon'])
-            if item['type'] == 'menuItem':
-                self.addMenuItem(item['parent'],
-                                 item['name'],
-                                 command=item['command'],
-                                 icon=item['icon'])
-            if item['type'] == 'subMenu':
-                self.addMenuItem(item['parent'],
-                                 item['name'],
-                                 command=item['command'],
-                                 icon=item['icon'])
-
-    def addButon(self, label, icon="commandButton.png",
-                 command=_null, doubleCommand=_null):
-        '''
-            Adds a shelf button with the specified label, command,
-            double click command and image.
-        '''
-        cmds.setParent(self.name)
-        if icon:
-            icon = os.path.join(self.iconPath, icon)
-            print(icon)
-        cmds.shelfButton(width=37, height=37, image=icon, label=label,
-                         command=command, dcc=doubleCommand,
-                         imageOverlayLabel=label, olb=self.labelBackground,
-                         olc=self.labelColour)
-
-    def addMenuItem(self, parent, label, command=_null, icon=""):
-        '''
-            Adds a shelf button with the specified label, command,
-            double click command and image.
-        '''
-        if icon:
-            icon = os.path.join(self.iconPath, icon)
-            print(icon)
-        return cmds.menuItem(p=parent, label=label, c=command, i="")
-
-    def addSubMenu(self, parent, label, icon=None):
-        '''
-            Adds a sub menu item with the specified label and icon to
-            the specified parent popup menu.
-        '''
-        if icon:
-            icon = os.path.join(self.iconPath, icon)
-            print(icon)
-        return cmds.menuItem(p=parent, label=label, i=icon, subMenu=1)
-
-    def _cleanOldShelf(self):
-        '''
-            Checks if the shelf exists and empties it if it does
-            or creates it if it does not.
-        '''
-        if cmds.shelfLayout(self.name, ex=1):
-            if cmds.shelfLayout(self.name, q=1, ca=1):
-                for each in cmds.shelfLayout(self.name, q=1, ca=1):
-                    cmds.deleteUI(each)
-        else:
-            cmds.shelfLayout(self.name, p="ShelfLayout")
 
 
 def update_content_on_context_change():

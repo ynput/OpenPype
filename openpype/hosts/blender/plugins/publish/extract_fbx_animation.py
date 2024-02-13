@@ -153,17 +153,20 @@ class ExtractAnimationFBX(
 
         override = plugin.create_blender_context(
             active=root, selected=[root, armature])
-        bpy.ops.export_scene.fbx(
-            override,
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            bake_anim_use_nla_strips=False,
-            bake_anim_use_all_actions=False,
-            add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'EMPTY', 'ARMATURE'}
-        )
+
+        with bpy.context.temp_override(**override):
+            # We export the fbx
+            bpy.ops.export_scene.fbx(
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                bake_anim_use_nla_strips=False,
+                bake_anim_use_all_actions=False,
+                add_leaf_bones=False,
+                armature_nodetype='ROOT',
+                object_types={'EMPTY', 'ARMATURE'}
+            )
+
         armature.name = armature_name
         asset_group.name = asset_group_name
         root.select_set(True)
