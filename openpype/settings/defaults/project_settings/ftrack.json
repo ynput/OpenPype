@@ -203,9 +203,9 @@
                     "__any__"
                 ],
                 "__ignore__": [
-                    "in progress",
-                    "omitted",
-                    "on hold"
+                    "In Progress",
+                    "Omitted",
+                    "On Hold"
                 ]
             },
             "status_change_on_file_save": {
@@ -213,9 +213,9 @@
                     "__any__"
                 ],
                 "__ignore__": [
-                    "in progress",
-                    "omitted",
-                    "on hold"
+                    "In Progress",
+                    "Omitted",
+                    "On Hold"
                 ]
             }
         }

@@ -153,11 +153,11 @@ class FtrackModule(
         # ---------------
 
         ent_path = "/".join([ent["name"] for ent in entity["link"]])
-        actual_status = entity["status"]["name"].lower()
+        actual_status = entity["status"]["name"]
 
         # Find the next status
         if "__ignore__" in mapping:
-            ignored_statuses = [status.lower() for status in mapping["__ignore__"]]
+            ignored_statuses = [status for status in mapping["__ignore__"]]
             if actual_status in ignored_statuses:
                 # We can exit, the status is flagged to be ignored.
                 return
@@ -168,7 +168,7 @@ class FtrackModule(
         next_status = None
 
         for to_status, from_statuses in mapping.items():
-            from_statuses = [status.lower() for status in from_statuses]
+            from_statuses = [status for status in from_statuses]
             if "__any__" in from_statuses:
                 next_status = to_status
                 # Not breaking in case a better mapping is set after.

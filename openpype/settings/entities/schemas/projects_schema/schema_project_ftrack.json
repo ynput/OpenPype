@@ -678,7 +678,7 @@
                             "label": "Status change on file open",
                             "object_type": {
                                 "type": "list",
-                                "object_type": "text"
+                                "object_type": "ftrack-task-statuses"
                             }
                         },
                         {
@@ -691,7 +691,7 @@
                             "label": "Status change on file save",
                             "object_type": {
                                 "type": "list",
-                                "object_type": "text"
+                                "object_type": "ftrack-task-statuses"
                             }
                         }
                     ]

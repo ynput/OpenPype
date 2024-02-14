@@ -580,6 +580,58 @@ class ShotgridUrlEnumEntity(DynamicEnumEntity):
         return enum_items_list, valid_keys
 
 
+class FtrackTaskStatusesEnumEntity(DynamicEnumEntity):
+    schema_types = ["ftrack-task-statuses"]
+
+    def _item_initialization(self):
+        self.multiselection = False
+        self.valid_value_types = (STRING_TYPE,)
+        self.value_on_not_set = ""
+        self.enum_items = []
+        self.valid_keys = set()
+        self.placeholder = None
+
+    def _get_enum_values(self):
+        # Import here to avoid circular import
+        from openpype.pipeline.context_tools import _get_modules_manager
+
+        manager = _get_modules_manager()
+        ftrack_module = manager.modules_by_name["ftrack"]
+
+        try:
+            ftrack_session = ftrack_module.create_ftrack_session()
+        except Exception:  # noqa
+            # Ftrack not available (could be if a developer is in "opdev" mode)
+            return [], set()
+
+        task_status_names = [status["name"] for status in ftrack_session.query("Status").all()]
+        task_status_names.sort()
+
+        if not task_status_names:
+            return [], set()
+
+        valid_keys = set()
+        enum_items = []
+        for task_status_name in task_status_names:
+            enum_items.append({task_status_name: task_status_name})
+            valid_keys.add(task_status_name)
+
+        return enum_items, valid_keys
+
+    def _convert_value_for_current_state(self, source_value):
+
+        if source_value not in self.valid_keys:
+            # Take first item from enum items
+            for item in self.enum_items:
+                for key in item.keys():
+                    source_value = key
+                break
+        return source_value
+
+    def set_override_state(self, *args, **kwargs):
+        super(FtrackTaskStatusesEnumEntity, self).set_override_state(*args, **kwargs)
+
+
 class AnatomyTemplatesEnumEntity(BaseEnumEntity):
     schema_types = ["anatomy-templates-enum"]
 
