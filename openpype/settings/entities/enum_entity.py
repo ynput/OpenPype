@@ -629,7 +629,7 @@ class DeadlineLimitsPluginEnumEntity(BaseEnumEntity):
                 self.set(value_on_not_set)
 
 
-class DeadlinePoolsnumEntity(BaseEnumEntity):
+class DeadlinePoolsnumEntity(DynamicEnumEntity):
     schema_types = ["deadline-pools-enum"]
 
     def _item_initialization(self):
@@ -677,24 +677,6 @@ class DeadlinePoolsnumEntity(BaseEnumEntity):
 
     def set_override_state(self, *args, **kwargs):
         super(DeadlinePoolsnumEntity, self).set_override_state(*args, **kwargs)
-
-        self.enum_items, self.valid_keys = self._get_enum_values()
-
-        if not self.enum_items:
-            self.valid_keys.add("")
-            self.enum_items.append({"": "< Empty >"})
-
-        for item in self.enum_items:
-            for key in item.keys():
-                value_on_not_set = key
-            break
-
-        self.value_on_not_set = value_on_not_set
-        if (
-            self._current_value is NOT_SET
-            or self._current_value not in self.valid_keys
-        ):
-            self.set(value_on_not_set)
 
 
 class RoyalRenderRootEnumEntity(DynamicEnumEntity):
