@@ -77,8 +77,8 @@ class CreateRenderlayer(plugin.RenderlayerCreator, DeadlineDefaultJobAttrs):
         project_settings = get_project_settings(project_name)
         profile = get_deadline_job_profile(project_settings, "maya")
 
-        default_limit_machine = profile.get("limit_machine", self.limit_machine) if profile else self.limit_machine
-        default_limits_plugin = profile.get("limits_plugin", self.limits_plugin) if profile else self.limits_plugin
+        default_limit_machine = profile.get("limit_machine", self.limit_machine)
+        default_limits_plugin = profile.get("limits_plugin", self.limits_plugin)
 
         return [
             BoolDef("review",
