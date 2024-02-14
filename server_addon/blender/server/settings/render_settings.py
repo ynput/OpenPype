@@ -127,6 +127,9 @@ class RenderSettingsModel(BaseSettingsModel):
         title="Renderer",
         enum_resolver=renderers_enum
     )
+    compositing: bool = SettingsField(
+        title="Enable Compositing"
+    )
     aov_list: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=aov_list_enum,
@@ -149,6 +152,7 @@ DEFAULT_RENDER_SETTINGS = {
     "image_format": "exr",
     "multilayer_exr": True,
     "renderer": "CYCLES",
+    "compositing": True,
     "aov_list": ["combined"],
     "custom_passes": []
 }

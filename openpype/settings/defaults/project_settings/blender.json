@@ -23,6 +23,7 @@
         "image_format": "exr",
         "multilayer_exr": true,
         "renderer": "CYCLES",
+        "compositing": true,
         "aov_list": ["combined"],
         "custom_passes": []
     },

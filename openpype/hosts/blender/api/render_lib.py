@@ -56,6 +56,14 @@ def get_renderer(settings):
                     ["renderer"])
 
 
+def get_compositing(settings):
+    """Get compositing from blender settings."""
+
+    return (settings["blender"]
+                    ["RenderSettings"]
+                    ["compositing"])
+
+
 def get_render_product(output_path, name, aov_sep):
     """
     Generate the path to the render product. Blender interprets the `#`
@@ -186,7 +194,9 @@ def _create_aov_slot(name, aov_sep, slots, rpass_name, multi_exr, output_path):
     return slot, filepath
 
 
-def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
+def set_node_tree(
+    output_path, render_product, name, aov_sep, ext, multilayer, compositing
+):
     # Set the scene to use the compositor node tree to render
     bpy.context.scene.use_nodes = True
 
@@ -252,11 +262,12 @@ def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
         name, aov_sep, slots, pass_name, multi_exr, output_path)
     tree.links.new(render_layer_node.outputs["Image"], slot)
 
-    # Create a new socket for the composite output
-    pass_name = "composite"
-    comp_socket, filepath = _create_aov_slot(
-        name, aov_sep, slots, pass_name, multi_exr, output_path)
-    aov_file_products.append(("Composite", filepath))
+    if compositing:
+        # Create a new socket for the composite output
+        pass_name = "composite"
+        comp_socket, filepath = _create_aov_slot(
+            name, aov_sep, slots, pass_name, multi_exr, output_path)
+        aov_file_products.append(("Composite", filepath))
 
     # For each active render pass, we add a new socket to the output node
     # and link it
@@ -280,7 +291,7 @@ def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
         tree.links.remove(link)
 
     # If there's a composite node, we connect its input with the new output
-    if composite_node:
+    if compositing and composite_node:
         for link in tree.links:
             if link.to_node == composite_node:
                 tree.links.new(link.from_socket, comp_socket)
@@ -323,6 +334,7 @@ def prepare_rendering(asset_group):
     ext = get_image_format(settings)
     multilayer = get_multilayer(settings)
     renderer = get_renderer(settings)
+    compositing = get_compositing(settings)
 
     set_render_format(ext, multilayer)
     bpy.context.scene.render.engine = renderer
@@ -332,7 +344,8 @@ def prepare_rendering(asset_group):
 
     render_product = get_render_product(output_path, name, aov_sep)
     aov_file_product = set_node_tree(
-        output_path, render_product, name, aov_sep, ext, multilayer)
+        output_path, render_product, name, aov_sep,
+        ext, multilayer, compositing)
 
     # Clear the render filepath, so that the output is handled only by the
     # output node in the compositor.

@@ -115,6 +115,11 @@
                     ]
                 },
                 {
+                    "key": "compositing",
+                    "type": "boolean",
+                    "label": "Enable Compositing"
+                },
+                {
                     "key": "aov_list",
                     "label": "AOVs to create",
                     "type": "enum",
