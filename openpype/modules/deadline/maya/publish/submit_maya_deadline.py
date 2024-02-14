@@ -45,10 +45,9 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import (
     abstract_submit_deadline,
-    get_deadline_job_profile
 )
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -106,7 +105,8 @@ class ArnoldPluginInfo(object):
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
-                         OpenPypePyblishPluginMixin):
+                         OpenPypePyblishPluginMixin,
+                         DeadlineDefaultJobAttrs):
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
@@ -114,29 +114,16 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     targets = ["local"]
 
     tile_assembler_plugin = "OpenPypeTileAssembler"
-    priority = 50
     tile_priority = 50
-    pool = ""
-    pool_secondary = ""
-    limit_machine = 0
-    limits_plugins = []
     jobInfo = {}
     pluginInfo = {}
     group = "none"
     strict_error_checking = True
 
+
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
-
-        # Default values from profile
-        profile = get_deadline_job_profile(project_settings, cls.hosts[0])
-
-        cls.priority = profile.get("priority", cls.priority)
-        cls.pool = profile.get("pool", cls.pool)
-        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
-        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
-        cls.limits_plugins = profile.get("limits_plugin", cls.limits_plugins)
 
         # Take some defaults from settings
         cls.asset_dependencies = settings.get("asset_dependencies",
@@ -204,7 +191,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if self.group != "none" and self.group:
             job_info.Group = self.group
 
-        limits_plugin = instance.data.get("limits", self.limits_plugins)
+        limits_plugin = instance.data.get("limits", self.limits_plugin)
         if limits_plugin:
             job_info.LimitGroups = ",".join(limits_plugin)
 
@@ -217,7 +204,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             else:
                 machine_list_key = "Blacklist"
             render_globals[machine_list_key] = machine_list
-
         job_info.Priority = attr_values.get("priority")
         job_info.ChunkSize = attr_values.get("chunkSize")
 

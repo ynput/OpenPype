@@ -11,9 +11,9 @@ import pyblish.api
 from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
 
-
-class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
+class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin, DeadlineDefaultJobAttrs):
     """Submit Houdini scene to perform a local publish in Deadline.
 
     Publishing in Deadline can be helpful for scenes that publish very slow.
@@ -76,10 +76,10 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         payload = {
             "JobInfo": {
                 "Plugin": "Houdini",
-                "Pool": "houdini",  # todo: remove hardcoded pool
+                "Pool": self.pool,
                 "BatchName": "Group: " + batch_name,
                 "Comment": context.data.get("comment", ""),
-                "Priority": 50,
+                "Priority": self.priority,
                 "Frames": "1-1",  # Always trigger a single frame
                 "IsFrameDependent": False,
                 "Name": job_name,

@@ -36,12 +36,12 @@
                     "label": "Default Values",
                     "children": [
                         {
-                            "type": "text",
+                            "type": "deadline-pools-enum",
                             "key": "pool",
                             "label": "Primary pool"
                         },
                         {
-                            "type": "text",
+                            "type": "deadline-pools-enum",
                             "key": "pool_secondary",
                             "label": "Secondary Pool"
                         },
@@ -87,12 +87,12 @@
                                 "type": "splitter"
                             },
                             {
-                                "type": "text",
+                                "type": "deadline-pools-enum",
                                 "key": "pool",
                                 "label": "Primary pool"
                             },
                             {
-                                "type": "text",
+                                "type": "deadline-pools-enum",
                                 "key": "pool_secondary",
                                 "label": "Secondary Pool"
                             },

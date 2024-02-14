@@ -17,7 +17,7 @@ from openpype.pipeline import publish, legacy_io
 from openpype.lib import EnumDef
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.version_start import get_versioning_start
-
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
     create_instances_for_aov,
@@ -56,7 +56,8 @@ def get_resource_files(resources, frame_range=None):
 
 class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                                 publish.OpenPypePyblishPluginMixin,
-                                publish.ColormanagedPyblishPluginMixin):
+                                publish.ColormanagedPyblishPluginMixin,
+                                DeadlineDefaultJobAttrs):
     """Process Job submitted on farm.
 
     These jobs are dependent on a deadline or muster job
@@ -128,11 +129,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     ]
 
     # Deadline attributes
-    priority = 50
-    pool = ""
-    pool_secondary = ""
-    limit_machine = 0
-    limits_plugins = []
+    url = ""
     department = ""
     group = ""
     chunk_size = 1
@@ -164,9 +161,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # deadline.publish.ProcessSubmittedJobOnFarm
         settings = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
 
-        cls.deadline_department = settings.get("department", "")
-        cls.deadline_group = settings.get("group", "")
-        cls.deadline_chunk_size = settings.get("chunk_size", 1)
+        cls.department = settings.get("department", "")
+        cls.group = settings.get("group", "")
+        cls.chunk_size = settings.get("chunk_size", 1)
 
     def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
@@ -220,12 +217,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             environment["AYON_RENDER_JOB"] = "0"
             environment["AYON_REMOTE_PUBLISH"] = "0"
             environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
-            deadline_plugin = "Ayon"
+            plugin_name = "Ayon"
         else:
             environment["OPENPYPE_PUBLISH_JOB"] = "1"
             environment["OPENPYPE_RENDER_JOB"] = "0"
             environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
-            deadline_plugin = "OpenPype"
+            plugin_name = "OpenPype"
             # Add OpenPype version
             self.environ_keys.append("OPENPYPE_VERSION")
 
@@ -266,20 +263,20 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # Generate the payload for Deadline submission
         payload = {
             "JobInfo": {
-                "Plugin": deadline_plugin,
+                "Plugin": plugin_name,
                 "BatchName": job["Props"]["Batch"],
                 "Name": job_name,
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
 
-                "Department": self.deadline_department,
-                "ChunkSize": self.deadline_chunk_size,
-                "Priority": instance.data.get("priority", 50),
+                "Department": self.department,
+                "ChunkSize": self.chunk_size,
+                "Priority": instance.data.get("priority", self.priority),
                 "InitialStatus": initial_status,
 
-                "Group": self.deadline_group,
-                "Pool": instance.data.get("primaryPool", ""),
-                "SecondaryPool": instance.data.get("secondaryPool", ""),
+                "Group": self.group,
+                "Pool": instance.data.get("primaryPool", self.pool),
+                "SecondaryPool": instance.data.get("secondaryPool", self.pool_secondary),
                 # ensure the outputdirectory with correct slashes
                 "OutputDirectory0": output_dir.replace("\\", "/")
             },
@@ -319,20 +316,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     )
                 }
             )
-        # remove secondary pool
-        payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.debug("Submitting Deadline publish job ...")
 
-        url = "{}/api/jobs".format(self.deadline_url)
+        url = "{}/api/jobs".format(self.url)
         response = requests.post(url, json=payload, timeout=10)
         if not response.ok:
             raise Exception(response.text)
 
-        deadline_publish_job_id = response.json()["_id"]
+        publish_job_id = response.json()["_id"]
 
-        return deadline_publish_job_id
-
+        return publish_job_id
 
     def process(self, instance):
         # type: (pyblish.api.Instance) -> None
@@ -483,21 +477,21 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
-        deadline_publish_job_id = None
+        publish_job_id = None
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
-            self.deadline_url = instance.context.data["defaultDeadline"]
+            self.url = instance.context.data["defaultDeadline"]
             # if custom one is set in instance, use that
             if instance.data.get("deadlineUrl"):
-                self.deadline_url = instance.data.get("deadlineUrl")
-            assert self.deadline_url, "Requires Deadline Webservice URL"
+                self.url = instance.data.get("deadlineUrl")
+            assert self.url, "Requires Deadline Webservice URL"
 
-            deadline_publish_job_id = \
+            publish_job_id = \
                 self._submit_deadline_post_job(instance, render_job, instances)
 
             # Inject deadline url to instances.
             for inst in instances:
-                inst["deadlineUrl"] = self.deadline_url
+                inst["deadlineUrl"] = self.url
 
         # publish job file
         publish_job = {
@@ -515,8 +509,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "instances": instances
         }
 
-        if deadline_publish_job_id:
-            publish_job["deadline_publish_job_id"] = deadline_publish_job_id
+        if publish_job_id:
+            publish_job["deadline_publish_job_id"] = publish_job_id
 
         # add audio to metadata file if available
         audio_file = instance.context.data.get("audioFile")

@@ -8,7 +8,7 @@
             "pool_secondary": "",
             "priority": 50,
             "limit_machine": 0,
-            "limits_plugin": [],
+            "limits_plugin": []
         },
         "profiles": []
     },

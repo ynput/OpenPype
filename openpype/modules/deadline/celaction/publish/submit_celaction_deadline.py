@@ -5,9 +5,9 @@ import getpass
 import requests
 import pyblish.api
 
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 
-class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
+class CelactionSubmitDeadline(pyblish.api.InstancePlugin, DeadlineDefaultJobAttrs):
     """Submit CelAction2D scene to Deadline
 
     Renders are submitted to a Deadline Web Service.
@@ -20,9 +20,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     families = ["render.farm"]
 
     department = ""
-    priority = 50
-    pool = ""
-    pool_secondary = ""
     deadline_group = ""
     chunk_size = 1
     job_delay = "00:00:08:00"

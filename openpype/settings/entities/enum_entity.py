@@ -629,6 +629,56 @@ class DeadlineLimitsPluginEnumEntity(BaseEnumEntity):
                 self.set(value_on_not_set)
 
 
+class DeadlinePoolsEnumEntity(DynamicEnumEntity):
+    schema_types = ["deadline-pools-enum"]
+
+    def _item_initialization(self):
+        self.multiselection = False
+        self.valid_value_types = (STRING_TYPE,)
+        self.value_on_not_set = ""
+        self.enum_items = []
+        self.valid_keys = set()
+        self.placeholder = None
+
+    def _get_enum_values(self):
+        # Import here to avoid circular import
+        from openpype.pipeline.context_tools import _get_modules_manager
+
+        modules_system_settings = get_system_settings()["modules"]
+        deadline_enabled = modules_system_settings["deadline"]["enabled"]
+        if not deadline_enabled:
+            return
+
+        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")  # noqa
+        manager = _get_modules_manager()
+        deadline_module = manager.modules_by_name["deadline"]
+        pools = deadline_module.get_deadline_pools(deadline_url, self.log)
+
+        if not pools:
+            return [], set()
+
+        valid_keys = set()
+        enum_items = []
+        for plugin_name in pools:
+            enum_items.append({plugin_name: plugin_name})
+            valid_keys.add(plugin_name)
+
+        return enum_items, valid_keys
+
+    def _convert_value_for_current_state(self, source_value):
+
+        if source_value not in self.valid_keys:
+            # Take first item from enum items
+            for item in self.enum_items:
+                for key in item.keys():
+                    source_value = key
+                break
+        return source_value
+
+    def set_override_state(self, *args, **kwargs):
+        super(DeadlinePoolsEnumEntity, self).set_override_state(*args, **kwargs)
+
+
 class RoyalRenderRootEnumEntity(DynamicEnumEntity):
     schema_types = ["rr_root-enum"]
 

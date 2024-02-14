@@ -11,7 +11,7 @@ from openpype.lib import (
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 
@@ -31,8 +31,8 @@ class DeadlinePluginInfo():
 
 
 class AfterEffectsSubmitDeadline(
-    abstract_submit_deadline.AbstractSubmitDeadline
-):
+    abstract_submit_deadline.AbstractSubmitDeadline,
+    DeadlineDefaultJobAttrs):
 
     label = "Submit AE to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
@@ -41,7 +41,6 @@ class AfterEffectsSubmitDeadline(
     use_published = True
     targets = ["local"]
 
-    priority = 50
     chunk_size = 1000000
     group = None
     department = None
@@ -80,8 +79,8 @@ class AfterEffectsSubmitDeadline(
             dln_job_info.Frames = frame_range
 
         dln_job_info.Priority = self.priority
-        dln_job_info.Pool = self._instance.data.get("primaryPool")
-        dln_job_info.SecondaryPool = self._instance.data.get("secondaryPool")
+        dln_job_info.Pool = self._instance.data.get("primaryPool", self.pool)
+        dln_job_info.SecondaryPool = self._instance.data.get("secondaryPool", self.pool_secondary)
         dln_job_info.Group = self.group
         dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size

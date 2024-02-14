@@ -9,14 +9,6 @@ class CollectDefaultDeadlineServerModel(BaseSettingsModel):
     pass_mongo_url: bool = Field(title="Pass Mongo url to job")
 
 
-class CollectDeadlinePoolsModel(BaseSettingsModel):
-    """Settings Deadline default pools."""
-
-    primary_pool: str = Field(title="Primary Pool")
-
-    secondary_pool: str = Field(title="Secondary Pool")
-
-
 class ValidateExpectedFilesModel(BaseSettingsModel):
     enabled: bool = Field(True, title="Enabled")
     active: bool = Field(True, title="Active")
@@ -242,9 +234,6 @@ class PublishPluginsModel(BaseSettingsModel):
     CollectDefaultDeadlineServer: CollectDefaultDeadlineServerModel = Field(
         default_factory=CollectDefaultDeadlineServerModel,
         title="Default Deadline Webservice")
-    CollectDeadlinePools: CollectDeadlinePoolsModel = Field(
-        default_factory=CollectDeadlinePoolsModel,
-        title="Default Pools")
     ValidateExpectedFiles: ValidateExpectedFilesModel = Field(
         default_factory=ValidateExpectedFilesModel,
         title="Validate Expected Files"

@@ -21,8 +21,10 @@ from openpype_modules.deadline import (
     get_deadline_limits_plugin
 )
 
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
 
-class CreateRenderlayer(plugin.RenderlayerCreator):
+
+class CreateRenderlayer(plugin.RenderlayerCreator, DeadlineDefaultJobAttrs):
     """Create and manages renderlayer subset per renderLayer in workfile.
 
     This generates a single node in the scene which tells the Creator to if
@@ -75,8 +77,8 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
         project_settings = get_project_settings(project_name)
         profile = get_deadline_job_profile(project_settings, "maya")
 
-        default_limit_machine = profile.get("limit_machine", 0)
-        default_limits_plugin = profile.get("limits_plugin", [])
+        default_limit_machine = profile.get("limit_machine", self.limit_machine)
+        default_limits_plugin = profile.get("limits_plugin", self.limits_plugin)
 
         return [
             BoolDef("review",
