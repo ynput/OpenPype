@@ -296,8 +296,8 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "priority": 50,
         "tile_priority": 50,
         "group": "none",
-        "limit_machine": 0,
-        "limits_plugin": [],
+        "limit_machine": 0,  # It Seems unused and unnecessary
+        "limits_plugin": [],  # It seems unused and unnecessary
         # this used to be empty dict
         "jobInfo": "",
         # this used to be empty dict
@@ -334,8 +334,8 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "use_gpu": True,
         "env_allowed_keys": [],
         "env_search_replace_values": [],
-        "limit_machine": 0,
-        "limits_plugin": []
+        "limit_machine": 0,  # It Seems unused and unnecessary
+        "limits_plugin": []  # It Seems unused and unnecessary
     },
     "HarmonySubmitDeadline": {
         "enabled": True,
