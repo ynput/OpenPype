@@ -59,10 +59,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
         cls.priority = profile.get("priority", cls.priority)
         cls.pool = profile.get("pool", cls.pool)
-        cls.secondary_pool = profile.get(
-            "pool_secondary",
-            cls.pool_secondary
-        )
+        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
 
     @classmethod
     def get_attribute_defs(cls):
