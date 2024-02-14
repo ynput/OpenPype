@@ -20,7 +20,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin, DeadlineDefaultJobAttr
     families = ["render.farm"]
 
     department = ""
-    deadline_group = ""
+    group = ""
     chunk_size = 1
     job_delay = "00:00:08:00"
 
