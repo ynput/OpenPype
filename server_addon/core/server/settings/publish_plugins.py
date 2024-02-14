@@ -176,6 +176,10 @@ class ExtractThumbnailOIIODefaultsModel(BaseSettingsModel):
 class ExtractThumbnailModel(BaseSettingsModel):
     _isGroup = True
     enabled: bool = SettingsField(True)
+    product_names: list[str] = SettingsField(
+        default_factory=list,
+        title="Product names"
+    )
     integrate_thumbnail: bool = SettingsField(
         True,
         title="Integrate Thumbnail Representation"
@@ -844,6 +848,7 @@ DEFAULT_PUBLISH_VALUES = {
     },
     "ExtractThumbnail": {
         "enabled": True,
+        "product_names": [],
         "integrate_thumbnail": True,
         "target_size": {
             "type": "source"

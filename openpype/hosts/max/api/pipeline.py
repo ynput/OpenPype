@@ -59,6 +59,8 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         rt.callbacks.addScript(rt.Name('filePostOpen'),
                                lib.check_colorspace)
+        rt.callbacks.addScript(rt.Name('postWorkspaceChange'),
+                               self._deferred_menu_creation)
 
     def workfile_has_unsaved_changes(self):
         return rt.getSaveRequired()
