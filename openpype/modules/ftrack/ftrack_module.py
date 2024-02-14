@@ -169,7 +169,7 @@ class FtrackModule(
 
         for to_status, from_statuses in mapping.items():
             from_statuses = [status for status in from_statuses]
-            if "__any__" in from_statuses or "__all__" in from_statuses:
+            if "__any__" in from_statuses:
                 next_status = to_status
                 # Not breaking in case a better mapping is set after.
                 continue

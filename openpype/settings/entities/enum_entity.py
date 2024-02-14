@@ -606,7 +606,7 @@ class FtrackTaskStatusesEnumEntity(DynamicEnumEntity):
 
         task_status_names = [status["name"] for status in ftrack_session.query("Status").all()]
         # Add custom status
-        task_status_names.extend(["__any__", "__all__"])
+        task_status_names.append("__any__")
         task_status_names.sort()
 
         if not task_status_names:
