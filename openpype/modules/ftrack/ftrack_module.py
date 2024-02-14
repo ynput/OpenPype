@@ -196,7 +196,7 @@ class FtrackModule(
             session.rollback()
             msg = "Status \"{}\" in presets wasn't found on Ftrack entity type \"{}\"".format(next_status,
                                                                                               entity.entity_type)
-            self.log.warning(msg)
+            self.log.error(msg)
 
     def get_ftrack_url(self):
         """Resolved ftrack url.
