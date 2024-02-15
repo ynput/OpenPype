@@ -103,13 +103,23 @@ def colorspace_exists_on_node(node, colorspace_name):
     except ValueError:
         # knob is not available on input node
         return False
-    all_clrs = get_colorspace_list(colorspace_knob)
 
-    return colorspace_name in all_clrs
+    return colorspace_name in get_colorspace_list(colorspace_knob)
 
 
 def get_colorspace_list(colorspace_knob):
     """Get available colorspace profile names
+
+    Because the values returned from colorspace_knob.values() do not correspond
+    to the value returned from colorspace_knob.value(), and the extracted
+    colorspace comes from using colorspace_knob.value(), we need to iterate
+    through all values to get the correct value.
+
+    A code example of the above would be:
+
+    for count, value in enumerate(colorspace_knob.values()):
+        colorspace_knob.setValue(count)
+        print(colorspace_knob.value() in colorspace_knob.values())
 
     Args:
         colorspace_knob (nuke.Knob): nuke knob object
@@ -117,19 +127,18 @@ def get_colorspace_list(colorspace_knob):
     Returns:
         list: list of strings names of profiles
     """
+    original_value = colorspace_knob.value()
 
-    all_clrs = list(colorspace_knob.values())
-    reduced_clrs = []
+    colorspaces = []
 
-    if not colorspace_knob.getFlag(nuke.STRIP_CASCADE_PREFIX):
-        return all_clrs
+    try:
+        for count, value in enumerate(colorspace_knob.values()):
+            colorspace_knob.setValue(count)
+            colorspaces.append(colorspace_knob.value())
+    finally:
+        colorspace_knob.setValue(original_value)
 
-    # strip colorspace with nested path
-    for clrs in all_clrs:
-        clrs = clrs.split('/')[-1]
-        reduced_clrs.append(clrs)
-
-    return reduced_clrs
+    return colorspaces
 
 
 def is_headless():
