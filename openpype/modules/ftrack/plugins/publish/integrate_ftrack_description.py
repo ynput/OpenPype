@@ -35,7 +35,7 @@ class IntegrateFtrackDescription(pyblish.api.InstancePlugin):
         asset_versions_key = "ftrackIntegratedAssetVersionsData"
         asset_versions_data_by_id = instance.data.get(asset_versions_key)
         if not asset_versions_data_by_id:
-            self.log.info("There are any integrated AssetVersions")
+            self.log.info("There are no integrated AssetVersions")
             return
 
         comment = instance.data["comment"]
