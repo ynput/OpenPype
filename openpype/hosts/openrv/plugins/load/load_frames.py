@@ -32,9 +32,7 @@ class FramesLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        filepath = self._format_path(context)
-        # Command fails on unicode so we must force it to be strings
-        filepath = str(filepath)
+        filepath = str(self._format_path(context))
 
         clean_rv_sources()
         rv.commands.addSourceVerbose([filepath])
@@ -44,14 +42,12 @@ class FramesLoader(load.LoaderPlugin):
         os.environ["AVALON_PROJECT"] = context["project"]["name"]
         os.environ["AVALON_ASSET"] = context["asset"]["name"]
         os.environ["AVALON_TASK"] = context["representation"]["context"]["task"]["name"]
-        rv.commands.addSourceVerbose([filepath])
 
     def update(self, container, representation):
         node = container["node"]
 
         context = get_representation_context(representation)
-        filepath = self._format_path(context)
-        filepath = str(filepath)
+        filepath = str(self._format_path(context))
 
         # change path
         rv.commands.setSourceMedia(node, [filepath])

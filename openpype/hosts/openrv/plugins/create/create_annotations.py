@@ -36,11 +36,6 @@ class AnnotationCreator(AutoCreator):
     def collect_instances(self):
 
         project_name = get_current_project_name()
-
-        # Query the representations in one go (optimization)
-        # TODO: We could optimize more by first checking annotated frames
-        #   and then only query the representations for those containers
-        #   that have any annotated frames.
         containers = list(get_containers())
         if not containers:
             if not rv.commands.sources():
