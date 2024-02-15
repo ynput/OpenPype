@@ -81,12 +81,7 @@ class ReviewMenu(MinorMode):
         self.review_main_layout = QtWidgets.QVBoxLayout()
         self.rev_head_label = QtWidgets.QLabel("Shot Review")
         self.set_item_font(self.rev_head_label, size=16)
-        self.rev_head_name = QtWidgets.QLabel("Shot Name")
         self.current_loaded_shot = QtWidgets.QLabel("")
-        self.current_shot_status = QtWidgets.QComboBox()
-        self.current_shot_status.addItems([
-            "In Review", "Ready For Review", "Reviewed", "Approved", "Deliver"
-        ])
         self.current_shot_comment = QtWidgets.QPlainTextEdit()
         self.current_shot_comment.setStyleSheet(
             "color: white; background-color: black"
@@ -94,16 +89,11 @@ class ReviewMenu(MinorMode):
 
         self.review_main_layout_head = QtWidgets.QVBoxLayout()
         self.review_main_layout_head.addWidget(self.rev_head_label)
-        self.review_main_layout_head.addWidget(self.rev_head_name)
         self.review_main_layout_head.addWidget(self.current_loaded_shot)
-        self.review_main_layout_head.addWidget(self.current_shot_status)
         self.review_main_layout_head.addWidget(self.current_shot_comment)
 
-        self.get_view_image = QtWidgets.QPushButton("Get image")
-        self.review_main_layout_head.addWidget(self.get_view_image)
-
-        self.remove_cmnt_status_btn = QtWidgets.QPushButton("Remove comment and status")  # noqa
-        self.review_main_layout_head.addWidget(self.remove_cmnt_status_btn)
+        self.remove_cmnt_btn = QtWidgets.QPushButton("Remove comment")  # noqa
+        self.review_main_layout_head.addWidget(self.remove_cmnt_btn)
 
         self.rvWindow = None
         self.dockWidget = None
@@ -122,11 +112,9 @@ class ReviewMenu(MinorMode):
         self.review_main_layout.addStretch(1)
         self.customDockWidget.setLayout(self.review_main_layout)
 
-        # signals
-        self.current_shot_status.currentTextChanged.connect(self.setup_combo_status)  # noqa
+        # signals noqa
         self.current_shot_comment.textChanged.connect(self.comment_update)
-        self.get_view_image.clicked.connect(self.get_gui_image)
-        self.remove_cmnt_status_btn.clicked.connect(self.clean_cmnt_status)
+        self.remove_cmnt_btn.clicked.connect(self.clean_cmnt)
         self.btn_note_prev.clicked.connect(self.annotate_prev)
         self.btn_note_next.clicked.connect(self.annotate_next)
 
@@ -198,89 +186,31 @@ class ReviewMenu(MinorMode):
         self.current_loaded_shot.setText(namespace)
 
         self.setup_properties()
-        self.get_comment()
-
-    def setup_combo_status(self):
-        # setup properties
-        node = self.current_loaded_viewnode
-        att_prop = node + ".openpype_review.task_status"
-        status = self.current_shot_status.currentText()
-        rv.commands.setStringProperty(att_prop, [str(status)], True)
-        self.current_shot_status.setCurrentText(status)
-
-    def setup_properties(self):
-        # setup properties
-        node = self.current_loaded_viewnode
-        if node is None:
-            self.current_shot_status.setCurrentIndex(0)
-            return
-
-        att_prop = node + ".openpype_review.task_status"
-        if not rv.commands.propertyExists(att_prop):
-            status = "In Review"
-            rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
-            rv.commands.setStringProperty(att_prop, [str(status)], True)
-            self.current_shot_status.setCurrentIndex(0)
-        else:
-            status = rv.commands.getStringProperty(att_prop)[0]
-            self.current_shot_status.setCurrentText(status)
 
     def comment_update(self):
-        node = self.current_loaded_viewnode
+        node = rv.commands.nodesOfType('RVFileSource')[0]
         if node is None:
             return
 
         comment = self.current_shot_comment.toPlainText()
-        att_prop = node + ".openpype_review.task_comment"
+        att_prop = "{0}.openpype_review.comment".format(node)
         rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
         rv.commands.setStringProperty(att_prop, [str(comment)], True)
 
-    def get_comment(self):
-        node = self.current_loaded_viewnode
-        if node is None:
-            self.current_shot_comment.setPlainText("")
-            return
-
-        att_prop = node + ".openpype_review.task_comment"
-        if not rv.commands.propertyExists(att_prop):
-            rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
-            rv.commands.setStringProperty(att_prop, [""], True)
-        else:
-            status = rv.commands.getStringProperty(att_prop)[0]
-            self.current_shot_comment.setPlainText(status)
-
-    def clean_cmnt_status(self):
+    def clean_cmnt(self):
         attribs = []
-        node = self.current_loaded_viewnode
-        att_prop_cmnt = node + ".openpype_review.task_comment"
-        att_prop_status = node + ".openpype_review.task_status"
+        node = rv.commands.nodesOfType('RVFileSource')[0]
+        if node is None:
+            return
+        att_prop_cmnt = node + ".openpype_review.comment"
         attribs.append(att_prop_cmnt)
-        attribs.append(att_prop_status)
 
         for prop in attribs:
             if not rv.commands.propertyExists(prop):
                 rv.commands.newProperty(prop, rv.commands.StringType, 1)
             rv.commands.setStringProperty(prop, [""], True)
 
-        self.current_shot_status.setCurrentText("In Review")
         self.current_shot_comment.setPlainText("")
-
-    def get_gui_image(self, filename=None):
-
-        if not filename:
-            # Allow user to pick filename
-            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                self.customDockWidget,
-                "Save image",
-                "image.png",
-                "Images (*.png *.jpg *.jpeg *.exr)"
-            )
-            if not filename:
-                # User cancelled
-                return
-
-        rv.commands.exportCurrentFrame(filename)
-        print("Current frame exported to: {}".format(filename))
 
     def annotate_next(self):
         """Set frame to next annotated frame"""
@@ -309,16 +239,6 @@ class ReviewMenu(MinorMode):
         """Return the frame numbers for all annotated frames"""
         annotated_frames = rv.extra_commands.findAnnotatedFrames()
         return annotated_frames
-
-    def get_task_status(self):
-        import ftrack_api
-        session = ftrack_api.Session(auto_connect_event_hub=False)
-        self.log.debug("Ftrack user: \"{0}\"".format(session.api_user))
-        # project_name = legacy_io.Session["AVALON_PROJECT"]
-        # project_entity = session.query((
-        #     "select project_schema from Project where full_name is \"{}\""
-        # ).format(project_name)).one()
-        # project_schema = project_entity["project_schema"]
 
 
 def createMode():

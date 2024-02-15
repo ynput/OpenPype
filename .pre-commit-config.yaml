@@ -7,7 +7,7 @@ repos:
     - id: check-yaml
     - id: check-added-large-files
     - id: no-commit-to-branch
-      args: [ '--pattern', '^(?!((release|enhancement|feature|bugfix|documentation|tests|local|chore)\/[\w_.-]+)$).*' ]
+      args: [ '--pattern', '^(?!((release|enhancement|feature|bugfix|hotfix|documentation|tests|local|chore)\/[\w_.-]+)$).*' ]
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v3.12.0
     hooks:

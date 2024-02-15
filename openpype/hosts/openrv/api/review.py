@@ -2,7 +2,7 @@
 import os
 
 import rv
-
+import pymu
 
 def get_path_annotated_frame(frame=None, asset=None, asset_folder=None):
     """Get path for annotations
@@ -18,12 +18,45 @@ def get_path_annotated_frame(frame=None, asset=None, asset_folder=None):
     return filename
 
 
-def extract_annotated_frame(filepath=None):
+def extract_annotated_frame(filepath=None, frame_to_export=None):
     """Export frame to file
     """
-    if filepath:
-        return rv.commands.exportCurrentFrame(filepath)
+    current_frame = rv.commands.frameStart()
+    sources = rv.commands.sourcesAtFrame(current_frame)
+    current_source = rv.commands.sourceMediaInfo(sources[0])
+    start_frame = current_source['startFrame']
+    # Rv framerange representation = [120=1, 121=2, etc...]{frame=rvframe}
+    # There is no 0 value at start
+    frame_to_export = frame_to_export - start_frame + 1
 
+    marked_frames = rv.commands.markedFrames()
+    annotated_frames = rv.extra_commands.findAnnotatedFrames()
+
+    # Generalize this into a function so you can reverse it after export.
+    for marked_frame in marked_frames:
+        rv.commands.markFrame(marked_frame, False)
+
+    for annotated_frame in annotated_frames:
+        if (annotated_frame - start_frame + 1) == frame_to_export:
+            rv.commands.markFrame(annotated_frame, True)
+    rv.commands.redraw()
+
+    # Do your path substitution here
+    os.fork()
+    rv.runtime.eval("""
+    require runtime;
+    use rvtypes;
+    {{
+    runtime.load_module("export_utils");
+    let Fname = runtime.intern_name("export_utils.exportMarkedFrames");
+    (ExternalProcess;string,string) F = runtime.lookup_function(Fname);
+     F("{0}", "default");
+    }}
+    """.format(filepath), [])
+    os.wait()
+
+    for marked_frame in marked_frames:
+        rv.commands.markFrame(marked_frame, True)
 
 def review_attributes(node=None):
     # TODO: Implement

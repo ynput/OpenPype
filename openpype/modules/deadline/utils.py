@@ -69,6 +69,7 @@ def set_custom_deadline_name(instance, filename, setting):
     anatomy_data = context.data.get("anatomyData")
 
     formatting_data = {
+        "workfile": basename,
         "asset": anatomy_data.get("asset"),
         "task": anatomy_data.get("task"),
         "subset": instance.data.get("subset"),

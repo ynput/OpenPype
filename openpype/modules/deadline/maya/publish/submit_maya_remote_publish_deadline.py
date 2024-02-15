@@ -2,8 +2,6 @@ import os
 import attr
 from datetime import datetime
 
-from maya import cmds
-
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.pipeline.context_tools import get_current_project_name
@@ -19,6 +17,13 @@ from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 
 import pyblish.api
+
+try:
+    from maya import cmds
+except ImportError:
+    # Ignoring, we don't want misleading error logs on jobs log on deadline.
+    # Because the farm publish function imports every publish file before filtering.
+    pass
 
 
 @attr.s

@@ -538,6 +538,9 @@ def attribute_values(attr_values):
     original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
     try:
         for attr, value in attr_values.items():
+            if not cmds.getAttr(attr ,settable=True):
+                log.debug("can not set {}".format(attr))
+                continue
             if isinstance(value, string_types):
                 cmds.setAttr(attr, value, type="string")
             else:
@@ -545,6 +548,9 @@ def attribute_values(attr_values):
         yield
     finally:
         for attr, value in original:
+            if not cmds.getAttr(attr ,settable=True):
+                log.debug("can not set {}".format(attr))
+                continue
             if isinstance(value, string_types):
                 cmds.setAttr(attr, value, type="string")
             elif value is None and cmds.getAttr(attr, type=True) == "string":
@@ -1535,7 +1541,11 @@ def set_attribute(attribute, value, node):
     """
 
     value_type = type(value).__name__
-    kwargs = ATTRIBUTE_DICT[value_type]
+    kwargs = ATTRIBUTE_DICT.get(value_type)
+    if not kwargs:
+        log.debug("Attribute type '{}' is not supported for {}".format(value_type, attribute))
+        return
+
     if not cmds.attributeQuery(attribute, node=node, exists=True):
         log.debug("Creating attribute '{}' on "
                   "'{}'".format(attribute, node))
@@ -4131,7 +4141,7 @@ def create_rig_animation_instance(
         log (logging.Logger, optional): Logger to log to if provided
 
     Returns:
-        None
+        instance
 
     """
     if options is None:
@@ -4182,8 +4192,11 @@ def create_rig_animation_instance(
     # Create the animation instance
     with maintained_selection():
         cmds.select([output, controls] + roots, noExpand=True)
-        create_context.create(
+        new_context = create_context.create(
             creator_identifier=creator_identifier,
             variant=namespace,
             pre_create_data={"use_selection": True}
         )
+    subset = new_context.get("subset", None)
+
+    return subset

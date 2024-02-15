@@ -14,8 +14,6 @@ try:
     import pysftp
     import paramiko
 except (ImportError, SyntaxError):
-    pass
-
     # handle imports from Python 2 hosts - in those only basic methods are used
     log.warning("Import failed, imported from Python 2, operations will fail.")
 

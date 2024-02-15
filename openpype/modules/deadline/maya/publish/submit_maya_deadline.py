@@ -25,10 +25,7 @@ import hashlib
 from datetime import datetime
 import itertools
 from collections import OrderedDict
-
 import attr
-
-from maya import cmds
 
 from openpype.pipeline import (
     legacy_io,
@@ -40,6 +37,14 @@ from openpype.lib import (
     TextDef,
     EnumDef
 )
+
+try:
+    from maya import cmds
+except ImportError:
+    # Ignoring, we don't want misleading error logs on jobs log on deadline.
+    # Because the farm publish function imports every publish file before filtering.
+    pass
+
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
 

@@ -54,15 +54,12 @@ class UpdatePathsToAnimation(bpy.types.Operator):
 
     def execute(self, context):
         mesh_objects = get_objects_by_type(ObjectsTypes.MESH.value)
-        modifiers_cache_files = [
-            modifier.cache_file for modifier in
-            get_modifiers_by_type(
-                modifier_type=ModifiersTypes.MESH_SEQUENCE_CACHE.value,
-                given_objects=mesh_objects
-            )
-        ]
-        import time
-        start = time.time()
+        mesh_sequence_caches = get_modifiers_by_type(
+            modifier_type=ModifiersTypes.MESH_SEQUENCE_CACHE.value,
+            given_objects=mesh_objects
+        )
+        modifiers_cache_files = [modifier.cache_file for modifier in mesh_sequence_caches]
+
         create_library_override_for(
             collections=bpy.context.scene.collection,
             objects=mesh_objects,
@@ -71,6 +68,7 @@ class UpdatePathsToAnimation(bpy.types.Operator):
 
         update_mesh_sequence_caches(mesh_objects)
         apply_scale(mesh_objects, SCALE)
+        disable_uv_data_reading(mesh_sequence_caches)
 
         return {'FINISHED'}
 
@@ -81,10 +79,11 @@ class UpdateObjectsPathsVersion(bpy.types.Operator):
 
     def execute(self, context):
         mesh_objects = get_objects_by_type(ObjectsTypes.MESH.value)
-        modifiers_cache_files = [
-            modifier.cache_file for modifier in
-            get_modifiers_by_type(ModifiersTypes.MESH_SEQUENCE_CACHE.value)
-        ]
+        mesh_sequence_caches = get_modifiers_by_type(
+            modifier_type=ModifiersTypes.MESH_SEQUENCE_CACHE.value,
+            given_objects=mesh_objects
+        )
+        modifiers_cache_files = [modifier.cache_file for modifier in mesh_sequence_caches]
         create_library_override_for(
             collections=bpy.context.scene.collection,
             objects=mesh_objects,
@@ -92,6 +91,7 @@ class UpdateObjectsPathsVersion(bpy.types.Operator):
         )
 
         update_versions(bpy.data.cache_files)
+        disable_uv_data_reading(mesh_sequence_caches)
 
         return {'FINISHED'}
 
@@ -101,12 +101,13 @@ def get_objects_by_type(object_type):
 
 
 def get_modifiers_by_type(modifier_type, given_objects=None):
+    retrieved_modifiers = list()
     given_objects = given_objects if given_objects else bpy.data.objects
-
     for obj in given_objects:
         for modifier in obj.modifiers:
             if modifier.type == modifier_type:
-                yield modifier
+                retrieved_modifiers.append(modifier)
+    return retrieved_modifiers
 
 
 def create_library_override_for(collections=[], objects=[], modifiers_cache_files=[]):
@@ -270,12 +271,17 @@ def apply_scale(objects, scale):
         blender_object.scale = (scale, scale, scale)
 
 
+def disable_uv_data_reading(mesh_sequence_caches):
+    for mesh_sequence_cache in mesh_sequence_caches:
+        mesh_sequence_cache.read_data = {'COLOR', 'POLY', 'VERT'}
+
 
 class SelectObjectTypesToUpdate(bpy.types.Panel):
     bl_idname = "paths.objects_types_selector"
     bl_label = "Select object types to update"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_category = "Quad"
 
     update_alembics = bpy.props.BoolProperty(default=True)
     update_shader_files = bpy.props.BoolProperty(default=True)
