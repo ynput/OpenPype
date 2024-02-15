@@ -489,7 +489,6 @@ class LoadClip(plugin.NukeLoader):
             Any[str,None]: colorspace name or None
         """
         # Get backward compatible colorspace key.
-        representation_data = representation_doc["data"]
         colorspace = representation_doc["data"].get("colorspace")
         self.log.debug(
             f"Colorspace from representation colorspace: {colorspace}"

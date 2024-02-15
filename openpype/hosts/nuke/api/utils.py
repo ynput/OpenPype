@@ -132,7 +132,7 @@ def get_colorspace_list(colorspace_knob):
     colorspaces = []
 
     try:
-        for count, value in enumerate(colorspace_knob.values()):
+        for count, _ in enumerate(colorspace_knob.values()):
             colorspace_knob.setValue(count)
             colorspaces.append(colorspace_knob.value())
     finally:
