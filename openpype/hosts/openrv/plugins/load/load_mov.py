@@ -28,9 +28,7 @@ class MovLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        filepath = self.fname
-        # Command fails on unicode so we must force it to be strings
-        filepath = str(filepath)
+        filepath = str(self.fname)
 
         clean_rv_sources()
         rv.commands.addSourceVerbose([filepath])
@@ -40,14 +38,12 @@ class MovLoader(load.LoaderPlugin):
         os.environ["AVALON_PROJECT"] = context["project"]["name"]
         os.environ["AVALON_ASSET"] = context["asset"]["name"]
         os.environ["AVALON_TASK"] = context["representation"]["context"]["task"]["name"]
-        rv.commands.addSourceVerbose([filepath])
 
     def update(self, container, representation):
         node = container["node"]
 
         context = get_representation_context(representation)
-        filepath = load.get_representation_path_from_context(context)
-        filepath = str(filepath)
+        filepath = str(load.get_representation_path_from_context(context))
 
         # change path
         rv.commands.setSourceMedia(node, [filepath])

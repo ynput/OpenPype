@@ -40,8 +40,4 @@ def clean_rv_sources():
     """
     Clean all sources showed in RV
     """
-    view_nodes = rv.commands.viewNodes()
-    for view_node in view_nodes:
-        if 'default' in view_node.lower():
-            continue
-        rv.commands.deleteNode(view_node)
+    rv.commands.clearSession()
