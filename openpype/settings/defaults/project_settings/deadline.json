@@ -2,13 +2,19 @@
     "deadline_servers": [],
     "deadline_batch_name": "{asset}_{task[name]}_{version}_{subversion}.{ext}",
     "deadline_job_name": "{asset}_{task[name]}_{version}_{subversion}.{ext} - {inst_name}",
+    "JobAttrsValues": {
+        "DefaultValues": {
+            "pool": "",
+            "pool_secondary": "",
+            "priority": 50,
+            "limit_machine": 0,
+            "limits_plugin": []
+        },
+        "profiles": []
+    },
     "publish": {
         "CollectDefaultDeadlineServer": {
             "pass_mongo_url": true
-        },
-        "CollectDeadlinePools": {
-            "primary_pool": "",
-            "secondary_pool": ""
         },
         "ValidateExpectedFiles": {
             "enabled": true,
@@ -29,10 +35,8 @@
             "use_published": true,
             "import_reference": false,
             "asset_dependencies": true,
-            "priority": 50,
             "tile_priority": 50,
             "group": "none",
-            "limit": [],
             "jobInfo": {},
             "pluginInfo": {},
             "scene_patches": [],
@@ -43,7 +47,6 @@
             "optional": false,
             "active": true,
             "use_published": true,
-            "priority": 50,
             "chunk_size": 10,
             "group": "none"
         },
@@ -51,7 +54,6 @@
             "enabled": true,
             "optional": false,
             "active": true,
-            "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
             "group": ""
@@ -60,22 +62,19 @@
             "enabled": true,
             "optional": false,
             "active": true,
-            "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
             "group": "",
             "department": "",
             "use_gpu": true,
             "env_allowed_keys": [],
-            "env_search_replace_values": {},
-            "limit_groups": {}
+            "env_search_replace_values": {}
         },
         "HarmonySubmitDeadline": {
             "enabled": true,
             "optional": false,
             "active": true,
             "use_published": true,
-            "priority": 50,
             "chunk_size": 10000,
             "group": "",
             "department": ""
@@ -85,7 +84,6 @@
             "optional": false,
             "active": true,
             "use_published": true,
-            "priority": 50,
             "chunk_size": 10000,
             "group": "",
             "department": "",
@@ -93,21 +91,20 @@
         },
         "CelactionSubmitDeadline": {
             "enabled": true,
-            "deadline_department": "",
-            "deadline_priority": 50,
-            "deadline_pool": "",
-            "deadline_pool_secondary": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 10,
-            "deadline_job_delay": "00:00:00:00"
+            "optional": false,
+            "active": true,
+            "department": "",
+            "group": "",
+            "chunk_size": 10,
+            "job_delay": "00:00:00:00"
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
-            "deadline_department": "",
-            "deadline_pool": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 1,
-            "deadline_priority": 50,
+            "optional": false,
+            "active": true,
+            "department": "",
+            "group": "",
+            "chunk_size": 1,
             "publishing_script": "",
             "skip_integration_repre_list": [],
             "aov_filter": {

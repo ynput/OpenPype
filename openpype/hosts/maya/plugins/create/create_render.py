@@ -2,22 +2,29 @@
 """Create ``Render`` instance in Maya."""
 
 from openpype.settings import (
-    get_system_settings
+    get_system_settings,
+    get_project_settings
 )
 from openpype.hosts.maya.api import (
     lib_rendersettings,
     plugin
 )
 from openpype.pipeline import CreatorError
+from openpype.pipeline.context_tools import get_current_project_name
 from openpype.lib import (
     BoolDef,
     NumberDef,
     EnumDef
 )
-from openpype.pipeline.context_tools import _get_modules_manager
+from openpype_modules.deadline import (
+    get_deadline_job_profile,
+    get_deadline_limits_plugin
+)
+
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
 
 
-class CreateRenderlayer(plugin.RenderlayerCreator):
+class CreateRenderlayer(plugin.RenderlayerCreator, DeadlineDefaultJobAttrs):
     """Create and manages renderlayer subset per renderLayer in workfile.
 
     This generates a single node in the scene which tells the Creator to if
@@ -62,12 +69,16 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
 
-        default_machine_limit = self._get_default_machine_limit(
-            deadline_enabled
+        limits_plugin = get_deadline_limits_plugin(
+            deadline_enabled, deadline_url, self.log
         )
-        limit_groups = self._get_limit_groups(
-            deadline_enabled, deadline_url
-        )
+
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+        profile = get_deadline_job_profile(project_settings, "maya")
+
+        default_limit_machine = profile.get("limit_machine", self.limit_machine)
+        default_limits_plugin = profile.get("limits_plugin", self.limits_plugin)
 
         return [
             BoolDef("review",
@@ -89,14 +100,15 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
                     tooltip="Override existing rendered frames "
                             "(if they exist).",
                     default=True),
-            NumberDef("machineLimit",
+            NumberDef("limit_machine",
                       label="Machine Limit",
-                      default=default_machine_limit,
+                      default=default_limit_machine,
                       minimum=0,
                       decimals=0),
-            EnumDef("limits",
+            EnumDef("limits_plugin",
                     label="Limit Groups",
-                    items=limit_groups,
+                    items=limits_plugin,
+                    default=default_limits_plugin,
                     multiselection=True),
 
             # TODO: Should these move to submit_maya_deadline plugin?
@@ -130,29 +142,3 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
                     default=self.render_settings.get("enable_all_lights",
                                                      False))
         ]
-
-    def _get_default_machine_limit(self, deadline_enabled):
-        default_machine_limit = 0
-
-        if deadline_enabled:
-            default_machine_limit = \
-                self.project_settings.get("deadline").get("publish").get(
-                    "MayaSubmitDeadline").get("jobInfo").get("machineLimit", 0)
-
-        return default_machine_limit
-
-    def _get_limit_groups(self, deadline_enabled, deadline_url):
-        manager = _get_modules_manager()
-        deadline_module = manager.modules_by_name["deadline"]
-
-        limit_groups = []
-        if deadline_enabled:
-            requested_arguments = {"NamesOnly": True}
-            limit_groups = deadline_module.get_deadline_data(
-                deadline_url,
-                "limitgroups",
-                log=self.log,
-                **requested_arguments
-            )
-
-        return limit_groups

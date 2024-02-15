@@ -4,12 +4,12 @@ import getpass
 from datetime import datetime
 import pyblish.api
 
+from openpype.lib import is_running_from_build
 from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
-from openpype.lib import is_running_from_build
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs, set_custom_deadline_name
 
 try:
     import hou
@@ -27,7 +27,7 @@ class DeadlinePluginInfo():
     IgnoreInputs = attr.ib(default=True)
 
 
-class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline, DeadlineDefaultJobAttrs):
     """Submit Solaris USD Render ROPs to Deadline.
 
     Renders are submitted to a Deadline Web Service as
@@ -88,9 +88,9 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
-
-        job_info.Pool = instance.data.get("primaryPool")
-        job_info.SecondaryPool = instance.data.get("secondaryPool")
+        job_info.Priority = instance.data.get("priority", self.priority)
+        job_info.Pool = instance.data.get("primaryPool", self.pool)
+        job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
         job_info.ChunkSize = instance.data.get("chunkSize", 10)
         job_info.Comment = context.data.get("comment")
 

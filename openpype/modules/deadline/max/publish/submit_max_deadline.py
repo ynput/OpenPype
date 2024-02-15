@@ -22,7 +22,7 @@ from openpype.hosts.max.api.lib import (
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 from openpype.lib import is_running_from_build
 
 
@@ -35,7 +35,7 @@ class MaxPluginInfo(object):
 
 
 class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
-                        OpenPypePyblishPluginMixin):
+                        OpenPypePyblishPluginMixin, DeadlineDefaultJobAttrs):
 
     label = "Submit Render to Deadline"
     hosts = ["max"]
@@ -43,7 +43,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     targets = ["local"]
 
     use_published = True
-    priority = 50
     chunk_size = 1
     jobInfo = {}
     pluginInfo = {}
@@ -101,8 +100,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         )
         job_info.Frames = frames
 
-        job_info.Pool = instance.data.get("primaryPool")
-        job_info.SecondaryPool = instance.data.get("secondaryPool")
+        job_info.Pool = instance.data.get("primaryPool", self.pool)
+        job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
 
         attr_values = self.get_attr_values_from_data(instance.data)
 

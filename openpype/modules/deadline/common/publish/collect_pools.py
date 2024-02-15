@@ -3,12 +3,15 @@
 
 """
 import pyblish.api
-from openpype.lib import TextDef
+from openpype.lib import EnumDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
+from openpype.pipeline.context_tools import _get_modules_manager
 
 
 class CollectDeadlinePools(pyblish.api.InstancePlugin,
-                           OpenPypePyblishPluginMixin):
+                           OpenPypePyblishPluginMixin,
+                           DeadlineDefaultJobAttrs):
     """Collect pools from instance if present, from Setting otherwise."""
 
     order = pyblish.api.CollectorOrder + 0.420
@@ -20,49 +23,33 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
                 "renderlayer",
                 "maxrender"]
 
-    primary_pool = None
-    secondary_pool = None
-
-    @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        # deadline.publish.CollectDeadlinePools
-        settings = project_settings["deadline"]["publish"]["CollectDeadlinePools"]  # noqa
-        cls.primary_pool = settings.get("primary_pool", None)
-        cls.secondary_pool = settings.get("secondary_pool", None)
-
     def process(self, instance):
-
         attr_values = self.get_attr_values_from_data(instance.data)
+
         if not instance.data.get("primaryPool"):
-            instance.data["primaryPool"] = (
-                attr_values.get("primaryPool") or self.primary_pool or "none"
-            )
-        if instance.data["primaryPool"] == "-":
-            instance.data["primaryPool"] = None
+            instance.data["primaryPool"] = attr_values.get("primaryPool", self.pool)
+        elif instance.data["primaryPool"] == "-":
+            instance.data["primaryPool"] = ""
 
         if not instance.data.get("secondaryPool"):
-            instance.data["secondaryPool"] = (
-                attr_values.get("secondaryPool") or self.secondary_pool or "none"  # noqa
-            )
-
-        if instance.data["secondaryPool"] == "-":
-            instance.data["secondaryPool"] = None
+            instance.data["secondaryPool"] = attr_values.get("secondaryPool", self.pool_secondary)
+        elif instance.data["secondaryPool"] == "-":
+            instance.data["secondaryPool"] = ""
 
     @classmethod
     def get_attribute_defs(cls):
-        # TODO: Preferably this would be an enum for the user
-        #       but the Deadline server URL can be dynamic and
-        #       can be set per render instance. Since get_attribute_defs
-        #       can't be dynamic unfortunately EnumDef isn't possible (yet?)
-        # pool_names = self.deadline_module.get_deadline_pools(deadline_url,
-        #                                                      self.log)
-        # secondary_pool_names = ["-"] + pool_names
+        manager = _get_modules_manager()
+        deadline_module = manager.modules_by_name["deadline"]
+        deadline_url = deadline_module.deadline_urls["default"]
+        pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
 
         return [
-            TextDef("primaryPool",
+            EnumDef("primaryPool",
                     label="Primary Pool",
-                    default=cls.primary_pool),
-            TextDef("secondaryPool",
+                    items=pools,
+                    default=cls.pool),
+            EnumDef("secondaryPool",
                     label="Secondary Pool",
-                    default=cls.secondary_pool)
+                    items=pools,
+                    default=cls.pool_secondary)
         ]
