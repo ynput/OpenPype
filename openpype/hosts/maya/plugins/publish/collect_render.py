@@ -105,6 +105,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             if not cmds.attributeQuery("family", node=s, exists=True):
                 continue
 
+            # Rename in Maya outliner the set (if needed) with the correct render layer name
             set_layer_name = s.split(":")[-1]
             layer_name = cmds.listConnections(f"{s}.renderlayer")[0]
             if layer_name != set_layer_name:
