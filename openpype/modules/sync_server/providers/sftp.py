@@ -48,12 +48,6 @@ class SFTPHandler(AbstractProvider):
             )
             return
 
-        # store to instance for reconnect
-        if not presets.get('sftp_host'):
-            self.log.warning(
-                "Sync Server: There are no presets for {}.".format(site_name)
-            )
-            return
         self.sftp_host = presets.get("sftp_host", "")
         self.sftp_port = presets.get("sftp_port", 22)
         self.sftp_user = presets.get("sftp_user", "")
