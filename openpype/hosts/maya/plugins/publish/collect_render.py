@@ -80,7 +80,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         context = instance.context
 
         layer = instance.data["transientData"]["layer"]
-        # objset = instance.data.get("instance_node")
+        objset = instance.data.get("instance_node")
         filepath = context.data["currentFile"].replace("\\", "/")
         workspace = context.data["workspaceDir"]
 
@@ -92,7 +92,13 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             self.log.warning(msg)
 
         # detect if there are sets (subsets) to attach render to
-        sets = cmds.sets("renderingMain", query=True) or []
+        object_set = None
+        connections = cmds.listConnections(objset)
+        for connection in connections:
+            if cmds.objectType(connection) == "objectSet":
+                object_set = connection
+
+        sets = cmds.sets(object_set, query=True) or []
         attach_to = []
 
         for s in sets:
@@ -116,7 +122,6 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             self.log.debug(" -> attach render to: {}".format(s))
 
         layer_name = layer.name()
-        self.log.debug(f"LAYER_NAME: {layer_name}")
 
         # collect all frames we are expecting to be rendered
         # return all expected files for all cameras and aovs in given
