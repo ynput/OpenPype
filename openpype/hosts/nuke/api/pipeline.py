@@ -127,6 +127,7 @@ class NukeHost(
 
         # Register Avalon event for workfiles loading.
         register_event_callback("workio.open_file", check_inventory_versions)
+        register_event_callback("workfile.open.after", _on_scene_open)
         register_event_callback("taskChanged", change_context_label)
 
         pyblish.api.register_callback(
@@ -180,7 +181,6 @@ def add_nuke_callbacks():
     # set apply all workfile settings on script load and save
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
-    nuke.addOnCreate(_on_scene_open, nodeClass="Root")
     nuke.addOnScriptSave(_on_scene_save)
 
     if nuke_settings["nuke-dirmap"]["enabled"]:
