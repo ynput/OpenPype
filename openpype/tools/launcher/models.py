@@ -94,9 +94,10 @@ class ActionModel(QtGui.QStandardItemModel):
 
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name, fields=["config.apps"])
-        config_data = config.ConfigReader()
-        if os.getenv('USERNAME') not in config_data.superusers:
-            project_doc["config"]["apps"] = [x for x in  project_doc["config"]["apps"] if '-dev' not in x['name']]
+        # disabling the super user group as decided to open the dev version for all the users.
+        # config_data = config.ConfigReader()
+        # if os.getenv('USERNAME') not in config_data.superusers:
+            # project_doc["config"]["apps"] = [x for x in  project_doc["config"]["apps"] if '-dev' not in x['name']]
         if not project_doc:
             return actions
 
