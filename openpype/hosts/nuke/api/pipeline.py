@@ -717,6 +717,7 @@ def _on_scene_open(*args):
 
 
 def _on_scene_save(*args):
-    if os.environ.get("OP_NUKE_SKIP_SAVE_EVENT") != 'False':
+    skip = os.getenv("OP_NUKE_SKIP_SAVE_EVENT")
+    if skip:
         return
     emit_event("after.save")

@@ -2595,14 +2595,14 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             )
 
     def set_context_settings(self):
-        os.environ["OP_NUKE_SKIP_SAVE_EVENT"] = 'True'
+        os.environ["OP_NUKE_SKIP_SAVE_EVENT"] = "True"
         # replace reset resolution from avalon core to pype's
         self.reset_resolution()
         # replace reset resolution from avalon core to pype's
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
-        os.environ["OP_NUKE_SKIP_SAVE_EVENT"] = 'False'
+        del os.environ["OP_NUKE_SKIP_SAVE_EVENT"]
 
     def set_favorites(self):
         from .utils import set_context_favorites
