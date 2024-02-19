@@ -276,14 +276,13 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         """Update builder action widget by family widget value"""
         builder_widget._input_widget.clear()
         actions_by_family = get_actions_by_family(family_widget.current_value())
+        action_items = [{"value": "", "label": ""}]
 
-        if not actions_by_family:
-            return
-
-        action_items = [
-            {"value": action_name, "label": action.label or action_name}
-            for action_name, action in actions_by_family.items()
-        ]
+        if actions_by_family:
+            action_items.extend([
+                {"value": action_name, "label": action.label or action_name}
+                for action_name, action in actions_by_family.items()
+            ])
 
         for item in action_items:
             builder_widget._input_widget.addItem(item["label"], item["value"])
