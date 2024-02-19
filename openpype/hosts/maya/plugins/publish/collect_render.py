@@ -92,11 +92,26 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             self.log.warning(msg)
 
         # detect if there are sets (subsets) to attach render to
-        sets = cmds.sets(objset, query=True) or []
+        object_set = None
+        connections = cmds.listConnections(objset)
+        for connection in connections:
+            if cmds.objectType(connection) == "objectSet":
+                object_set = connection
+
+        sets = cmds.sets(object_set, query=True) or []
         attach_to = []
+
         for s in sets:
             if not cmds.attributeQuery("family", node=s, exists=True):
                 continue
+
+            # Rename in Maya outliner the set (if needed) with the correct render layer name
+            set_layer_name = s.split(":")[-1]
+            layer_name = cmds.listConnections(f"{s}.renderlayer")[0]
+            if layer_name != set_layer_name:
+                new_set_name = s.replace(set_layer_name, layer_name)
+                cmds.rename(s, new_set_name)
+                s = new_set_name
 
             attach_to.append(
                 {

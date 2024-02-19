@@ -4,11 +4,17 @@ from datetime import datetime
 
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io, PublishXmlValidationError
+from openpype.pipeline.context_tools import get_current_project_name
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
-from openpype_modules.deadline import abstract_submit_deadline
+
+from openpype_modules.deadline import (
+    abstract_submit_deadline,
+    get_deadline_job_profile,
+    get_deadline_limit_groups
+)
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 
 import pyblish.api
 
@@ -34,7 +40,7 @@ class MayaPluginInfo(object):
 
 
 class MayaSubmitRemotePublishDeadline(
-        abstract_submit_deadline.AbstractSubmitDeadline):
+        abstract_submit_deadline.AbstractSubmitDeadline, DeadlineDefaultJobAttrs):
     """Submit Maya scene to perform a local publish in Deadline.
 
     Publishing in Deadline can be helpful for scenes that publish very slow.
@@ -79,6 +85,10 @@ class MayaSubmitRemotePublishDeadline(
         scene = instance.context.data["currentFile"]
         scenename = os.path.basename(scene)
 
+        project_name = get_current_project_name()
+        project_settings = context.data["project_settings"]
+        profile = get_deadline_job_profile(project_settings, self.hosts[0])
+
         job_name = set_custom_deadline_name(
             instance,
             scenename,
@@ -99,14 +109,16 @@ class MayaSubmitRemotePublishDeadline(
         job_info.UserName = context.data.get("user")
         job_info.Comment = context.data.get("comment", "")
 
-        # use setting for publish job on farm, no reason to have it separately
-        project_settings = context.data["project_settings"]
+        # Use setting for publish job on farm, no reason to have it separately
         deadline_publish_job_sett = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
-        job_info.Department = deadline_publish_job_sett["deadline_department"]
-        job_info.ChunkSize = deadline_publish_job_sett["deadline_chunk_size"]
-        job_info.Priority = deadline_publish_job_sett["deadline_priority"]
-        job_info.Group = deadline_publish_job_sett["deadline_group"]
-        job_info.Pool = deadline_publish_job_sett["deadline_pool"]
+        job_info.Department = deadline_publish_job_sett["department"]
+        job_info.ChunkSize = deadline_publish_job_sett["chunk_size"]
+        job_info.Priority = profile.get("priority", 50)
+        job_info.Group = deadline_publish_job_sett["group"]
+        job_info.Pool = profile.get("primary_pool", "")
+        job_info.SecondaryPool = profile.get("secondary_pool", "")
+        job_info.MachineLimit = profile.get("limit_machine", 0)
+        job_info.LimitGroups = profile.get("limit_plugins", "")
 
         # Include critical environment variables with submission + Session
         keys = [

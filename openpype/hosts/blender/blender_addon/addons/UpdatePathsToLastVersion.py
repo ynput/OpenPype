@@ -281,6 +281,7 @@ class SelectObjectTypesToUpdate(bpy.types.Panel):
     bl_label = "Select object types to update"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
+    bl_category = "Quad"
 
     update_alembics = bpy.props.BoolProperty(default=True)
     update_shader_files = bpy.props.BoolProperty(default=True)

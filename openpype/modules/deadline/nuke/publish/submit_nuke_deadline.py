@@ -12,12 +12,18 @@ from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
 )
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.pipeline.context_tools import _get_modules_manager
+from openpype.modules.deadline.utils import (
+    set_custom_deadline_name,
+    get_deadline_job_profile,
+    DeadlineDefaultJobAttrs
+)
 from openpype.tests.lib import is_in_tests
 from openpype.lib import (
     is_running_from_build,
     BoolDef,
-    NumberDef
+    NumberDef,
+    EnumDef
 )
 
 try:
@@ -29,7 +35,8 @@ except ImportError:
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin,
-                         OpenPypePyblishPluginMixin):
+                         OpenPypePyblishPluginMixin,
+                         DeadlineDefaultJobAttrs):
     """Submit write to Deadline
 
     Renders are submitted to a Deadline Web Service as
@@ -44,21 +51,38 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     optional = True
     targets = ["local"]
 
-    # presets
-    priority = 50
     chunk_size = 1
     concurrent_tasks = 1
     group = ""
     department = ""
-    limit_groups = {}
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
 
     @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        profile = get_deadline_job_profile(project_settings, cls.hosts[0])
+        cls.priority = profile.get("priority", cls.priority)
+        cls.pool = profile.get("pool", cls.pool)
+        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
+
+    @classmethod
     def get_attribute_defs(cls):
         defs = super(NukeSubmitDeadline, cls).get_attribute_defs()
+        manager = _get_modules_manager()
+        deadline_module = manager.modules_by_name["deadline"]
+        deadline_url = deadline_module.deadline_urls["default"]
+        pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
+
         defs.extend([
+            EnumDef("primary_pool",
+                    label="Primary Pool",
+                    items=pools,
+                    default=cls.pool),
+            EnumDef("secondary_pool",
+                    label="Secondary Pool",
+                    items=pools,
+                    default=cls.pool_secondary),
             NumberDef(
                 "priority",
                 label="Priority",
@@ -260,8 +284,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             pass
 
         # resolve any limit groups
-        limit_groups = self.get_limit_groups()
-        self.log.debug("Limit groups: `{}`".format(limit_groups))
+        limits = ",".join(
+            instance.data["creator_attributes"].get('limits', self.limits_plugin)
+        )
 
         payload = {
             "JobInfo": {
@@ -285,8 +310,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
                 "Department": self.department,
 
-                "Pool": instance.data.get("primaryPool"),
-                "SecondaryPool": instance.data.get("secondaryPool"),
+                "Pool": instance.data["attributeValues"].get(
+                    "primary_pool", self.pool),
+                "SecondaryPool": instance.data["attributeValues"].get(
+                    "secondary_pool", self.pool_secondary),
+                "MachineLimit": instance.data["creator_attributes"].get(
+                    "machineLimit", self.limit_machine),
                 "Group": self.group,
 
                 "Plugin": "Nuke",
@@ -301,7 +330,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "OutputFilename0": output_filename_0.replace("\\", "/"),
 
                 # limiting groups
-                "LimitGroups": ",".join(limit_groups)
+                "LimitGroups": limits
 
             },
             "PluginInfo": {
@@ -500,28 +529,3 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         for i in range(start_frame, (end_frame + 1)):
             instance.data["expectedFiles"].append(
                 os.path.join(dirname, (file % i)).replace("\\", "/"))
-
-    def get_limit_groups(self):
-        """Search for limit group nodes and return group name.
-        Limit groups will be defined as pairs in Nuke deadline submitter
-        presents where the key will be name of limit group and value will be
-        a list of plugin's node class names. Thus, when a plugin uses more
-        than one node, these will be captured and the triggered process
-        will add the appropriate limit group to the payload jobinfo attributes.
-        Returning:
-            list: captured groups list
-        """
-        captured_groups = []
-        for lg_name, list_node_class in self.limit_groups.items():
-            for node_class in list_node_class:
-                for node in nuke.allNodes(recurseGroups=True):
-                    # ignore all nodes not member of defined class
-                    if node.Class() not in node_class:
-                        continue
-                    # ignore all disabled nodes
-                    if node["disable"].value():
-                        continue
-                    # add group name if not already added
-                    if lg_name not in captured_groups:
-                        captured_groups.append(lg_name)
-        return captured_groups

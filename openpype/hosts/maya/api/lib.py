@@ -4141,7 +4141,7 @@ def create_rig_animation_instance(
         log (logging.Logger, optional): Logger to log to if provided
 
     Returns:
-        None
+        instance
 
     """
     if options is None:
@@ -4192,8 +4192,11 @@ def create_rig_animation_instance(
     # Create the animation instance
     with maintained_selection():
         cmds.select([output, controls] + roots, noExpand=True)
-        create_context.create(
+        new_context = create_context.create(
             creator_identifier=creator_identifier,
             variant=namespace,
             pre_create_data={"use_selection": True}
         )
+    subset = new_context.get("subset", None)
+
+    return subset

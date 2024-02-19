@@ -24,6 +24,7 @@ class SetSceneProperties(PreLaunchHook):
         current_os = data['env']['OS']
         hierarchy = data['workdir_data']['hierarchy']
         entity_name = data['asset_name']
+        task_name = data['task_name']
 
         target_work_dir = self._get_correct_work_dir(data, target_os)
         current_work_dir = self._get_correct_work_dir(data, current_os)
@@ -43,19 +44,22 @@ class SetSceneProperties(PreLaunchHook):
                     'publish',
                     'render',
                 )
-            render_layer_path = self._generate_path_with_version(
+            deadline_render_layer_path = self._generate_render_path_with_version(
                 target_work_dir, base_output_path, data['project_name'], entity_name
             )
-            output_path = self._generate_path_without_version(
+            deadline_output_path = self._generate_render_path_without_version(
                 current_work_dir, base_output_path, data['project_name'], entity_name
             )
-            return render_layer_path, output_path
+            playblast_render_path = self._generate_playblast_path(
+                current_work_dir, base_output_path, task_name, data['project_name'], entity_name
+            )
+            return deadline_render_layer_path, deadline_output_path, playblast_render_path
 
         except IndexError as err:
             self.log.warning("Value is missing from launch_context data. Can't set default output path.")
             self.log.warning(err)
             tempdir = tempfile.gettempdir(),
-            return tempdir, tempdir
+            return tempdir, tempdir, tempdir
 
     def _get_correct_work_dir(self, data, given_os):
         work_directories = data['project_doc']['config']['roots']['work']
@@ -68,7 +72,7 @@ class SetSceneProperties(PreLaunchHook):
         return retrieved_work_dir
 
 
-    def _generate_path_with_version(self, work_dir, base_path, project_name, entity_name):
+    def _generate_render_path_with_version(self, work_dir, base_path, project_name, entity_name):
         return Path(
             work_dir,
             base_path,
@@ -77,12 +81,23 @@ class SetSceneProperties(PreLaunchHook):
             '_'.join([project_name, entity_name, '{render_layer_name}', '{version}'])
         )
 
-    def _generate_path_without_version(self, work_dir, base_path, project_name, entity_name):
+    def _generate_render_path_without_version(self, work_dir, base_path, project_name, entity_name):
         return Path(
             work_dir,
             base_path,
             '{render_layer_name}',
             '_'.join([project_name, entity_name, '{render_layer_name}'])
+        )
+
+    def _generate_playblast_path(self, work_dir, base_path, task_name, project_name, entity_name):
+        subset_name = f'playblast{task_name}Main'
+        file_suffix = '{version}.{extension}'
+        return Path(
+            work_dir,
+            base_path,
+            subset_name,
+            '{version}',
+            f'{entity_name}_{subset_name}_{file_suffix}'
         )
 
     def execute(self):
@@ -96,13 +111,14 @@ class SetSceneProperties(PreLaunchHook):
         self.launch_context.data.setdefault("python_scripts", []).append(
             custom_script_folder.joinpath(self.script_file_name)
         )
-        render_layer_path, output_path = self.get_formatted_outputs_paths()
+        deadline_render_layer_path, deadline_output_path, playblast_render_path = self.get_formatted_outputs_paths()
         self.launch_context.data.setdefault("script_args", []).extend(
             [
                 '--render-layer-path',
-                render_layer_path,
+                deadline_render_layer_path,
                 '--output-path',
-                output_path
-
+                deadline_output_path,
+                '--playblast-render-path',
+                playblast_render_path
             ]
         )

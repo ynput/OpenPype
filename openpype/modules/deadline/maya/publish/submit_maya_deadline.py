@@ -48,9 +48,11 @@ except ImportError:
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
 
-from openpype_modules.deadline import abstract_submit_deadline
+from openpype_modules.deadline import (
+    abstract_submit_deadline,
+)
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -108,7 +110,8 @@ class ArnoldPluginInfo(object):
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
-                         OpenPypePyblishPluginMixin):
+                         OpenPypePyblishPluginMixin,
+                         DeadlineDefaultJobAttrs):
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
@@ -116,13 +119,12 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     targets = ["local"]
 
     tile_assembler_plugin = "OpenPypeTileAssembler"
-    priority = 50
     tile_priority = 50
-    limit = []  # limit groups
     jobInfo = {}
     pluginInfo = {}
     group = "none"
     strict_error_checking = True
+
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
@@ -134,9 +136,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         cls.import_reference = settings.get("import_reference",
                                             cls.import_reference)
         cls.use_published = settings.get("use_published", cls.use_published)
-        cls.priority = settings.get("priority", cls.priority)
         cls.tile_priority = settings.get("tile_priority", cls.tile_priority)
-        cls.limit = settings.get("limit", cls.limit)
         cls.group = settings.get("group", cls.group)
         cls.strict_error_checking = settings.get("strict_error_checking",
                                                  cls.strict_error_checking)
@@ -187,19 +187,18 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
-
-        job_info.Pool = instance.data.get("primaryPool")
-        job_info.SecondaryPool = instance.data.get("secondaryPool")
+        job_info.Pool = instance.data.get("primaryPool", self.pool)
+        job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
         job_info.Comment = context.data.get("comment")
         job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.MachineLimit = instance.data.get("machineLimit", 0)
+        job_info.MachineLimit = instance.data.get("machineLimit", self.limit_machine)
 
         if self.group != "none" and self.group:
             job_info.Group = self.group
 
-        self.limit = instance.data.get("limits")
-        if self.limit:
-            job_info.LimitGroups = ",".join(self.limit)
+        limits_plugin = instance.data.get("limits", self.limits_plugin)
+        if limits_plugin:
+            job_info.LimitGroups = ",".join(limits_plugin)
 
         attr_values = self.get_attr_values_from_data(instance.data)
         render_globals = instance.data.setdefault("renderGlobals", dict())
@@ -210,7 +209,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             else:
                 machine_list_key = "Blacklist"
             render_globals[machine_list_key] = machine_list
-
         job_info.Priority = attr_values.get("priority")
         job_info.ChunkSize = attr_values.get("chunkSize")
 
@@ -486,10 +484,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                                      self.tile_priority)
         assembly_job_info.TileJob = False
 
-        # TODO: This should be a new publisher attribute definition
-        pool = instance.context.data["project_settings"]["deadline"]
-        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["deadline_pool"]
-        assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
+        assembly_job_info.Pool = instance.data.get("primaryPool", self.pool)
+        assembly_job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
 
         assembly_plugin_info = {
             "CleanupTiles": 1,

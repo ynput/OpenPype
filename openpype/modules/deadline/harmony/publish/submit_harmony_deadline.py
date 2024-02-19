@@ -13,7 +13,7 @@ import pyblish.api
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 
@@ -221,7 +221,7 @@ class PluginInfo(object):
 
 
 class HarmonySubmitDeadline(
-    abstract_submit_deadline.AbstractSubmitDeadline
+    abstract_submit_deadline.AbstractSubmitDeadline, DeadlineDefaultJobAttrs
 ):
     """Submit render write of Harmony scene to Deadline.
 
@@ -246,7 +246,6 @@ class HarmonySubmitDeadline(
 
     optional = True
     use_published = False
-    priority = 50
     chunk_size = 1000000
     group = "none"
     department = ""
