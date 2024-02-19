@@ -142,7 +142,6 @@ class LoadClip(plugin.NukeLoader):
                 "Representation id `{}` is failing to load".format(repre_id))
             return
 
-        print(representation["data"]["colorspaceData"])
         read_name = self._get_node_name(representation)
 
         # Create the Loader with the filename path set
