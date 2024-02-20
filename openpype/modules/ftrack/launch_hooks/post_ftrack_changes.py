@@ -132,7 +132,7 @@ class PostFtrackHook(PostLaunchHook):
                 if key in already_tested:
                     continue
 
-                value = value.lower()
+                value = [i.lower() for i in value]
                 if actual_status in value or "__any__" in value:
                     if key != "__ignore__":
                         next_status_name = key
