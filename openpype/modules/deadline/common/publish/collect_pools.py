@@ -35,21 +35,3 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
             instance.data["secondaryPool"] = attr_values.get("secondaryPool", self.pool_secondary)
         elif instance.data["secondaryPool"] == "-":
             instance.data["secondaryPool"] = ""
-
-    @classmethod
-    def get_attribute_defs(cls):
-        manager = _get_modules_manager()
-        deadline_module = manager.modules_by_name["deadline"]
-        deadline_url = deadline_module.deadline_urls["default"]
-        pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
-
-        return [
-            EnumDef("primaryPool",
-                    label="Primary Pool",
-                    items=pools,
-                    default=cls.pool),
-            EnumDef("secondaryPool",
-                    label="Secondary Pool",
-                    items=pools,
-                    default=cls.pool_secondary)
-        ]
