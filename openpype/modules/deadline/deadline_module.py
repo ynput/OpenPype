@@ -109,6 +109,9 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
             RuntimeError: If deadline webservice is unreachable.
 
         """
+        if not webservice:
+            return []
+
         if not log:
             log = Logger.get_logger(__name__)
 
