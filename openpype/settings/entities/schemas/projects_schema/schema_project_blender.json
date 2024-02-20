@@ -126,7 +126,6 @@
                     "multiselection": true,
                     "defaults": "empty",
                     "enum_items": [
-                        {"empty": "< empty >"},
                         {"combined": "Combined"},
                         {"z": "Z"},
                         {"mist": "Mist"},
