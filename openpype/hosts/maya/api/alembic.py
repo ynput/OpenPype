@@ -70,6 +70,7 @@ def extract_alembic(
     worldSpace=False,
     writeColorSets=False,
     writeCreases=False,
+    writeNormals=False,
     writeFaceSets=False,
     writeUVSets=False,
     writeVisibility=False

@@ -1150,6 +1150,32 @@
                 "pointcache",
                 "model",
                 "vrayproxy.alembic"
+            ],
+            "flags": [
+                "stripNamespaces",
+                "writeColorSets",
+                "writeNormals",
+                "worldSpace"
+            ],
+            "attr": "",
+            "attrPrefix": "",
+            "dataFormat": "ogawa",
+            "melPerFrameCallback": "",
+            "melPostJobCallback": "",
+            "preRollStartFrame": 0,
+            "pythonPerFrameCallback": "",
+            "pythonPostJobCallback": "",
+            "userAttr": "",
+            "userAttrPrefix": "",
+            "visibleOnly": false,
+            "export_overrides": [
+                "attr",
+                "attrPrefix",
+                "worldSpace",
+                "writeNormals",
+                "writeFaceSets",
+                "renderableOnly",
+                "visibleOnly"
             ]
         },
         "ExtractObj": {

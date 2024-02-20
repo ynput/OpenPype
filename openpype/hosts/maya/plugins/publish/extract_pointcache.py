@@ -9,9 +9,18 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection,
     iter_visible_nodes_in_range,
 )
+from openpype.lib import (
+    BoolDef,
+    TextDef,
+    NumberDef,
+    EnumDef,
+    UISeparatorDef,
+    UILabelDef,
+)
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 
-class ExtractAlembic(publish.Extractor):
+class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals, uvs, creases are preserved, but nothing more,
@@ -25,6 +34,19 @@ class ExtractAlembic(publish.Extractor):
     hosts = ["maya"]
     families = ["pointcache", "model", "vrayproxy.alembic"]
     targets = ["local", "remote"]
+    flags = []
+    attr = []
+    attrPrefix = []
+    dataFormat = "ogawa"
+    melPerFrameCallback = ""
+    melPostJobCallback = ""
+    preRollStartFrame = 0
+    pythonPerFrameCallback = ""
+    pythonPostJobCallback = ""
+    stripNamespaces = -1
+    userAttr = ""
+    userAttrPrefix = ""
+    export_overrides = []
 
     def process(self, instance):
         if instance.data.get("farm"):
@@ -37,20 +59,22 @@ class ExtractAlembic(publish.Extractor):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        # Collect Alembic Arguments
-        creator_attributes = instance.data.get("creator_attributes")
-        abc_flags = creator_attributes.get(
-            "abcExportTogglableFlags"
-        ) + creator_attributes.get("abcExportTogglableFlags")
+        attribute_values = self.get_attr_values_from_data(
+            instance.data
+        )
 
-        abc_attrs = [
+        attrs = [
             attr.strip()
-            for attr in creator_attributes.get("attr", "").split(";")
+            for attr in attribute_values.get("attr", "").split(";")
+            if attr.strip()
         ]
+        attrs += instance.data.get("userDefinedAttributes", [])
+        attrs += ["cbId"]
 
-        abc_attr_prefixes = [
-            attr_prefix.strip()
-            for attr_prefix in instance.data.get("attrPrefix", "").split(";")
+        attr_prefixes = [
+            attr.strip()
+            for attr in attribute_values.get("attrPrefix", "").split(";")
+            if attr.strip()
         ]
 
         self.log.debug("Extracting pointcache...")
@@ -60,50 +84,51 @@ class ExtractAlembic(publish.Extractor):
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
 
-        abc_root = None
+        root = None
         if not instance.data.get("includeParentHierarchy", True):
             # Set the root nodes if we don't want to include parents
             # The roots are to be considered the ones that are the actual
             # direct members of the set
-            abc_root = roots
+            root = roots
 
-        abc_writeUVSets = False
-
-        if int(cmds.about(version=True)) >= 2017:
-            # Since Maya 2017 alembic supports multiple uv sets - write them.
-            if "writeUVSets" in abc_flags:
-                abc_writeUVSets = True
-
-        extract_abc_args = {
+        args = {
             "file": path,
-            "attr": abc_attrs,
-            "attrPrefix": abc_attr_prefixes,
-            "dataFormat": creator_attributes.get("dataFormat", "ogawa"),
+            "attr": attrs,
+            "attrPrefix": attr_prefixes,
+            "dataFormat": attribute_values.get("dataFormat", "ogawa"),
             "endFrame": end,
-            "eulerFilter": True if "eulerFilter" in abc_flags else False,
-            "noNormals": True if "noNormals" in abc_flags else False,
-            "preRoll": True if "preRoll" in abc_flags else False,
-            "preRollStartFrame": creator_attributes.get(
+            "eulerFilter": False,
+            "noNormals": False,
+            "preRoll": False,
+            "preRollStartFrame": attribute_values.get(
                 "preRollStartFrame", 0
             ),
-            "renderableOnly": True if "renderableOnly" in abc_flags else False,
-            "root": abc_root,
-            "selection": True,  # Should this stay like so?
+            "renderableOnly": False,
+            "root": root,
+            "selection": True,
             "startFrame": start,
-            "step": creator_attributes.get("step", 1.0),
-            "stripNamespaces": True,
-            "uvWrite": True if "uvWrite" in abc_flags else False,
-            "verbose": True if "verbose" in abc_flags else False,
-            "wholeFrameGeo": True if "wholeFrameGeo" in abc_flags else False,
-            "worldSpace": True if "worldSpace" in abc_flags else False,
-            "writeColorSets": True if "writeColorSets" in abc_flags else False,
-            "writeCreases": True if "writeCreases" in abc_flags else False,
-            "writeFaceSets": True if "writeFaceSets" in abc_flags else False,
-            "writeUVSets": abc_writeUVSets,
-            "writeVisibility": True
-            if "writeVisibility" in abc_flags
-            else False,
+            "step": instance.data.get(
+                "creator_attributes", {}
+            ).get("step", 1.0),
+            "stripNamespaces": False,
+            "uvWrite": False,
+            "verbose": False,
+            "wholeFrameGeo": False,
+            "worldSpace": False,
+            "writeColorSets": False,
+            "writeCreases": False,
+            "writeFaceSets": False,
+            "writeUVSets": False,
+            "writeVisibility": False,
         }
+
+        # Export flags are defined as default enabled flags excluding flags
+        # that are exposed to the user, plus the flags the user has enabled
+        # when publishing.
+        flags = list(set(self.flags) - set(self.export_overrides))
+        flags += attribute_values["flag_overrides"]
+        for flag in flags:
+            args[flag] = True
 
         if instance.data.get("visibleOnly", False):
             # If we only want to include nodes that are visible in the frame
@@ -121,10 +146,10 @@ class ExtractAlembic(publish.Extractor):
                 cmds.select(nodes, noExpand=True)
                 self.log.debug(
                     "Running `extract_alembic` with the arguments: {}".format(
-                        extract_abc_args
+                        args
                     )
                 )
-                extract_alembic(**extract_abc_args)
+                extract_alembic(**args)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -148,17 +173,17 @@ class ExtractAlembic(publish.Extractor):
             return
 
         path = path.replace(".abc", "_proxy.abc")
-        extract_abc_args["file"] = path
+        args["file"] = path
         if not instance.data.get("includeParentHierarchy", True):
             # Set the root nodes if we don't want to include parents
             # The roots are to be considered the ones that are the actual
             # direct members of the set
-            extract_abc_args["root"] = instance.data["proxyRoots"]
+            args["root"] = instance.data["proxyRoots"]
 
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(instance.data["proxy"])
-                extract_alembic(**extract_abc_args)
+                extract_alembic(**args)
 
         representation = {
             "name": "proxy",
@@ -172,9 +197,146 @@ class ExtractAlembic(publish.Extractor):
     def get_members_and_roots(self, instance):
         return instance[:], instance.data.get("setMembers")
 
+    @classmethod
+    def get_attribute_defs(cls):
+        override_defs = {
+            "attr": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "Custom Attributes",
+                    "placeholder": "attr1; attr2; ...",
+                }
+            },
+            "attrPrefix": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "Custom Attributes Prefix",
+                    "placeholder": "prefix1; prefix2; ...",
+                }
+            },
+            "dataFormat": {
+                "def": EnumDef,
+                "kwargs": {
+                    "label": "Data Format",
+                    "items": ["ogawa", "HDF"],
+                }
+            },
+            "melPerFrameCallback": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "melPerFrameCallback",
+                }
+            },
+            "melPostJobCallback": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "melPostJobCallback",
+                }
+            },
+            "preRollStartFrame": {
+                "def": NumberDef,
+                "kwargs": {
+                    "label": "Start frame for preroll",
+                    "tooltip": (
+                        "The frame to start scene evaluation at. This is used"
+                        " to set the starting frame for time dependent "
+                        "translations and can be used to evaluate run-up that"
+                        " isn't actually translated."
+                    ),
+                }
+            },
+            "pythonPerFrameCallback": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "pythonPerFrameCallback",
+                }
+            },
+            "pythonPostJobCallback": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "pythonPostJobCallback",
+                }
+            },
+            "stripNamespaces": {
+                "def": NumberDef,
+                "kwargs": {
+                    "label": "stripNamespaces",
+                    "tooltip": (
+                        "If this flag is present namespaces will be stripped "
+                        "off of the node before being written to Alembic. The "
+                        "int after the flag specifies how many namespaces will"
+                        " be stripped off of the node name. Be careful that "
+                        "the new stripped name does not collide with other "
+                        "sibling node names.\n\nExamples:\n taco:foo:bar would"
+                        " be written as just bar with -sn 0\ntaco:foo:bar "
+                        "would be written as foo:bar with -sn 1"
+                    ),
+                }
+            },
+            "userAttr": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "userAttr",
+                }
+            },
+            "userAttrPrefix": {
+                "def": TextDef,
+                "kwargs": {
+                    "label": "userAttrPrefix",
+                }
+            },
+            "visibleOnly": {
+                "def": BoolDef,
+                "kwargs": {
+                    "label": "Visible Only",
+                }
+            }
+        }
+
+        defs = super(ExtractAlembic, cls).get_attribute_defs()
+
+        defs.extend([
+            UISeparatorDef("sep_alembic_options"),
+            UILabelDef("Alembic Options"),
+        ])
+
+        # The Arguments that can be modified by the Publisher
+        export_overrides = set(getattr(cls, "export_overrides", set()))
+
+        # What we have set in the Settings as defaults.
+        flags = set(getattr(cls, "flags", set()))
+
+        enabled_flags = [x for x in flags if x in export_overrides]
+        flag_overrides = export_overrides - set(override_defs.keys())
+        defs.append(
+            EnumDef(
+                "flag_overrides",
+                flag_overrides,
+                default=enabled_flags,
+                multiselection=True,
+                label="Export Flags",
+            )
+        )
+
+        for key, value in override_defs.items():
+            if key not in export_overrides:
+                continue
+
+            kwargs = value["kwargs"]
+            kwargs["default"] = getattr(cls, key, None)
+            defs.append(
+                value["def"](key, **value["kwargs"])
+            )
+
+        defs.append(
+            UISeparatorDef("sep_alembic_options")
+        )
+
+        return defs
+
 
 class ExtractAnimation(ExtractAlembic):
-    label = "Extract Animation"
+    label = "Extract Animation (Alembic)"
     families = ["animation"]
 
     def get_members_and_roots(self, instance):

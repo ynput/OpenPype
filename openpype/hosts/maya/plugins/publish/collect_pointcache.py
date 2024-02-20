@@ -10,11 +10,6 @@ class CollectPointcache(pyblish.api.InstancePlugin):
     families = ["pointcache"]
     label = "Collect Pointcache"
     hosts = ["maya"]
-    legacy_settings = {
-        "write_color_sets": "writeColorSets",
-        "write_face_sets": "writeFaceSets",
-        "include_user_defined_attributes": "includeUserDefinedAttributes"
-    }
 
     def process(self, instance):
         if instance.data.get("farm"):
