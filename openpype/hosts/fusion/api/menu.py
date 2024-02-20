@@ -15,6 +15,7 @@ from openpype.hosts.fusion.api.lib import (
 )
 from openpype.pipeline import get_current_asset_name
 from openpype.resources import get_openpype_icon_filepath
+from openpype.tools.utils import get_qt_app
 
 from .pipeline import FusionEventHandler
 from .pulse import FusionPulse
@@ -174,7 +175,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
 
 def launch_openpype_menu():
-    app = QtWidgets.QApplication(sys.argv)
+
+    app = get_qt_app()
 
     pype_menu = OpenPypeMenu()
 
