@@ -43,7 +43,6 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
     preRollStartFrame = 0
     pythonPerFrameCallback = ""
     pythonPostJobCallback = ""
-    stripNamespaces = -1
     userAttr = ""
     userAttrPrefix = ""
     export_overrides = []
@@ -255,22 +254,6 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
                 "def": TextDef,
                 "kwargs": {
                     "label": "pythonPostJobCallback",
-                }
-            },
-            "stripNamespaces": {
-                "def": NumberDef,
-                "kwargs": {
-                    "label": "stripNamespaces",
-                    "tooltip": (
-                        "If this flag is present namespaces will be stripped "
-                        "off of the node before being written to Alembic. The "
-                        "int after the flag specifies how many namespaces will"
-                        " be stripped off of the node name. Be careful that "
-                        "the new stripped name does not collide with other "
-                        "sibling node names.\n\nExamples:\n taco:foo:bar would"
-                        " be written as just bar with -sn 0\ntaco:foo:bar "
-                        "would be written as foo:bar with -sn 1"
-                    ),
                 }
             },
             "userAttr": {

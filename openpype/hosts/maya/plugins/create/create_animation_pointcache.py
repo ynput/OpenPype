@@ -5,6 +5,7 @@ from openpype.hosts.maya.api import lib, plugin
 from openpype.lib import (
     BoolDef,
     NumberDef,
+    TextDef,
 )
 from openpype.pipeline import CreatedInstance
 
@@ -28,6 +29,21 @@ def _get_animation_attr_defs(cls):
     )
 
     return defs
+
+
+def _get_legacy_attr_defs(cls):
+    """These attributes are defined to hide legacy attributes in the publisher
+    from the user."""
+    return [
+        BoolDef("writeColorSets", label="writeColorSets", hidden=True),
+        BoolDef("writeNormals", label="writeNormals", hidden=True),
+        BoolDef("writeFaceSets", label="writeFaceSets", hidden=True),
+        BoolDef("renderableOnly", label="renderableOnly", hidden=True),
+        BoolDef("visibleOnly", label="visibleOnly", hidden=True),
+        BoolDef("worldSpace", label="worldSpace", hidden=True),
+        TextDef("attr", label="attr", hidden=True),
+        TextDef("attrPrefix", label="attrPrefix", hidden=True),
+    ]
 
 
 class CreateAnimation(plugin.MayaHiddenCreator):
@@ -64,6 +80,7 @@ class CreateAnimation(plugin.MayaHiddenCreator):
     def get_instance_attr_defs(self):
         super(CreateAnimation, self).get_instance_attr_defs()
         defs = _get_animation_attr_defs(self)
+        defs += _get_legacy_attr_defs(self)
         return defs
 
 
@@ -93,6 +110,7 @@ class CreatePointCache(plugin.MayaCreator):
     def get_instance_attr_defs(self):
         super(CreatePointCache, self).get_instance_attr_defs()
         defs = _get_animation_attr_defs(self)
+        defs += _get_legacy_attr_defs(self)
         return defs
 
     def create(self, subset_name, instance_data, pre_create_data):

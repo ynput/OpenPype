@@ -562,7 +562,8 @@
             "includeParentHierarchy": false,
             "farm": false,
             "priority": 50,
-            "refresh": false
+            "refresh": false,
+            "include_user_defined_attributes": false
         },
         "CreateModel": {
             "enabled": true,
@@ -1112,7 +1113,6 @@
             ],
             "flags": [
                 "stripNamespaces",
-                "writeColorSets",
                 "writeNormals",
                 "worldSpace"
             ],
@@ -1131,6 +1131,7 @@
                 "attr",
                 "attrPrefix",
                 "worldSpace",
+                "writeColorSets",
                 "writeNormals",
                 "writeFaceSets",
                 "renderableOnly",
