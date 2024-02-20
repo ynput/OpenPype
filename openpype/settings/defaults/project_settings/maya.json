@@ -559,28 +559,10 @@
         "CreateAnimation": {
             "default_variants": [],
             "step": 1.0,
-            "abc_export_flags": [
-                "writeColorSets",
-                "worldSpace",
-                "writeNormals"
-            ],
-            "abc_export_overrides": [
-                "step",
-                "includeParentHierarchy",
-                "writeNormals",
-                "includeUserDefinedAttributes",
-                "attr",
-                "attrPrefix"
-            ],
             "includeParentHierarchy": false,
             "farm": false,
             "priority": 50,
-            "attr": "",
-            "attrPrefix": "",
-            "dataFormat": "ogawa",
-            "preRollStartFrame": 0,
-            "refresh": false,
-            "visibleOnly": false
+            "refresh": false
         },
         "CreateModel": {
             "enabled": true,
@@ -598,33 +580,10 @@
                 "Main"
             ],
             "step": 1.0,
-            "abc_export_flags": [
-                "selection",
-                "uvWrite",
-                "writeCreases",
-                "writeVisibility"
-            ],
-            "abc_export_overrides": [
-                "attr",
-                "attrPrefix",
-                "step",
-                "writeColorSets",
-                "writeFaceSets",
-                "renderableOnly",
-                "worldSpace"
-            ],
-            "renderableOnly": false,
-            "visibleOnly": false,
             "includeParentHierarchy": false,
             "farm": false,
             "priority": 50,
-            "attr": "cbId",
-            "attrPrefix": "",
-            "dataFormat": "ogawa",
-            "preRollStartFrame": 0,
             "refresh": false,
-            "write_color_sets": false,
-            "write_face_sets": false,
             "include_user_defined_attributes": false
         },
         "CreateProxyAlembic": {

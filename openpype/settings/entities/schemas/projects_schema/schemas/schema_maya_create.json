@@ -160,8 +160,8 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "visibleOnly",
-                    "label": "Visible Only default"
+                    "key": "include_user_defined_attributes",
+                    "label": "Include User Defined Attributes"
                 }
             ]
         },
@@ -214,89 +214,11 @@
                     "object_type": "text"
                 },
                 {
-                    "type": "enum",
-                    "key": "abc_export_flags",
-                    "multiselection": true,
-                    "label": "Export Flags (.abc)",
-                    "enum_items": [
-                        {"autoSubd": "autoSubd"},
-                        {"dontSkipUnwrittenFrames": "dontSkipUnwrittenFrames"},
-                        {"eulerFilter": "eulerFilter"},
-                        {"noNormals": "noNormals"},
-                        {"preRoll": "preRoll"},
-                        {"renderableOnly": "renderableOnly"},
-                        {"selection": "selection"},
-                        {"stripNamespaces": "stripNamespaces"},
-                        {"uvWrite": "uvWrite"},
-                        {"uvsOnly": "uvsOnly"},
-                        {"verbose": "verbose"},
-                        {"wholeFrameGeo": "wholeFrameGeo"},
-                        {"worldSpace": "worldSpace"},
-                        {"writeColorSets": "writeColorSets"},
-                        {"writeCreases": "writeCreases"},
-                        {"writeFaceSets": "writeFaceSets"},
-                        {"writeUVSets": "writeUVSets"},
-                        {"writeVisibility": "writeVisibility"}
-                    ]
-                },
-                {
-                    "type": "enum",
-                    "key": "abc_export_overrides",
-                    "multiselection": true,
-                    "label": "Export Overrides (.abc)",
-                    "enum_items": [
-                        {"attr": "attr"},
-                        {"attrPrefix": "attrPrefix"},
-                        {"autoSubd": "autoSubd"},
-                        {"dataFormat": "dataFormat"},
-                        {"dontSkipUnwrittenFrames": "dontSkipUnwrittenFrames"},
-                        {"endFrame": "endFrame"},
-                        {"eulerFilter": "eulerFilter"},
-                        {"frameRange": "frameRange"},
-                        {"frameRelativeSample": "frameRelativeSample"},
-                        {"melPerFrameCallback": "melPerFrameCallback"},
-                        {"melPostJobCallback": "melPostJobCallback"},
-                        {"noNormals": "noNormals"},
-                        {"preRoll": "preRoll"},
-                        {"preRollStartFrame": "preRollStartFrame"},
-                        {"pythonPerFrameCallback": "pythonPerFrameCallback"},
-                        {"pythonPostJobCallback": "pythonPostJobCallback"},
-                        {"renderableOnly": "renderableOnly"},
-                        {"root": "root"},
-                        {"selection": "selection"},
-                        {"startFrame": "startFrame"},
-                        {"step": "step"},
-                        {"stripNamespaces": "stripNamespaces"},
-                        {"userAttr": "userAttr"},
-                        {"userAttrPrefix": "userAttrPrefix"},
-                        {"uvWrite": "uvWrite"},
-                        {"uvsOnly": "uvsOnly"},
-                        {"verbose": "verbose"},
-                        {"wholeFrameGeo": "wholeFrameGeo"},
-                        {"worldSpace": "worldSpace"},
-                        {"writeColorSets": "writeColorSets"},
-                        {"writeCreases": "writeCreases"},
-                        {"writeFaceSets": "writeFaceSets"},
-                        {"writeUVSets": "writeUVSets"},
-                        {"writeVisibility": "writeVisibility"}
-                    ]
-                },
-                {
                   "type": "number",
                   "key": "step",
                   "label": "Step default",
                   "minimum": 0.0,
                   "decimal": 4
-                },
-                {
-                    "type": "boolean",
-                    "key": "renderableOnly",
-                    "label": "Renderable Only default"
-                },
-                {
-                    "type": "boolean",
-                    "key": "visibleOnly",
-                    "label": "Visible Only default"
                 },
                 {
                     "type": "boolean",
@@ -315,53 +237,14 @@
                     "minimum": 0
                 },
                 {
-                    "type": "text",
-                    "key": "attr",
-                    "label": "Attr default"
-                },
-                {
-                    "type": "text",
-                    "key": "attrPrefix",
-                    "label": "Attr Prefix default"
-                },
-                {
-                    "type": "enum",
-                    "key": "dataFormat",
-                    "label": "Data Format default",
-                    "enum_items": [
-                        {
-                            "ogawa": "ogawa"
-                        },
-                        {
-                            "HDF": "HDF"
-                        }
-                    ]
-                },
-                {
-                    "type": "number",
-                    "key": "preRollStartFrame",
-                    "label": "Pre Roll Start Frame default",
-                    "minimum": 0
-                },
-                {
                     "type": "boolean",
                     "key": "refresh",
                     "label": "Refresh default"
                 },
                 {
                     "type": "boolean",
-                    "key": "write_color_sets",
-                    "label": "DEPRECATED! Write Color Sets"
-                },
-                {
-                    "type": "boolean",
-                    "key": "write_face_sets",
-                    "label": "DEPRECATED! Write Face Sets"
-                },
-                {
-                    "type": "boolean",
                     "key": "include_user_defined_attributes",
-                    "label": "DEPRECATED! Include User Defined Attributes"
+                    "label": "Include User Defined Attributes"
                 }
             ]
         },
