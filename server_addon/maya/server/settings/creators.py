@@ -1,5 +1,3 @@
-from typing import Literal
-
 from ayon_server.settings import (
     BaseSettingsModel,
     SettingsField,
@@ -59,74 +57,6 @@ class BasicExportMeshModel(BaseSettingsModel):
     )
 
 
-def alembic_booleans_enum():
-    return [
-        "autoSubd",
-        "dontSkipUnwritten",
-        "eulerFilter",
-        "noNormals",
-        "preRoll",
-        "renderableOnly",
-        "selection",
-        "stripNamespaces",
-        "uvWrite",
-        "uvsOnly",
-        "verbose",
-        "wholeFrameGeo",
-        "worldSpace",
-        "writeColorSets",
-        "writeCreases",
-        "writeFaceSets",
-        "writeUVSets",
-        "writeVisibility",
-    ]
-
-def alembic_arguments_enum():
-    return [
-        "attr",
-        "attrPrefix",
-        "autoSubd",
-        "dataFormat",
-        "dontSkipUnwrittenFrames",
-        "endFrame",
-        "eulerFilter",
-        "frameRange",
-        "frameRelativeSample",
-        "melPerFrameCallback",
-        "melPostJobCallback",
-        "noNormals",
-        "preRoll",
-        "preRollStartFrame",
-        "pythonPerFrameCallback",
-        "pythonPostJobCallback",
-        "renderableOnly",
-        "root",
-        "selection",
-        "startFrame",
-        "step",
-        "stripNamespaces",
-        "userAttr",
-        "userAttrPrefix",
-        "uvWrite",
-        "uvsOnly",
-        "verbose",
-        "wholeFrameGeo",
-        "worldSpace",
-        "writeColorSets",
-        "writeCreases",
-        "writeFaceSets",
-        "writeUVSets",
-        "writeVisibility",
-    ]
-
-AlembicDataFormat = Literal["ogawa", "hdf5"]
-
-def alembic_data_formats():
-    return [
-        "ogawa",
-        "hdf5"
-    ]
-
 class CreateAnimationModel(BaseSettingsModel):
     write_color_sets: bool = SettingsField(title="Write Color Sets")
     write_face_sets: bool = SettingsField(title="Write Face Sets")
@@ -148,20 +78,6 @@ class CreateAnimationModel(BaseSettingsModel):
         title="Submit to the Farm")
     attr: str = SettingsField(title="Attributes")
     attr_prefix: str = SettingsField(title="Attributes Prefix")
-    data_format: AlembicDataFormat = SettingsField(
-        enum_resolver=alembic_data_formats,
-        title="Data Format",
-    )
-    abc_export_flags: list[str] = SettingsField(
-        default_factory=list,
-        enum_resolver=alembic_booleans_enum,
-        title="Export Flags (.abc)",
-    )
-    abc_export_overrides: list[str] = SettingsField(
-        default_factory=list,
-        enum_resolver=alembic_arguments_enum,
-        title="Export Overrides (.abc)",
-    )
 
 
 class CreatePointCacheModel(BaseSettingsModel):
@@ -185,20 +101,6 @@ class CreatePointCacheModel(BaseSettingsModel):
         title="Submit to the Farm")
     attr: str = SettingsField(title="Attributes")
     attr_prefix: str = SettingsField(title="Attributes Prefix")
-    data_format: AlembicDataFormat = SettingsField(
-        enum_resolver=alembic_data_formats,
-        title="Data Format",
-    )
-    abc_export_flags: list[str] = SettingsField(
-        default_factory=list,
-        enum_resolver=alembic_booleans_enum,
-        title="Export Flags (.abc)",
-    )
-    abc_export_overrides: list[str] = SettingsField(
-        default_factory=list,
-        enum_resolver=alembic_arguments_enum,
-        title="Export Overrides (.abc)",
-    )
 
 
 class CreateProxyAlembicModel(BaseSettingsModel):
@@ -402,26 +304,8 @@ DEFAULT_CREATORS_SETTINGS = {
             "Main"
         ],
         "step": 1.0,
-        "abc_export_flags": [
-            "writeColorSets",
-            "visibleOnly",
-            "worldSpace",
-            "writeNormals"
-        ],
-        "abc_export_overrides": [
-            "step",
-            "includeParentHierarchy",
-            "writeNormals",
-            "includeUserDefinedAttributes",
-            "attr",
-            "attrPrefix"
-        ],
         "farm": False,
         "priority": 50,
-        "attr": "",
-        "attr_prefix": "",
-        "data_format": "ogawa",
-        "pre_roll_start_frame": 0,
         "refresh": False,
     },
     "CreateModel": {
@@ -443,28 +327,9 @@ DEFAULT_CREATORS_SETTINGS = {
             "Main"
         ],
         "step": 1.0,
-        "abc_export_flags": [
-            "selection",
-            "uvWrite",
-            "writeCreases",
-            "writeVisibility"
-        ],
-        "abc_export_overrides": [
-            "attr",
-            "attrPrefix",
-            "step",
-            "writeColorSets",
-            "writeFaceSets",
-            "renderableOnly",
-            "worldSpace"
-        ],
         "include_parent_hierarchy": False,
         "farm": False,
         "priority": 50,
-        "attr": "cbId",
-        "attr_prefix": "",
-        "data_format": "ogawa",
-        "pre_roll_start_frame": 0,
         "refresh": False
     },
     "CreateProxyAlembic": {
