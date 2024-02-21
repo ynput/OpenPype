@@ -68,16 +68,6 @@ class CreateAnimationModel(BaseSettingsModel):
         default_factory=list,
         title="Default Products"
     )
-    priority: int = SettingsField(
-        title="Farm Job Priority")
-    pre_roll_start_frame: int = SettingsField(title="Pre Roll Start Frame")
-    refresh: bool = SettingsField(
-        title="Refresh")
-    step: int = SettingsField(title="Step")
-    farm: bool = SettingsField(
-        title="Submit to the Farm")
-    attr: str = SettingsField(title="Attributes")
-    attr_prefix: str = SettingsField(title="Attributes Prefix")
 
 
 class CreatePointCacheModel(BaseSettingsModel):
@@ -91,16 +81,6 @@ class CreatePointCacheModel(BaseSettingsModel):
         default_factory=list,
         title="Default Products"
     )
-    priority: int = SettingsField(
-        title="Farm Job Priority")
-    pre_roll_start_frame: int = SettingsField(title="Pre Roll Start Frame")
-    refresh: bool = SettingsField(
-        title="Refresh")
-    step: int = SettingsField(title="Step")
-    farm: bool = SettingsField(
-        title="Submit to the Farm")
-    attr: str = SettingsField(title="Attributes")
-    attr_prefix: str = SettingsField(title="Attributes Prefix")
 
 
 class CreateProxyAlembicModel(BaseSettingsModel):
@@ -298,15 +278,11 @@ DEFAULT_CREATORS_SETTINGS = {
     "CreateAnimation": {
         "write_color_sets": False,
         "write_face_sets": False,
-        "include_user_defined_attributes": False,
         "include_parent_hierarchy": False,
+        "include_user_defined_attributes": False,
         "default_variants": [
             "Main"
-        ],
-        "step": 1.0,
-        "farm": False,
-        "priority": 50,
-        "refresh": False,
+        ]
     },
     "CreateModel": {
         "enabled": True,
@@ -325,12 +301,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "include_user_defined_attributes": False,
         "default_variants": [
             "Main"
-        ],
-        "step": 1.0,
-        "include_parent_hierarchy": False,
-        "farm": False,
-        "priority": 50,
-        "refresh": False
+        ]
     },
     "CreateProxyAlembic": {
         "enabled": True,
