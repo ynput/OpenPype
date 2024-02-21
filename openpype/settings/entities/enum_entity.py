@@ -1,5 +1,8 @@
 import abc
 import copy
+
+import requests
+
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
 from .lib import NOT_SET, STRING_TYPE
@@ -563,13 +566,17 @@ class DeadlineLimitsPluginEnumEntity(BaseEnumEntity):
 
         modules_system_settings = get_system_settings()["modules"]
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
-        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")  # noqa
+        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default", "")  # noqa
 
-        limits_plugin = get_deadline_limits_plugin(
-            deadline_enabled,
-            deadline_url,
-            self.log
-        )
+        try:
+            requests.get(deadline_url)
+            limits_plugin = get_deadline_limits_plugin(
+                deadline_enabled,
+                deadline_url,
+                self.log
+            )
+        except requests.exceptions.ConnectionError:
+            limits_plugin = None
 
         if not limits_plugin:
             return [], set()
@@ -649,10 +656,14 @@ class DeadlinePoolsEnumEntity(DynamicEnumEntity):
         if not deadline_enabled:
             return
 
-        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")  # noqa
+        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default", "")  # noqa
         manager = _get_modules_manager()
         deadline_module = manager.modules_by_name["deadline"]
-        pools = deadline_module.get_deadline_pools(deadline_url, self.log)
+        try:
+            requests.get(deadline_url)
+            pools = deadline_module.get_deadline_pools(deadline_url, self.log)
+        except requests.exceptions.ConnectionError:
+            pools = None
 
         if not pools:
             return [], set()

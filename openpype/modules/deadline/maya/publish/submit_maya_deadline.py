@@ -51,8 +51,9 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 from openpype_modules.deadline import (
     abstract_submit_deadline,
 )
+from openpype.pipeline.context_tools import _get_modules_manager
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs, get_deadline_job_profile
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -128,6 +129,13 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
+        profile = get_deadline_job_profile(project_settings, cls.hosts[0])
+        cls.priority = profile.get("priority", cls.priority)
+        cls.pool = profile.get("pool", cls.pool)
+        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
+        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
+        cls.limits_plugin = profile.get("limits_plugin", cls.limits_plugin)
+
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
 
         # Take some defaults from settings
@@ -187,18 +195,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
-        job_info.Pool = instance.data.get("primaryPool", self.pool)
-        job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
         job_info.Comment = context.data.get("comment")
-        job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.MachineLimit = instance.data.get("machineLimit", self.limit_machine)
 
         if self.group != "none" and self.group:
             job_info.Group = self.group
-
-        limits_plugin = instance.data.get("limits", self.limits_plugin)
-        if limits_plugin:
-            job_info.LimitGroups = ",".join(limits_plugin)
 
         attr_values = self.get_attr_values_from_data(instance.data)
         render_globals = instance.data.setdefault("renderGlobals", dict())
@@ -209,8 +209,15 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             else:
                 machine_list_key = "Blacklist"
             render_globals[machine_list_key] = machine_list
+
         job_info.Priority = attr_values.get("priority")
+        job_info.Pool = attr_values.get("primaryPool", self.pool)
+        job_info.SecondaryPool =attr_values.get("secondaryPool", self.pool_secondary)
         job_info.ChunkSize = attr_values.get("chunkSize")
+        job_info.MachineLimit = instance.data["creator_attributes"].get("limit_machine", self.limit_machine)
+        limits_plugin = instance.data["creator_attributes"].get("limits_plugin", self.limits_plugin)
+        if limits_plugin:
+            job_info.LimitGroups = ",".join(limits_plugin)
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -783,8 +790,20 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     @classmethod
     def get_attribute_defs(cls):
         defs = super(MayaSubmitDeadline, cls).get_attribute_defs()
+        manager = _get_modules_manager()
+        deadline_module = manager.modules_by_name["deadline"]
+        deadline_url = deadline_module.deadline_urls["default"]
+        pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
 
         defs.extend([
+            EnumDef("primaryPool",
+                    label="Primary Pool",
+                    items=pools,
+                    default=cls.pool),
+            EnumDef("secondaryPool",
+                    label="Secondary Pool",
+                    items=pools,
+                    default=cls.pool_secondary),
             NumberDef("priority",
                       label="Priority",
                       default=cls.priority,

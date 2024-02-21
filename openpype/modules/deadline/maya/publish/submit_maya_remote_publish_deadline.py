@@ -8,13 +8,9 @@ from openpype.pipeline.context_tools import get_current_project_name
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 
-from openpype_modules.deadline import (
-    abstract_submit_deadline,
-    get_deadline_job_profile,
-    get_deadline_limit_groups
-)
+from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs
+from openpype.modules.deadline.utils import set_custom_deadline_name, DeadlineDefaultJobAttrs, get_deadline_job_profile
 
 import pyblish.api
 
@@ -113,12 +109,12 @@ class MayaSubmitRemotePublishDeadline(
         deadline_publish_job_sett = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
         job_info.Department = deadline_publish_job_sett["department"]
         job_info.ChunkSize = deadline_publish_job_sett["chunk_size"]
-        job_info.Priority = profile.get("priority", 50)
+        job_info.Priority = profile.get("priority", self.priority)
         job_info.Group = deadline_publish_job_sett["group"]
-        job_info.Pool = profile.get("primary_pool", "")
-        job_info.SecondaryPool = profile.get("secondary_pool", "")
-        job_info.MachineLimit = profile.get("limit_machine", 0)
-        job_info.LimitGroups = profile.get("limit_plugins", "")
+        job_info.Pool = profile.get("pool", self.pool)
+        job_info.SecondaryPool = profile.get("pool_secondary", self.pool_secondary)
+        job_info.MachineLimit = profile.get("limit_machine", self.limit_machine)
+        job_info.LimitGroups = profile.get("limit_plugins", self.limits_plugin)
 
         # Include critical environment variables with submission + Session
         keys = [
