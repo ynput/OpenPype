@@ -285,7 +285,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
         # resolve any limit groups
         limits = ",".join(
-            instance.data["creator_attributes"].get('limits', self.limits_plugin)
+            instance.data["creator_attributes"].get('limits_plugin', self.limits_plugin)
         )
 
         payload = {
@@ -315,7 +315,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "SecondaryPool": instance.data["attributeValues"].get(
                     "secondary_pool", self.pool_secondary),
                 "MachineLimit": instance.data["creator_attributes"].get(
-                    "machineLimit", self.limit_machine),
+                    "limit_machine", self.limit_machine),
                 "Group": self.group,
 
                 "Plugin": "Nuke",
