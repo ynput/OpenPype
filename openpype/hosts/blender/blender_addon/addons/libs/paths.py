@@ -5,6 +5,8 @@ from pathlib import Path
 
 def get_next_version_folder(filepath):
     directory_path = _get_version_directory(filepath)
+    directory_path.mkdir(parents=True, exist_ok=True)
+
     versions_folders = _list_all_versions_folders(directory_path)
 
     if versions_folders:
@@ -18,7 +20,7 @@ def get_next_version_folder(filepath):
 
 
 def _get_version_directory(filepath):
-    return filepath.split('{version}')[0]
+    return Path(filepath.split('{version}')[0])
 
 
 def _list_all_versions_folders(directory_path):
