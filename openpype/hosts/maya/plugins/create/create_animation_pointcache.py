@@ -5,7 +5,6 @@ from openpype.hosts.maya.api import lib, plugin
 from openpype.lib import (
     BoolDef,
     NumberDef,
-    TextDef,
 )
 from openpype.pipeline import CreatedInstance
 
@@ -31,19 +30,45 @@ def _get_animation_attr_defs(cls):
     return defs
 
 
-def _get_legacy_attr_defs(cls):
-    """These attributes are defined to hide legacy attributes in the publisher
-    from the user."""
-    return [
-        BoolDef("writeColorSets", label="writeColorSets", hidden=True),
-        BoolDef("writeNormals", label="writeNormals", hidden=True),
-        BoolDef("writeFaceSets", label="writeFaceSets", hidden=True),
-        BoolDef("renderableOnly", label="renderableOnly", hidden=True),
-        BoolDef("visibleOnly", label="visibleOnly", hidden=True),
-        BoolDef("worldSpace", label="worldSpace", hidden=True),
-        TextDef("attr", label="attr", hidden=True),
-        TextDef("attrPrefix", label="attrPrefix", hidden=True),
+def extract_alembic_attributes(node_data, class_name):
+    """This is a legacy transfer of creator attributes to publish attributes
+    for ExtractAlembic/ExtractAnimation plugin.
+    """
+    publish_attributes = node_data["publish_attributes"]
+
+    if class_name in publish_attributes:
+        return node_data
+
+    extract_alembic_flags = [
+        "writeColorSets",
+        "writeFaceSets",
+        "writeNormals",
+        "renderableOnly",
+        "visibleOnly",
+        "worldSpace",
+        "renderableOnly"
     ]
+    extract_alembic_attributes = [
+        "attr",
+        "attrPrefix",
+        "visibleOnly"
+    ]
+    attributes = extract_alembic_flags + extract_alembic_attributes
+    plugin_attributes = {"flag_overrides": []}
+    for attr in attributes:
+        if attr not in node_data["creator_attributes"].keys():
+            continue
+        value = node_data["creator_attributes"].pop(attr)
+
+        if value and attr in extract_alembic_flags:
+            plugin_attributes["flag_overrides"].append(attr)
+
+        if attr in extract_alembic_attributes:
+            plugin_attributes[attr] = value
+
+    publish_attributes[class_name] = plugin_attributes
+
+    return node_data
 
 
 class CreateAnimation(plugin.MayaHiddenCreator):
@@ -74,13 +99,17 @@ class CreateAnimation(plugin.MayaHiddenCreator):
 
         for node in cached_subsets.get(self.identifier, []):
             node_data = self.read_instance_node(node)
+
+            node_data = extract_alembic_attributes(
+                node_data, "ExtractAnimation"
+            )
+
             created_instance = CreatedInstance.from_existing(node_data, self)
             self._add_instance_to_context(created_instance)
 
     def get_instance_attr_defs(self):
         super(CreateAnimation, self).get_instance_attr_defs()
         defs = _get_animation_attr_defs(self)
-        defs += _get_legacy_attr_defs(self)
         return defs
 
 
@@ -104,13 +133,15 @@ class CreatePointCache(plugin.MayaCreator):
 
         for node in cached_subsets.get(self.identifier, []):
             node_data = self.read_instance_node(node)
+
+            node_data = extract_alembic_attributes(node_data, "ExtractAlembic")
+
             created_instance = CreatedInstance.from_existing(node_data, self)
             self._add_instance_to_context(created_instance)
 
     def get_instance_attr_defs(self):
         super(CreatePointCache, self).get_instance_attr_defs()
         defs = _get_animation_attr_defs(self)
-        defs += _get_legacy_attr_defs(self)
         return defs
 
     def create(self, subset_name, instance_data, pre_create_data):

@@ -45,6 +45,7 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
     pythonPostJobCallback = ""
     userAttr = ""
     userAttrPrefix = ""
+    visibleOnly = False
     export_overrides = []
 
     def process(self, instance):
