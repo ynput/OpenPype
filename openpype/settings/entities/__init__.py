@@ -111,7 +111,8 @@ from .enum_entity import (
     DeadlinePoolsEnumEntity,
     AnatomyTemplatesEnumEntity,
     ShotgridUrlEnumEntity,
-    RoyalRenderRootEnumEntity
+    RoyalRenderRootEnumEntity,
+    FtrackTaskStatusesEnumEntity
 )
 
 from .list_entity import ListEntity
@@ -178,6 +179,7 @@ __all__ = (
     "DeadlinePoolsEnumEntity",
     "ShotgridUrlEnumEntity",
     "RoyalRenderRootEnumEntity",
+    "FtrackTaskStatusesEnumEntity"
     "AnatomyTemplatesEnumEntity",
 
     "ListEntity",

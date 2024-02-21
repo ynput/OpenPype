@@ -250,7 +250,7 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if has_formatting_entries:
             project_name = self.get_current_project_name()
             asset_name = self.get_current_asset_name()
-            task_name = self.get_current_asset_name()
+            task_name = self.get_current_task_name()
             system_settings = get_system_settings()
             formatting_data = get_template_data_with_names(project_name,
                                                            asset_name,
