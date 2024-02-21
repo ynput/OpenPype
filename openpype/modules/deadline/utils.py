@@ -110,7 +110,7 @@ def get_deadline_limits_plugin(deadline_enabled, deadline_url, log):
     deadline_module = manager.modules_by_name["deadline"]
 
     limits_plugin = []
-    if deadline_enabled:
+    if deadline_enabled and deadline_url:
         requested_arguments = {"NamesOnly": True}
         limits_plugin = deadline_module.get_deadline_data(
             deadline_url,
