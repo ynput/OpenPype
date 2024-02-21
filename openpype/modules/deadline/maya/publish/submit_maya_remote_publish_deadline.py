@@ -111,8 +111,8 @@ class MayaSubmitRemotePublishDeadline(
         job_info.ChunkSize = deadline_publish_job_sett["chunk_size"]
         job_info.Priority = profile.get("priority", self.priority)
         job_info.Group = deadline_publish_job_sett["group"]
-        job_info.Pool = profile.get("primary_pool", self.pool)
-        job_info.SecondaryPool = profile.get("secondary_pool", self.priority)
+        job_info.Pool = profile.get("pool", self.pool)
+        job_info.SecondaryPool = profile.get("pool_secondary", self.pool_secondary)
         job_info.MachineLimit = profile.get("limit_machine", self.limit_machine)
         job_info.LimitGroups = profile.get("limit_plugins", self.limits_plugin)
 

@@ -133,6 +133,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         cls.priority = profile.get("priority", cls.priority)
         cls.pool = profile.get("pool", cls.pool)
         cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
+        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
+        cls.limits_plugin = profile.get("limits_plugin", cls.limits_plugin)
 
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
 
@@ -213,7 +215,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         job_info.SecondaryPool =attr_values.get("secondaryPool", self.pool_secondary)
         job_info.ChunkSize = attr_values.get("chunkSize")
         job_info.MachineLimit = instance.data["creator_attributes"].get("limit_machine", self.limit_machine)
-        limits_plugin = instance.data["creator_attributes"].get("limits_plugin", self.limit_machine)
+        limits_plugin = instance.data["creator_attributes"].get("limits_plugin", self.limits_plugin)
         if limits_plugin:
             job_info.LimitGroups = ",".join(limits_plugin)
 
