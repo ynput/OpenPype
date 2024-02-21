@@ -125,7 +125,7 @@ def get_deadline_limits_plugin(deadline_enabled, deadline_url, log):
 def get_deadline_job_profile(project_settings, host):
     settings = project_settings["deadline"]["JobAttrsValues"] # noqa
     task = get_current_task_name()
-    profile = {} # TODO: This should return values from the DefaultValues
+    profile = {}
 
     filtering_criteria = {
         "hosts": host,
