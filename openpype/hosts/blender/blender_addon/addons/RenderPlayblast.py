@@ -1,12 +1,10 @@
 import bpy
 import os
 import logging
-import platform
+import re
+from pathlib import Path
 
 from libs import paths
-
-
-RENDER_LAYER = 'playblast'
 
 
 logging.basicConfig(level=logging.INFO)
@@ -28,9 +26,9 @@ def get_view_3D_region():
     return next(iter([area.spaces[0].region_3d for area in bpy.context.screen.areas if area.type == 'VIEW_3D']), None)
 
 
-def get_render_filepath(extension):
+def get_render_filepath(extension, version):
     return bpy.context.scene.playblast_render_path.format(
-        version=paths.extract_version(bpy.data.filepath),
+        version=version,
         extension=extension
     )
 
@@ -76,9 +74,11 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
             region.view_perspective = 'CAMERA'
         scene.render.use_file_extension = False
 
+        version = paths.get_next_version_folder(bpy.context.scene.playblast_render_path)
+
         for file_format, file_extension in get_renders_types_and_extensions():
             scene.render.image_settings.file_format = file_format
-            scene.render.filepath = get_render_filepath(file_extension)
+            scene.render.filepath = get_render_filepath(file_extension, version)
             logging.info(f"{'Camera view' if use_camera_view else 'Viewport'} will be rendered at following path : {scene.render.filepath}")
             result = bpy.ops.render.opengl(animation=True)
             if result != {'FINISHED'}:
@@ -90,9 +90,6 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
         if region and use_camera_view:
             region.view_perspective = memorized_region
         return {'FINISHED'}
-
-
-
 
 
 def register():
