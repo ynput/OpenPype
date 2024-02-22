@@ -497,6 +497,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
     def set_instance_global_info(self, instance):
         """Set global info from the submitter into the instance"""
         instance.data["priority"] = self.job_info.Priority
+        instance.data["primaryPool"] = self.job_info.Pool
+        instance.data["secondaryPool"] = self.job_info.SecondaryPool
 
     @abstractmethod
     def get_plugin_info(self):
