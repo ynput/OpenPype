@@ -56,13 +56,13 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
         # Check for pyblish errors.
         error_regex = r"pyblish \(ERROR\)((.|\n)*?)((pyblish \())"
-        matches = re.findall(error_regex, logging_output)
-        assert not matches, matches[0][0]
+        allowed_errors = ["No module named \\\'pymxs\\\'"]
+        self._filtered_asserts(allowed_errors, error_regex, logging_output)
 
         # Check for python errors.
         error_regex = r"// Error((.|\n)*)"
-        matches = re.findall(error_regex, logging_output)
-        assert not matches, matches[0][0]
+        allowed_errors = []
+        self._filtered_asserts(allowed_errors, error_regex, logging_output)
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
@@ -102,6 +102,27 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
                                     additional_args=additional_args))
 
         assert not any(failures)
+
+    def _filtered_asserts(self, allowed_errors, error_regex, logging_output):
+        matches = re.findall(error_regex, logging_output)
+        filtered_matches = self._filter_errors(allowed_errors, matches)
+        assert not filtered_matches, filtered_matches[0][0]
+
+    def _filter_errors(self, allowed_errors, matches):
+        """Some errors might be actually ok.
+
+        Wrong imports caused by Pyblish logic etc.
+        """
+        filtered_matches = []
+        for match in matches:
+            filter_out = False
+            for allowed_error in allowed_errors:
+                if allowed_error in str(match):
+                    filter_out = True
+                    break
+            if not filter_out:
+                filtered_matches.append(match)
+        return filtered_matches
 
 
 if __name__ == "__main__":
