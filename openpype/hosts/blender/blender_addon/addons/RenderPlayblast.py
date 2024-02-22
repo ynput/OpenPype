@@ -1,8 +1,5 @@
 import bpy
-import os
 import logging
-import re
-from pathlib import Path
 
 from libs import paths
 
