@@ -9,7 +9,6 @@ def _get_version_directory(filepath):
         return None
     return Path(parts[0])
 
-
 def get_next_version_folder(filepath):
     directory_path = _get_version_directory(filepath)
     if not directory_path:
