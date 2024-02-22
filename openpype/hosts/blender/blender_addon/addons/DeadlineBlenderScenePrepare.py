@@ -305,7 +305,7 @@ def set_global_output_path():
 
 
 def set_render_nodes_output_path():
-    version = paths.extract_version(bpy.data.filepath)
+    version = paths.get_next_version_folder(bpy.context.scene.render_layer_path)
     for output_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == NodesNames.OUTPUT_FILE.value]:
         render_node = _browse_render_nodes(output_node.inputs)
         render_layer_name = render_node.layer
