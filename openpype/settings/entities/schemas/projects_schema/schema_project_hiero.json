@@ -312,6 +312,31 @@
                             "label": "Tags addition"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "CollectClipEffects",
+                    "label": "Collect Clip Effects",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "effect_categories",
+                            "label": "Effect Categories",
+                            "object_type": {
+                                "type": "list",
+                                "key": "effects_classes",
+                                "object_type": "text"
+                            }
+                        }
+                    ]
                 }
             ]
         },
