@@ -40,16 +40,18 @@ class InstallPySide2(PreLaunchHook):
         if platform == "windows":
             expected_executable += ".exe"
 
-        if executable.name.lower() != expected_executable:
-            self.log.info((
-                f"Executable {executable.as_posix()} does not lead "
-                f"to {expected_executable} file. "
-                "Can't determine 3dequalizer's python to "
-                f"check/install PySide2. {executable.name}"
-            ))
-            return
-
-        python_dir = executable.parent.parent / "sys_data" / "py37_inst"
+        if not self.launch_context.env.get("TDE4_HOME"):
+            if executable.name.lower() != expected_executable:
+                self.log.warning((
+                    f"Executable {executable.as_posix()} does not lead "
+                    f"to {expected_executable} file. "
+                    "Can't determine 3dequalizer's python to "
+                    f"check/install PySide2. {executable.name}"
+                ))
+                return
+            python_dir = executable.parent.parent / "sys_data" / "py37_inst"
+        else:
+            python_dir = Path(self.launch_context.env["TDE4_HOME"]) / "sys_data" / "py37_inst"  # noqa: E501
 
         if platform == "windows":
             python_executable = python_dir / "python.exe"
