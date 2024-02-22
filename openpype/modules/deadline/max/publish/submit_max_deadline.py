@@ -100,8 +100,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         )
         job_info.Frames = frames
 
-        job_info.Pool = instance.data.get("primaryPool", self.pool)
-        job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
+        job_info.Pool = instance.data.get("pool", self.pool)
+        job_info.SecondaryPool = instance.data.get("pool_secondary", self.pool_secondary)
 
         attr_values = self.get_attr_values_from_data(instance.data)
 

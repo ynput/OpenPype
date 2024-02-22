@@ -260,8 +260,8 @@ class HarmonySubmitDeadline(
         # for now, get those from presets. Later on it should be
         # configurable in Harmony UI directly.
         job_info.Priority = self.priority
-        job_info.Pool = self._instance.data.get("primaryPool")
-        job_info.SecondaryPool = self._instance.data.get("secondaryPool")
+        job_info.Pool = self._instance.data.get("pool")
+        job_info.SecondaryPool = self._instance.data.get("pool_secondary")
         job_info.ChunkSize = self.chunk_size
         filename = os.path.basename(self._instance.data["source"])
         job_name = set_custom_deadline_name(

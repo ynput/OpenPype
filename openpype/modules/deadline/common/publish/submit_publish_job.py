@@ -275,8 +275,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "InitialStatus": initial_status,
 
                 "Group": self.group,
-                "Pool": instance.data.get("primaryPool", self.pool),
-                "SecondaryPool": instance.data.get("secondaryPool", self.pool_secondary),
+                "Pool": instance.data.get("pool", self.pool),
+                "SecondaryPool": instance.data.get("pool_secondary", self.pool_secondary),
                 # ensure the outputdirectory with correct slashes
                 "OutputDirectory0": output_dir.replace("\\", "/")
             },

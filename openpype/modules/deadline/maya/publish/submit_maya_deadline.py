@@ -185,14 +185,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         job_info.Name = job_name
         job_info.BatchName = "Group: " + batch_name
-        job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
+        job_info.Plugin = self.get_attr_value(self, instance, "machineList", "MayaBatch")
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
 
         # Deadline requires integers in frame range
         frames = "{start}-{end}x{step}".format(
-            start=int(instance.data["frameStartHandle"]),
-            end=int(instance.data["frameEndHandle"]),
-            step=int(instance.data["byFrameStep"]),
+            start=int(self.get_attr_value(self, instance, "frameStartHandle")),
+            end=int(self.get_attr_value(self, instance, "frameEndHandle")),
+            step=int(self.get_attr_value(self, instance, "byFrameStep")),
         )
         job_info.Frames = frames
         job_info.Comment = context.data.get("comment")
@@ -200,27 +200,26 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if self.group != "none" and self.group:
             job_info.Group = self.group
 
-        attr_values = self.get_attr_values_from_data(instance.data)
         render_globals = instance.data.setdefault("renderGlobals", dict())
-        machine_list = attr_values.get("machineList", "")
+        machine_list = self.get_attr_value(self, instance, "machineList")
         if machine_list:
-            if attr_values.get("whitelist", True):
+            if self.get_attr_value(self, instance, "whitelist", True):
                 machine_list_key = "Whitelist"
             else:
                 machine_list_key = "Blacklist"
             render_globals[machine_list_key] = machine_list
 
-        job_info.Priority = attr_values.get("priority")
-        job_info.Pool = attr_values.get("primaryPool", self.pool)
-        job_info.SecondaryPool =attr_values.get("secondaryPool", self.pool_secondary)
-        job_info.ChunkSize = attr_values.get("chunkSize")
-        job_info.MachineLimit = instance.data["creator_attributes"].get("limit_machine", self.limit_machine)
-        limits_plugin = instance.data["creator_attributes"].get("limits_plugin", self.limits_plugin)
+        job_info.Priority = self.get_attr_value(self, instance, "priority")
+        job_info.Pool = self.get_attr_value(self, instance, "pool")
+        job_info.SecondaryPool = self.get_attr_value(self, instance, "pool_secondary")
+        job_info.ChunkSize = self.get_attr_value(self, instance, "chunkSize")
+        job_info.MachineLimit = self.get_attr_value(self, instance, "limit_machine")
+        limits_plugin = self.get_attr_value(self, instance, "limits_plugin")
         if limits_plugin:
             job_info.LimitGroups = ",".join(limits_plugin)
 
         # Add options from RenderGlobals
-        render_globals = instance.data.get("renderGlobals", {})
+        render_globals = self.get_attr_value(self, instance, "renderGlobals", {})
         job_info.update(render_globals)
 
         keys = [
@@ -263,9 +262,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             for dependency in dependencies:
                 job_info.AssetDependency += dependency
 
-        # Add list of expected files to job
-        # ---------------------------------
-        exp = instance.data.get("expectedFiles")
+        # Add the list of expected files to the job
+        # -----------------------------------------
+        exp = self.get_attr_value(self, instance, "expectedFiles")
         for filepath in iter_expected_files(exp):
             job_info.OutputDirectory += os.path.dirname(filepath)
             job_info.OutputFilename += os.path.basename(filepath)
@@ -491,8 +490,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                                      self.tile_priority)
         assembly_job_info.TileJob = False
 
-        assembly_job_info.Pool = instance.data.get("primaryPool", self.pool)
-        assembly_job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
+        assembly_job_info.Pool = instance.data.get("pool", self.pool)
+        assembly_job_info.SecondaryPool = instance.data.get("pool_secondary", self.pool_secondary)
 
         assembly_plugin_info = {
             "CleanupTiles": 1,
@@ -796,11 +795,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
 
         defs.extend([
-            EnumDef("primaryPool",
+            EnumDef("pool",
                     label="Primary Pool",
                     items=pools,
                     default=cls.pool),
-            EnumDef("secondaryPool",
+            EnumDef("pool_secondary",
                     label="Secondary Pool",
                     items=pools,
                     default=cls.pool_secondary),

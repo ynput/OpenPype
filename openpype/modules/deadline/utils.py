@@ -2,12 +2,14 @@ import os
 import re
 
 from openpype.lib import filter_profiles
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 from openpype.pipeline.context_tools import (
     _get_modules_manager,
     get_current_task_name
 )
 from openpype.settings.lib import load_openpype_default_settings
 from openpype.settings import get_current_project_settings
+
 
 class RecalculateOnAccess:
     def __init__(self, fget):
@@ -48,6 +50,28 @@ class DeadlineDefaultJobAttrs:
     def limits_plugin(self):
         return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
                 or self._limits_plugin)
+
+    @staticmethod
+    def get_attr_value(plugin, instance, attr_name, fallback=None):
+        attrs = instance.data.get("attributeValues", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        attrs = instance.data.get("creator_attributes", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if attr_name in instance.data:
+            return instance.data.get(attr_name)
+
+        attrs = OpenPypePyblishPluginMixin.get_attr_values_from_data_for_plugin(plugin, instance.data)
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if hasattr(plugin, attr_name):
+            return getattr(plugin, attr_name)
+
+        return fallback
 
 
 class SafeDict(dict):

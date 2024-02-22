@@ -112,7 +112,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin, DeadlineDefaultJobAttr
             pass
 
         # define chunk and priority
-        chunk_size = instance.context.data.get("chunk", self.chunk_size)
+        chunk_size = instance.context.data.get("chunkSize", self.chunk_size)
 
         # search for %02d pattern in name, and padding number
         search_results = re.search(r"(%0)(\d)(d)[._]", render_path).groups()
@@ -144,7 +144,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin, DeadlineDefaultJobAttr
                 # Top-level group name
                 "BatchName": "Group: " + batch_name,
 
-                # Arbitrary username, for visualisation in Monitor
+                # Arbitrary username, for visualization in Monitor
                 "UserName": self._deadline_user,
 
                 "Department": self.department,
