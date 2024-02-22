@@ -732,10 +732,9 @@ class PublishClip:
             self.tag_data["asset"] = self.ti_name
             self.tag_data["hierarchyData"]["shot"] = self.ti_name
 
-        if self.tag_data["heroTrack"] and self.review_layer:
-            self.tag_data.update({"reviewTrack": self.review_layer})
-        else:
-            self.tag_data.update({"reviewTrack": None})
+        # At Quad Group we want the review track to always be by default the current track
+        # Yes this isn't the original behavior of OP but the oal isn't to propose this edit to the OP codebase.
+        self.tag_data.update({"reviewTrack": self.track_name})
 
         log.debug("___ self.tag_data: {}".format(
             pformat(self.tag_data)
