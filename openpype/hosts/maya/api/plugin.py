@@ -503,10 +503,21 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
             creator_identifier = cmds.getAttr(node + ".creator_identifier")
             if creator_identifier == self.identifier:
                 self.log.info("Found node: {}".format(node))
+
+                subset = cmds.getAttr(f'{node}.subset')
+                if layer.name() not in subset:
+                    self._update_subset(node, layer.name(), subset)
                 return node
 
-    def _create_layer_instance_node(self, layer):
+    def _update_subset(self, node, layer_name, subset):
+        variant = cmds.getAttr(f'{node}.variant')
+        new_subset_name = subset.replace(variant, layer_name)
 
+        cmds.setAttr(f'{node}.subset', new_subset_name, type="string")
+        cmds.setAttr(f'{node}.variant', layer_name, type="string")
+
+    def _create_layer_instance_node(self, layer):
+        self.log.debug("#" * 100)
         # We only collect if a CreateRender instance exists
         create_render_set = self._get_singleton_node()
         if not create_render_set:
