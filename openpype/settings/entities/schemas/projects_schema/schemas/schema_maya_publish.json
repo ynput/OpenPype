@@ -1033,6 +1033,7 @@
                         {"worldSpace": "worldSpace"},
                         {"writeColorSets": "writeColorSets"},
                         {"writeFaceSets": "writeFaceSets"},
+                        {"writeNormals": "writeNormals"},
                         {"writeUVSets": "writeUVSets"},
                         {"writeVisibility": "writeVisibility"}
                     ]
