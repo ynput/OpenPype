@@ -3,24 +3,30 @@ import os
 from pathlib import Path
 
 
+def _get_version_directory(filepath):
+    parts = filepath.split('{version}')
+    if len(parts) == 1:
+        return None
+    return Path(parts[0])
+
+
 def get_next_version_folder(filepath):
     directory_path = _get_version_directory(filepath)
+
+    if not directory_path:
+        raise Exception("Delimiter '{version}' not found in given filepath: " + "({})".format(filepath))
+
     directory_path.mkdir(parents=True, exist_ok=True)
 
     versions_folders = _list_all_versions_folders(directory_path)
 
     if versions_folders:
         latest_version_folder = max(versions_folders)
-        next_version_number = _extract_version_digits(latest_version_folder) +1
-
+        next_version_number = _extract_version_digits(latest_version_folder) + 1
     else:
         next_version_number = 1
 
     return _format_to_version_folder(next_version_number)
-
-
-def _get_version_directory(filepath):
-    return Path(filepath.split('{version}')[0])
 
 
 def _list_all_versions_folders(directory_path):
