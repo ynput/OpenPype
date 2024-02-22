@@ -694,6 +694,14 @@
                             }
                         },
                         {
+                            "type": "list",
+                            "key": "families_transfer",
+                            "label": "List of family names to transfer\nto generated instances (AOVs for example).",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
                             "type": "dict-modifiable",
                             "docstring": "Regular expression to filter for which subset review should be created in publish job.",
                             "key": "aov_filter",

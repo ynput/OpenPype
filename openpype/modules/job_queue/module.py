@@ -41,8 +41,7 @@ import json
 import copy
 import platform
 
-import click
-from openpype.modules import OpenPypeModule
+from openpype.modules import OpenPypeModule, click_wrap
 from openpype.settings import get_system_settings
 
 
@@ -153,7 +152,7 @@ class JobQueueModule(OpenPypeModule):
         return requests.get(api_path).json()
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
     @classmethod
     def get_server_url_from_settings(cls):
@@ -213,7 +212,7 @@ class JobQueueModule(OpenPypeModule):
         return main(str(executable), server_url)
 
 
-@click.group(
+@click_wrap.group(
     JobQueueModule.name,
     help="Application job server. Can be used as render farm."
 )
@@ -225,8 +224,8 @@ def cli_main():
     "start_server",
     help="Start server handling workers and their jobs."
 )
-@click.option("--port", help="Server port")
-@click.option("--host", help="Server host (ip address)")
+@click_wrap.option("--port", help="Server port")
+@click_wrap.option("--host", help="Server host (ip address)")
 def cli_start_server(port, host):
     JobQueueModule.start_server(port, host)
 
@@ -236,7 +235,9 @@ def cli_start_server(port, host):
         "Start a worker for a specific application. (e.g. \"tvpaint/11.5\")"
     )
 )
-@click.argument("app_name")
-@click.option("--server_url", help="Server url which handle workers and jobs.")
+@click_wrap.argument("app_name")
+@click_wrap.option(
+    "--server_url",
+    help="Server url which handle workers and jobs.")
 def cli_start_worker(app_name, server_url):
     JobQueueModule.start_worker(app_name, server_url)
