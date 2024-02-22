@@ -1,6 +1,533 @@
 # Changelog
 
 
+## [3.18.7](https://github.com/ynput/OpenPype/tree/3.18.7)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.6...3.18.7)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Chore: Wrapper for click proposal <a href="https://github.com/ynput/OpenPype/pull/5928">#5928</a></summary>
+
+This is a proposal how to resolve issues with `click` python module. Issue https://github.com/ynput/OpenPype/issues/5921 reported that in Houdini 20+ is our click clashing with click in houdini, where is expected higher version. We can't update our version to support older pythons (NOTE older Python 3).
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Add repair action to hidden joints validator <a href="https://github.com/ynput/OpenPype/pull/6214">#6214</a></summary>
+
+Joints Hidden is missing repair action, this adds it back
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: output node and EXR <a href="https://github.com/ynput/OpenPype/pull/6086">#6086</a></summary>
+
+Output node now works correctly for Multilayer EXR and keeps existing links. The output now is handled entirely by the compositor node tree.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Switch tool: Keep version after switch <a href="https://github.com/ynput/OpenPype/pull/6104">#6104</a></summary>
+
+Keep version if only representation did change. The AYON variant of https://github.com/ynput/OpenPype/pull/4629
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Loader AYON: Reset loader window on open <a href="https://github.com/ynput/OpenPype/pull/6170">#6170</a></summary>
+
+Make sure loader tool is reset on each show.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Show message with error on action failure <a href="https://github.com/ynput/OpenPype/pull/6179">#6179</a></summary>
+
+This PR adds support for the publisher to show error message from running actions.Errors from actions will otherwise be hidden from user in various console outputs.Also include card for when action is finished.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Applications: Remove djvview group from default applications <a href="https://github.com/ynput/OpenPype/pull/6188">#6188</a></summary>
+
+The djv does not have group defined in models so the values are not used anywhere.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: added fallback for broken ffprobe return <a href="https://github.com/ynput/OpenPype/pull/6189">#6189</a></summary>
+
+Customer provided .exr returned width and height equal to 0 which caused error in `extract_thumbnail`. This tries to use oiiotool to get metadata about file, in our case it read it correctly.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: High scaling in UIs <a href="https://github.com/ynput/OpenPype/pull/6190">#6190</a></summary>
+
+Use `get_openpype_qt_app` to create `QApplication` in Photoshop.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Status update settings are not case insensitive. <a href="https://github.com/ynput/OpenPype/pull/6195">#6195</a></summary>
+
+Make values for project_settings/ftrack/events/status_update case insensitive.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Thumbnail product filtering <a href="https://github.com/ynput/OpenPype/pull/6197">#6197</a></summary>
+
+This PR introduces subset filtering for thumbnail extraction. This is to skip passes like zdepth which is not needed and can cause issues with extraction. Also speeds up publishing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TimersManager: Idle dialog always on top <a href="https://github.com/ynput/OpenPype/pull/6201">#6201</a></summary>
+
+Make stop timer dialog always on tophttps://app.clickup.com/t/6658547/OP-8033
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: added toggle for applying values from DB during creation <a href="https://github.com/ynput/OpenPype/pull/6204">#6204</a></summary>
+
+Previously values (resolution, duration) from Asset (eg. DB) were applied explicitly when instance of `render` product type was created. This PR adds toggle to Settings to disable this. (This allows artist to publish non standard length of composition, disabling of `Validate Scene Settings` is still required.)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Update plugin commit <a href="https://github.com/ynput/OpenPype/pull/6208">#6208</a></summary>
+
+Updated unreal plugin to latest main.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Traypublisher: editorial avoid audio tracks processing <a href="https://github.com/ynput/OpenPype/pull/6038">#6038</a></summary>
+
+Avoiding audio tracks from EDL editorial publishing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve Inventory offsets clips when swapping versions <a href="https://github.com/ynput/OpenPype/pull/6128">#6128</a></summary>
+
+Swapped version retain the offset and IDT of the timelime clip.closes: https://github.com/ynput/OpenPype/issues/6125
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher window as dialog <a href="https://github.com/ynput/OpenPype/pull/6176">#6176</a></summary>
+
+Changing back Publisher window to QDialog.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Validate write node fix error report - OP-8088 <a href="https://github.com/ynput/OpenPype/pull/6183">#6183</a></summary>
+
+Report error was not printing the expected values from settings, but instead the values on the write node, leading to confusing messages like:
+```
+Traceback (most recent call last):
+  File "C:\Users\tokejepsen\AppData\Local\Ynput\AYON\dependency_packages\ayon_2310271602_windows.zip\dependencies\pyblish\plugin.py", line 527, in __explicit_process
+    runner(*args)
+  File "C:\Users\tokejepsen\OpenPype\openpype\hosts\nuke\plugins\publish\validate_write_nodes.py", line 135, in process
+    self._make_error(check)
+  File "C:\Users\tokejepsen\OpenPype\openpype\hosts\nuke\plugins\publish\validate_write_nodes.py", line 149, in _make_error
+    raise PublishXmlValidationError(
+openpype.pipeline.publish.publish_plugins.PublishXmlValidationError: Write node's knobs values are not correct!
+Knob 'channels' > Correct: `rgb` > Wrong: `rgb`
+```
+This PR changes the error report to:
+```
+Traceback (most recent call last):
+  File "C:\Users\tokejepsen\AppData\Local\Ynput\AYON\dependency_packages\ayon_2310271602_windows.zip\dependencies\pyblish\plugin.py", line 527, in __explicit_process
+    runner(*args)
+  File "C:\Users\tokejepsen\OpenPype\openpype\hosts\nuke\plugins\publish\validate_write_nodes.py", line 135, in process
+    self._make_error(check)
+  File "C:\Users\tokejepsen\OpenPype\openpype\hosts\nuke\plugins\publish\validate_write_nodes.py", line 149, in _make_error
+    raise PublishXmlValidationError(
+openpype.pipeline.publish.publish_plugins.PublishXmlValidationError: Write node's knobs values are not correct!
+Knob 'channels' > Expected: `['rg']` > Current: `rgb`
+```
+
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Camera product type loaded is not updating - OP-7973 <a href="https://github.com/ynput/OpenPype/pull/6184">#6184</a></summary>
+
+When updating the camera this error would appear:
+```
+(...)openpype/hosts/nuke/plugins/load/load_camera_abc.py", line 142, in update
+    camera_node = nuke.toNode(object_name)
+TypeError: toNode() argument 1 must be str, not Node
+```
+
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON settings: Use bundle name as variant in dev mode <a href="https://github.com/ynput/OpenPype/pull/6187">#6187</a></summary>
+
+Make sure the bundle name is used in dev mode for settings variant.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: fix unwanted change to field name in Settings <a href="https://github.com/ynput/OpenPype/pull/6193">#6193</a></summary>
+
+It should be `image_format` but in previous refactoring PR it fell back to original `output_formats` which caused enum not to show up and propagate into plugin.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: AYON menu disappeared when the workspace has been changed in 3dsMax <a href="https://github.com/ynput/OpenPype/pull/6200">#6200</a></summary>
+
+AYON plugins are not correctly registered when switching to different workspaces.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: adding settings category to base creator classes <a href="https://github.com/ynput/OpenPype/pull/6202">#6202</a></summary>
+
+Settings are resolving correctly as they suppose to.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: expose knobs backward compatibility fix - OP-8164 <a href="https://github.com/ynput/OpenPype/pull/6211">#6211</a></summary>
+
+Fix backwards compatibility for settings `project_settings/nuke/create/CreateWriteRender/exposed_knobs`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AE: fix local render doesn't push thumbnail to Ftrack <a href="https://github.com/ynput/OpenPype/pull/6212">#6212</a></summary>
+
+Without thumbnail review is not clickable from main Versions list
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: openpype expose knobs validator - OP-8166 <a href="https://github.com/ynput/OpenPype/pull/6213">#6213</a></summary>
+
+Fix exposed knobs validator for backwards compatibility with missing settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Post-launch hook fix value lowering <a href="https://github.com/ynput/OpenPype/pull/6221">#6221</a></summary>
+
+Fix lowerin of values in status mapping.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Maya: Remove `shelf` class and shelf build on maya `userSetup.py` <a href="https://github.com/ynput/OpenPype/pull/5837">#5837</a></summary>
+
+Remove shelf builder logic. It appeared to be unused and had bugs.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Max: updated implementation of save_scene + small QOL improvements to host <a href="https://github.com/ynput/OpenPype/pull/6186">#6186</a></summary>
+
+- Removed `has_unsaved_changes` from Max host as it looks to have been unused and unimplemented.
+- Added and implemented `workfile_has_unsaved_changes` to Max host.
+- Mirrored the Houdini host to implement the above into `save_scene` publish for Max.
+- Added a line to `startup.ms` which opens the usual 'default' menu inside of Max (see screenshots).Current (Likely opens this menu due to one or more of the startup scripts used to insert OP menu):New:
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Use better resolution of Ayon apps on 4k display <a href="https://github.com/ynput/OpenPype/pull/6199">#6199</a></summary>
+
+Changes size (makes it smaller) of Ayon apps (Workfiles, Loader) in Fusion on high definitions displays.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Update CONTRIBUTING.md <a href="https://github.com/ynput/OpenPype/pull/6210">#6210</a></summary>
+
+Updating contributing guidelines to reflect the EOL state of repository
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: Remove redundant instance_skeleton_data code - OP-8269 <a href="https://github.com/ynput/OpenPype/pull/6219">#6219</a></summary>
+
+This PR https://github.com/ynput/OpenPype/pull/5186 re-introduced code about for the `instance_skeleton_data` but its actually not used since this variable gets overwritten later.
+
+
+___
+
+</details>
+
+
+
+
+## [3.18.6](https://github.com/ynput/OpenPype/tree/3.18.6)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.5...3.18.6)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>AYON: Use `SettingsField` from ayon server <a href="https://github.com/ynput/OpenPype/pull/6173">#6173</a></summary>
+
+This is preparation for new version of pydantic which will require to customize the field class for AYON purposes as raw pydantic Field could not be used.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Expose write knobs - OP-7592 <a href="https://github.com/ynput/OpenPype/pull/6137">#6137</a></summary>
+
+This PR adds `exposed_knobs` to the creator plugins settings at `ayon+settings://nuke/create/CreateWriteRender/exposed_knobs`.When exposed knobs will be linked from the write node to the outside publish group, for users to adjust.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Remove kitsu addon <a href="https://github.com/ynput/OpenPype/pull/6172">#6172</a></summary>
+
+Removed kitsu addon from server addons because already has own repository.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Fusion: provide better logging for validate saver crash due type error <a href="https://github.com/ynput/OpenPype/pull/6082">#6082</a></summary>
+
+Handles reported issue for `NoneType` error thrown in conversion `int(tool["Comments"][frame])`. It is most likely happening when saver node has no input connections.There is a validator for that, but it might be not obvious, that this error is caused by missing input connections and it has been already reported by `"Validate Saver Has Input"`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Workfile Template Builder: Use correct variable in create placeholder <a href="https://github.com/ynput/OpenPype/pull/6141">#6141</a></summary>
+
+Use correct variable where failed instances are stored for validation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>ExtractOIIOTranscode: Missing product_names to subsets conversion <a href="https://github.com/ynput/OpenPype/pull/6159">#6159</a></summary>
+
+The `Product Names` filtering should be fixed with this.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix missing animation data when updating blend assets <a href="https://github.com/ynput/OpenPype/pull/6165">#6165</a></summary>
+
+Fix missing animation data when updating blend assets.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: Pre-fill of version works in AYON <a href="https://github.com/ynput/OpenPype/pull/6180">#6180</a></summary>
+
+Use `folderPath` instead of `asset` in AYON mode to calculate next available version.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Chore: remove Muster <a href="https://github.com/ynput/OpenPype/pull/6085">#6085</a></summary>
+
+Muster isn't maintained for a long time and it wasn't working anyway. This is removing related code from the code base. If there is renewed interest in Muster, it needs to be re-implemented in modern AYON compatible way.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Maya: change label in the render settings to be more readable <a href="https://github.com/ynput/OpenPype/pull/6134">#6134</a></summary>
+
+AYON replacement for #5713.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.5](https://github.com/ynput/OpenPype/tree/3.18.5)
 
 
