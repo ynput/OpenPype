@@ -252,9 +252,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         default_prefix = default_prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
         if prefix.lower() != default_prefix.lower():
-            cls.log.warning("warning: prefix differs from "
-                            "recommended {}".format(
-                                default_prefix))
+            cls.log.info("warning: prefix differs from recommended {}".format(
+                default_prefix))
 
         if padding != cls.DEFAULT_PADDING:
             invalid = True

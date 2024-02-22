@@ -316,7 +316,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 )
                 component_list.append(new_thumbnail_component)
 
-        # Add source components for review and thubmnail components
+        # Add source components for review and thumbnail components
         for copy_src_item in src_components_to_add:
             # Make sure thumbnail is disabled
             copy_src_item["thumbnail"] = False

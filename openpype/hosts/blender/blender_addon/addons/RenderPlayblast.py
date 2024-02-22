@@ -1,8 +1,5 @@
 import bpy
-import os
 import logging
-import re
-from pathlib import Path
 
 from libs import paths
 
@@ -36,7 +33,7 @@ def get_render_filepath(extension, version):
 def get_renders_types_and_extensions():
     return {
         "PNG": '####.png',
-        "FFMPEG":'mp4'
+        "FFMPEG": 'mp4'
     }.items()
 
 

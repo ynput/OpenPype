@@ -21,7 +21,7 @@ from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 
 class StoreThumbnailsToAvalon(BaseAction):
     # Action identifier
-    identifier = "store.thubmnail.to.avalon"
+    identifier = "store.thumbnail.to.avalon"
     # Action label
     label = "OpenPype Admin"
     # Action variant
@@ -30,7 +30,7 @@ class StoreThumbnailsToAvalon(BaseAction):
     description = 'Test action'
     # roles that are allowed to register this action
     icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
-    settings_key = "store_thubmnail_to_avalon"
+    settings_key = "store_thumbnail_to_avalon"
 
     thumbnail_key = "AVALON_THUMBNAIL_ROOT"
 
@@ -135,7 +135,7 @@ class StoreThumbnailsToAvalon(BaseAction):
 
         example_template_data = {
             "_id": "ID",
-            "thumbnail_root": "THUBMNAIL_ROOT",
+            "thumbnail_root": "THUMBNAIL_ROOT",
             "thumbnail_type": "THUMBNAIL_TYPE",
             "ext": ".EXT",
             "project": {
@@ -262,8 +262,8 @@ class StoreThumbnailsToAvalon(BaseAction):
                 if not res_id:
                     continue
 
-                thubmnail_url = self.get_thumbnail_url(res_id)
-                if self.download_file(thubmnail_url, thumbnail_path):
+                thumbnail_url = self.get_thumbnail_url(res_id)
+                if self.download_file(thumbnail_url, thumbnail_path):
                     downloaded = True
                     break
 

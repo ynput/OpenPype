@@ -14,7 +14,7 @@ from openpype.host import (
     IPublishHost
 )
 from openpype.settings import get_current_project_settings
-from openpype.lib import register_event_callback, Logger
+from openpype.lib import register_event_callback, emit_event, Logger
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -180,6 +180,9 @@ def add_nuke_callbacks():
     # set apply all workfile settings on script load and save
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
+    # Emit events
+    nuke.addOnCreate(_on_scene_open, nodeClass="Root")
+    nuke.addOnScriptSave(_on_scene_save)
 
     if nuke_settings["nuke-dirmap"]["enabled"]:
         log.info("Added Nuke's dir-mapping callback ...")
@@ -710,3 +713,14 @@ def select_instance(instance):
     """
     instance_node = instance.transient_data["node"]
     instance_node["selected"].setValue(True)
+
+
+def _on_scene_open(*args):
+    emit_event("open")
+
+
+def _on_scene_save(*args):
+    skip = os.getenv("OP_NUKE_SKIP_SAVE_EVENT")
+    if skip:
+        return
+    emit_event("after.save")
