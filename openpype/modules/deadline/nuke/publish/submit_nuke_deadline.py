@@ -77,11 +77,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
 
         defs.extend([
-            EnumDef("primary_pool",
+            EnumDef("pool",
                     label="Primary Pool",
                     items=pools,
                     default=cls.pool),
-            EnumDef("secondary_pool",
+            EnumDef("pool_secondary",
                     label="Secondary Pool",
                     items=pools,
                     default=cls.pool_secondary),
