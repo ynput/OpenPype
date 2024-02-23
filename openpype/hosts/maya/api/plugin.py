@@ -529,7 +529,6 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         return node
 
     def _create_layer_instance_node(self, layer):
-        self.log.debug("#" * 100)
         # We only collect if a CreateRender instance exists
         create_render_set = self._get_singleton_node()
         if not create_render_set:
