@@ -271,12 +271,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
                 "Department": self.department,
                 "ChunkSize": self.chunk_size,
-                "Priority": instance.data.get("priority", self.priority),
+                "Priority": self.get_attr_value(self, instance, "priority"),
                 "InitialStatus": initial_status,
 
                 "Group": self.group,
-                "Pool": instance.data.get("pool", self.pool),
-                "SecondaryPool": instance.data.get("pool_secondary", self.pool_secondary),
+                "Pool": self.get_attr_value(self, instance, "pool"),
+                "SecondaryPool": self.get_attr_value(self, instance, "pool_secondary"),
                 # ensure the outputdirectory with correct slashes
                 "OutputDirectory0": output_dir.replace("\\", "/")
             },
