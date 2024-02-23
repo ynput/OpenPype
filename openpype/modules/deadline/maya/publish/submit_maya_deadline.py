@@ -185,7 +185,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         job_info.Name = job_name
         job_info.BatchName = "Group: " + batch_name
-        job_info.Plugin = self.get_attr_value(self, instance, "machineList", "MayaBatch")
+        job_info.Plugin = self.get_attr_value(self, instance, "mayaRenderPlugin", "MayaBatch")
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
 
         # Deadline requires integers in frame range

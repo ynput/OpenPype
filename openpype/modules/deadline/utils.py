@@ -16,6 +16,8 @@ class RecalculateOnAccess:
         self.fget = fget
 
     def __get__(self, instance, owner):
+        if not instance:
+            return self.fget
         return self.fget(instance)
 
 class DeadlineDefaultJobAttrs:
