@@ -50,6 +50,7 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import (
     abstract_submit_deadline,
+    get_deadline_limits_plugin
 )
 from openpype.pipeline.context_tools import _get_modules_manager
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
@@ -793,6 +794,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         deadline_module = manager.modules_by_name["deadline"]
         deadline_url = deadline_module.deadline_urls["default"]
         pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
+        limits_plugin = get_deadline_limits_plugin(deadline_module.enabled, deadline_url, cls.log)
 
         defs.extend([
             EnumDef("pool",
@@ -807,6 +809,16 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                       label="Priority",
                       default=cls.priority,
                       decimals=0),
+            NumberDef("limit_machine",
+                      label="Machine Limit",
+                      default=cls.limit_machine,
+                      minimum=0,
+                      decimals=0),
+            EnumDef("limits_plugin",
+                    label="Limit Groups",
+                    items=limits_plugin,
+                    default=cls.limits_plugin,
+                    multiselection=True),
             NumberDef("chunkSize",
                       label="Frames Per Task",
                       default=1,

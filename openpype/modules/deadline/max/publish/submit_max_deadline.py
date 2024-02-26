@@ -56,7 +56,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         cls.use_published = settings.get("use_published",
                                          cls.use_published)
         cls.priority = settings.get("priority",
-                                    cls.priority)
+                                    cls.default_priority)
         cls.chunk_size = settings.get("chunk_size", cls.chunk_size)
         cls.group = settings.get("group", cls.group)
 
@@ -100,8 +100,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         )
         job_info.Frames = frames
 
-        job_info.Pool = instance.data.get("pool", self.pool)
-        job_info.SecondaryPool = instance.data.get("pool_secondary", self.pool_secondary)
+        job_info.Pool = instance.data.get("pool", self.default_pool)
+        job_info.SecondaryPool = instance.data.get("pool_secondary", self.default_pool_secondary)
 
         attr_values = self.get_attr_values_from_data(instance.data)
 

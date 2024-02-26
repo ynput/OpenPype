@@ -169,7 +169,7 @@ class FusionSubmitDeadline(
                 "Name": job_name,
 
                 "Priority": attribute_values.get(
-                    "priority", self.priority),
+                    "priority", self.default_priority),
                 "ChunkSize": attribute_values.get(
                     "chunkSize", self.chunk_size),
                 "ConcurrentTasks": attribute_values.get(
@@ -180,8 +180,8 @@ class FusionSubmitDeadline(
                 # User, as seen in Monitor
                 "UserName": deadline_user,
 
-                "Pool": instance.data.get("pool"),
-                "SecondaryPool": instance.data.get("pool_secondary"),
+                "Pool": instance.data.get("pool", self.default_pool),
+                "SecondaryPool": instance.data.get("pool_secondary", self.default_pool_secondary),
                 "Group": self.group,
 
                 "Plugin": "Fusion",

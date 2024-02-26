@@ -83,10 +83,10 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin, DeadlineDefaultJob
         payload = {
             "JobInfo": {
                 "Plugin": "Houdini",
-                "Pool": self.pool,
+                "Pool": self.default_pool,
                 "BatchName": "Group: " + batch_name,
                 "Comment": context.data.get("comment", ""),
-                "Priority": self.priority,
+                "Priority": self.default_priority,
                 "Frames": "1-1",  # Always trigger a single frame
                 "IsFrameDependent": False,
                 "Name": job_name,

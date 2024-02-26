@@ -26,6 +26,10 @@ from openpype.lib import (
     EnumDef
 )
 
+from openpype_modules.deadline import (
+    get_deadline_limits_plugin
+)
+
 try:
     import nuke
 except ImportError:
@@ -62,11 +66,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
-        cls.priority = profile.get("priority", cls.priority)
-        cls.pool = profile.get("pool", cls.pool)
-        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
-        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
-        cls.limits_plugin = profile.get("limits_plugin", cls.limits_plugin)
+        cls.priority = profile.get("priority", cls.default_priority)
+        cls.pool = profile.get("pool", cls.default_pool)
+        cls.pool_secondary = profile.get("pool_secondary", cls.default_pool_secondary)
+        cls.limit_machine = profile.get("limit_machine", cls.default_limit_machine)
+        cls.limits_plugin = profile.get("limits_plugin", cls.default_limits_plugin)
 
     @classmethod
     def get_attribute_defs(cls):
@@ -75,6 +79,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         deadline_module = manager.modules_by_name["deadline"]
         deadline_url = deadline_module.deadline_urls["default"]
         pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
+        limits_plugin = get_deadline_limits_plugin(deadline_module.enabled, deadline_url, cls.log)
 
         defs.extend([
             EnumDef("pool",
@@ -90,6 +95,20 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 label="Priority",
                 default=cls.priority,
                 decimals=0
+            ),
+            NumberDef(
+                "limit_machine",
+                label="Machine Limit",
+                default=cls.limit_machine,
+                minimum=0,
+                decimals=0
+            ),
+            EnumDef(
+                "limits_plugin",
+                label="Plugin Limits",
+                items=limits_plugin,
+                default=cls.limits_plugin,
+                multiselection=True
             ),
             NumberDef(
                 "chunkSize",

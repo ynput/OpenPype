@@ -148,11 +148,11 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin, DeadlineDefaultJobAttr
                 "UserName": self._deadline_user,
 
                 "Department": self.department,
-                "Priority": self.priority,
+                "Priority": self.default_priority,
 
                 "Group": self.group,
-                "Pool": self.pool,
-                "SecondaryPool": self.pool_secondary,
+                "Pool": self.default_pool,
+                "SecondaryPool": self.default_pool_secondary,
                 "ChunkSize": chunk_size,
 
                 "Frames": f"{self._frame_start}-{self._frame_end}",

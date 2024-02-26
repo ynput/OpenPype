@@ -88,9 +88,9 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline, Dea
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
-        job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.Pool = instance.data.get("pool", self.pool)
-        job_info.SecondaryPool = instance.data.get("pool_secondary", self.pool_secondary)
+        job_info.Priority = instance.data.get("priority", self.default_priority)
+        job_info.Pool = instance.data.get("pool", self.default_pool)
+        job_info.SecondaryPool = instance.data.get("pool_secondary", self.default_pool_secondary)
         job_info.ChunkSize = instance.data.get("chunkSize", 10)
         job_info.Comment = context.data.get("comment")
 
