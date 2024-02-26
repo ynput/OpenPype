@@ -46,7 +46,7 @@ class FusionSubmitDeadline(
             NumberDef(
                 "priority",
                 label="Priority",
-                default=cls.priority,
+                default=cls.get_job_attr("priority"),
                 decimals=0
             ),
             NumberDef(

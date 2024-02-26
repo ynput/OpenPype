@@ -612,3 +612,25 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
         self._instance.data["deadlineSubmissionJob"] = result
 
         return result["_id"]
+
+    @staticmethod
+    def get_attr_value(plugin, instance, attr_name, fallback=None):
+        attrs = instance.data.get("attributeValues", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        attrs = instance.data.get("creator_attributes", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if attr_name in instance.data:
+            return instance.data.get(attr_name)
+
+        attrs = OpenPypePyblishPluginMixin.get_attr_values_from_data_for_plugin(plugin, instance.data)
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if hasattr(plugin, attr_name):
+            return getattr(plugin, attr_name)
+
+        return fallback

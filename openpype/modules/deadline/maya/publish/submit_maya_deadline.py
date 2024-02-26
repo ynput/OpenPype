@@ -131,11 +131,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
-        cls.priority = profile.get("priority", cls.default_priority)
-        cls.pool = profile.get("pool", cls.default_pool)
-        cls.pool_secondary = profile.get("pool_secondary", cls.default_pool_secondary)
-        cls.limit_machine = profile.get("limit_machine", cls.default_limit_machine)
-        cls.limits_plugin = profile.get("limits_plugin", cls.default_limits_plugin)
+        cls.set_job_attrs(profile)
 
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
 
@@ -491,8 +487,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                                      self.tile_priority)
         assembly_job_info.TileJob = False
 
-        assembly_job_info.Pool = instance.data.get("pool", self.pool)
-        assembly_job_info.SecondaryPool = instance.data.get("pool_secondary", self.pool_secondary)
+        assembly_job_info.Pool = instance.data.get("pool", self.get_job_attr("pool"))
+        assembly_job_info.SecondaryPool = instance.data.get("pool_secondary", self.get_job_attr("pool_secondary"))
 
         assembly_plugin_info = {
             "CleanupTiles": 1,
@@ -800,24 +796,24 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             EnumDef("pool",
                     label="Primary Pool",
                     items=pools,
-                    default=cls.pool),
+                    default=cls.get_job_attr("pool")),
             EnumDef("pool_secondary",
                     label="Secondary Pool",
                     items=pools,
-                    default=cls.pool_secondary),
+                    default=cls.get_job_attr("pool_secondary")),
             NumberDef("priority",
                       label="Priority",
-                      default=cls.priority,
+                      default=cls.get_job_attr("priority"),
                       decimals=0),
             NumberDef("limit_machine",
                       label="Machine Limit",
-                      default=cls.limit_machine,
+                      default=cls.get_job_attr("limit_machine"),
                       minimum=0,
                       decimals=0),
             EnumDef("limits_plugin",
                     label="Limit Groups",
                     items=limits_plugin,
-                    default=cls.limits_plugin,
+                    default=cls.get_job_attr("limits_plugin"),
                     multiselection=True),
             NumberDef("chunkSize",
                       label="Frames Per Task",
