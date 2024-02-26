@@ -20,38 +20,50 @@ class RecalculateOnAccess:
             return self.fget
         return self.fget(instance)
 
+
 class DeadlineDefaultJobAttrs:
-    deadline_job_attrs_global_settings = load_openpype_default_settings()['project_settings']['deadline']['JobAttrsValues']
-    _pool = deadline_job_attrs_global_settings['DefaultValues']['pool']
-    _pool_secondary = deadline_job_attrs_global_settings['DefaultValues']['pool_secondary']
-    _priority = deadline_job_attrs_global_settings['DefaultValues']['priority']
-    _limit_machine = deadline_job_attrs_global_settings['DefaultValues']['limit_machine']
-    _limits_plugin = deadline_job_attrs_global_settings['DefaultValues']['limits_plugin']
+    global_default_attrs_values = load_openpype_default_settings()['project_settings']['deadline']\
+                                    ['JobAttrsValues']['DefaultValues']
 
-    @RecalculateOnAccess
+    @property
     def pool(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool']
-                or self._pool)
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["pool"]
+        return value
 
-    @RecalculateOnAccess
+    @property
     def pool_secondary(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool_secondary']
-                or self._pool_secondary)
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool_secondary']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["pool_secondary"]
+        return value
 
-    @RecalculateOnAccess
+    @property
     def priority(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['priority']
-                or self._priority)
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['priority']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["priority"]
+        return value
 
-    @RecalculateOnAccess
+    @property
     def limit_machine(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limit_machine']
-                or self._limit_machine)
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limit_machine']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["limit_machine"]
+        return value
 
-    @RecalculateOnAccess
+    @property
     def limits_plugin(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
-                or self._limits_plugin)
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["limits_plugin"]
+        return value
 
     @staticmethod
     def get_attr_value(plugin, instance, attr_name, fallback=None):
@@ -160,5 +172,9 @@ def get_deadline_job_profile(project_settings, host):
 
     if settings.get("profiles"):
         profile = filter_profiles(settings["profiles"], filtering_criteria)
+
+        # Ensure we return a dict (not None)
+        if not profile:
+            profile = {}
 
     return profile
