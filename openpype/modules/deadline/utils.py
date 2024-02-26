@@ -11,16 +11,6 @@ from openpype.settings.lib import load_openpype_default_settings
 from openpype.settings import get_current_project_settings
 
 
-class RecalculateOnAccess:
-    def __init__(self, fget):
-        self.fget = fget
-
-    def __get__(self, instance, owner):
-        if not instance:
-            return self.fget
-        return self.fget(instance)
-
-
 class DeadlineDefaultJobAttrs:
     global_default_attrs_values = load_openpype_default_settings()['project_settings']['deadline']\
                                     ['JobAttrsValues']['DefaultValues']
