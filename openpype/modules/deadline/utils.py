@@ -24,9 +24,21 @@ class RecalculateOnAccess:
 class DeadlineDefaultJobAttrs:
     global_default_attrs_values = load_openpype_default_settings()['project_settings']['deadline']\
                                     ['JobAttrsValues']['DefaultValues']
+    pool: str = ""
+    pool_secondary: str = ""
+    priority: int = 0
+    limit_machine: int = 0
+    limits_plugin: list = []
+
+    def __init__(self):
+        self.pool = self.default_pool
+        self.pool_secondary = self.default_pool_secondary
+        self.priority = self.default_priority
+        self.limit_machine = self.default_limit_machine
+        self.limits_plugin = self.default_limits_plugin
 
     @property
-    def pool(self):
+    def default_pool(self):
         try:
             value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool']
         except Exception: # noqa
@@ -34,7 +46,7 @@ class DeadlineDefaultJobAttrs:
         return value
 
     @property
-    def pool_secondary(self):
+    def default_pool_secondary(self):
         try:
             value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool_secondary']
         except Exception: # noqa
@@ -42,7 +54,7 @@ class DeadlineDefaultJobAttrs:
         return value
 
     @property
-    def priority(self):
+    def default_priority(self):
         try:
             value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['priority']
         except Exception: # noqa
@@ -50,7 +62,7 @@ class DeadlineDefaultJobAttrs:
         return value
 
     @property
-    def limit_machine(self):
+    def default_limit_machine(self):
         try:
             value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limit_machine']
         except Exception: # noqa
@@ -58,7 +70,7 @@ class DeadlineDefaultJobAttrs:
         return value
 
     @property
-    def limits_plugin(self):
+    def default_limits_plugin(self):
         try:
             value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
         except Exception: # noqa

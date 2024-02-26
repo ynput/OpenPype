@@ -130,11 +130,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
-        cls.priority = profile.get("priority", cls.priority)
-        cls.pool = profile.get("pool", cls.pool)
-        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
-        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
-        cls.limits_plugin = profile.get("limits_plugin", cls.limits_plugin)
+        cls.priority = profile.get("priority", cls.default_priority)
+        cls.pool = profile.get("pool", cls.default_pool)
+        cls.pool_secondary = profile.get("pool_secondary", cls.default_pool_secondary)
+        cls.limit_machine = profile.get("limit_machine", cls.default_limit_machine)
+        cls.limits_plugin = profile.get("limits_plugin", cls.default_limits_plugin)
 
         settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
 
