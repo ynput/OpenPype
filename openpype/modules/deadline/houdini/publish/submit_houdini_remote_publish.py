@@ -10,8 +10,7 @@ import pyblish.api
 from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
-from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
-
+from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs, get_deadline_job_profile
 try:
     import hou
 except ImportError:
@@ -69,6 +68,10 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin, DeadlineDefaultJob
         project = context.data["projectEntity"]
         code = project["data"].get("code", project["name"])
 
+        project_settings = context.data["project_settings"]
+        profile = get_deadline_job_profile(project_settings, self.hosts[0])
+        self.set_job_attrs(profile)
+
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=code, scene=scenename)
         if is_in_tests():
@@ -83,10 +86,10 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin, DeadlineDefaultJob
         payload = {
             "JobInfo": {
                 "Plugin": "Houdini",
-                "Pool": self.default_pool,
+                "Pool": self.get_job_attr("pool"),
                 "BatchName": "Group: " + batch_name,
                 "Comment": context.data.get("comment", ""),
-                "Priority": self.default_priority,
+                "Priority": self.get_job_attr("priority"),
                 "Frames": "1-1",  # Always trigger a single frame
                 "IsFrameDependent": False,
                 "Name": job_name,

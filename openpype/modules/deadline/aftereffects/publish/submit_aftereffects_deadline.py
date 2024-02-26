@@ -78,9 +78,9 @@ class AfterEffectsSubmitDeadline(
                 int(round(self._instance.data["frameEnd"])))
             dln_job_info.Frames = frame_range
 
-        dln_job_info.Priority = self.default_priority
-        dln_job_info.Pool = self._instance.data.get("pool", self.default_pool)
-        dln_job_info.SecondaryPool = self._instance.data.get("pool_secondary", self.default_pool_secondary)
+        dln_job_info.Priority = self.get_job_attr("priority")
+        dln_job_info.Pool = self._instance.data.get("pool", self.get_job_attr("pool"))
+        dln_job_info.SecondaryPool = self._instance.data.get("pool_secondary", self.get_job_attr("pool_secondary"))
         dln_job_info.Group = self.group
         dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size
