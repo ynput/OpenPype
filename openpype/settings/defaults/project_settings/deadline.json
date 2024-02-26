@@ -129,6 +129,7 @@
             "deadline_priority": 50,
             "publishing_script": "",
             "skip_integration_repre_list": [],
+            "families_transfer": ["render3d", "render2d", "ftrack", "slate"],
             "aov_filter": {
                 "maya": [
                     ".*([Bb]eauty).*"
