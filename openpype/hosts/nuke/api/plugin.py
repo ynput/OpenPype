@@ -321,7 +321,6 @@ class NukeWriteCreator(NukeCreator):
         attr_defs = [
             self._get_render_target_enum(),
         ]
-        attr_defs.extend(self._get_limits_machine_and_plugin())
         # add reviewable attribute
         if "reviewable" in self.instance_attributes:
             attr_defs.append(self._get_reviewable_bool())
@@ -342,44 +341,6 @@ class NukeWriteCreator(NukeCreator):
             items=rendering_targets,
             label="Render target"
         )
-
-    def _get_limits_machine_and_plugin(self):
-        from openpype_modules.deadline import (
-            get_deadline_job_profile,
-            get_deadline_limits_plugin
-        )
-
-        modules_system_settings = get_system_settings()["modules"]
-        deadline_enabled = modules_system_settings["deadline"]["enabled"]
-        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
-
-        limits_plugin = get_deadline_limits_plugin(
-            deadline_enabled, deadline_url, self.log
-        )
-
-        project_name = get_current_project_name()
-        project_settings = get_project_settings(project_name)
-        profile = get_deadline_job_profile(project_settings, "nuke")
-
-        default_limit_machine = profile.get("limit_machine", 0)
-        default_limits_plugin = profile.get("limits_plugin", [])
-
-        return [
-            NumberDef(
-                "limit_machine",
-                label="Machine Limit",
-                default=default_limit_machine,
-                minimum=0,
-                decimals=0
-            ),
-            EnumDef(
-                "limits_plugin",
-                label="Plugin Limits",
-                items=limits_plugin,
-                default=default_limits_plugin,
-                multiselection=True
-            ),
-        ]
 
     def _get_reviewable_bool(self):
         return BoolDef(

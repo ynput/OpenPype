@@ -290,9 +290,6 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             "pixelAspect": lib.get_attr_in_layer(
                 "defaultResolution.pixelAspect", layer=layer_name
             ),
-            "priority": instance.data.get("priority"),
-            "machineLimit": instance.data.get("machineLimit", 0),
-            "limits": instance.data.get("limits", []),
             # todo: Following are likely not needed due to collecting from the
             #       instance itself if they are attribute definitions
             "tileRendering": instance.data.get("tileRendering", False),  # noqa: E501

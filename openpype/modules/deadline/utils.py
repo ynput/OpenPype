@@ -2,6 +2,7 @@ import os
 import re
 
 from openpype.lib import filter_profiles
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 from openpype.pipeline.context_tools import (
     _get_modules_manager,
     get_current_task_name
@@ -9,45 +10,84 @@ from openpype.pipeline.context_tools import (
 from openpype.settings.lib import load_openpype_default_settings
 from openpype.settings import get_current_project_settings
 
-class RecalculateOnAccess:
-    def __init__(self, fget):
-        self.fget = fget
-
-    def __get__(self, instance, owner):
-        return self.fget(instance)
 
 class DeadlineDefaultJobAttrs:
-    deadline_job_attrs_global_settings = load_openpype_default_settings()['project_settings']['deadline']['JobAttrsValues']
-    _pool = deadline_job_attrs_global_settings['DefaultValues']['pool']
-    _pool_secondary = deadline_job_attrs_global_settings['DefaultValues']['pool_secondary']
-    _priority = deadline_job_attrs_global_settings['DefaultValues']['priority']
-    _limit_machine = deadline_job_attrs_global_settings['DefaultValues']['limit_machine']
-    _limits_plugin = deadline_job_attrs_global_settings['DefaultValues']['limits_plugin']
+    global_default_attrs_values = load_openpype_default_settings()['project_settings']['deadline']\
+                                    ['JobAttrsValues']['DefaultValues']
+    pool: str = ""
+    pool_secondary: str = ""
+    priority: int = 0
+    limit_machine: int = 0
+    limits_plugin: list = []
 
-    @RecalculateOnAccess
-    def pool(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool']
-                or self._pool)
+    def __init__(self):
+        self.pool = self.default_pool
+        self.pool_secondary = self.default_pool_secondary
+        self.priority = self.default_priority
+        self.limit_machine = self.default_limit_machine
+        self.limits_plugin = self.default_limits_plugin
 
-    @RecalculateOnAccess
-    def pool_secondary(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool_secondary']
-                or self._pool_secondary)
+    @property
+    def default_pool(self):
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["pool"]
+        return value
 
-    @RecalculateOnAccess
-    def priority(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['priority']
-                or self._priority)
+    @property
+    def default_pool_secondary(self):
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool_secondary']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["pool_secondary"]
+        return value
 
-    @RecalculateOnAccess
-    def limit_machine(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limit_machine']
-                or self._limit_machine)
+    @property
+    def default_priority(self):
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['priority']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["priority"]
+        return value
 
-    @RecalculateOnAccess
-    def limits_plugin(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
-                or self._limits_plugin)
+    @property
+    def default_limit_machine(self):
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limit_machine']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["limit_machine"]
+        return value
+
+    @property
+    def default_limits_plugin(self):
+        try:
+            value = get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
+        except Exception: # noqa
+            value = self.global_default_attrs_values["limits_plugin"]
+        return value
+
+    @staticmethod
+    def get_attr_value(plugin, instance, attr_name, fallback=None):
+        attrs = instance.data.get("attributeValues", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        attrs = instance.data.get("creator_attributes", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if attr_name in instance.data:
+            return instance.data.get(attr_name)
+
+        attrs = OpenPypePyblishPluginMixin.get_attr_values_from_data_for_plugin(plugin, instance.data)
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if hasattr(plugin, attr_name):
+            return getattr(plugin, attr_name)
+
+        return fallback
 
 
 class SafeDict(dict):
@@ -134,5 +174,9 @@ def get_deadline_job_profile(project_settings, host):
 
     if settings.get("profiles"):
         profile = filter_profiles(settings["profiles"], filtering_criteria)
+
+        # Ensure we return a dict (not None)
+        if not profile:
+            profile = {}
 
     return profile

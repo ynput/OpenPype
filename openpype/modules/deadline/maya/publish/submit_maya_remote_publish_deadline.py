@@ -109,12 +109,12 @@ class MayaSubmitRemotePublishDeadline(
         deadline_publish_job_sett = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
         job_info.Department = deadline_publish_job_sett["department"]
         job_info.ChunkSize = deadline_publish_job_sett["chunk_size"]
-        job_info.Priority = profile.get("priority", self.priority)
+        job_info.Priority = profile.get("priority", self.default_priority)
         job_info.Group = deadline_publish_job_sett["group"]
-        job_info.Pool = profile.get("pool", self.pool)
-        job_info.SecondaryPool = profile.get("pool_secondary", self.pool_secondary)
-        job_info.MachineLimit = profile.get("limit_machine", self.limit_machine)
-        job_info.LimitGroups = profile.get("limit_plugins", self.limits_plugin)
+        job_info.Pool = profile.get("pool", self.default_pool)
+        job_info.SecondaryPool = profile.get("pool_secondary", self.default_pool_secondary)
+        job_info.MachineLimit = profile.get("limit_machine", self.default_limit_machine)
+        job_info.LimitGroups = profile.get("limit_plugins", self.default_limits_plugin)
 
         # Include critical environment variables with submission + Session
         keys = [
