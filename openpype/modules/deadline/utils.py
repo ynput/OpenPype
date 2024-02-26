@@ -2,7 +2,6 @@ import os
 import re
 
 from openpype.lib import filter_profiles
-from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 from openpype.pipeline.context_tools import (
     _get_modules_manager,
     get_current_task_name
