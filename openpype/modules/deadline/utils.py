@@ -8,6 +8,7 @@ from openpype.pipeline.context_tools import (
 )
 from openpype.settings.lib import load_openpype_default_settings
 from openpype.settings import get_current_project_settings
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 
 class DeadlineDefaultJobAttrs:
@@ -23,7 +24,7 @@ class DeadlineDefaultJobAttrs:
 
         if hasattr(cls, "_" + attr_name):
             # Attribute has been set, use it
-            return getattr(cls, attr_name)
+            return getattr(cls, "_" + attr_name)
 
         try:
             # Value from project setting default values
@@ -48,6 +49,28 @@ class DeadlineDefaultJobAttrs:
     def set_job_attrs(cls, attrs_dict):
         for attr_name, value in attrs_dict.items():
             cls.set_job_attr(attr_name, value, ignore_error=True)
+
+    @staticmethod
+    def get_attr_value(plugin, instance, attr_name, fallback=None):
+        attrs = instance.data.get("attributeValues", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        attrs = instance.data.get("creator_attributes", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if attr_name in instance.data:
+            return instance.data.get(attr_name)
+
+        attrs = OpenPypePyblishPluginMixin.get_attr_values_from_data_for_plugin(plugin, instance.data)
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if hasattr(plugin, attr_name):
+            return getattr(plugin, attr_name)
+
+        return fallback
 
 
 class SafeDict(dict):
