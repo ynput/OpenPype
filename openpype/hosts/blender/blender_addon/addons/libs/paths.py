@@ -10,7 +10,7 @@ def _get_version_directory(filepath):
     return Path(parts[0])
 
 
-def get_latest_version_folder(filepath, enforce_parent_dir=False, absolute_path=False):
+def get_latest_version_folder(filepath, *, enforce_parent_dir=False, absolute_path=False):
     directory_path = _get_version_directory(filepath)
     if not directory_path:
         raise Exception("Delimiter '{version}' not found in given filepath: " + "({})".format(filepath))
