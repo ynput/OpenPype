@@ -9,22 +9,45 @@ def _get_version_directory(filepath):
         return None
     return Path(parts[0])
 
-def get_next_version_folder(filepath):
+
+def get_latest_version_folder(filepath, *, enforce_parent_dir=False, absolute_path=False):
     directory_path = _get_version_directory(filepath)
     if not directory_path:
         raise Exception("Delimiter '{version}' not found in given filepath: " + "({})".format(filepath))
 
     # Ensure the folder exists on disk
-    directory_path.mkdir(parents=True, exist_ok=True)
+    if enforce_parent_dir:
+        directory_path.mkdir(parents=True, exist_ok=True)
+    elif not directory_path.exists():
+        return None
 
     versions_folders = _list_all_versions_folders(directory_path)
 
-    next_version_number = 1
-    if versions_folders:
-        latest_version_folder = max(versions_folders)
+    if not versions_folders:
+        return None
+
+    if absolute_path:
+        return directory_path.joinpath(str(max(versions_folders))).resolve()
+
+    return max(versions_folders)
+
+
+def get_next_version_folder(filepath):
+    latest_version_folder = get_latest_version_folder(filepath, enforce_parent_dir=True)
+    if not latest_version_folder:
+        next_version_number = 1
+    else:
         next_version_number = _extract_version_digits(latest_version_folder) + 1
 
     return _format_to_version_folder(next_version_number)
+
+
+def get_version_folder_fullpath(filepath):
+    latest_version_folder = get_latest_version_folder(filepath, absolute_path=True)
+    if not latest_version_folder:
+        return None
+
+    return latest_version_folder
 
 
 def _list_all_versions_folders(directory_path):
