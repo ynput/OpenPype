@@ -18,6 +18,8 @@ def get_latest_version_folder(filepath, enforce_parent_dir=False):
     # Ensure the folder exists on disk
     if enforce_parent_dir:
         directory_path.mkdir(parents=True, exist_ok=True)
+    elif not directory_path.exists():
+        return None
 
     versions_folders = _list_all_versions_folders(directory_path)
 
