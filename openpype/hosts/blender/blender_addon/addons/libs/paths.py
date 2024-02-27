@@ -45,7 +45,7 @@ def get_version_folder(filepath):
     if not latest_version_folder:
         return None
 
-    version_path = os.path.join(directory_path, latest_version_folder)
+    version_path = directory_path.joinpath(str(latest_version_folder))
 
     return version_path
 
