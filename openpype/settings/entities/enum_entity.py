@@ -747,6 +747,8 @@ class FtrackTaskStatusesEnumEntity(DynamicEnumEntity):
 
         manager = _get_modules_manager()
         ftrack_module = manager.modules_by_name["ftrack"]
+        if not ftrack_module.enabled:
+            return [], set()
 
         try:
             ftrack_session = ftrack_module.create_ftrack_session()
