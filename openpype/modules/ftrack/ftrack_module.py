@@ -310,7 +310,6 @@ class FtrackModule(
         self, old_value, new_value, changes, new_value_metadata
     ):
         """Implementation of ISettingsChangeListener interface."""
-        self.log.debug("TRRRRRRRRRRRREEEEEEEEEEEEEEEEEEEEEEEEE")
         if not self.ftrack_url:
             raise SaveWarningExc((
                 "Ftrack URL is not set."
@@ -564,7 +563,6 @@ class FtrackModule(
     def create_ftrack_session(self, **session_kwargs):
         import ftrack_api
 
-        self.log.debug("PIPOUUUUUUUUUUUUUUUUUUUUUUU")
         if "server_url" not in session_kwargs:
             session_kwargs["server_url"] = self.ftrack_url
 
@@ -646,7 +644,6 @@ class FtrackModule(
         """Get local Ftrack credentials."""
         from .lib import credentials
 
-        self.log.error("WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
         cred = credentials.get_credentials(self.ftrack_url)
         return cred.get("username"), cred.get("api_key")
 
