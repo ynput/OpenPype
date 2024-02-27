@@ -213,7 +213,6 @@ class FtrackModule(
         """
 
         if self._ftrack_url is _URL_NOT_SET:
-            self.log.debug("LOL5")
             self._ftrack_url = resolve_ftrack_url(
                 self._settings_ftrack_url,
                 logger=self.log
