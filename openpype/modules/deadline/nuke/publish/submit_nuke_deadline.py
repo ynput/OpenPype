@@ -26,6 +26,10 @@ from openpype.lib import (
     EnumDef
 )
 
+from openpype_modules.deadline import (
+    get_deadline_limits_plugin
+)
+
 try:
     import nuke
 except ImportError:
@@ -62,11 +66,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
-        cls.priority = profile.get("priority", cls.priority)
-        cls.pool = profile.get("pool", cls.pool)
-        cls.pool_secondary = profile.get("pool_secondary", cls.pool_secondary)
-        cls.limit_machine = profile.get("limit_machine", cls.limit_machine)
-        cls.limits_plugin = profile.get("limits_plugin", cls.limits_plugin)
+        cls.set_job_attrs(profile)
 
     @classmethod
     def get_attribute_defs(cls):
@@ -75,24 +75,39 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         deadline_module = manager.modules_by_name["deadline"]
         deadline_url = deadline_module.deadline_urls["default"]
         pools = deadline_module.get_deadline_pools(deadline_url, cls.log)
+        limits_plugin = get_deadline_limits_plugin(deadline_module.enabled, deadline_url, cls.log)
 
         defs.extend([
-            EnumDef("primary_pool",
+            EnumDef("pool",
                     label="Primary Pool",
                     items=pools,
-                    default=cls.pool),
-            EnumDef("secondary_pool",
+                    default=cls.get_job_attr("pool")),
+            EnumDef("pool_secondary",
                     label="Secondary Pool",
                     items=pools,
-                    default=cls.pool_secondary),
+                    default=cls.get_job_attr("pool_secondary")),
             NumberDef(
                 "priority",
                 label="Priority",
-                default=cls.priority,
+                default=cls.get_job_attr("priority"),
                 decimals=0
             ),
             NumberDef(
-                "chunk",
+                "limit_machine",
+                label="Machine Limit",
+                default=cls.get_job_attr("limit_machine"),
+                minimum=0,
+                decimals=0
+            ),
+            EnumDef(
+                "limits_plugin",
+                label="Plugin Limits",
+                items=limits_plugin,
+                default=cls.get_job_attr("limits_plugin"),
+                multiselection=True
+            ),
+            NumberDef(
+                "chunkSize",
                 label="Frames Per Task",
                 default=cls.chunk_size,
                 decimals=0,
@@ -286,9 +301,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             pass
 
         # resolve any limit groups
-        limits = ",".join(
-            instance.data["creator_attributes"].get('limits_plugin', self.limits_plugin)
-        )
+        limits_plugin = self.get_attr_value(self, instance, "limits_plugin")
+        if limits_plugin:
+            limits_plugin = ",".join(limits_plugin)
 
         payload = {
             "JobInfo": {
@@ -298,26 +313,18 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 # Job name, as seen in Monitor
                 "Name": job_name,
 
-                # Arbitrary username, for visualisation in Monitor
+                # Arbitrary username, for visualization in Monitor
                 "UserName": self._deadline_user,
 
-                "Priority": instance.data["attributeValues"].get(
-                    "priority", self.priority),
-                "ChunkSize": instance.data["attributeValues"].get(
-                    "chunk", self.chunk_size),
-                "ConcurrentTasks": instance.data["attributeValues"].get(
-                    "concurrency",
-                    self.concurrent_tasks
-                ),
+                "Priority": self.get_attr_value(self, instance, "priority"),
+                "ChunkSize": self.get_attr_value(self, instance, "chunkSize", self.chunk_size),
+                "ConcurrentTasks": self.get_attr_value(self, instance, "concurrency", self.concurrent_tasks),
 
                 "Department": self.department,
 
-                "Pool": instance.data["attributeValues"].get(
-                    "primary_pool", self.pool),
-                "SecondaryPool": instance.data["attributeValues"].get(
-                    "secondary_pool", self.pool_secondary),
-                "MachineLimit": instance.data["creator_attributes"].get(
-                    "limit_machine", self.limit_machine),
+                "Pool": self.get_attr_value(self, instance, "pool"),
+                "SecondaryPool": self.get_attr_value(self, instance, "pool_secondary"),
+                "MachineLimit": self.get_attr_value(self, instance, "limit_machine"),
                 "Group": self.group,
 
                 "Plugin": "Nuke",
@@ -332,7 +339,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "OutputFilename0": output_filename_0.replace("\\", "/"),
 
                 # limiting groups
-                "LimitGroups": limits
+                "LimitGroups": limits_plugin
 
             },
             "PluginInfo": {
@@ -351,8 +358,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "AWSAssetFile0": render_path,
 
                 # using GPU by default
-                "UseGpu": instance.data["attributeValues"].get(
-                    "use_gpu", self.use_gpu),
+                "UseGpu": self.get_attr_value(self, instance, "use_gpu", self.use_gpu),
 
                 # Only the specific write node is rendered.
                 "WriteNode": exe_node_name
@@ -448,7 +454,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         self.log.debug("Submitting..")
         self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
-        # adding expectied files to instance.data
+        # adding expected files to instance.data
         self.expected_files(
             instance,
             render_path,
@@ -457,7 +463,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         )
 
         self.log.debug("__ expectedFiles: `{}`".format(
-            instance.data["expectedFiles"]))
+            self.get_attr_value(self, instance, "expectedFiles")))
         response = requests.post(self.deadline_url, json=payload, timeout=10)
 
         if not response.ok:

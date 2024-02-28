@@ -8,46 +8,69 @@ from openpype.pipeline.context_tools import (
 )
 from openpype.settings.lib import load_openpype_default_settings
 from openpype.settings import get_current_project_settings
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
-class RecalculateOnAccess:
-    def __init__(self, fget):
-        self.fget = fget
-
-    def __get__(self, instance, owner):
-        return self.fget(instance)
 
 class DeadlineDefaultJobAttrs:
-    deadline_job_attrs_global_settings = load_openpype_default_settings()['project_settings']['deadline']['JobAttrsValues']
-    _pool = deadline_job_attrs_global_settings['DefaultValues']['pool']
-    _pool_secondary = deadline_job_attrs_global_settings['DefaultValues']['pool_secondary']
-    _priority = deadline_job_attrs_global_settings['DefaultValues']['priority']
-    _limit_machine = deadline_job_attrs_global_settings['DefaultValues']['limit_machine']
-    _limits_plugin = deadline_job_attrs_global_settings['DefaultValues']['limits_plugin']
+    global_default_attrs_values = load_openpype_default_settings()["project_settings"]["deadline"]\
+                                    ["JobAttrsValues"]["DefaultValues"]
+    deadline_attrs_names = ["pool", "pool_secondary", "priority", "limit_machine", "limits_plugin"]
 
-    @RecalculateOnAccess
-    def pool(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool']
-                or self._pool)
+    @classmethod
+    def get_job_attr(cls, attr_name):
+        if attr_name not in cls.deadline_attrs_names:
+            # Attribute not found
+            raise AttributeError("Unknown attribute {}".format(attr_name))
 
-    @RecalculateOnAccess
-    def pool_secondary(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['pool_secondary']
-                or self._pool_secondary)
+        if hasattr(cls, "_" + attr_name):
+            # Attribute has been set, use it
+            return getattr(cls, "_" + attr_name)
 
-    @RecalculateOnAccess
-    def priority(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['priority']
-                or self._priority)
+        try:
+            # Value from project setting default values
+            return get_current_project_settings()["deadline"]["JobAttrsValues"]["DefaultValues"][attr_name]
+        except Exception: # noqa
+            pass
 
-    @RecalculateOnAccess
-    def limit_machine(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limit_machine']
-                or self._limit_machine)
+        # Value from global setting default values
+        return cls.global_default_attrs_values[attr_name]
 
-    @RecalculateOnAccess
-    def limits_plugin(self):
-        return (get_current_project_settings()['deadline']['JobAttrsValues']['DefaultValues']['limits_plugin']
-                or self._limits_plugin)
+    @classmethod
+    def set_job_attr(cls, attr_name, value, ignore_error=False):
+        if attr_name not in cls.deadline_attrs_names:
+            # Attribute not found
+            if ignore_error:
+                return
+            raise AttributeError("Unknown attribute {}".format(attr_name))
+
+        setattr(cls, "_" + attr_name, value)
+
+    @classmethod
+    def set_job_attrs(cls, attrs_dict):
+        for attr_name, value in attrs_dict.items():
+            cls.set_job_attr(attr_name, value, ignore_error=True)
+
+    @staticmethod
+    def get_attr_value(plugin, instance, attr_name, fallback=None):
+        attrs = instance.data.get("attributeValues", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        attrs = instance.data.get("creator_attributes", {})
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if attr_name in instance.data:
+            return instance.data.get(attr_name)
+
+        attrs = OpenPypePyblishPluginMixin.get_attr_values_from_data_for_plugin(plugin, instance.data)
+        if attr_name in attrs:
+            return attrs.get(attr_name)
+
+        if hasattr(plugin, attr_name):
+            return getattr(plugin, attr_name)
+
+        return fallback
 
 
 class SafeDict(dict):
@@ -134,5 +157,9 @@ def get_deadline_job_profile(project_settings, host):
 
     if settings.get("profiles"):
         profile = filter_profiles(settings["profiles"], filtering_criteria)
+
+        # Ensure we return a dict (not None)
+        if not profile:
+            profile = {}
 
     return profile

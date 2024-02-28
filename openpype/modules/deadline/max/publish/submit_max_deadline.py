@@ -55,8 +55,9 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # Take some defaults from settings
         cls.use_published = settings.get("use_published",
                                          cls.use_published)
-        cls.priority = settings.get("priority",
-                                    cls.priority)
+        if "priority" in settings:
+            cls.set_job_attr("priority", settings.get("priority"))
+
         cls.chunk_size = settings.get("chunk_size", cls.chunk_size)
         cls.group = settings.get("group", cls.group)
 
@@ -100,14 +101,14 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         )
         job_info.Frames = frames
 
-        job_info.Pool = instance.data.get("primaryPool", self.pool)
-        job_info.SecondaryPool = instance.data.get("secondaryPool", self.pool_secondary)
+        job_info.Pool = instance.data.get("pool", self.default_pool)
+        job_info.SecondaryPool = instance.data.get("pool_secondary", self.default_pool_secondary)
 
         attr_values = self.get_attr_values_from_data(instance.data)
 
         job_info.ChunkSize = attr_values.get("chunkSize", 1)
         job_info.Comment = context.data.get("comment")
-        job_info.Priority = attr_values.get("priority", self.priority)
+        job_info.Priority = attr_values.get("priority", self.get_job_attr("priority"))
         job_info.Group = attr_values.get("group", self.group)
 
         # Add options from RenderGlobals
@@ -287,7 +288,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                       minimum=1,
                       maximum=250,
                       decimals=0,
-                      default=cls.priority,
+                      default=cls.get_job_attr("priority"),
                       label="Priority"),
 
             NumberDef("chunkSize",

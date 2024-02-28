@@ -1,24 +1,14 @@
 # -*- coding: utf-8 -*-
 """Create ``Render`` instance in Maya."""
 
-from openpype.settings import (
-    get_system_settings,
-    get_project_settings
-)
 from openpype.hosts.maya.api import (
     lib_rendersettings,
     plugin
 )
 from openpype.pipeline import CreatorError
-from openpype.pipeline.context_tools import get_current_project_name
 from openpype.lib import (
     BoolDef,
-    NumberDef,
-    EnumDef
-)
-from openpype_modules.deadline import (
-    get_deadline_job_profile,
-    get_deadline_limits_plugin
+    NumberDef
 )
 
 from openpype.modules.deadline.utils import DeadlineDefaultJobAttrs
@@ -65,20 +55,6 @@ class CreateRenderlayer(plugin.RenderlayerCreator, DeadlineDefaultJobAttrs):
 
     def get_instance_attr_defs(self):
         """Create instance settings."""
-        modules_system_settings = get_system_settings()["modules"]
-        deadline_enabled = modules_system_settings["deadline"]["enabled"]
-        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
-
-        limits_plugin = get_deadline_limits_plugin(
-            deadline_enabled, deadline_url, self.log
-        )
-
-        project_name = get_current_project_name()
-        project_settings = get_project_settings(project_name)
-        profile = get_deadline_job_profile(project_settings, "maya")
-
-        default_limit_machine = profile.get("limit_machine", self.limit_machine)
-        default_limits_plugin = profile.get("limits_plugin", self.limits_plugin)
 
         return [
             BoolDef("review",
@@ -100,17 +76,6 @@ class CreateRenderlayer(plugin.RenderlayerCreator, DeadlineDefaultJobAttrs):
                     tooltip="Override existing rendered frames "
                             "(if they exist).",
                     default=True),
-            NumberDef("limit_machine",
-                      label="Machine Limit",
-                      default=default_limit_machine,
-                      minimum=0,
-                      decimals=0),
-            EnumDef("limits_plugin",
-                    label="Limit Groups",
-                    items=limits_plugin,
-                    default=default_limits_plugin,
-                    multiselection=True),
-
             # TODO: Should these move to submit_maya_deadline plugin?
             # Tile rendering
             BoolDef("tileRendering",

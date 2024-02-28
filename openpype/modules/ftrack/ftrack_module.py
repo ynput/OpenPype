@@ -120,6 +120,9 @@ class FtrackModule(
         self._auto_update_task_status("status_change_on_file_save")
 
     def _auto_update_task_status(self, setting_mapping_section):
+        if not self.enabled:
+            return
+
         # Create ftrack session
         try:
             session = self.create_ftrack_session()

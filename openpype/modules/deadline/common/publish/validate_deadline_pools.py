@@ -40,11 +40,11 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
         pools = self.get_pools(deadline_url)
 
         invalid_pools = {}
-        primary_pool = instance.data.get("primaryPool")
+        primary_pool = instance.data.get("pool")
         if primary_pool and primary_pool not in pools:
             invalid_pools["primary"] = primary_pool
 
-        secondary_pool = instance.data.get("secondaryPool")
+        secondary_pool = instance.data.get("pool_secondary")
         if secondary_pool and secondary_pool not in pools:
             invalid_pools["secondary"] = secondary_pool
 

@@ -1,5 +1,7 @@
 import bpy
 import logging
+import os
+import subprocess
 
 from libs import paths
 
@@ -49,7 +51,8 @@ class VIEW3D_PT_render_playblast(bpy.types.Panel):
         layout = self.layout
         col = layout.column()
         col.prop(context.scene, 'use_camera_view')
-        col.operator('playblast.render', text="Render playblast")
+        col.operator('playblast.render', text="Render Playblast")
+        col.operator('playblast.open', text="Open Last Playblast Folder")
 
 
 class OBJECT_OT_render_playblast(bpy.types.Operator):
@@ -89,9 +92,26 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class OBJECT_OT_open_playblast_folder(bpy.types.Operator):
+    bl_idname = "playblast.open"
+    bl_label = "Open Last Playblast Folder"
+
+    def execute(self, context):
+        playblast_version_folderpath = paths.get_version_folder_fullpath(bpy.context.scene.playblast_render_path)
+
+        if not playblast_version_folderpath or not playblast_version_folderpath.exists():
+            self.report({'ERROR'}, "File '{}' not found".format(bpy.context.scene.playblast_render_path))
+            return {'CANCELLED'}
+
+        subprocess.Popen(['start', str(playblast_version_folderpath.resolve())], shell=True)
+
+        return {'FINISHED'}
+
+
 def register():
     bpy.utils.register_class(VIEW3D_PT_render_playblast)
     bpy.utils.register_class(OBJECT_OT_render_playblast)
+    bpy.utils.register_class(OBJECT_OT_open_playblast_folder)
 
     bpy.types.Scene.use_camera_view = bpy.props.BoolProperty(default=False)
 
@@ -99,5 +119,6 @@ def register():
 def unregister():
     bpy.utils.unregister_class(VIEW3D_PT_render_playblast)
     bpy.utils.unregister_class(OBJECT_OT_render_playblast)
+    bpy.utils.unregister_class(OBJECT_OT_open_playblast_folder)
 
     del bpy.types.Scene.use_camera_view
