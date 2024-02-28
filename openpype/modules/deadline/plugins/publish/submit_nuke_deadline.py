@@ -376,6 +376,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         keys = [
             "PYTHONPATH",
             "PATH",
+            "AVALON_DB",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
