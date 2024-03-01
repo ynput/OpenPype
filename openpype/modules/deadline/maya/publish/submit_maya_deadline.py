@@ -127,7 +127,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     group = "none"
     strict_error_checking = True
 
-
     @classmethod
     def apply_settings(cls, project_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
