@@ -501,6 +501,10 @@ def filter_pyblish_plugins(plugins):
     for plugin in plugins[:]:
         # Apply settings to plugins
 
+        plugin_settings = get_publish_plugin_settings(
+            plugin, project_settings, host_name, logger=log)
+        apply_plugin_settings(plugin, plugin_settings, log)
+
         apply_settings_func = getattr(plugin, "apply_settings", None)
         if apply_settings_func is not None:
             # Use classmethod 'apply_settings'
@@ -528,11 +532,6 @@ def filter_pyblish_plugins(plugins):
                     ).format(plugin.__name__),
                     exc_info=True
                 )
-        else:
-            # Automated
-            plugin_settings = get_publish_plugin_settings(
-                plugin, project_settings, host_name, logger=log)
-            apply_plugin_settings(plugin, plugin_settings, log)
 
         # Remove disabled plugins
         if getattr(plugin, "enabled", True) is False:

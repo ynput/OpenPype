@@ -64,7 +64,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     env_search_replace_values = {}
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
+    def apply_settings(cls, project_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
         cls.set_job_attrs(profile)
 
