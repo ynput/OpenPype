@@ -366,7 +366,7 @@ def publish_plugins_discover(paths=None):
     return result
 
 
-def get_plugin_settings(plugin, project_settings, log, category=None):
+def get_publish_plugin_settings(plugin, project_settings, category=None, logger=None):
     """Get plugin settings based on host name and plugin name.
 
     Note:
@@ -376,7 +376,7 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
     Args:
         plugin (pyblish.Plugin): Plugin where settings are applied.
         project_settings (dict[str, Any]): Project settings.
-        log (logging.Logger): Logger to log messages.
+        logger (Optional[logging.Logger]): Logger to log messages.
         category (Optional[str]): Settings category key where to look
             for plugin settings.
 
@@ -398,7 +398,9 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
                 [plugin.__name__]
             )
         except KeyError:
-            log.warning((
+            if not logger:
+                logger = Logger.get_logger("get_publish_plugin_settings")
+            logger.warning((
                 "Couldn't find plugin '{}' settings"
                 " under settings category '{}'"
             ).format(plugin.__name__, settings_category))
@@ -423,7 +425,9 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
 
     split_path = filepath.rsplit(os.path.sep, 5)
     if len(split_path) < 4:
-        log.debug((
+        if not logger:
+            logger = Logger.get_logger("get_publish_plugin_settings")
+        logger.debug((
             "Plugin path is too short to automatically"
             " extract settings category. {}"
         ).format(filepath))
@@ -448,7 +452,7 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
     return {}
 
 
-def apply_plugin_settings_automatically(plugin, settings, logger=None):
+def apply_plugin_settings(plugin, settings, logger=None):
     """Automatically apply plugin settings to a plugin object.
 
     Note:
@@ -526,10 +530,9 @@ def filter_pyblish_plugins(plugins):
                 )
         else:
             # Automated
-            plugin_settins = get_plugin_settings(
-                plugin, project_settings, log, host_name
-            )
-            apply_plugin_settings_automatically(plugin, plugin_settins, log)
+            plugin_settings = get_publish_plugin_settings(
+                plugin, project_settings, host_name, logger=log)
+            apply_plugin_settings(plugin, plugin_settings, log)
 
         # Remove disabled plugins
         if getattr(plugin, "enabled", True) is False:
