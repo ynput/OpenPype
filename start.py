@@ -1098,17 +1098,17 @@ def boot():
                 op_version_to_extract = op_version
                 break
 
-    # Extract zip based on OpenPypeVersion() Object
-    try:
-        _print(">>> Extracting zip file ...")
-        bootstrap.extract_openpype(op_version_to_extract)
-    except OSError as e:
-        _print("!!! failed: {}".format(str(e)), True)
-        sys.exit(1)
-    else:
-        # cleanup zip after extraction
-        _print(">>> Cleanup zip file ...")
-        os.unlink(op_version_to_extract.path)
+    if op_version_to_extract:
+        try:
+            _print(">>> Extracting zip file ...")
+            bootstrap.extract_openpype(op_version_to_extract)
+        except OSError as e:
+            _print("!!! failed: {}".format(str(e)), True)
+            sys.exit(1)
+        else:
+            # cleanup zip after extraction
+            _print(">>> Cleanup zip file ...")
+            os.unlink(op_version_to_extract.path)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions
