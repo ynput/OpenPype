@@ -129,11 +129,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
+    def apply_settings(cls, project_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
         cls.set_job_attrs(profile)
-
-        settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
