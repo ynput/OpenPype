@@ -103,7 +103,6 @@ import site
 import distutils.spawn
 from pathlib import Path
 
-
 silent_mode = False
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
@@ -1066,6 +1065,49 @@ def boot():
     if "print_versions" in commands:
         _boot_print_versions(OPENPYPE_ROOT)
         sys.exit(0)
+
+    # Check version exist on deadline folder
+    deadline_version_exists = local_version in bootstrap.get_openpype_versions(data_dir)
+    official_version_exists = local_version in bootstrap.get_openpype_versions(Path(openpype_path))
+    dev_mode = "python" in os.path.basename(sys.executable).lower()
+    op_version_to_extract = None
+
+    _print(">>> deadline_version_exists: {0}".format(deadline_version_exists))
+    _print(">>> official_version_exists: {0}".format(official_version_exists))
+    _print(">>> dev_mode: {0}".format(dev_mode))
+
+    if official_version_exists and not deadline_version_exists:
+        # Get OpenPypeVersion() Object
+        for op_version in OpenPypeVersion.get_remote_versions():
+            if local_version == op_version:
+                op_version_to_extract = op_version
+                break
+
+    if not official_version_exists and dev_mode:
+        # Generate Zip
+        zip_path = Path(openpype_path) / 'debug' / 'openpype-{0}.zip'.format(local_version)
+        if os.path.exists(zip_path):
+            _print(">>> zip file already existing, clean up...")
+            os.unlink(zip_path)
+        _print(">>> Writing zip file : {0}".format(zip_path))
+        bootstrap._create_openpype_zip(zip_path, Path(OPENPYPE_ROOT))
+        # Get OpenPypeVersion() Object
+        for op_version in bootstrap.get_openpype_versions(zip_path.parent):
+            if local_version == op_version:
+                op_version_to_extract = op_version
+                break
+
+    # Extract zip based on OpenPypeVersion() Object
+    try:
+        _print(">>> Extracting zip file ...")
+        bootstrap.extract_openpype(op_version_to_extract)
+    except OSError as e:
+        _print("!!! failed: {}".format(str(e)), True)
+        sys.exit(1)
+    else:
+        # cleanup zip after extraction
+        _print(">>> Cleanup zip file ...")
+        os.unlink(op_version_to_extract.path)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions
