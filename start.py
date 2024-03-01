@@ -1066,7 +1066,7 @@ def boot():
         _boot_print_versions(OPENPYPE_ROOT)
         sys.exit(0)
 
-    # Check version exist on deadline folder
+    # Check existing versions
     deadline_version_exists = local_version in bootstrap.get_openpype_versions(data_dir)
     official_version_exists = local_version in bootstrap.get_openpype_versions(Path(openpype_path))
     dev_mode = "python" in os.path.basename(sys.executable).lower()
