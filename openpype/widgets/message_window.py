@@ -14,6 +14,8 @@ class Window(QtWidgets.QWidget):
         self.level = level
         self._answer = None
 
+        self.setWindowTitle(self.title)
+
         if self.level == "info":
             self._info()
         elif self.level == "warning":
