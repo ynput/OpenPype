@@ -103,6 +103,7 @@ import site
 import distutils.spawn
 from pathlib import Path
 
+
 silent_mode = False
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
