@@ -499,12 +499,14 @@ def filter_pyblish_plugins(plugins):
 
     # iterate over plugins
     for plugin in plugins[:]:
-        # Apply settings to plugins
+        # Apply settings to plugin
 
+        # First settings from OP settings
         plugin_settings = get_publish_plugin_settings(
             plugin, project_settings, host_name, logger=log)
         apply_plugin_settings(plugin, plugin_settings, log)
 
+        # Then (if defined) calling the class method
         apply_settings_func = getattr(plugin, "apply_settings", None)
         if apply_settings_func is not None:
             # Use classmethod 'apply_settings'
@@ -524,8 +526,7 @@ def filter_pyblish_plugins(plugins):
                     plugin.apply_settings(project_settings)
                 else:
                     plugin.apply_settings(project_settings, system_settings)
-
-            except Exception:
+            except Exception: # noqa
                 log.warning(
                     (
                         "Failed to apply settings on plugin {}"
