@@ -363,6 +363,16 @@
                             "label": "Use GPU"
                         },
                         {
+                            "type": "boolean",
+                            "key": "workfile_dependency",
+                            "label": "Workfile Dependency"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "use_published_workfile",
+                            "label": "Use Published Workfile"
+                        },
+                        {
                             "type": "list",
                             "key": "env_allowed_keys",
                             "object_type": "text",
@@ -679,6 +689,14 @@
                             "type": "list",
                             "key": "skip_integration_repre_list",
                             "label": "Skip integration of representation with ext",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "list",
+                            "key": "families_transfer",
+                            "label": "List of family names to transfer\nto generated instances (AOVs for example).",
                             "object_type": {
                                 "type": "text"
                             }

@@ -112,8 +112,6 @@ class AlembicCameraLoader(load.LoaderPlugin):
         project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
-        object_name = container["node"]
-
         # get main variables
         version_data = version_doc.get("data", {})
         vname = version_doc.get("name", None)
@@ -139,7 +137,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
         file = get_representation_path(representation).replace("\\", "/")
 
         with maintained_selection():
-            camera_node = nuke.toNode(object_name)
+            camera_node = container["node"]
             camera_node['selected'].setValue(True)
 
             # collect input output dependencies
@@ -154,9 +152,10 @@ class AlembicCameraLoader(load.LoaderPlugin):
             xpos = camera_node.xpos()
             ypos = camera_node.ypos()
             nuke.nodeCopy("%clipboard%")
+            camera_name = camera_node.name()
             nuke.delete(camera_node)
             nuke.nodePaste("%clipboard%")
-            camera_node = nuke.toNode(object_name)
+            camera_node = nuke.toNode(camera_name)
             camera_node.setXYpos(xpos, ypos)
 
             # link to original input nodes

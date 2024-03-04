@@ -30,8 +30,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         if not AYON_SERVER_ENABLED:
             return
 
-        hierarchy_context = context.data.get("hierarchyContext")
-        if not hierarchy_context:
+        if not context.data.get("hierarchyContext"):
             self.log.debug("Skipping ExtractHierarchyToAYON")
             return
 

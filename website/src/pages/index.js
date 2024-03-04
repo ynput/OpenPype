@@ -29,7 +29,7 @@ const services = [
     title: <>Extensible</>,
     description: (
       <>
-        Project needs differ, clients differ and studios differ. OpenPype is designed to fit into your workflow and bend to your will. If a feature is missing, it can most probably be added. 
+        Project needs differ, clients differ and studios differ. OpenPype is designed to fit into your workflow and bend to your will. If a feature is missing, it can most probably be added.
       </>
     ),
   },
@@ -310,7 +310,7 @@ function Home() {
                 <h2>Why choose openPype?
                 </h2>
                 <p>
-                Pipeline is the technical backbone of your production. It means, that whatever solution you use, it will cause vendor-lock to some extend. 
+                Pipeline is the technical backbone of your production. It means, that whatever solution you use, it will cause vendor-lock to some extend.
                 You can mitigate this risk by developing purely in-house tools, however, that just shifts the problem from a software vendor to your developers. Sooner or later, you'll hit the limits of such solution. In-house tools tend to be undocumented, narrow focused and heavily dependent on a very few or even a single developer.
                 </p>
                 <p>
@@ -332,7 +332,7 @@ function Home() {
                   <img src="/img/app_maya.png" alt="" title=""></img>
                   <span className="caption">Maya</span>
                 </a>
-				
+
                 <a className="link" href="https://www.autodesk.com/products/flame">
                   <img src="/img/app_flame.png" alt="" title=""></img>
                   <span className="caption">Flame</span>
@@ -422,7 +422,7 @@ function Home() {
                   <img src="/img/app_deadline.png" alt="" title=""></img>
                   <span className="caption">Deadline</span>
                 </a>
-				
+
 				        <a className="link" href="https://www.royalrender.de/index.php/startseite.html">
                   <img src="/img/app_royalrender.png" alt="" title=""></img>
                   <span className="caption">Royal Render</span>
@@ -443,15 +443,10 @@ function Home() {
               <p> <b>Planned or in development by us and OpenPype community.</b></p>
 
               <div className={classnames('showcase',)}>
-			  
+
                 <a className="link" href="https://fatfi.sh/aquarium/en">
                   <img src="/img/app_aquarium.png" alt="" title=""></img>
                   <span className="caption">Aquarium</span>
-                </a>
-
-                <a className="link" href="https://www.vvertex.com">
-                  <img src="/img/app_muster.png" alt="" title=""></img>
-                  <span className="caption">Muster</span>
                 </a>
 
                 <a className="link" href="https://www.hibob.com">

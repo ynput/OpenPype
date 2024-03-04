@@ -9,7 +9,7 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Saver Passthrough"
-    families = ["render"]
+    families = ["render", "image"]
     hosts = ["fusion"]
     actions = [SelectInvalidAction]
 

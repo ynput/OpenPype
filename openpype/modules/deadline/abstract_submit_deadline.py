@@ -34,8 +34,8 @@ def requests_post(*args, **kwargs):
     """Wrap request post method.
 
     Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-    variable is found. This is useful when Deadline or Muster server are
-    running with self-signed certificates and their certificate is not
+    variable is found. This is useful when Deadline server is
+    running with self-signed certificates and its certificate is not
     added to trusted certificates on client machines.
 
     Warning:
@@ -55,8 +55,8 @@ def requests_get(*args, **kwargs):
     """Wrap request get method.
 
     Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-    variable is found. This is useful when Deadline or Muster server are
-    running with self-signed certificates and their certificate is not
+    variable is found. This is useful when Deadline server is
+    running with self-signed certificates and its certificate is not
     added to trusted certificates on client machines.
 
     Warning:
@@ -464,7 +464,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
         self.log.info("Submitted job to Deadline: {}.".format(job_id))
 
         # TODO: Find a way that's more generic and not render type specific
-        if "exportJob" in instance.data:
+        if instance.data.get("splitRender"):
             self.log.info("Splitting export and render in two jobs")
             self.log.info("Export job id: %s", job_id)
             render_job_info = self.get_job_info(dependency_job_ids=[job_id])

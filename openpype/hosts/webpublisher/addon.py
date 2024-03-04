@@ -1,8 +1,6 @@
 import os
 
-import click
-
-from openpype.modules import OpenPypeModule, IHostAddon
+from openpype.modules import click_wrap, OpenPypeModule, IHostAddon
 
 WEBPUBLISHER_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,10 +36,10 @@ class WebpublisherAddon(OpenPypeModule, IHostAddon):
         )
 
     def cli(self, click_group):
-        click_group.add_command(cli_main)
+        click_group.add_command(cli_main.to_click_obj())
 
 
-@click.group(
+@click_wrap.group(
     WebpublisherAddon.name,
     help="Webpublisher related commands.")
 def cli_main():
@@ -49,10 +47,10 @@ def cli_main():
 
 
 @cli_main.command()
-@click.argument("path")
-@click.option("-u", "--user", help="User email address")
-@click.option("-p", "--project", help="Project")
-@click.option("-t", "--targets", help="Targets", default=None,
+@click_wrap.argument("path")
+@click_wrap.option("-u", "--user", help="User email address")
+@click_wrap.option("-p", "--project", help="Project")
+@click_wrap.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
 def publish(project, path, user=None, targets=None):
     """Start publishing (Inner command).
@@ -67,11 +65,11 @@ def publish(project, path, user=None, targets=None):
 
 
 @cli_main.command()
-@click.argument("path")
-@click.option("-p", "--project", help="Project")
-@click.option("-h", "--host", help="Host")
-@click.option("-u", "--user", help="User email address")
-@click.option("-t", "--targets", help="Targets", default=None,
+@click_wrap.argument("path")
+@click_wrap.option("-p", "--project", help="Project")
+@click_wrap.option("-h", "--host", help="Host")
+@click_wrap.option("-u", "--user", help="User email address")
+@click_wrap.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
 def publishfromapp(project, path, host, user=None, targets=None):
     """Start publishing through application (Inner command).
@@ -86,10 +84,10 @@ def publishfromapp(project, path, host, user=None, targets=None):
 
 
 @cli_main.command()
-@click.option("-e", "--executable", help="Executable")
-@click.option("-u", "--upload_dir", help="Upload dir")
-@click.option("-h", "--host", help="Host", default=None)
-@click.option("-p", "--port", help="Port", default=None)
+@click_wrap.option("-e", "--executable", help="Executable")
+@click_wrap.option("-u", "--upload_dir", help="Upload dir")
+@click_wrap.option("-h", "--host", help="Host", default=None)
+@click_wrap.option("-p", "--port", help="Port", default=None)
 def webserver(executable, upload_dir, host=None, port=None):
     """Start service for communication with Webpublish Front end.
 

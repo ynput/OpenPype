@@ -64,17 +64,12 @@ class PublisherWindow(QtWidgets.QDialog):
         if reset_on_show is None:
             reset_on_show = True
 
-        if parent is None:
-            on_top_flag = QtCore.Qt.WindowStaysOnTopHint
-        else:
-            on_top_flag = QtCore.Qt.Dialog
-
         self.setWindowFlags(
-            QtCore.Qt.WindowTitleHint
+            QtCore.Qt.Window
+            | QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
-            | on_top_flag
         )
 
         if controller is None:
@@ -189,7 +184,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ReportPageWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, content_stacked_widget)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
@@ -321,12 +316,14 @@ class PublisherWindow(QtWidgets.QDialog):
             "convertors.find.failed", self._on_convertor_error
         )
         controller.event_system.add_callback(
+            "publish.action.failed", self._on_action_error
+        )
+        controller.event_system.add_callback(
             "export_report.request", self._export_report
         )
         controller.event_system.add_callback(
             "copy_report.request", self._copy_report
         )
-
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -490,8 +487,14 @@ class PublisherWindow(QtWidgets.QDialog):
         app.removeEventFilter(self)
 
     def keyPressEvent(self, event):
-        # Ignore escape button to close window
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() in {
+            # Ignore escape button to close window
+            QtCore.Qt.Key_Escape,
+            # Ignore enter keyboard event which by default triggers
+            #   first available button in QDialog
+            QtCore.Qt.Key_Enter,
+            QtCore.Qt.Key_Return,
+        }:
             event.accept()
             return
 
@@ -990,6 +993,18 @@ class PublisherWindow(QtWidgets.QDialog):
             new_failed_info.append(new_item)
         self.add_error_message_dialog(
             event["title"], new_failed_info, "Convertor:"
+        )
+
+    def _on_action_error(self, event):
+        self.add_error_message_dialog(
+            event["title"],
+            [{
+                "message": event["message"],
+                "traceback": event["traceback"],
+                "label": event["label"],
+                "identifier": event["identifier"]
+            }],
+            "Action:"
         )
 
     def _update_create_overlay_size(self):
