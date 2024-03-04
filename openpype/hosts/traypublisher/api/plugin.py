@@ -32,6 +32,7 @@ SHARED_DATA_KEY = "openpype.traypublisher.instances"
 
 class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
+    settings_category = "traypublisher"
 
     def collect_instances(self):
         instances_by_identifier = cache_and_get_instances(
@@ -68,6 +69,7 @@ class HiddenTrayPublishCreator(HiddenCreator):
 class TrayPublishCreator(Creator):
     create_allow_context_change = True
     host_name = "traypublisher"
+    settings_category = "traypublisher"
 
     def collect_instances(self):
         instances_by_identifier = cache_and_get_instances(

@@ -203,6 +203,12 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "list",
+                    "object_type": "text",
+                    "key": "subsets",
+                    "label": "Subsets"
+                },
+                {
                     "type": "boolean",
                     "key": "integrate_thumbnail",
                     "label": "Integrate thumbnail as representation"
