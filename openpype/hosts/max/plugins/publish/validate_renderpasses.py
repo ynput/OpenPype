@@ -75,8 +75,8 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         filename, ext = os.path.splitext(file)
         if filename not in rt.rendOutputFilename:
             cls.log.error(
-                "Render output folder "
-                f"doesn't match the max scene name {filename} "
+                "Render output folder must include "
+                f" the max scene name {filename} "
             )
             invalid_folder_name = os.path.dirname(
                 rt.rendOutputFilename).replace(
@@ -121,7 +121,7 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                 invalid.extend(invalid_image_format)
         elif renderer == "Arnold":
             cls.log.debug(
-                "Renderpass validation not supported Arnold yet,"
+                "Renderpass validation does not support Arnold yet,"
                 " validation skipped...")
 
         return invalid
