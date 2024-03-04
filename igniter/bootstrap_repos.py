@@ -685,7 +685,7 @@ class BootstrapRepos:
             return
 
         # create destination directory
-        destination = self.data_dir / f"{installed_version.major}.{installed_version.minor}"  # noqa
+        destination = (data_dir or self.data_dir) / f"{installed_version.major}.{installed_version.minor}"  # noqa
         if not destination.exists():
             destination.mkdir(parents=True)
 
@@ -1187,6 +1187,29 @@ class BootstrapRepos:
         openpype_versions = sorted(list(set(openpype_versions)))
 
         return openpype_versions
+
+    @staticmethod
+    def find_openpype_version_in_prod_dir(version=None):
+        """
+           Finds the specified OpenPype version in the production directory.
+
+           Parameters:
+           - version (str, optional): A specific version of OpenPype to search for.
+
+           Returns:
+           - OpenPypeVersion() or None: Returns the found OpenPype version if available, or None if not found.
+        """
+        op_version = None
+
+        for remote_op_version in OpenPypeVersion.get_remote_versions():
+            if version == remote_op_version:
+                op_version = remote_op_version
+                break
+
+        if not op_version:
+            return None
+
+        return op_version
 
     def process_entered_location(self, location: str) -> Union[Path, None]:
         """Process user entered location string.

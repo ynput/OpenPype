@@ -701,8 +701,9 @@ def _install_and_initialize_version(openpype_version: OpenPypeVersion):
             _print("!!! failed: {}".format(str(e)), True)
             sys.exit(1)
         else:
-            # cleanup zip after extraction
-            os.unlink(openpype_version.path)
+            # cleanup zip after extraction, we don't touch prod dir
+            if openpype_version not in OpenPypeVersion.get_remote_versions():
+                os.unlink(openpype_version.path)
 
         openpype_version.path = version_path
 
@@ -1084,9 +1085,9 @@ def boot():
     _print(">>> Dev Mode Enabled: {}".format(dev_mode))
 
     if prod_dir_version_exists and not user_dir_version_exists:
-        # Need to copy the version into the correct user/artist directory
+        # Need to copy the prod version into the correct user/artist directory
         # Get OpenPypeVersion() Object
-        op_version_to_extract = find_version_in_data_dir(local_version)
+        op_version_to_extract = bootstrap.find_openpype_version_in_prod_dir(local_version)
 
     if not prod_dir_version_exists and dev_mode:
         # There isn't an official version, and we are in developer mode
