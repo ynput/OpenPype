@@ -48,19 +48,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     pluginInfo = {}
     group = None
 
-    @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        settings = project_settings["deadline"]["publish"]["MaxSubmitDeadline"]  # noqa
-
-        # Take some defaults from settings
-        cls.use_published = settings.get("use_published",
-                                         cls.use_published)
-        if "priority" in settings:
-            cls.set_job_attr("priority", settings.get("priority"))
-
-        cls.chunk_size = settings.get("chunk_size", cls.chunk_size)
-        cls.group = settings.get("group", cls.group)
-
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="3dsmax")
 
