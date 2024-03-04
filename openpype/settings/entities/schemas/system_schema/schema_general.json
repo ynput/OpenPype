@@ -25,7 +25,8 @@
         {
             "type": "password",
             "key": "admin_password",
-            "label": "Admin password"
+            "label": "Admin password",
+            "disabled": true
         },
         {
             "type": "splitter"

@@ -289,7 +289,7 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         if not self._user_passed:
-            self._user_passed = not is_admin_password_required(ignore_admin_skip=True)
+            self._user_passed = not is_admin_password_required(admin_bypass_enabled=False)
 
         self._on_state_change()
 

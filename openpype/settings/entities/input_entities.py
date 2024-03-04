@@ -473,6 +473,11 @@ class TextEntity(InputEntity):
 class PasswordEntity(TextEntity):
     schema_types = ["password"]
 
+    def _item_initialization(self):
+        super(PasswordEntity, self)._item_initialization()
+
+        self.disabled = self.schema_data.get("disabled", False)
+
 
 class PathInput(InputEntity):
     schema_types = ["path-input"]

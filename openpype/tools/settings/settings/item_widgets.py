@@ -450,9 +450,12 @@ class TextWidget(InputWidget):
 
 
 class PasswordWidget(TextWidget):
+
     def _add_inputs_to_layout(self):
         input_field = SettingsLineEdit(self.content_widget)
         input_field.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        input_field.setEnabled(not self.entity.disabled)
 
         placeholder_text = self.entity.placeholder_text
         if placeholder_text:
@@ -493,6 +496,14 @@ class PasswordWidget(TextWidget):
 
     def input_value(self):
         return self.input_field.text()
+
+    def set_read_only(self, status):
+        self._read_only = status
+        if self.is_disabled():
+            # Enforce read-only (security) since this widget should stay disabled
+            self.input_field.setEnabled(False)
+            return
+        self.input_field.setEnabled(not self._read_only)
 
 
 class OpenPypeVersionText(TextWidget):

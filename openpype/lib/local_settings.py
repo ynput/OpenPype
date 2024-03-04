@@ -34,7 +34,7 @@ from openpype.settings import (
     get_local_settings,
     get_system_settings
 )
-
+import openpype.settings.lib as sett_lib
 from openpype.client.mongo import validate_mongo_connection
 
 _PLACEHOLDER = object()
@@ -616,13 +616,23 @@ def get_openpype_username():
     return username
 
 
-def is_admin_password_required(ignore_admin_skip=False):
+def is_admin_password_required(admin_bypass_enabled=True):
     system_settings = get_system_settings()
     password = system_settings["general"].get("admin_password")
     if not password:
         return False
 
-    if not ignore_admin_skip:
+    # Check if the user (session username) is allow-listed
+    # In that case password isn't required
+    username = getpass.getuser()
+    admins_doc = sett_lib._SETTINGS_HANDLER.collection.find_one({"type": "administrators"})
+    if admins_doc and username in admins_doc["data"]["usernames"]:
+        return False
+
+    # There is an option on the local settings (user) to switch to admin
+    # By default admin users automatically bypass password requirement
+    # admin_bypass_enabled, if set to False, means password is required even for admins
+    if admin_bypass_enabled:
         local_settings = get_local_settings()
         is_admin = local_settings.get("general", {}).get("is_admin", False)
         if is_admin:
