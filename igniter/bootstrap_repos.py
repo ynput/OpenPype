@@ -584,6 +584,7 @@ class BootstrapRepos:
         # vendor and app used to construct user data dir
         self._message = message
         self._log = log.getLogger(str(__class__))
+        self.data_dir = None
         self.set_data_dir(None)
         self.secure_registry = OpenPypeSecureRegistry("mongodb")
         self.registry = OpenPypeSettingsRegistry()
@@ -654,7 +655,7 @@ class BootstrapRepos:
         return version['__version__']
 
     def create_version_from_live_code(
-            self, repo_dir: Path = None) -> Union[OpenPypeVersion, None]:
+            self, repo_dir: Path = None, data_dir: Path = None) -> Union[OpenPypeVersion, None]:
         """Copy zip created from OpenPype repositories to user data dir.
 
         This detects OpenPype version either in local "live" OpenPype

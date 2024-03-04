@@ -692,6 +692,23 @@ def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
 
+def _install_and_initialize_version(openpype_version: OpenPypeVersion):
+    if openpype_version.path.is_file():
+        _print(">>> Extracting zip file ...")
+        try:
+            version_path = bootstrap.extract_openpype(openpype_version)
+        except OSError as e:
+            _print("!!! failed: {}".format(str(e)), True)
+            sys.exit(1)
+        else:
+            # cleanup zip after extraction
+            os.unlink(openpype_version.path)
+
+        openpype_version.path = version_path
+
+    _initialize_environment(openpype_version)
+
+
 def _find_frozen_openpype(use_version: str = None,
                           use_staging: bool = False) -> Path:
     """Find OpenPype to run from frozen code.
@@ -803,20 +820,8 @@ def _find_frozen_openpype(use_version: str = None,
         _initialize_environment(openpype_version)
         return openpype_version.path
 
-    if openpype_version.path.is_file():
-        _print(">>> Extracting zip file ...")
-        try:
-            version_path = bootstrap.extract_openpype(openpype_version)
-        except OSError as e:
-            _print("!!! failed: {}".format(str(e)), True)
-            sys.exit(1)
-        else:
-            # cleanup zip after extraction
-            os.unlink(openpype_version.path)
+    _install_and_initialize_version(openpype_version)
 
-        openpype_version.path = version_path
-
-    _initialize_environment(openpype_version)
     return openpype_version.path
 
 
@@ -1040,8 +1045,8 @@ def boot():
         log_to_server_msg = "OFF"
     _print(f">>> Logging to server is turned {log_to_server_msg}")
 
-    # Get openpype path from database and set it to environment so openpype can
-    # find its versions there and bootstrap them.
+    # Get path to the folder containing OpenPype patch versions, then set it to
+    # environment so openpype can find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_settings(global_settings)
 
     # Check if local versions should be installed in custom folder and not in
@@ -1068,47 +1073,31 @@ def boot():
         sys.exit(0)
 
     # Check existing versions
-    deadline_version_exists = local_version in bootstrap.get_openpype_versions(data_dir)
-    official_version_exists = local_version in bootstrap.get_openpype_versions(Path(openpype_path))
+    user_dir_version_exists = local_version in OpenPypeVersion.get_local_versions()
+    prod_dir_version_exists = local_version in OpenPypeVersion.get_remote_versions()
     dev_mode = "python" in os.path.basename(sys.executable).lower()
+
     op_version_to_extract = None
 
-    _print(">>> deadline_version_exists: {0}".format(deadline_version_exists))
-    _print(">>> official_version_exists: {0}".format(official_version_exists))
-    _print(">>> dev_mode: {0}".format(dev_mode))
+    _print(">>> OP Version Exists in User Dir: {}".format(user_dir_version_exists))
+    _print(">>> OP Version Exists in Prod Dir: {}".format(prod_dir_version_exists))
+    _print(">>> Dev Mode Enabled: {}".format(dev_mode))
 
-    if official_version_exists and not deadline_version_exists:
+    if prod_dir_version_exists and not user_dir_version_exists:
+        # Need to copy the version into the correct user/artist directory
         # Get OpenPypeVersion() Object
-        for op_version in OpenPypeVersion.get_remote_versions():
-            if local_version == op_version:
-                op_version_to_extract = op_version
-                break
+        op_version_to_extract = find_version_in_data_dir(local_version)
 
-    if not official_version_exists and dev_mode:
+    if not prod_dir_version_exists and dev_mode:
+        # There isn't an official version, and we are in developer mode
+        # Generate the version, then copy it on the user/artist directory
+
         # Generate Zip
-        zip_path = Path(openpype_path) / 'debug' / 'openpype-{0}.zip'.format(local_version)
-        if os.path.exists(zip_path):
-            _print(">>> zip file already existing, clean up...")
-            os.unlink(zip_path)
-        _print(">>> Writing zip file : {0}".format(zip_path))
-        bootstrap._create_openpype_zip(zip_path, Path(OPENPYPE_ROOT))
-        # Get OpenPypeVersion() Object
-        for op_version in bootstrap.get_openpype_versions(zip_path.parent):
-            if local_version == op_version:
-                op_version_to_extract = op_version
-                break
+        debug_dir = Path(openpype_path, "debug")
+        op_version_to_extract = bootstrap.create_version_from_live_code(data_dir=debug_dir)
 
     if op_version_to_extract:
-        try:
-            _print(">>> Extracting zip file ...")
-            bootstrap.extract_openpype(op_version_to_extract)
-        except OSError as e:
-            _print("!!! failed: {}".format(str(e)), True)
-            sys.exit(1)
-        else:
-            # cleanup zip after extraction
-            _print(">>> Cleanup zip file ...")
-            os.unlink(op_version_to_extract.path)
+        _install_and_initialize_version(op_version_to_extract)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions
