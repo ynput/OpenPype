@@ -1,42 +1,40 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class SimpleCreatorPlugin(BaseSettingsModel):
     _layout = "expanded"
-    product_type: str = Field("", title="Product type")
+    product_type: str = SettingsField("", title="Product type")
     # TODO add placeholder
-    identifier: str = Field("", title="Identifier")
-    label: str = Field("", title="Label")
-    icon: str = Field("", title="Icon")
-    default_variants: list[str] = Field(
+    identifier: str = SettingsField("", title="Identifier")
+    label: str = SettingsField("", title="Label")
+    icon: str = SettingsField("", title="Icon")
+    default_variants: list[str] = SettingsField(
         default_factory=list,
         title="Default Variants"
     )
-    description: str = Field(
+    description: str = SettingsField(
         "",
         title="Description",
         widget="textarea"
     )
-    detailed_description: str = Field(
+    detailed_description: str = SettingsField(
         "",
         title="Detailed Description",
         widget="textarea"
     )
-    allow_sequences: bool = Field(
+    allow_sequences: bool = SettingsField(
         False,
         title="Allow sequences"
     )
-    allow_multiple_items: bool = Field(
+    allow_multiple_items: bool = SettingsField(
         False,
         title="Allow multiple items"
     )
-    allow_version_control: bool = Field(
+    allow_version_control: bool = SettingsField(
         False,
         title="Allow version control"
     )
-    extensions: list[str] = Field(
+    extensions: list[str] = SettingsField(
         default_factory=list,
         title="Extensions"
     )

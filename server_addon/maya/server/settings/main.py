@@ -1,5 +1,9 @@
-from pydantic import Field, validator
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
+from pydantic import validator
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    ensure_unique_names,
+)
 from .imageio import ImageIOSettings, DEFAULT_IMAGEIO_SETTINGS
 from .maya_dirmap import MayaDirmapModel, DEFAULT_MAYA_DIRMAP_SETTINGS
 from .include_handles import IncludeHandlesModel, DEFAULT_INCLUDE_HANDLES
@@ -19,44 +23,46 @@ from .templated_workfile_settings import (
 
 class ExtMappingItemModel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Product type")
-    value: str = Field(title="Extension")
+    name: str = SettingsField(title="Product type")
+    value: str = SettingsField(title="Extension")
 
 
 class MayaSettings(BaseSettingsModel):
     """Maya Project Settings."""
 
-    open_workfile_post_initialization: bool = Field(
+    open_workfile_post_initialization: bool = SettingsField(
         True, title="Open Workfile Post Initialization")
-    explicit_plugins_loading: ExplicitPluginsLoadingModel = Field(
+    explicit_plugins_loading: ExplicitPluginsLoadingModel = SettingsField(
         default_factory=ExplicitPluginsLoadingModel,
         title="Explicit Plugins Loading")
-    imageio: ImageIOSettings = Field(
+    imageio: ImageIOSettings = SettingsField(
         default_factory=ImageIOSettings, title="Color Management (imageio)")
-    mel_workspace: str = Field(title="Maya MEL Workspace", widget="textarea")
-    ext_mapping: list[ExtMappingItemModel] = Field(
+    mel_workspace: str = SettingsField(
+        title="Maya MEL Workspace", widget="textarea"
+    )
+    ext_mapping: list[ExtMappingItemModel] = SettingsField(
         default_factory=list, title="Extension Mapping")
-    maya_dirmap: MayaDirmapModel = Field(
+    maya_dirmap: MayaDirmapModel = SettingsField(
         default_factory=MayaDirmapModel, title="Maya dirmap Settings")
-    include_handles: IncludeHandlesModel = Field(
+    include_handles: IncludeHandlesModel = SettingsField(
         default_factory=IncludeHandlesModel,
         title="Include/Exclude Handles in default playback & render range"
     )
-    scriptsmenu: ScriptsmenuModel = Field(
+    scriptsmenu: ScriptsmenuModel = SettingsField(
         default_factory=ScriptsmenuModel,
         title="Scriptsmenu Settings"
     )
-    render_settings: RenderSettingsModel = Field(
+    render_settings: RenderSettingsModel = SettingsField(
         default_factory=RenderSettingsModel, title="Render Settings")
-    create: CreatorsModel = Field(
+    create: CreatorsModel = SettingsField(
         default_factory=CreatorsModel, title="Creators")
-    publish: PublishersModel = Field(
+    publish: PublishersModel = SettingsField(
         default_factory=PublishersModel, title="Publishers")
-    load: LoadersModel = Field(
+    load: LoadersModel = SettingsField(
         default_factory=LoadersModel, title="Loaders")
-    workfile_build: ProfilesModel = Field(
+    workfile_build: ProfilesModel = SettingsField(
         default_factory=ProfilesModel, title="Workfile Build Settings")
-    templated_workfile_build: TemplatedProfilesModel = Field(
+    templated_workfile_build: TemplatedProfilesModel = SettingsField(
         default_factory=TemplatedProfilesModel,
         title="Templated Workfile Build Settings")
 

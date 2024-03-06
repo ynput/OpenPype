@@ -59,10 +59,11 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         rt.callbacks.addScript(rt.Name('filePostOpen'),
                                lib.check_colorspace)
+        rt.callbacks.addScript(rt.Name('postWorkspaceChange'),
+                               self._deferred_menu_creation)
 
-    def has_unsaved_changes(self):
-        # TODO: how to get it from 3dsmax?
-        return True
+    def workfile_has_unsaved_changes(self):
+        return rt.getSaveRequired()
 
     def get_workfile_extensions(self):
         return [".max"]

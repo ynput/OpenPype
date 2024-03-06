@@ -1,13 +1,11 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class ValidatePluginModel(BaseSettingsModel):
     _isGroup = True
     enabled: bool = True
-    optional: bool = Field(True, title="Optional")
-    active: bool = Field(True, title="Active")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class ValidateFrameRangeModel(ValidatePluginModel):
@@ -17,15 +15,15 @@ class ValidateFrameRangeModel(ValidatePluginModel):
 
 
 class TrayPublisherPublishPlugins(BaseSettingsModel):
-    CollectFrameDataFromAssetEntity: ValidatePluginModel = Field(
+    CollectFrameDataFromAssetEntity: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Collect Frame Data From Folder Entity",
     )
-    ValidateFrameRange: ValidateFrameRangeModel = Field(
+    ValidateFrameRange: ValidateFrameRangeModel = SettingsField(
         title="Validate Frame Range",
         default_factory=ValidateFrameRangeModel,
     )
-    ValidateExistingVersion: ValidatePluginModel = Field(
+    ValidateExistingVersion: ValidatePluginModel = SettingsField(
         title="Validate Existing Version",
         default_factory=ValidatePluginModel,
     )

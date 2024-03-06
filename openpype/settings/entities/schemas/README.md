@@ -645,7 +645,7 @@ How output of the schema could look like on save:
     },
     "is_group": true,
     "key": "templates_mapping",
-    "label": "Muster - Templates mapping",
+    "label": "Deadline - Templates mapping",
     "is_file": true
 }
 ```
@@ -657,7 +657,7 @@ How output of the schema could look like on save:
     "object_type": "text",
     "is_group": true,
     "key": "templates_mapping",
-    "label": "Muster - Templates mapping",
+    "label": "Deadline - Templates mapping",
     "is_file": true
 }
 ```

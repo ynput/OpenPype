@@ -6,15 +6,16 @@ import pyblish.api
 from pymxs import runtime as rt
 
 
-class CollectWorkfile(pyblish.api.ContextPlugin):
+class CollectWorkfile(pyblish.api.InstancePlugin):
     """Inject the current working file into context"""
 
     order = pyblish.api.CollectorOrder - 0.01
     label = "Collect 3dsmax Workfile"
     hosts = ['max']
 
-    def process(self, context):
+    def process(self, instance):
         """Inject the current working file."""
+        context = instance.context
         folder = rt.maxFilePath
         file = rt.maxFileName
         if not folder or not file:
@@ -23,15 +24,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         context.data['currentFile'] = current_file
 
-        filename, ext = os.path.splitext(file)
-
-        task = context.data["task"]
+        ext = os.path.splitext(file)[-1].lstrip(".")
 
         data = {}
 
         # create instance
-        instance = context.create_instance(name=filename)
-        subset = 'workfile' + task.capitalize()
+        subset = instance.data["subset"]
 
         data.update({
             "subset": subset,
@@ -55,7 +53,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         }]
 
         instance.data.update(data)
-
+        self.log.info('Collected data: {}'.format(data))
         self.log.info('Collected instance: {}'.format(file))
         self.log.info('Scene path: {}'.format(current_file))
         self.log.info('staging Dir: {}'.format(folder))

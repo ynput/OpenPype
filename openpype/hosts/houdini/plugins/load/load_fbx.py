@@ -16,8 +16,9 @@ class FbxLoader(load.LoaderPlugin):
 
     order = -10
 
-    families = ["staticMesh", "fbx"]
-    representations = ["fbx"]
+    families = ["*"]
+    representations = ["*"]
+    extensions = {"fbx"}
 
     def load(self, context, name=None, namespace=None, data=None):
 

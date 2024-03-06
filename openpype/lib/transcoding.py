@@ -44,17 +44,17 @@ XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
 
 IMAGE_EXTENSIONS = {
-    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
-    ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
-    ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
-    ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
-    ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
-    ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
-    ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-    ".pictor", ".png", ".psd", ".psb", ".psp", ".qtvr", ".ras",
-    ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
-    ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
-    ".xpm", ".xwd"
+    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave",
+    ".cal", ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr",
+    ".fits", ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc",
+    ".icer", ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
+    ".jng", ".jpeg", ".jpeg-ls", ".jpeg-hdr", ".2000", ".jpg",
+    ".kra", ".logluv", ".mng", ".miff", ".nrrd", ".ora",
+    ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+    ".pictor", ".png", ".psd", ".psb", ".psp", ".qtvr",
+    ".ras", ".rgbe", ".sgi", ".tga",
+    ".tif", ".tiff", ".tiff/ep", ".tiff/it", ".ufo", ".ufp",
+    ".wbmp", ".webp", ".xr", ".xt", ".xbm", ".xcf", ".xpm", ".xwd"
 }
 
 VIDEO_EXTENSIONS = {
@@ -110,8 +110,9 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
             if line == "</ImageSpec>":
                 subimages_lines.append(lines)
                 lines = []
+                xml_started = False
 
-    if not xml_started:
+    if not subimages_lines:
         raise ValueError(
             "Failed to read input file \"{}\".\nOutput:\n{}".format(
                 filepath, output
@@ -1226,12 +1227,8 @@ def get_rescaled_command_arguments(
     target_par = target_par or 1.0
     input_par = 1.0
 
-    # ffmpeg command
-    input_file_metadata = get_ffprobe_data(input_path, logger=log)
-    stream = input_file_metadata["streams"][0]
-    input_width = int(stream["width"])
-    input_height = int(stream["height"])
-    stream_input_par = stream.get("sample_aspect_ratio")
+    input_height, input_width, stream_input_par = _get_image_dimensions(
+        application, input_path, log)
     if stream_input_par:
         input_par = (
             float(stream_input_par.split(":")[0])
@@ -1342,6 +1339,48 @@ def get_rescaled_command_arguments(
         )
 
     return command_args
+
+
+def _get_image_dimensions(application, input_path, log):
+    """Uses 'ffprobe' first and then 'oiiotool' if available to get dim.
+
+    Args:
+        application (str): "oiiotool"|"ffmpeg"
+        input_path (str): path to image file
+        log (Optional[logging.Logger]): Logger used for logging.
+    Returns:
+        (tuple) (int, int, dict) - (height, width, sample_aspect_ratio)
+    Raises:
+        RuntimeError if image dimensions couldn't be parsed out.
+    """
+    # ffmpeg command
+    input_file_metadata = get_ffprobe_data(input_path, logger=log)
+    input_width = input_height = 0
+    stream = next(
+        (
+            s for s in input_file_metadata["streams"]
+            if s.get("codec_type") == "video"
+        ),
+        {}
+    )
+    if stream:
+        input_width = int(stream["width"])
+        input_height = int(stream["height"])
+
+    # fallback for weird files with width=0, height=0
+    if (input_width == 0 or input_height == 0) and application == "oiiotool":
+        # Load info about file from oiio tool
+        input_info = get_oiio_info_for_input(input_path, logger=log)
+        if input_info:
+            input_width = int(input_info["width"])
+            input_height = int(input_info["height"])
+
+    if input_width == 0 or input_height == 0:
+        raise RuntimeError("Couldn't read {} either "
+                           "with ffprobe or oiiotool".format(input_path))
+
+    stream_input_par = stream.get("sample_aspect_ratio")
+    return input_height, input_width, stream_input_par
 
 
 def convert_color_values(application, color_value):

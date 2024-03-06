@@ -1,7 +1,5 @@
 """Providing models and values for Maya Render Settings."""
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 def aov_separators_enum():
@@ -278,88 +276,89 @@ class AdditionalOptionsModel(BaseSettingsModel):
     """Additional Option"""
     _layout = "compact"
 
-    attribute: str = Field("", title="Attribute name")
-    value: str = Field("", title="Value")
+    attribute: str = SettingsField("", title="Attribute name")
+    value: str = SettingsField("", title="Value")
 
 
 class ArnoldSettingsModel(BaseSettingsModel):
-    image_prefix: str = Field(title="Image prefix template")
-    image_format: str = Field(
+    image_prefix: str = SettingsField(title="Image prefix template")
+    image_format: str = SettingsField(
         enum_resolver=arnold_image_format_enum, title="Output Image Format")
-    multilayer_exr: bool = Field(title="Multilayer (exr)")
-    tiled: bool = Field(title="Tiled (tif, exr)")
-    aov_list: list[str] = Field(
+    multilayer_exr: bool = SettingsField(title="Multilayer (exr)")
+    tiled: bool = SettingsField(title="Tiled (tif, exr)")
+    aov_list: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=arnold_aov_list_enum,
         title="AOVs to create"
     )
-    additional_options: list[AdditionalOptionsModel] = Field(
+    additional_options: list[AdditionalOptionsModel] = SettingsField(
         default_factory=list,
         title="Additional Arnold Options",
         description=(
             "Add additional options - put attribute and value, like AASamples"
+            " and 4"
         )
     )
 
 
 class VraySettingsModel(BaseSettingsModel):
-    image_prefix: str = Field(title="Image prefix template")
+    image_prefix: str = SettingsField(title="Image prefix template")
     # engine was str because of JSON limitation (key must be string)
-    engine: str = Field(
+    engine: str = SettingsField(
         enum_resolver=lambda: [
             {"label": "V-Ray", "value": "1"},
             {"label": "V-Ray GPU", "value": "2"}
         ],
         title="Production Engine"
     )
-    image_format: str = Field(
+    image_format: str = SettingsField(
         enum_resolver=vray_image_output_enum,
         title="Output Image Format"
     )
-    aov_list: list[str] = Field(
+    aov_list: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=vray_aov_list_enum,
         title="AOVs to create"
     )
-    additional_options: list[AdditionalOptionsModel] = Field(
+    additional_options: list[AdditionalOptionsModel] = SettingsField(
         default_factory=list,
         title="Additional Vray Options",
         description=(
-            "Add additional options - put attribute and value,"
-            " like aaFilterSize"
+            "Add additional options - put attribute and value, like "
+            "aaFilterSize and 1.5"
         )
     )
 
 
 class RedshiftSettingsModel(BaseSettingsModel):
-    image_prefix: str = Field(title="Image prefix template")
+    image_prefix: str = SettingsField(title="Image prefix template")
     # both engines are using the same enumerator,
     #   both were originally str because of JSON limitation.
-    primary_gi_engine: str = Field(
+    primary_gi_engine: str = SettingsField(
         enum_resolver=redshift_engine_enum,
         title="Primary GI Engine"
     )
-    secondary_gi_engine: str = Field(
+    secondary_gi_engine: str = SettingsField(
         enum_resolver=redshift_engine_enum,
         title="Secondary GI Engine"
     )
-    image_format: str = Field(
+    image_format: str = SettingsField(
         enum_resolver=redshift_image_output_enum,
         title="Output Image Format"
     )
-    multilayer_exr: bool = Field(title="Multilayer (exr)")
-    force_combine: bool = Field(title="Force combine beauty and AOVs")
-    aov_list: list[str] = Field(
+    multilayer_exr: bool = SettingsField(title="Multilayer (exr)")
+    force_combine: bool = SettingsField(title="Force combine beauty and AOVs")
+    aov_list: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=redshift_aov_list_enum,
         title="AOVs to create"
     )
-    additional_options: list[AdditionalOptionsModel] = Field(
+    additional_options: list[AdditionalOptionsModel] = SettingsField(
         default_factory=list,
         title="Additional Vray Options",
         description=(
-            "Add additional options - put attribute and value,"
-            " like reflectionMaxTraceDepth"
+            "Add additional options - put attribute and value, like "
+            "reflectionMaxTraceDepth and 3"
         )
     )
 
@@ -396,61 +395,61 @@ def renderman_sample_filters_enum():
 
 
 class RendermanSettingsModel(BaseSettingsModel):
-    image_prefix: str = Field(
+    image_prefix: str = SettingsField(
         "", title="Image prefix template")
-    image_dir: str = Field(
+    image_dir: str = SettingsField(
         "", title="Image Output Directory")
-    display_filters: list[str] = Field(
+    display_filters: list[str] = SettingsField(
         default_factory=list,
         title="Display Filters",
         enum_resolver=renderman_display_filters
     )
-    imageDisplay_dir: str = Field(
+    imageDisplay_dir: str = SettingsField(
         "", title="Image Display Filter Directory")
-    sample_filters: list[str] = Field(
+    sample_filters: list[str] = SettingsField(
         default_factory=list,
         title="Sample Filters",
         enum_resolver=renderman_sample_filters_enum
     )
-    cryptomatte_dir: str = Field(
+    cryptomatte_dir: str = SettingsField(
         "", title="Cryptomatte Output Directory")
-    watermark_dir: str = Field(
+    watermark_dir: str = SettingsField(
         "", title="Watermark Filter Directory")
-    additional_options: list[AdditionalOptionsModel] = Field(
+    additional_options: list[AdditionalOptionsModel] = SettingsField(
         default_factory=list,
         title="Additional Renderer Options"
     )
 
 
 class RenderSettingsModel(BaseSettingsModel):
-    apply_render_settings: bool = Field(
+    apply_render_settings: bool = SettingsField(
         title="Apply Render Settings on creation"
     )
-    default_render_image_folder: str = Field(
+    default_render_image_folder: str = SettingsField(
         title="Default render image folder"
     )
-    enable_all_lights: bool = Field(
+    enable_all_lights: bool = SettingsField(
         title="Include all lights in Render Setup Layers by default"
     )
-    aov_separator: str = Field(
+    aov_separator: str = SettingsField(
         "underscore",
         title="AOV Separator character",
         enum_resolver=aov_separators_enum
     )
-    reset_current_frame: bool = Field(
+    reset_current_frame: bool = SettingsField(
         title="Reset Current Frame")
-    remove_aovs: bool = Field(
+    remove_aovs: bool = SettingsField(
         title="Remove existing AOVs")
-    arnold_renderer: ArnoldSettingsModel = Field(
+    arnold_renderer: ArnoldSettingsModel = SettingsField(
         default_factory=ArnoldSettingsModel,
         title="Arnold Renderer")
-    vray_renderer: VraySettingsModel = Field(
+    vray_renderer: VraySettingsModel = SettingsField(
         default_factory=VraySettingsModel,
         title="Vray Renderer")
-    redshift_renderer: RedshiftSettingsModel = Field(
+    redshift_renderer: RedshiftSettingsModel = SettingsField(
         default_factory=RedshiftSettingsModel,
         title="Redshift Renderer")
-    renderman_renderer: RendermanSettingsModel = Field(
+    renderman_renderer: RendermanSettingsModel = SettingsField(
         default_factory=RendermanSettingsModel,
         title="Renderman Renderer")
 
