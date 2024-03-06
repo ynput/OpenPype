@@ -409,7 +409,6 @@ class ClipLoader:
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
         source_duration = int(_clip_property("Frames"))
-	
         # Trim clip start if slate is present
         if "slate" in self.data["versionData"]["families"]:
             source_in += 1
