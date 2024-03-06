@@ -428,7 +428,7 @@ class PrepareProjectLocal(BaseAction):
             for key, value in custom_attribute_values.items():
                 project_entity["custom_attributes"][key] = value
                 self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
-            # session.commit()
+            session.commit()
 
         # Trigger create project structure action
         if create_project_structure_checked:
