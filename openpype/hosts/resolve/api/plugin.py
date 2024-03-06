@@ -408,11 +408,12 @@ class ClipLoader:
         _clip_property = media_pool_item.GetClipProperty
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
-
+        source_duration = int(_clip_property("Frames"))
+	
         # Trim clip start if slate is present
         if "slate" in self.data["versionData"]["families"]:
             source_in += 1
-        source_duration = source_out - source_in + 1
+            source_duration = source_out - source_in + 1
 
         if not self.with_handles:
             # Load file without the handles of the source media
