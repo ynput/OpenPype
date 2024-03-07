@@ -12,7 +12,10 @@ class CollectMembers(pyblish.api.InstancePlugin):
     hosts = ['max']
 
     def process(self, instance):
-
+        if instance.data["family"] == "workfile":
+            self.log.debug("Skipping Actions for workfile family.")
+            self.log.debug("{}".format(instance.data["subset"]))
+            return
         if instance.data.get("instance_node"):
             container = rt.GetNodeByName(instance.data["instance_node"])
             instance.data["members"] = [

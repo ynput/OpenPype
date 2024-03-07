@@ -470,7 +470,15 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # Set video input attributes
         max_int = str(2147483647)
         video_data = get_ffprobe_data(video_file_path, logger=self.log)
-        duration = float(video_data["format"]["duration"])
+        # Use duration of the individual streams since it is returned with
+        # higher decimal precision than 'format.duration'. We need this
+        # more precise value for calculating the correct amount of frames
+        # for higher FPS ranges or decimal ranges, e.g. 29.97 FPS
+        duration = max(
+            float(stream.get("duration", 0))
+            for stream in video_data["streams"]
+            if stream.get("codec_type") == "video"
+        )
 
         cmd_args = [
             "-y",
