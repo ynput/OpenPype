@@ -1127,7 +1127,7 @@
             "userAttr": "",
             "userAttrPrefix": "",
             "visibleOnly": false,
-            "export_overrides": [
+            "overrides": [
                 "attr",
                 "attrPrefix",
                 "worldSpace",
