@@ -285,13 +285,13 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
         ])
 
         # The Arguments that can be modified by the Publisher
-        export_overrides = set(getattr(cls, "export_overrides", set()))
+        overrides = set(getattr(cls, "overrides", set()))
 
         # What we have set in the Settings as defaults.
         flags = set(getattr(cls, "flags", set()))
 
-        enabled_flags = [x for x in flags if x in export_overrides]
-        flag_overrides = export_overrides - set(override_defs.keys())
+        enabled_flags = [x for x in flags if x in overrides]
+        flag_overrides = overrides - set(override_defs.keys())
         defs.append(
             EnumDef(
                 "flag_overrides",
@@ -303,7 +303,7 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
         )
 
         for key, value in override_defs.items():
-            if key not in export_overrides:
+            if key not in overrides:
                 continue
 
             kwargs = value["kwargs"]
