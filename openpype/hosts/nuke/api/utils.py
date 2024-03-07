@@ -1,4 +1,6 @@
 import os
+import re
+
 import nuke
 
 from openpype import resources
@@ -110,35 +112,28 @@ def colorspace_exists_on_node(node, colorspace_name):
 def get_colorspace_list(colorspace_knob):
     """Get available colorspace profile names
 
-    Because the values returned from colorspace_knob.values() do not correspond
-    to the value returned from colorspace_knob.value(), and the extracted
-    colorspace comes from using colorspace_knob.value(), we need to iterate
-    through all values to get the correct value.
-
-    A code example of the above would be:
-
-    for count, value in enumerate(colorspace_knob.values()):
-        colorspace_knob.setValue(count)
-        print(colorspace_knob.value() in colorspace_knob.values())
-
     Args:
         colorspace_knob (nuke.Knob): nuke knob object
 
     Returns:
         list: list of strings names of profiles
     """
-    original_value = colorspace_knob.value()
+    results = []
 
-    colorspaces = []
+    # This pattern is to match with roles which uses an indentation and
+    # parentheses with original colorspace. The value returned from the
+    # colorspace is the string before the indentation, so we'll need to
+    # convert the values to match with value returned from the knob,
+    # ei. knob.value().
+    pattern = r".*\t.* \(.*\)"
+    for colorspace in nuke.getColorspaceList(colorspace_knob):
+        match = re.search(pattern, colorspace)
+        if match:
+            results.append(colorspace.split("\t")[0])
+        else:
+            results.append(colorspace)
 
-    try:
-        for count, _ in enumerate(colorspace_knob.values()):
-            colorspace_knob.setValue(count)
-            colorspaces.append(colorspace_knob.value())
-    finally:
-        colorspace_knob.setValue(original_value)
-
-    return colorspaces
+    return results
 
 
 def is_headless():
