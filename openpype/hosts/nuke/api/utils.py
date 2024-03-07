@@ -129,7 +129,7 @@ def get_colorspace_list(colorspace_knob):
     for colorspace in nuke.getColorspaceList(colorspace_knob):
         match = re.search(pattern, colorspace)
         if match:
-            results.append(colorspace.split("\t")[0])
+            results.append(colorspace.split("\t", 1)[0])
         else:
             results.append(colorspace)
 
