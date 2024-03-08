@@ -1,11 +1,9 @@
-from openpype.pipeline import publish
-
 import pyblish.api
 
 
-class ExtractHandles(publish.Extractor):
+class CollectHandles(pyblish.api.InstancePlugin):
     """
-    OpenPype extractor for handling animation-related tasks.
+    OpenPype collector for handling animation-related tasks.
     It checks the include handle settings of the project, determines whether to include/exclude handles
     based on the current task, and initializes handle values accordingly.
 
@@ -14,8 +12,8 @@ class ExtractHandles(publish.Extractor):
         label (str): The label used to identify this extractor.
         families (list): List of families to which this extractor is applicable.
     """
-    order = pyblish.api.ExtractorOrder
-    label = "Extract Handles"
+    order = pyblish.api.CollectorOrder + 0.4999999
+    label = "Collect Handles"
     families = ["animation",
                 "pointcache",
                 "camera",

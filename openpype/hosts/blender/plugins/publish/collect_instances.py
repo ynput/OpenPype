@@ -26,6 +26,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
         and we don't want to publish it.
         """
         instances = bpy.data.collections.get(AVALON_INSTANCES)
+        if not instances:
+            return []
+
         for obj in instances.objects:
             avalon_prop = obj.get(AVALON_PROPERTY) or dict()
             if avalon_prop.get('id') == 'pyblish.avalon.instance':

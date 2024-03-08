@@ -188,7 +188,7 @@ def get_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     return next((path for path in paths if os.path.exists(path)), None)
 
 
-def get_local_openpype_path_from_settings(settings: dict) -> Union[str, None]:
+def get_local_openpype_path_from_settings(settings: dict) -> Union[Path, None]:
     """Get OpenPype local path from global settings.
 
     Used to download and unzip OP versions.

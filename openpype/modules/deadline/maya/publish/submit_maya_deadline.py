@@ -127,27 +127,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     group = "none"
     strict_error_checking = True
 
-
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
+    def apply_settings(cls, project_settings):
         profile = get_deadline_job_profile(project_settings, cls.hosts[0])
         cls.set_job_attrs(profile)
-
-        settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
-
-        # Take some defaults from settings
-        cls.asset_dependencies = settings.get("asset_dependencies",
-                                              cls.asset_dependencies)
-        cls.import_reference = settings.get("import_reference",
-                                            cls.import_reference)
-        cls.use_published = settings.get("use_published", cls.use_published)
-        cls.tile_priority = settings.get("tile_priority", cls.tile_priority)
-        cls.group = settings.get("group", cls.group)
-        cls.strict_error_checking = settings.get("strict_error_checking",
-                                                 cls.strict_error_checking)
-
-        cls.jobInfo = settings.get("jobInfo", cls.jobInfo)
-        cls.pluginInfo = settings.get("pluginInfo", cls.pluginInfo)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")

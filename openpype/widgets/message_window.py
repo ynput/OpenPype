@@ -12,6 +12,9 @@ class Window(QtWidgets.QWidget):
         self.title = title
         self.message = message
         self.level = level
+        self._answer = None
+
+        self.setWindowTitle(self.title)
 
         if self.level == "info":
             self._info()
@@ -19,6 +22,8 @@ class Window(QtWidgets.QWidget):
             self._warning()
         elif self.level == "critical":
             self._critical()
+        elif self.level == "ask":
+            self._ask()
 
     def _info(self):
         self.setWindowTitle(self.title)
@@ -39,6 +44,19 @@ class Window(QtWidgets.QWidget):
         rc = QtWidgets.QMessageBox.critical(
             self, self.title, self.message)
         if rc:
+            self.exit()
+
+    def _ask(self):
+        self._answer = None
+        rc = QtWidgets.QMessageBox.question(
+            self,
+            self.title,
+            self.message,
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        self._answer = False
+        if rc == QtWidgets.QMessageBox.Yes:
+            self.answer = True
             self.exit()
 
     def exit(self):
@@ -72,13 +90,16 @@ def message(title=None, message=None, level="info", parent=None):
         desktop_rect = QtWidgets.QApplication.desktop().availableGeometry(ex)
         center = desktop_rect.center()
         ex.move(
-            center.x() - (ex.width() * 0.5),
-            center.y() - (ex.height() * 0.5)
+            int(center.x() - (ex.width() * 0.5)),
+            int(center.y() - (ex.height() * 0.5))
         )
-    except Exception:
-        # skip all possible issues that may happen feature is not crutial
+    except Exception: # noqa
+        # skip all possible issues that may happen feature is not crucial
         log.warning("Couldn't center message.", exc_info=True)
     # sys.exit(app.exec_())
+
+    if level == "ask":
+        return ex.answer
 
 
 class ScrollMessageBox(QtWidgets.QDialog):
@@ -107,10 +128,10 @@ class ScrollMessageBox(QtWidgets.QDialog):
 
         message_len = 0
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        for message in messages:
-            label_widget = QtWidgets.QLabel(message, content_widget)
+        for msg in messages:
+            label_widget = QtWidgets.QLabel(msg, content_widget)
             content_layout.addWidget(label_widget)
-            message_len = max(message_len, len(message))
+            message_len = max(message_len, len(msg))
 
         # guess size of scrollable area
         desktop = QtWidgets.QApplication.desktop()
@@ -130,7 +151,7 @@ class ScrollMessageBox(QtWidgets.QDialog):
         btn_box.accepted.connect(self.accept)
 
         if cancelable:
-            btn_box.reject.connect(self.reject)
+            btn_box.rejected.connect(self.reject)
 
         btn = QtWidgets.QPushButton('Copy to clipboard')
         btn.clicked.connect(lambda: QtWidgets.QApplication.

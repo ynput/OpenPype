@@ -2,7 +2,6 @@ import inspect
 from abc import ABCMeta
 import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
-from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 from openpype.lib import BoolDef
 
 from .lib import (
