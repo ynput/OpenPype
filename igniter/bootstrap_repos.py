@@ -584,6 +584,7 @@ class BootstrapRepos:
         # vendor and app used to construct user data dir
         self._message = message
         self._log = log.getLogger(str(__class__))
+        self.data_dir = None
         self.set_data_dir(None)
         self.secure_registry = OpenPypeSecureRegistry("mongodb")
         self.registry = OpenPypeSettingsRegistry()
@@ -654,7 +655,7 @@ class BootstrapRepos:
         return version['__version__']
 
     def create_version_from_live_code(
-            self, repo_dir: Path = None) -> Union[OpenPypeVersion, None]:
+            self, repo_dir: Path = None, data_dir: Path = None) -> Union[OpenPypeVersion, None]:
         """Copy zip created from OpenPype repositories to user data dir.
 
         This detects OpenPype version either in local "live" OpenPype
@@ -684,7 +685,7 @@ class BootstrapRepos:
             return
 
         # create destination directory
-        destination = self.data_dir / f"{installed_version.major}.{installed_version.minor}"  # noqa
+        destination = (data_dir or self.data_dir) / f"{installed_version.major}.{installed_version.minor}"  # noqa
         if not destination.exists():
             destination.mkdir(parents=True)
 
@@ -1043,6 +1044,45 @@ class BootstrapRepos:
         sys.path.insert(0, directory.as_posix())
 
     @staticmethod
+    def find_openpype_local_version(version: OpenPypeVersion) -> Union[OpenPypeVersion, None]:
+        """
+           Finds the specified OpenPype version in the local directory.
+
+           Parameters:
+           - version (OpenPypeVersion): A specific version of OpenPype to search for.
+
+           Returns:
+           - OpenPypeVersion() or None: Returns the found OpenPype version if available, or None if not found.
+        """
+        zip_version = None
+        for local_version in OpenPypeVersion.get_local_versions():
+            if local_version == version:
+                if local_version.path.suffix.lower() == ".zip":
+                    zip_version = local_version
+                else:
+                    return local_version
+
+        return zip_version
+
+    @staticmethod
+    def find_openpype_remote_version(version: OpenPypeVersion) -> Union[OpenPypeVersion, None]:
+        """
+           Finds the specified OpenPype version in the remote directory.
+
+           Parameters:
+           - version (OpenPypeVersion): A specific version of OpenPype to search for.
+
+           Returns:
+           - OpenPypeVersion() or None: Returns the found OpenPype version if available, or None if not found.
+        """
+        remote_versions = OpenPypeVersion.get_remote_versions()
+        return next(
+            (
+                remote_version for remote_version in remote_versions
+                if remote_version == version
+            ), None)
+
+    @staticmethod
     def find_openpype_version(
             version: Union[str, OpenPypeVersion]
     ) -> Union[OpenPypeVersion, None]:
@@ -1055,31 +1095,19 @@ class BootstrapRepos:
             requested OpenPypeVersion.
 
         """
-        installed_version = OpenPypeVersion.get_installed_version()
+
         if isinstance(version, str):
             version = OpenPypeVersion(version=version)
 
+        installed_version = OpenPypeVersion.get_installed_version()
         if installed_version == version:
             return installed_version
 
-        local_versions = OpenPypeVersion.get_local_versions()
-        zip_version = None
-        for local_version in local_versions:
-            if local_version == version:
-                if local_version.path.suffix.lower() == ".zip":
-                    zip_version = local_version
-                else:
-                    return local_version
+        op_version = BootstrapRepos.find_openpype_local_version(version)
+        if op_version is not None:
+            return op_version
 
-        if zip_version is not None:
-            return zip_version
-
-        remote_versions = OpenPypeVersion.get_remote_versions()
-        return next(
-            (
-                remote_version for remote_version in remote_versions
-                if remote_version == version
-            ), None)
+        return BootstrapRepos.find_openpype_remote_version(version)
 
     @staticmethod
     def find_latest_openpype_version() -> Union[OpenPypeVersion, None]:

@@ -692,6 +692,24 @@ def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
 
+def _install_and_initialize_version(openpype_version: OpenPypeVersion, delete_zip=True):
+    if openpype_version.path.is_file():
+        _print(">>> Extracting zip file ...")
+        try:
+            version_path = bootstrap.extract_openpype(openpype_version)
+        except OSError as e:
+            _print("!!! failed: {}".format(str(e)), True)
+            sys.exit(1)
+        else:
+            # cleanup zip after extraction, we don't touch prod dir
+            if delete_zip and openpype_version not in OpenPypeVersion.get_remote_versions():
+                os.unlink(openpype_version.path)
+
+        openpype_version.path = version_path
+
+    _initialize_environment(openpype_version)
+
+
 def _find_frozen_openpype(use_version: str = None,
                           use_staging: bool = False) -> Path:
     """Find OpenPype to run from frozen code.
@@ -803,20 +821,8 @@ def _find_frozen_openpype(use_version: str = None,
         _initialize_environment(openpype_version)
         return openpype_version.path
 
-    if openpype_version.path.is_file():
-        _print(">>> Extracting zip file ...")
-        try:
-            version_path = bootstrap.extract_openpype(openpype_version)
-        except OSError as e:
-            _print("!!! failed: {}".format(str(e)), True)
-            sys.exit(1)
-        else:
-            # cleanup zip after extraction
-            os.unlink(openpype_version.path)
+    _install_and_initialize_version(openpype_version)
 
-        openpype_version.path = version_path
-
-    _initialize_environment(openpype_version)
     return openpype_version.path
 
 
@@ -1040,8 +1046,8 @@ def boot():
         log_to_server_msg = "OFF"
     _print(f">>> Logging to server is turned {log_to_server_msg}")
 
-    # Get openpype path from database and set it to environment so openpype can
-    # find its versions there and bootstrap them.
+    # Get path to the folder containing OpenPype patch versions, then set it to
+    # environment so openpype can find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_settings(global_settings)
 
     # Check if local versions should be installed in custom folder and not in
@@ -1066,6 +1072,38 @@ def boot():
     if "print_versions" in commands:
         _boot_print_versions(OPENPYPE_ROOT)
         sys.exit(0)
+
+    # ------------------------------------------------------------------------
+    # Ensure patch version of OpenPype is on the user/local dir
+    # ------------------------------------------------------------------------
+    curr_version = local_version
+    if isinstance(local_version, str):
+        curr_version = OpenPypeVersion(version=local_version)
+    user_dir_version = bootstrap.find_openpype_local_version(curr_version)
+    prod_dir_version = bootstrap.find_openpype_remote_version(curr_version)
+    dev_mode = "python" in os.path.basename(sys.executable).lower()
+
+    op_version_to_extract = None
+
+    _print(">>> OP Version Exists in User(local) Dir: {}".format(bool(user_dir_version)))
+    _print(">>> OP Version Exists in Prod(remote) Dir: {}".format(bool(prod_dir_version)))
+    _print(">>> Dev Mode Enabled: {}".format(dev_mode))
+
+    if prod_dir_version and not user_dir_version:
+        # Need to copy the prod version into the correct user/artist directory
+        # Get OpenPypeVersion() Object
+        op_version_to_extract = prod_dir_version
+
+    if not prod_dir_version and dev_mode:
+        # This isn't a released version, we are in developer mode
+        # Generate the version, then copy it on the user/artist directory
+
+        # Generate Zip
+        debug_dir = Path(openpype_path, "debug")
+        op_version_to_extract = bootstrap.create_version_from_live_code(data_dir=debug_dir)
+
+    if op_version_to_extract:
+        _install_and_initialize_version(op_version_to_extract, delete_zip=False)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions
