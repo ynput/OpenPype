@@ -620,6 +620,11 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         aov_patterns = aov_filter
 
         preview = match_aov_pattern(app, aov_patterns, render_file_name)
+
+        new_instance = deepcopy(skeleton)
+        new_instance["subset"] = subset_name
+        new_instance["subsetGroup"] = group_name
+
         # toggle preview on if multipart is on
         # Because we cant query the multipartExr data member of each AOV we'll
         # need to have hardcoded rule of excluding any renders with
@@ -632,10 +637,8 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
            "cryptomatte" not in render_file_name.lower()):
             log.debug("Adding preview tag because its multipartExr")
             preview = True
-
-        new_instance = deepcopy(skeleton)
-        new_instance["subset"] = subset_name
-        new_instance["subsetGroup"] = group_name
+        else:
+            new_instance["multipartExr"] = False
 
         # explicitly disable review by user
         preview = preview and not do_not_add_review
