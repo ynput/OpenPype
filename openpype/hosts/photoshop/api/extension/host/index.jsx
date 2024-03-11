@@ -43,14 +43,14 @@ function getLayerTypeWithName(layerName) {
 
 function getLayers() {
     /**
-     * Get json representation of list of layers. 
+     * Get json representation of list of layers.
      * Much faster this way than in DOM traversal (2s vs 45s on same file)
-     * 
+     *
      * Format of single layer info:
      *      id :    number
      *      name:   string
      *      group:  boolean - true if layer is a group
-     *      parents:array - list of ids of parent groups, useful for selection 
+     *      parents:array - list of ids of parent groups, useful for selection
      *          all children layers from parent layerSet (eg. group)
      *      type:   string - type of layer guessed from its name
      *      visible:boolean - true if visible
@@ -59,14 +59,14 @@ function getLayers() {
         return '[]';
     }
     var ref1 = new ActionReference();
-    ref1.putEnumerated(charIDToTypeID('Dcmn'), charIDToTypeID('Ordn'), 
+    ref1.putEnumerated(charIDToTypeID('Dcmn'), charIDToTypeID('Ordn'),
                        charIDToTypeID('Trgt'));
     var count = executeActionGet(ref1).getInteger(charIDToTypeID('NmbL'));
 
     // get all layer names
     var layers = [];
     var layer = {};
-    
+
     var parents = [];
     for (var i = count; i >= 1; i--) {
       var layer = {};
@@ -76,24 +76,25 @@ function getLayers() {
       var desc = executeActionGet(ref2);  // Access layer index #i
       var layerSection = typeIDToStringID(desc.getEnumerationValue(
                                           stringIDToTypeID('layerSection')));
-      
-      layer.id = desc.getInteger(stringIDToTypeID("layerID")); 
+
+      layer.id = desc.getInteger(stringIDToTypeID("layerID"));
       layer.name = desc.getString(stringIDToTypeID("name"));
       layer.color_code = typeIDToStringID(desc.getEnumerationValue(stringIDToTypeID('color')));
       layer.group = false;
       layer.parents = parents.slice();
       layer.type = getLayerTypeWithName(layer.name);
       layer.visible = desc.getBoolean(stringIDToTypeID("visible"));
-      //log(" name: " + layer.name + " groupId " + layer.groupId + 
+      layer.blendMode = typeIDToStringID(desc.getEnumerationValue(stringIDToTypeID('mode')));
+      //log(" name: " + layer.name + " groupId " + layer.groupId +
       //" group " + layer.group);
       if (layerSection == 'layerSectionStart') { // Group start and end
-        parents.push(layer.id); 
-        layer.group = true;                    
+        parents.push(layer.id);
+        layer.group = true;
       }
       if (layerSection == 'layerSectionEnd') {
         parents.pop();
         continue;
-      } 
+      }
       layers.push(JSON.stringify(layer));
     }
      try{
@@ -112,6 +113,75 @@ function getLayers() {
     return '[' + layers + ']';
 }
 
+function setBlendmode(layerName, blendModeName){
+    /**
+     * Sets blendMode 'blendModeName'<str> on a given 'layerName'<str>
+     **/
+    var blendModeDict= {};
+
+    blendModeDict["colorBurn"] = BlendMode.COLORBURN;
+    blendModeDict["colorDodge"] = BlendMode.COLORDODGE;
+    blendModeDict["darken"] = BlendMode.DARKEN;
+    blendModeDict["darkerColor"] = BlendMode.DARKERCOLOR;
+    blendModeDict["difference"] = BlendMode.DIFFERENCE;
+    blendModeDict["dissolve"] = BlendMode.DISSOLVE;
+    blendModeDict["blendDivide"] = BlendMode.DIVIDE;
+    blendModeDict["exclusion"] = BlendMode.EXCLUSION;
+    blendModeDict["hardLight"] = BlendMode.HARDLIGHT;
+    blendModeDict["hardMix"] = BlendMode.HARDMIX;
+    blendModeDict["hue"] = BlendMode.HUE;
+    blendModeDict["lighten"] = BlendMode.LIGHTEN;
+    blendModeDict["lighterColor"] = BlendMode.LIGHTERCOLOR;
+    blendModeDict["linearBurn"] = BlendMode.LINEARBURN;
+    blendModeDict["linearDodge"] = BlendMode.LINEARDODGE;
+    blendModeDict["linearLight"] = BlendMode.LINEARLIGHT;
+    blendModeDict["luminosity"] = BlendMode.LUMINOSITY;
+    blendModeDict["multiply"] = BlendMode.MULTIPLY;
+    blendModeDict["normal"] = BlendMode.NORMAL;
+    blendModeDict["overlay"] = BlendMode.OVERLAY;
+    blendModeDict["passThrough"] = BlendMode.PASSTHROUGH;
+    blendModeDict["pinLight"] = BlendMode.PINLIGHT;
+    blendModeDict["saturation"] = BlendMode.SATURATION;
+    blendModeDict["screen"] = BlendMode.SCREEN;
+    blendModeDict["softLight"] = BlendMode.SOFTLIGHT;
+    blendModeDict["subtract"] = BlendMode.SUBTRACT;
+    blendModeDict["vividLight"] = BlendMode.VIVIDLIGHT;
+
+    // search for the conresponding layer
+    var layer = _go_through_layers(layerName, app.activeDocument);
+    // if layer not found, raise an alert and stop
+    if (layer==null){
+        return alert("Error Occured, Layer Not Found");
+    }
+    layer.blendMode = blendModeDict[blendModeName];
+}
+
+function _go_through_layers(layerName, parentLayer){
+    /**
+     * Recurcive function to scan all the layers even in groups
+     *
+     * return the psd layer that matches the given name we want as a psd <class Layer>
+     * see more here https://developer.adobe.com/photoshop/uxp/2022/ps_reference/classes/layer/
+     **/
+    var curLayer;
+    for(var i=0;i<parentLayer.layers.length;i++){
+            curLayer = parentLayer.layers[i];
+            if (curLayer.typename=='LayerSet' && curLayer.name!=layerName){
+                curLayer = _go_through_layers(layerName, curLayer);
+                if (curLayer!=null){
+                    return curLayer;
+                }
+            }
+            else {
+                if (curLayer.name==layerName){
+                    return curLayer;
+                }
+            }
+
+    }
+    return null;
+}
+
 function setVisible(layer_id, visibility){
     /**
      * Sets particular 'layer_id'<int> to 'visibility' if true > show
@@ -120,22 +190,22 @@ function setVisible(layer_id, visibility){
     var ref = new ActionReference();
     ref.putIdentifier(stringIDToTypeID("layer"), layer_id);
     desc.putReference(stringIDToTypeID("null"), ref);
-    
-    executeAction(visibility?stringIDToTypeID("show"):stringIDToTypeID("hide"), 
+
+    executeAction(visibility?stringIDToTypeID("show"):stringIDToTypeID("hide"),
                   desc, DialogModes.NO);
-    
+
 }
 
 function getHeadline(){
     /**
-     *  Returns headline of current document with metadata 
-     * 
+     *  Returns headline of current document with metadata
+     *
      **/
     if (documents.length == 0){
         return '';
     }
     var headline = app.activeDocument.info.headline;
-    
+
     return headline;
 }
 
@@ -144,19 +214,19 @@ function isSaved(){
 }
 
 function save(){
-    /** Saves active document **/        
+    /** Saves active document **/
     return app.activeDocument.save();
 }
 
 function saveAs(output_path, ext, as_copy){
     /** Exports scene to various formats
-     * 
+     *
      * Currently implemented: 'jpg', 'png', 'psd'
-     * 
+     *
      * output_path - escaped file path on local system
      * ext - extension for export
      * as_copy - create copy, do not overwrite
-     * 
+     *
      * */
     var saveName = output_path;
     var saveOptions;
@@ -176,14 +246,14 @@ function saveAs(output_path, ext, as_copy){
     }
     if (ext == 'psd'){
         saveOptions = null;
-        return app.activeDocument.saveAs(new File(saveName));       
+        return app.activeDocument.saveAs(new File(saveName));
     }
     if (ext == 'psb'){
         return savePSB(output_path);
     }
 
-    return app.activeDocument.saveAs(new File(saveName), saveOptions, as_copy);   
-    
+    return app.activeDocument.saveAs(new File(saveName), saveOptions, as_copy);
+
 }
 
 function getActiveDocumentName(){
@@ -215,7 +285,7 @@ function imprint(payload){
      *  Sets headline content of current document with metadata. Stores
      *  information about assets created through Avalon.
      *  Content accessible in PS through File > File Info
-     * 
+     *
      **/
     app.activeDocument.info.headline = payload;
 }
@@ -231,10 +301,10 @@ function getSelectedLayers(doc) {
     if (doc == null){
         doc = app.activeDocument;
     }
-        
+
     var selLayers = [];
     _grp = groupSelectedLayers(doc);
-  
+
     var group = doc.activeLayer;
     var layers = group.layers;
 
@@ -243,27 +313,27 @@ function getSelectedLayers(doc) {
     // if (layers){
     //     itself_name = layers[0].name;
     // }
-    
-    
+
+
     for (var i = 0; i < layers.length; i++) {
         var layer = {};
         layer.id = layers[i].id;
         layer.name = layers[i].name;
         long_names =_get_parents_names(group.parent, layers[i].name);
         var t = layers[i].kind;
-        if ((typeof t !== 'undefined') && 
+        if ((typeof t !== 'undefined') &&
             (layers[i].kind.toString() == 'LayerKind.NORMAL')){
             layer.group = false;
         }else{
             layer.group = true;
         }
         layer.long_name = long_names;
-        
+
         selLayers.push(layer);
     }
-  
+
     _undo();
-  
+
     return JSON.stringify(selLayers);
 };
 
@@ -277,7 +347,7 @@ function selectLayers(selectedLayers){
     var desc12 = new ActionDescriptor();
     var id55 = charIDToTypeID( "null" );
     var ref9 = new ActionReference();
-    
+
     var existing_layers = JSON.parse(getLayers());
     var existing_ids = [];
     for (var y = 0; y < existing_layers.length; y++){
@@ -289,7 +359,7 @@ function selectLayers(selectedLayers){
        if(existing_ids.toString().indexOf(id)>=0){
            layers[i] = charIDToTypeID( "Lyr " );
            ref9.putIdentifier(layers[i], id);
-       }       
+       }
     }
     desc12.putReference( id55, ref9 );
     var id58 = charIDToTypeID( "MkVs" );
@@ -301,7 +371,7 @@ function groupSelectedLayers(doc, name) {
     /**
      * Groups selected layers into new group.
      * Returns json representation of Layer for server to consume
-     * 
+     *
      * Args:
      *     doc(activeDocument)
      *     name (str): new name of created group
@@ -309,55 +379,55 @@ function groupSelectedLayers(doc, name) {
     if (doc == null){
         doc = app.activeDocument;
     }
-    
+
     var desc = new ActionDescriptor();
     var ref = new ActionReference();
     ref.putClass( stringIDToTypeID('layerSection') );
     desc.putReference( charIDToTypeID('null'), ref );
     var lref = new ActionReference();
-    lref.putEnumerated( charIDToTypeID('Lyr '), charIDToTypeID('Ordn'), 
+    lref.putEnumerated( charIDToTypeID('Lyr '), charIDToTypeID('Ordn'),
                         charIDToTypeID('Trgt') );
     desc.putReference( charIDToTypeID('From'), lref);
     executeAction( charIDToTypeID('Mk  '), desc, DialogModes.NO );
-    
+
     var group = doc.activeLayer;
     if (name){
         // Add special character to highlight group that will be published
         group.name = name;
-    }   
+    }
     var layer = {};
     layer.id = group.id;
     layer.name = name; // keep name clean
-    layer.group = true; 
+    layer.group = true;
 
     layer.long_name = _get_parents_names(group, name);
 
-    return JSON.stringify(layer);        
+    return JSON.stringify(layer);
 };
 
 function importSmartObject(path, name, link){
     /**
      *  Creates new layer with an image from 'path'
-     *  
+     *
      *      path: absolute path to loaded file
      *      name: sets name of newly created laye
-     *  
+     *
      **/
     var desc1 = new ActionDescriptor();
     desc1.putPath( app.charIDToTypeID("null"), new File(path) );
     link = link || false;
     if (link) {
-        desc1.putBoolean( app.charIDToTypeID('Lnkd'), true );  
+        desc1.putBoolean( app.charIDToTypeID('Lnkd'), true );
     }
 
-    desc1.putEnumerated(app.charIDToTypeID("FTcs"), app.charIDToTypeID("QCSt"), 
-                       app.charIDToTypeID("Qcsa"));                     
+    desc1.putEnumerated(app.charIDToTypeID("FTcs"), app.charIDToTypeID("QCSt"),
+                       app.charIDToTypeID("Qcsa"));
     var desc2 = new ActionDescriptor();
-    desc2.putUnitDouble(app.charIDToTypeID("Hrzn"), 
+    desc2.putUnitDouble(app.charIDToTypeID("Hrzn"),
                         app.charIDToTypeID("#Pxl"), 0.0);
-    desc2.putUnitDouble(app.charIDToTypeID("Vrtc"), 
+    desc2.putUnitDouble(app.charIDToTypeID("Vrtc"),
                         app.charIDToTypeID("#Pxl"), 0.0);
-    
+
     desc1.putObject(charIDToTypeID("Ofst"), charIDToTypeID("Ofst"), desc2);
     executeAction(charIDToTypeID("Plc " ), desc1, DialogModes.NO);
 
@@ -368,14 +438,14 @@ function importSmartObject(path, name, link){
     }
     var layer = {}
     layer.id = currentActivelayer.id;
-    layer.name = currentActivelayer.name;                        
-    return JSON.stringify(layer);     
+    layer.name = currentActivelayer.name;
+    return JSON.stringify(layer);
 }
 
 function replaceSmartObjects(layer_id, path, name){
     /**
      *  Updates content of 'layer' with an image from 'path'
-     *  
+     *
      **/
 
     var desc = new ActionDescriptor();
@@ -386,12 +456,12 @@ function replaceSmartObjects(layer_id, path, name){
     desc.putPath(charIDToTypeID('null'), new File(path) );
     desc.putInteger(charIDToTypeID("PgNm"), 1);
 
-    executeAction(stringIDToTypeID('placedLayerReplaceContents'), 
-                  desc, DialogModes.NO );       
+    executeAction(stringIDToTypeID('placedLayerReplaceContents'),
+                  desc, DialogModes.NO );
     var currentActivelayer = app.activeDocument.activeLayer;
     if (name){
         currentActivelayer.name = name;
-    }                  
+    }
 }
 
 function createGroup(name){
@@ -402,14 +472,14 @@ function createGroup(name){
     group = app.activeDocument.layerSets.add();
     // Add special character to highlight group that will be published
     group.name = name;
-       
+
     return group.id;  // only id available at this time :|
 }
 
-function deleteLayer(layer_id){          
+function deleteLayer(layer_id){
     /***
      * Deletes layer by its layer_id
-     * 
+     *
      * layer_id (int)
      **/
     var d = new ActionDescriptor();
@@ -427,16 +497,16 @@ function _undo() {
 function savePSB(output_path){
     /***
      * Saves file as .psb to 'output_path'
-     * 
+     *
      * output_path (str)
      **/
-    var desc1 = new ActionDescriptor(); 
-    var desc2 = new ActionDescriptor(); 
-    desc2.putBoolean( stringIDToTypeID('maximizeCompatibility'), true );        
-    desc1.putObject( charIDToTypeID('As  '), charIDToTypeID('Pht8'), desc2 );        
-    desc1.putPath( charIDToTypeID('In  '), new File(output_path) );       
-    desc1.putBoolean( charIDToTypeID('LwCs'), true );        
-    executeAction( charIDToTypeID('save'), desc1, DialogModes.NO );      
+    var desc1 = new ActionDescriptor();
+    var desc2 = new ActionDescriptor();
+    desc2.putBoolean( stringIDToTypeID('maximizeCompatibility'), true );
+    desc1.putObject( charIDToTypeID('As  '), charIDToTypeID('Pht8'), desc2 );
+    desc1.putPath( charIDToTypeID('In  '), new File(output_path) );
+    desc1.putBoolean( charIDToTypeID('LwCs'), true );
+    executeAction( charIDToTypeID('save'), desc1, DialogModes.NO );
 }
 
 function close(){
@@ -446,13 +516,13 @@ function close(){
 function renameLayer(layer_id, new_name){
     /***
      * Renames 'layer_id' to 'new_name'
-     * 
+     *
      * Via Action (fast)
-     * 
+     *
      * Args:
      *    layer_id(int)
      *    new_name(str)
-     * 
+     *
      * output_path (str)
      **/
     doc = app.activeDocument;
@@ -473,8 +543,8 @@ function _get_parents_names(layer, itself_name){
     return long_names;
 }
 
-// triggers when panel is opened, good for debugging 
-//log(getActiveDocumentName()); 
+// triggers when panel is opened, good for debugging
+//log(getActiveDocumentName());
 // log.show();
 // var a = app.activeDocument.activeLayer;
 // log(a);
