@@ -463,7 +463,11 @@ def compatibility_check():
 
     try:
         import PyOpenColorIO  # noqa: F401
-        CachedData.has_compatible_ocio_package = True
+        # Requirement, introduced in newer ocio version
+        config = PyOpenColorIO.GetCurrentConfig()
+        CachedData.has_compatible_ocio_package = (
+            hasattr(config, "getDisplayViewColorSpaceName")
+        )
     except ImportError:
         CachedData.has_compatible_ocio_package = False
 
