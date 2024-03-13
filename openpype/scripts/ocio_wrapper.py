@@ -83,7 +83,7 @@ def get_colorspace(in_path, out_path):
     with open(json_path, "w") as f_:
         json.dump(out_data, f_)
 
-    print(f"Colorspace data are saved to '{json_path}'")
+    print("Colorspace data are saved to '{}'".format(json_path))
 
 
 def _get_colorspace_data(config_path):
@@ -102,7 +102,7 @@ def _get_colorspace_data(config_path):
 
     if not config_path.is_file():
         raise IOError(
-            f"Input path `{config_path}` should be `config.ocio` file")
+            "Input path `{}` should be `config.ocio` file".format(config_path))
 
     config = ocio.Config().CreateFromFile(str(config_path))
 
@@ -118,10 +118,9 @@ def _get_colorspace_data(config_path):
             for color in config.getColorSpaces()
         },
         "displays_views": {
-            f"{view} ({display})": {
+            "{} ({})".format(display, view): {
                 "display": display,
                 "view": view
-
             }
             for display in config.getDisplays()
             for view in config.getViews(display)
@@ -181,7 +180,7 @@ def get_views(in_path, out_path):
     with open(json_path, "w") as f_:
         json.dump(out_data, f_)
 
-    print(f"Viewer data are saved to '{json_path}'")
+    print("Viewer data are saved to '{}'".format(json_path))
 
 
 def _get_views_data(config_path):
@@ -207,11 +206,12 @@ def _get_views_data(config_path):
     for display in config.getDisplays():
         for view in config.getViews(display):
             colorspace = config.getDisplayViewColorSpaceName(display, view)
-            # Special token. See https://opencolorio.readthedocs.io/en/latest/guides/authoring/authoring.html#shared-views # noqa
+            # Special token.
+            # See https://opencolorio.readthedocs.io/en/latest/guides/authoring/authoring.html#shared-views # noqa
             if colorspace == "<USE_DISPLAY_NAME>":
                 colorspace = display
 
-            data_[f"{display}/{view}"] = {
+            data_["{}/{}".format(display, view)] = {
                 "display": display,
                 "view": view,
                 "colorspace": colorspace
@@ -254,7 +254,7 @@ def get_version(config_path, out_path):
     with open(json_path, "w") as f_:
         json.dump(out_data, f_)
 
-    print(f"Config version data are saved to '{json_path}'")
+    print("Config version data are saved to '{}'".format(json_path))
 
 
 def _get_version_data(config_path):
@@ -325,7 +325,7 @@ def get_config_file_rules_colorspace_from_filepath(
     with open(json_path, "w") as f_:
         json.dump(colorspace, f_)
 
-    print(f"Colorspace name is saved to '{json_path}'")
+    print("Colorspace name is saved to '{}'".format(json_path))
 
 
 def _get_config_file_rules_colorspace_from_filepath(config_path, filepath):
@@ -345,7 +345,7 @@ def _get_config_file_rules_colorspace_from_filepath(config_path, filepath):
 
     if not config_path.is_file():
         raise IOError(
-            f"Input path `{config_path}` should be `config.ocio` file")
+            "Input path `{}` should be `config.ocio` file".format(config_path))
 
     config = ocio.Config().CreateFromFile(str(config_path))
 
@@ -427,7 +427,8 @@ def get_display_view_colorspace_name(in_path, out_path,
     with open(out_path, "w") as f:
         json.dump(out_data, f)
 
-    print(f"Display view colorspace saved to '{out_path}'")
+    print("Display view colorspace saved to '{}'".format(out_path))
+
 
 if __name__ == '__main__':
     main()
