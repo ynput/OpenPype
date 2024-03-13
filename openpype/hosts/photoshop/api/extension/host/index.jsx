@@ -117,35 +117,6 @@ function setBlendmode(layerName, blendModeName){
     /**
      * Sets blendMode 'blendModeName'<str> on a given 'layerName'<str>
      **/
-    var blendModeDict= {};
-
-    blendModeDict["colorBurn"] = BlendMode.COLORBURN;
-    blendModeDict["colorDodge"] = BlendMode.COLORDODGE;
-    blendModeDict["darken"] = BlendMode.DARKEN;
-    blendModeDict["darkerColor"] = BlendMode.DARKERCOLOR;
-    blendModeDict["difference"] = BlendMode.DIFFERENCE;
-    blendModeDict["dissolve"] = BlendMode.DISSOLVE;
-    blendModeDict["blendDivide"] = BlendMode.DIVIDE;
-    blendModeDict["exclusion"] = BlendMode.EXCLUSION;
-    blendModeDict["hardLight"] = BlendMode.HARDLIGHT;
-    blendModeDict["hardMix"] = BlendMode.HARDMIX;
-    blendModeDict["hue"] = BlendMode.HUE;
-    blendModeDict["lighten"] = BlendMode.LIGHTEN;
-    blendModeDict["lighterColor"] = BlendMode.LIGHTERCOLOR;
-    blendModeDict["linearBurn"] = BlendMode.LINEARBURN;
-    blendModeDict["linearDodge"] = BlendMode.LINEARDODGE;
-    blendModeDict["linearLight"] = BlendMode.LINEARLIGHT;
-    blendModeDict["luminosity"] = BlendMode.LUMINOSITY;
-    blendModeDict["multiply"] = BlendMode.MULTIPLY;
-    blendModeDict["normal"] = BlendMode.NORMAL;
-    blendModeDict["overlay"] = BlendMode.OVERLAY;
-    blendModeDict["passThrough"] = BlendMode.PASSTHROUGH;
-    blendModeDict["pinLight"] = BlendMode.PINLIGHT;
-    blendModeDict["saturation"] = BlendMode.SATURATION;
-    blendModeDict["screen"] = BlendMode.SCREEN;
-    blendModeDict["softLight"] = BlendMode.SOFTLIGHT;
-    blendModeDict["subtract"] = BlendMode.SUBTRACT;
-    blendModeDict["vividLight"] = BlendMode.VIVIDLIGHT;
 
     // search for the conresponding layer
     var layer = _go_through_layers(layerName, app.activeDocument);
@@ -153,7 +124,7 @@ function setBlendmode(layerName, blendModeName){
     if (layer==null){
         return alert("Error Occured, Layer Not Found");
     }
-    layer.blendMode = blendModeDict[blendModeName];
+    layer.blendMode = eval('BlendMode.' + blendModeName.toUpperCase());
 }
 
 function _go_through_layers(layerName, parentLayer){
