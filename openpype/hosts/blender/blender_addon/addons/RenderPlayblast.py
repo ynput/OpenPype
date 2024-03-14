@@ -72,6 +72,7 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
         scene.render.use_file_extension = False
 
         render_filepath = get_render_filepath()
+        Path(render_filepath).resolve().parent.mkdir(parents=True, exist_ok=True)
 
         for file_format, file_extension in get_renders_types_and_extensions():
             scene.render.image_settings.file_format = file_format

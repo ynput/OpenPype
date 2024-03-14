@@ -3,9 +3,14 @@ import os
 from pathlib import Path
 
 
-def _get_next_version(filepath, format_to_version_folder=True):
+def _get_next_version(filepath, format_to_version_folder=True, create_version_folder=False):
     directory_path = _get_version_directory(filepath)
-    directory_path.mkdir(parents=True, exist_ok=True)
+    print('directory path')
+    print(directory_path)
+    if create_version_folder:
+        directory_path.mkdir(parents=True, exist_ok=True)
+    else:
+        if not directory_path.is_dir(): return 1
 
     versions_folders = _list_all_versions_folders(directory_path)
     if versions_folders:
@@ -22,16 +27,25 @@ def _get_next_version(filepath, format_to_version_folder=True):
 
 
 def get_next_version_folder(filepath):
-    return _get_next_version(filepath, format_to_version_folder=True)
+    return _get_next_version(filepath, format_to_version_folder=True, create_version_folder=False)
 
 
 def get_next_version_number(filepath):
-    return _get_next_version(filepath, format_to_version_folder=False)
+    return _get_next_version(filepath, format_to_version_folder=False, create_version_folder=False)
+
+
+def create_and_get_next_version_folder(filepath):
+    return _get_next_version(filepath, format_to_version_folder=True, create_version_folder=True)
+
+
+def create_and_get_next_version_number(filepath):
+    return _get_next_version(filepath, format_to_version_folder=False, create_version_folder=True)
 
 
 def _get_version_directory(filepath):
-    capture_version = r'(.+)(v\d{3})'
-    return Path(re.search(capture_version, filepath).groups()[0])
+    capture_version = r'(.+)(v\d{3})|(.+[\\\/])'
+    captured_groups = re.search(capture_version, filepath).groups()
+    return Path(next(filter(lambda path: path is not None, captured_groups)))
 
 
 def _list_all_versions_folders(directory_path):
@@ -46,7 +60,7 @@ def _list_all_versions_folders(directory_path):
 def _is_version_folder(folder_name):
     only_version_regex = r'(v\d{3})+$'
     results = re.search(only_version_regex, folder_name)
-    return results.groups()[-1]
+    return results.groups()[-1] if results else None
 
 
 def _extract_version_digits(version_folder):

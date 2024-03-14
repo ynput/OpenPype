@@ -7,7 +7,7 @@ from enum import Enum
 
 import bpy
 
-from libs import paths
+from libs import paths, templates
 
 
 logging.basicConfig(level=logging.INFO)
@@ -300,19 +300,15 @@ def set_engine(engine):
 
 
 def set_global_output_path():
-    bpy.context.scene.render.filepath = bpy.context.scene.output_path
-    log.info(f"Global output path has been set to '{bpy.context.scene.output_path}'")
+    bpy.context.scene.render.filepath = templates.get_render_global_output_path()
+    log.info(f"Global output path has been set to '{bpy.context.scene.render.filepath}'")
 
 
 def set_render_nodes_output_path():
-    version = paths.get_next_version_folder(bpy.context.scene.render_layer_path)
     for output_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == NodesNames.OUTPUT_FILE.value]:
         render_node = _browse_render_nodes(output_node.inputs)
         render_layer_name = render_node.layer
-        output_node.base_path = bpy.context.scene.render_layer_path.format(
-            render_layer_name=render_layer_name,
-            version = version
-        ) + '_'
+        output_node.base_path = templates.get_render_node_output_path(render_layer_name=render_layer_name)
         log.info(f"File output path has been set to '{output_node.base_path}'.")
 
 
