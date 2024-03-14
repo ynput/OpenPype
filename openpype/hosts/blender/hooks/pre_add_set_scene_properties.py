@@ -24,7 +24,6 @@ class SetSceneProperties(PreLaunchHook):
         current_os = data['env']['OS']
         hierarchy = data['workdir_data']['hierarchy']
         entity_name = data['asset_name']
-        task_name = data['task_name']
 
         target_work_dir = self._get_correct_work_dir(data, target_os)
         current_work_dir = self._get_correct_work_dir(data, current_os)
@@ -50,16 +49,14 @@ class SetSceneProperties(PreLaunchHook):
             deadline_output_path = self._generate_render_path_without_version(
                 current_work_dir, base_output_path, data['project_name'], entity_name
             )
-            playblast_render_path = self._generate_playblast_path(
-                current_work_dir, base_output_path, task_name, data['project_name'], entity_name
-            )
-            return deadline_render_layer_path, deadline_output_path, playblast_render_path
+            return deadline_render_layer_path, deadline_output_path
 
         except IndexError as err:
             self.log.warning("Value is missing from launch_context data. Can't set default output path.")
             self.log.warning(err)
             tempdir = tempfile.gettempdir(),
             return tempdir, tempdir, tempdir
+
 
     def _get_correct_work_dir(self, data, given_os):
         work_directories = data['project_doc']['config']['roots']['work']
@@ -89,17 +86,6 @@ class SetSceneProperties(PreLaunchHook):
             '_'.join([project_name, entity_name, '{render_layer_name}'])
         )
 
-    def _generate_playblast_path(self, work_dir, base_path, task_name, project_name, entity_name):
-        subset_name = f'playblast{task_name}Main'
-        file_suffix = '{version}.{extension}'
-        return Path(
-            work_dir,
-            base_path,
-            subset_name,
-            '{version}',
-            f'{entity_name}_{subset_name}_{file_suffix}'
-        )
-
     def execute(self):
         hooks_folder_path = Path(__file__).parent
         custom_script_folder = hooks_folder_path.parent.joinpath("blender_addon", "startup", "custom_scripts")
@@ -111,14 +97,12 @@ class SetSceneProperties(PreLaunchHook):
         self.launch_context.data.setdefault("python_scripts", []).append(
             custom_script_folder.joinpath(self.script_file_name)
         )
-        deadline_render_layer_path, deadline_output_path, playblast_render_path = self.get_formatted_outputs_paths()
+        deadline_render_layer_path, deadline_output_path, = self.get_formatted_outputs_paths()
         self.launch_context.data.setdefault("script_args", []).extend(
             [
                 '--render-layer-path',
                 deadline_render_layer_path,
                 '--output-path',
-                deadline_output_path,
-                '--playblast-render-path',
-                playblast_render_path
+                deadline_output_path
             ]
         )

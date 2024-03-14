@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess
 
-from libs import paths
+from libs import paths, templates
 
 
 logging.basicConfig(level=logging.INFO)
@@ -25,11 +25,8 @@ def get_view_3D_region():
     return next(iter([area.spaces[0].region_3d for area in bpy.context.screen.areas if area.type == 'VIEW_3D']), None)
 
 
-def get_render_filepath(extension, version):
-    return bpy.context.scene.playblast_render_path.format(
-        version=version,
-        extension=extension
-    )
+def get_render_filepath():
+    return templates.get_playblast_path()
 
 
 def get_renders_types_and_extensions():
@@ -74,12 +71,14 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
             region.view_perspective = 'CAMERA'
         scene.render.use_file_extension = False
 
-        version = paths.get_next_version_folder(bpy.context.scene.playblast_render_path)
+        render_filepath = get_render_filepath()
 
         for file_format, file_extension in get_renders_types_and_extensions():
             scene.render.image_settings.file_format = file_format
-            scene.render.filepath = get_render_filepath(file_extension, version)
+            scene.render.filepath = render_filepath.format(ext=file_extension)
+
             logging.info(f"{'Camera view' if use_camera_view else 'Viewport'} will be rendered at following path : {scene.render.filepath}")
+
             result = bpy.ops.render.opengl(animation=True)
             if result != {'FINISHED'}:
                 logging.error(f'An error has occured when rendering with file_format {file_format} with OpenGL')
