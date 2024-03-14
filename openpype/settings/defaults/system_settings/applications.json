@@ -1623,11 +1623,11 @@
         "heartbeat_interval": 500,
         "environment": {},
         "variants": {
-            "7-1v2": {
-                "use_python_2": false,
+            "R5": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\3DE4_win64_r7.1v2\\bin\\3DE4.exe"
+                        "C:\\Program Files\\3DEqualizer_4_R5\\3DE4_win64_r5\\bin\\3de4.ico"
                     ],
                     "darwin": [],
                     "linux": []
@@ -1640,7 +1640,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "7-1v2": "7.1v2"
+                "R5": "R5"
             }
         }
     },

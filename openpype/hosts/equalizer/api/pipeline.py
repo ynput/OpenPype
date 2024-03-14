@@ -1,17 +1,16 @@
-from attrs import field, define
+
+import attr
 from openpype.pipeline import AVALON_CONTAINER_ID
 import contextlib
 import tde4
 
-
-@define
+@attr.s
 class Container(object):
-
-    name: str = field(default=None)
-    id: str = field(init=False, default=AVALON_CONTAINER_ID)
-    namespace: str = field(default="")
-    loader: str = field(default=None)
-    representation: str = field(default=None)
+    name = attr.ib(default=None)
+    id = attr.ib(init=False, default=AVALON_CONTAINER_ID)
+    namespace = attr.ib(default="")
+    loader = attr.ib(default=None)
+    representation = attr.ib(default=None)
 
 
 @contextlib.contextmanager

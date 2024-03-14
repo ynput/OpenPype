@@ -4,8 +4,9 @@ note:
     3dequalizer 7.1v2 uses Python 3.7.9
 
 """
-from abc import ABC
-from typing import Dict, List
+from abc import ABCMeta
+import six
+# from typing import Dict, List
 
 from openpype.hosts.equalizer.api import EqualizerHost
 from openpype.lib import BoolDef, EnumDef, NumberDef
@@ -15,15 +16,15 @@ from openpype.pipeline import (
     OptionalPyblishPluginMixin,
 )
 
-
-class EqualizerCreator(ABC, Creator):
+@six.add_metaclass(ABCMeta)
+class EqualizerCreator(Creator):
 
     @property
-    def host(self) -> EqualizerHost:
+    def host(self):
         """Return the host application."""
         # We need to cast the host to EqualizerHost, because the Creator
         # class is not aware of the host application.
-        return super().host
+        return super(EqualizerCreator, self).host
 
     def create(self, subset_name, instance_data, pre_create_data):
         """Create a subset in the host application.
@@ -88,20 +89,22 @@ class EqualizerCreator(ABC, Creator):
 
         self.host.update_context_data(context, changes=update_list)
 
-    def remove_instances(self, instances: List[Dict]):
-        context = self.host.get_context_data()
-        if not context.get("publish_instances"):
-            context["publish_instances"] = []
+    def remove_instances(self, instances):
+        # context = self.host.get_context_data()
+        # if not context.get("publish_instances"):
+        #     context["publish_instances"] = []
 
-        ids_to_remove = [
-            instance.get("instance_id")
-            for instance in instances
-        ]
-        for instance in context.get("publish_instances"):
-            if instance.get("instance_id") in ids_to_remove:
-                context["publish_instances"].remove(instance)
+        # ids_to_remove = [
+        #     instance.get("instance_id")
+        #     for instance in instances
+        # ]
+        # for instance in context.get("publish_instances"):
+        #     if instance.get("instance_id") in ids_to_remove:
+        #         context["publish_instances"].remove(instance)
 
-        self.host.update_context_data(context, changes={})
+        # self.host.update_context_data(context, changes={})
+        for instance in instances:
+            self._remove_instance_from_context(instance)
 
 
 class ExtractScriptBase(OptionalPyblishPluginMixin):

@@ -8,8 +8,9 @@ import json
 import re
 import unittest
 
-from attrs import asdict, define, field
-from attrs.exceptions import NotAnAttrsClassError
+from attr import asdict
+import attr
+from attr.exceptions import NotAnAttrsClassError
 
 AVALON_CONTAINER_ID = "test.container"
 
@@ -18,14 +19,13 @@ CONTEXT_REGEX = re.compile(
     re.DOTALL)
 
 
-@define
+@attr.s
 class Container(object):
-
-    name: str = field(default=None)
-    id: str = field(init=False, default=AVALON_CONTAINER_ID)
-    namespace: str = field(default="")
-    loader: str = field(default=None)
-    representation: str = field(default=None)
+    name = attr.ib(default=None)
+    id = attr.ib(init=False, default=AVALON_CONTAINER_ID)
+    namespace = attr.ib(default="")
+    loader = attr.ib(default=None)
+    representation = attr.ib(default=None)
 
 
 class Tde4Mock:
@@ -51,10 +51,10 @@ tde4 = Tde4Mock()
 
 def get_context_data():
     m = re.search(CONTEXT_REGEX, tde4.getProjectNotes())
-    return json.loads(m["context"]) if m else {}
+    return json.loads(m.groupdict()["context"]) if m else {}
 
 
-def update_context_data(data, _):
+def update_context_data(data, changes):
     m = re.search(CONTEXT_REGEX, tde4.getProjectNotes())
     if not m:
         tde4.setProjectNotes("AYON_CONTEXT::::AYON_CONTEXT_END")
@@ -62,7 +62,7 @@ def update_context_data(data, _):
     tde4.setProjectNotes(
         re.sub(
             CONTEXT_REGEX,
-            f"AYON_CONTEXT::{update}::AYON_CONTEXT_END",
+            "AYON_CONTEXT::%s::AYON_CONTEXT_END"%update,
             tde4.getProjectNotes()
         )
     )
@@ -72,7 +72,7 @@ def get_containers():
     return get_context_data().get("containers", [])
 
 
-def add_container(container: Container):
+def add_container(container):
     context_data = get_context_data()
     containers = get_containers()
 
@@ -96,12 +96,14 @@ class TestEqualizer(unittest.TestCase):
         # ensure empty project notest
 
         data = get_context_data()
+        print("data here", data)
         self.assertEqual({}, data, "context data are not empty")
 
         # add container
         add_container(
             Container(name="test", representation="test_A")
         )
+
 
         self.assertEqual(
             1, len(get_containers()), "container not added")
@@ -130,7 +132,12 @@ class TestEqualizer(unittest.TestCase):
             get_containers()[1]["representation"],
             "test_C", "container name is not correct")
 
-        print(f"--4: {tde4.getProjectNotes()}")
+        Containers = get_containers()
+        print("Containers here", Containers)
+        notes = tde4.getProjectNotes().split("\n")
+        print("\n  \n \nproject notes:-")
+        for note in notes:
+            print(note)
 
 
 if __name__ == "__main__":

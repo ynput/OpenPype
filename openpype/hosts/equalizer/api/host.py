@@ -1,25 +1,26 @@
-"""3dequalizer host implementation.
+"""
+3dequalizer host implementation.
 
 note:
-    3dequalizer 7.1v2 uses Python 3.7.9
-
+    3dequalizer Release 5 uses Python 2.7
 """
+
 import json
 import os
 import re
 
+from attr import asdict
+from attr.exceptions import NotAnAttrsClassError
 import pyblish.api
 import tde4  # noqa: F401
-from attrs import asdict
-from attrs.exceptions import NotAnAttrsClassError
-from qtpy import QtCore, QtWidgets
+from PySide import QtCore, QtGui
 
 from openpype.host import HostBase, ILoadHost, IPublishHost, IWorkfileHost
 from openpype.hosts.equalizer import EQUALIZER_HOST_DIR
-from openpype.hosts.equalizer.api.pipeline import Container
 from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
+    legacy_io
 )
 
 CONTEXT_REGEX = re.compile(
@@ -58,24 +59,48 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_workfile_extensions(self):
         return [".3de"]
 
-    def save_workfile(self, dst_path=None):
-        if not dst_path:
-            dst_path = tde4.getProjectPath()
-        result = tde4.saveProject(dst_path, True)
+    def save_workfile(self, filepath=None):
+        result = tde4.saveProject(filepath)
         if not bool(result):
-            raise RuntimeError(f"Failed to save workfile {dst_path}.")
+            raise RuntimeError("Failed to save workfile %s."%filepath)
 
-        return dst_path
+        return filepath
 
     def open_workfile(self, filepath):
-        result = tde4.loadProject(filepath, True)
+        result = tde4.loadProject(filepath)
         if not bool(result):
-            raise RuntimeError(f"Failed to open workfile {filepath}.")
+            raise RuntimeError("Failed to open workfile %s."%filepath)
 
         return filepath
 
     def get_current_workfile(self):
-        return tde4.getProjectPath()
+        current_filepath = tde4.getProjectPath()
+        if not current_filepath:
+            return None
+
+        return current_filepath
+
+
+    def get_overscan(self):
+        context = self.get_context_data()
+        if "overscan" in context:
+            return context.get("overscan", {})
+        return {}
+
+    def set_overscan(self, overscan_width, overscan_height):
+        context_data = self.get_context_data()
+        overscan = self.get_overscan()
+        if not overscan:
+            overscan = {
+                "width": overscan_width,
+                "height": overscan_height
+            }
+        else:
+            overscan["width"] = overscan_width
+            overscan["height"] = overscan_height
+
+        context_data["overscan"] = overscan
+        self.update_context_data(context_data, changes={})
 
     def get_containers(self):
         context = self.get_context_data()
@@ -83,7 +108,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             return context.get("containers", [])
         return []
 
-    def add_container(self, container: Container):
+    def add_container(self, container):
         context_data = self.get_context_data()
         containers = self.get_containers()
 
@@ -101,7 +126,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         context_data["containers"] = containers
         self.update_context_data(context_data, changes={})
 
-    def get_context_data(self) -> dict:
+    def get_context_data(self):
         """Get context data from the current workfile.
 
         3Dequalizer doesn't have any custom node or other
@@ -116,7 +141,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         # sourcery skip: use-named-expression
         m = re.search(CONTEXT_REGEX, tde4.getProjectNotes())
         try:
-            context = json.loads(m["context"]) if m else {}
+            context = json.loads(m.groupdict()["context"]) if m else {}
         except ValueError:
             self.log.debug("context data is not valid json")
             context = {}
@@ -137,13 +162,10 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         Raises:
             RuntimeError: If the context data is not found.
         """
-        notes = tde4.getProjectNotes()
-        m = re.search(CONTEXT_REGEX, notes)
+        m = re.search(CONTEXT_REGEX, tde4.getProjectNotes())
         if not m:
             # context data not found, create empty placeholder
-            tde4.setProjectNotes(
-                f"{tde4.getProjectNotes()}\n"
-                f"AYON_CONTEXT::::AYON_CONTEXT_END\n")
+            tde4.setProjectNotes("AYON_CONTEXT::::AYON_CONTEXT_END")
 
         original_data = self.get_context_data()
 
@@ -154,7 +176,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         tde4.setProjectNotes(
             re.sub(
                 CONTEXT_REGEX,
-                f"AYON_CONTEXT::{update_str}::AYON_CONTEXT_END",
+                "AYON_CONTEXT::%s::AYON_CONTEXT_END"%update_str,
                 tde4.getProjectNotes()
             )
         )
@@ -162,23 +184,37 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def install(self):
         if not QtCore.QCoreApplication.instance():
-            app = QtWidgets.QApplication([])
+            app = QtGui.QApplication([])
             self._qapp = app
             self._qapp.setQuitOnLastWindowClosed(False)
 
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
         pyblish.api.register_host("equalizer")
 
-        pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
 
-        heartbeat_interval = os.getenv("AYON_TDE4_HEARTBEAT_INTERVAL") or 500
-        tde4.setTimerCallbackFunction(
-            "EqualizerHost._timer", int(heartbeat_interval))
+        # heartbeat_interval = os.getenv("AYON_TDE4_HEARTBEAT_INTERVAL") or 500
+        # tde4.setTimerCallbackFunction(
+        #     "EqualizerHost._timer", int(heartbeat_interval))
+
+
+    def _set_project(self):
+        workdir = legacy_io.Session["AVALON_WORKDIR"]
+        if os.path.exists(workdir):
+            projects = []
+            workdir_files = os.listdir(workdir)
+            if len(workdir_files) > 0:
+                for f in os.listdir(workdir):
+                    if legacy_io.Session["AVALON_ASSET"] in f:
+                        projects.append(f)
+                projects.sort()
+                tde4.loadProject(os.path.join(workdir, projects[-1]))
+
 
     @staticmethod
     def _timer():
-        QtWidgets.QApplication.instance().processEvents(
+        QtGui.QApplication.instance().processEvents(
             QtCore.QEventLoop.AllEvents)
 
     @classmethod

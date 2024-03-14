@@ -1,7 +1,8 @@
 #
 # 3DE4.script.name:     Load ...
-# 3DE4.script.gui:      Main Window::Ayon
-# 3DE4.script.comment:  Open AYON Loader tool
+# 3DE4.script.gui:	Main Window::AromaOpenPype
+# 3DE4.script.comment:  Open OpenPype Loader tool
+# 3DE4.script.comment:	Author: Eslam Ezzat
 #
 
 from openpype.pipeline import install_host, is_installed
@@ -10,12 +11,13 @@ from openpype.tools.utils import host_tools
 
 
 def install_3de_host():
-    print("Running AYON integration ...")
+    print("Running OpenPype integration ...")
     install_host(EqualizerHost())
 
 
 if not is_installed():
     install_3de_host()
+
 
 # show the UI
 print("Opening loader window ...")
