@@ -3,29 +3,6 @@ import os
 from pathlib import Path
 
 
-def _get_next_version(filepath, format_to_version_folder=True, create_version_folder=False):
-    directory_path = _get_version_directory(filepath)
-    print('directory path')
-    print(directory_path)
-    if create_version_folder:
-        directory_path.mkdir(parents=True, exist_ok=True)
-    else:
-        if not directory_path.is_dir(): return 1
-
-    versions_folders = _list_all_versions_folders(directory_path)
-    if versions_folders:
-        latest_version_folder = max(versions_folders)
-        next_version_number = _extract_version_digits(latest_version_folder) +1
-
-    else:
-        next_version_number = 1
-
-    if format_to_version_folder:
-        return _format_to_version_folder(next_version_number)
-    else:
-        return next_version_number
-
-
 def get_next_version_folder(filepath):
     return _get_next_version(filepath, format_to_version_folder=True, create_version_folder=False)
 
@@ -42,10 +19,55 @@ def create_and_get_next_version_number(filepath):
     return _get_next_version(filepath, format_to_version_folder=False, create_version_folder=True)
 
 
+def get_version_folder_fullpath(filepath):
+    latest_version_folder = _get_latest_version_folder(filepath, absolute_path=True, create_version_folder=False)
+    if not latest_version_folder:
+        return None
+
+    return latest_version_folder
+
+
+def _get_latest_version_folder(filepath, absolute_path=False, create_version_folder=False):
+    directory_path = _get_version_directory(filepath)
+    if not directory_path:
+        raise Exception("Version delimiter not found in given filepath: " + "({})".format(filepath))
+
+    if create_version_folder:
+        directory_path.mkdir(parents=True, exist_ok=True)
+
+    elif not directory_path.is_dir():
+        return None
+
+    versions_folders = _list_all_versions_folders(directory_path)
+    if not versions_folders:
+        return None
+
+    if absolute_path:
+        return directory_path.joinpath(str(max(versions_folders))).resolve()
+
+    return max(versions_folders)
+
+
 def _get_version_directory(filepath):
-    capture_version = r'(.+)(v\d{3})|(.+[\\\/])'
+    capture_version = r'(.*?)(v\d{3})|(.+[\\\/])'
     captured_groups = re.search(capture_version, filepath).groups()
-    return Path(next(filter(lambda path: path is not None, captured_groups)))
+    try:
+        return Path(next(filter(lambda path: path is not None, captured_groups)))
+    except StopIteration:
+        return None
+
+
+def _get_next_version(filepath, format_to_version_folder, create_version_folder):
+    latest_version_folder = _get_latest_version_folder(filepath, create_version_folder)
+    if not latest_version_folder:
+        next_version_number = 1
+    else:
+        next_version_number = _extract_version_digits(latest_version_folder) + 1
+
+    if format_to_version_folder:
+        return _format_to_version_folder(next_version_number)
+    else:
+        return next_version_number
 
 
 def _list_all_versions_folders(directory_path):

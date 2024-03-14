@@ -2,6 +2,7 @@ import bpy
 import logging
 import os
 import subprocess
+from pathlib import Path
 
 from libs import paths, templates
 
@@ -97,13 +98,15 @@ class OBJECT_OT_open_playblast_folder(bpy.types.Operator):
     bl_label = "Open Last Playblast Folder"
 
     def execute(self, context):
-        playblast_version_folderpath = paths.get_version_folder_fullpath(bpy.context.scene.playblast_render_path)
-
-        if not playblast_version_folderpath or not playblast_version_folderpath.exists():
-            self.report({'ERROR'}, "File '{}' not found".format(bpy.context.scene.playblast_render_path))
+        latest_playblast_filepath = paths.get_version_folder_fullpath(
+            templates.get_playblast_path()
+        )
+        print(latest_playblast_filepath)
+        if not latest_playblast_filepath or not latest_playblast_filepath.exists():
+            self.report({'ERROR'}, "File '{}' not found".format(latest_playblast_filepath))
             return {'CANCELLED'}
 
-        subprocess.Popen(['start', str(playblast_version_folderpath.resolve())], shell=True)
+        subprocess.Popen(['start', str(latest_playblast_filepath.resolve())], shell=True)
 
         return {'FINISHED'}
 

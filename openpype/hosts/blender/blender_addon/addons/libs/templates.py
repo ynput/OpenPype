@@ -69,7 +69,7 @@ def _format_template_data(anatomy_template, template_path_key, template_data):
     return path_template.format_map(Default(template_data))
 
 
-def get_playblast_path(extension=None, version=None):
+def get_playblast_path():
     anatomy_roots, anatomy_template = _get_anatomy_roots_and_template(
         template_name="playblast"
     )
@@ -80,14 +80,11 @@ def get_playblast_path(extension=None, version=None):
         roots=anatomy_roots,
         template=anatomy_template,
         template_path_key="path",
-        ext=extension,
-        version=version,
     )
-    if not version:
-        if not _set_template_version(
-            anatomy_template=anatomy_template,
-            template_data=template_data
-        ): return None
+    if not _set_template_version(
+        anatomy_template=anatomy_template,
+        template_data=template_data
+    ): return None
 
     return _format_template_data(
         anatomy_template=anatomy_template,
