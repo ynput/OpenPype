@@ -136,6 +136,24 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "IntegrateKitsuReview",
+                    "label": "Integrate Kitsu Review",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "normalize",
+                            "label": "Normalize"
+                        }
+                    ]
                 }
             ]
         }
