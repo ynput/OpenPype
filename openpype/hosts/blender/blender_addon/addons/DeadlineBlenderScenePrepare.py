@@ -197,7 +197,7 @@ class PrepareTemporaryFile(bpy.types.Operator):
         convert_modifiers_windows_path_to_linux()
         set_engine('CYCLES')
         set_global_output_path()
-        set_render_nodes_output_path()
+        set_render_nodes_output_path(convert_to_linux_paths=True)
         save_as_temporary_scene()
 
         return {'FINISHED'}
@@ -260,7 +260,7 @@ def _generate_temporary_file_path(suffix=''):
 def convert_cache_files_windows_path_to_linux():
     for cache_file in bpy.data.cache_files:
         old_path = cache_file.filepath
-        cache_file.filepath = _replace_paths_part(cache_file.filepath)
+        cache_file.filepath = _replace_path_parts_to_linux(cache_file.filepath)
         log.info(f"Cache file path has updated from {old_path} to {cache_file.filepath}")
 
 
@@ -271,7 +271,7 @@ def convert_modifiers_windows_path_to_linux():
             if not path_to_replace:
                 continue
 
-            setattr(modifier, modifier_attribute, _replace_paths_part(path_to_replace))
+            setattr(modifier, modifier_attribute, _replace_path_parts_to_linux(path_to_replace))
             new_path = getattr(modifier, modifier_attribute, None)
             log.info(f"Cache file path has been updated from {path_to_replace} to {new_path}")
 
@@ -284,7 +284,7 @@ def _get_all_modifiers():
     return modifiers
 
 
-def _replace_paths_part(path):
+def _replace_path_parts_to_linux(path):
     return bpy.path.abspath(path).replace('\\', '/').replace(
         PathsParts.WINDOWS_L.value,
         PathsParts.LINUX.value
@@ -304,15 +304,16 @@ def set_global_output_path():
     log.info(f"Global output path has been set to '{bpy.context.scene.render.filepath}'")
 
 
-def set_render_nodes_output_path():
+def set_render_nodes_output_path(convert_to_linux_paths=False):
     for output_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == NodesNames.OUTPUT_FILE.value]:
         render_node = _browse_render_nodes(output_node.inputs)
-        if not render_node:
-            logging.warning(f"No render node found for this output node : {output_node}")
-            continue
-
         render_layer_name = render_node.layer
-        output_node.base_path = templates.get_render_node_output_path(render_layer_name=render_layer_name)
+        render_node_output_path = templates.get_render_node_output_path(render_layer_name=render_layer_name)
+
+        if convert_to_linux_paths:
+            render_node_output_path = _replace_path_parts_to_linux(render_node_output_path)
+
+        output_node.base_path = render_node_output_path
         log.info(f"File output path has been set to '{output_node.base_path}'.")
 
 
