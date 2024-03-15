@@ -977,6 +977,9 @@ class ProjectModel(QtGui.QStandardItemModel):
             section, orientation, role
         )
 
+    def get_project_names(self):
+        return sorted(list(self._items_by_name.keys()))
+
 
 class VersionAction(QtWidgets.QAction):
     version_triggered = QtCore.Signal(str)
@@ -988,6 +991,18 @@ class VersionAction(QtWidgets.QAction):
 
     def _on_trigger(self):
         self.version_triggered.emit(self._version)
+
+
+class ProjectSettingsAction(QtWidgets.QAction):
+    project_triggered = QtCore.Signal(str)
+
+    def __init__(self, project, *args, **kwargs):
+        super(ProjectSettingsAction, self).__init__(project, *args, **kwargs)
+        self._project = project
+        self.triggered.connect(self._on_trigger)
+
+    def _on_trigger(self):
+        self.project_triggered.emit(self._project)
 
 
 class ProjectView(QtWidgets.QTreeView):
@@ -1063,6 +1078,7 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 class ProjectListWidget(QtWidgets.QWidget):
     project_changed = QtCore.Signal()
     version_change_requested = QtCore.Signal(str)
+    apply_from_project_requested = QtCore.Signal(str)
     extract_to_file_requested = QtCore.Signal()
 
     def __init__(self, parent, only_active=False):
@@ -1151,18 +1167,31 @@ class ProjectListWidget(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self)
-        submenu = QtWidgets.QMenu("Use settings from version", menu)
+        submenu_versions = QtWidgets.QMenu("Use settings from version", menu)
         for version in reversed(versions):
-            action = VersionAction(version, submenu)
-            action.version_triggered.connect(
+            action_version = VersionAction(version, submenu_versions)
+            action_version.version_triggered.connect(
                 self.version_change_requested
             )
-            submenu.addAction(action)
+            submenu_versions.addAction(action_version)
+        menu.addMenu(submenu_versions)
+
+        submenu_projects = QtWidgets.QMenu("Use settings from project", menu)
+        for project_name in self.project_model.get_project_names():
+            if self.current_project == project_name:
+                # Skip current project
+                continue
+
+            action_project = ProjectSettingsAction(project_name, submenu_projects)
+            action_project.project_triggered.connect(
+                self.apply_from_project_requested
+            )
+            submenu_projects.addAction(action_project)
+        menu.addMenu(submenu_projects)
 
         extract_action = QtWidgets.QAction("Extract to file", menu)
         extract_action.triggered.connect(self.extract_to_file_requested)
 
-        menu.addMenu(submenu)
         menu.addAction(extract_action)
         menu.exec_(QtGui.QCursor.pos())
 
