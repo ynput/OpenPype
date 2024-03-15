@@ -101,7 +101,6 @@ class OBJECT_OT_open_playblast_folder(bpy.types.Operator):
         latest_playblast_filepath = paths.get_version_folder_fullpath(
             templates.get_playblast_path()
         )
-        print(latest_playblast_filepath)
         if not latest_playblast_filepath or not latest_playblast_filepath.exists():
             self.report({'ERROR'}, "File '{}' not found".format(latest_playblast_filepath))
             return {'CANCELLED'}

@@ -3,20 +3,12 @@ import os
 from pathlib import Path
 
 
-def get_next_version_folder(filepath):
-    return _get_next_version(filepath, format_to_version_folder=True, create_version_folder=False)
+def get_next_version_folder(filepath, create_version_folder=False):
+    return _get_next_version(filepath, create_version_folder, format_to_version_folder=True)
 
 
-def get_next_version_number(filepath):
-    return _get_next_version(filepath, format_to_version_folder=False, create_version_folder=False)
-
-
-def create_and_get_next_version_folder(filepath):
-    return _get_next_version(filepath, format_to_version_folder=True, create_version_folder=True)
-
-
-def create_and_get_next_version_number(filepath):
-    return _get_next_version(filepath, format_to_version_folder=False, create_version_folder=True)
+def get_next_version_number(filepath, create_version_folder=False):
+    return _get_next_version(filepath, create_version_folder, format_to_version_folder=False)
 
 
 def get_version_folder_fullpath(filepath):
@@ -57,7 +49,7 @@ def _get_version_directory(filepath):
         return None
 
 
-def _get_next_version(filepath, format_to_version_folder, create_version_folder):
+def _get_next_version(filepath, create_version_folder, format_to_version_folder):
     latest_version_folder = _get_latest_version_folder(filepath, create_version_folder)
     if not latest_version_folder:
         next_version_number = 1
