@@ -93,7 +93,7 @@ def get_playblast_path():
     )
 
 
-def get_render_global_output_path(version=None):
+def get_render_global_output_path():
     anatomy_roots, anatomy_template = _get_anatomy_roots_and_template(
         template_name="deadline_render"
     )
@@ -104,7 +104,6 @@ def get_render_global_output_path(version=None):
         roots=anatomy_roots,
         template=anatomy_template,
         template_path_key="global_output",
-        version=version,
     )
 
     return _format_template_data(
@@ -114,7 +113,7 @@ def get_render_global_output_path(version=None):
     )
 
 
-def get_render_node_output_path(render_layer_name=None, version=None):
+def get_render_node_output_path(render_layer_name=None):
     anatomy_roots, anatomy_template = _get_anatomy_roots_and_template(
         template_name="deadline_render"
     )
@@ -126,14 +125,12 @@ def get_render_node_output_path(render_layer_name=None, version=None):
         template=anatomy_template,
         template_path_key="node_output",
         render_layer_name=render_layer_name,
-        version=version,
     )
 
-    if not version:
-        if not _set_template_version(
-            anatomy_template=anatomy_template,
-            template_data=template_data
-        ): return None
+    if not _set_template_version(
+        anatomy_template=anatomy_template,
+        template_data=template_data
+    ): return None
 
     return _format_template_data(
         anatomy_template=anatomy_template,
