@@ -307,6 +307,10 @@ def set_global_output_path():
 def set_render_nodes_output_path():
     for output_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == NodesNames.OUTPUT_FILE.value]:
         render_node = _browse_render_nodes(output_node.inputs)
+        if not render_node:
+            logging.warning(f"No render node found for this output node : {output_node}")
+            continue
+
         render_layer_name = render_node.layer
         output_node.base_path = templates.get_render_node_output_path(render_layer_name=render_layer_name)
         log.info(f"File output path has been set to '{output_node.base_path}'.")
