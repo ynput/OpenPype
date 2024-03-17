@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtUiTools">
+    <load-typesystem name="typesystem_gui.xml" generate="no" />
+    <load-typesystem name="typesystem_xml.xml" generate="no" />
+
+    <object-type name="QUiLoader">
+      <extra-includes>
+        <include file-name="glue/plugins.h" location="local"/>
+      </extra-includes>
+      <inject-code class="native" position="beginning" file="glue/uitools_loadui.cpp"/>
+      <inject-code>
+          Q_IMPORT_PLUGIN(uiplugin);
+      </inject-code>
+      <add-function signature="registerCustomWidget(PyObject*)" return-type="void">
+         <modify-argument index="1">
+            <rename to="customWidgetType" />
+         </modify-argument>
+         <inject-documentation format="target" mode="append">
+         Registers a Python created custom widget to QUiLoader, so it can be recognized when
+         loading a `.ui` file. The custom widget type is passed via the ``customWidgetType`` argument.
+         This is needed when you want to override a virtual method of some widget in the interface,
+         since duck punching will not work with widgets created by QUiLoader based on the contents
+         of the `.ui` file.
+
+         (Remember that `duck punching virtual methods is an invitation for your own demise!
+         &lt;http://www.pyside.org/docs/shiboken/wordsofadvice.html#duck-punching-and-virtual-methods>`_)
+
+         Let's see an obvious example. If you want to create a new widget it's probable you'll end up
+         overriding :class:`~PySide.QtGui.QWidget`'s :meth:`~PySide.QtGui.QWidget.paintEvent` method.
+
+         .. code-block:: python
+
+            class Circle(QWidget):
+                def paintEvent(self, event):
+                    painter = QPainter(self)
+                    painter.setPen(self.pen)
+                    painter.setBrush(QBrush(self.color))
+                    painter.drawEllipse(event.rect().center(), 20, 20)
+
+            # ...
+
+            loader = QUiLoader()
+            loader.registerCustomWidget(Circle)
+            circle = loader.load('circle.ui')
+            circle.show()
+
+            # ...
+         </inject-documentation>
+         <inject-code class="target" position="beginning">
+             registerCustomWidget(%PYARG_1);
+             %CPPSELF.addPluginPath(""); // force reload widgets
+         </inject-code>
+      </add-function>
+      <modify-function signature="createAction(QObject*, const QString&amp;)">
+        <modify-argument index="return">
+          <parent index="1" action="add"/>
+        </modify-argument>
+      </modify-function>
+
+      <modify-function signature="createActionGroup(QObject*, const QString&amp;)">
+        <modify-argument index="return">
+          <parent index="1" action="add"/>
+        </modify-argument>
+      </modify-function>
+
+      <modify-function signature="createLayout(const QString&amp;, QObject*, const QString&amp;)">
+        <modify-argument index="return">
+          <parent index="2" action="add"/>
+        </modify-argument>
+      </modify-function>
+
+      <modify-function signature="createWidget(const QString&amp;, QWidget*, const QString&amp;)">
+        <modify-argument index="return">
+            <parent index="2" action="add"/>
+            <define-ownership class="target" owner="default"/>
+        </modify-argument>
+      </modify-function>
+
+      <modify-function signature="load(QIODevice*, QWidget*)">
+        <modify-argument index="2">
+          <replace-default-expression with="0" />
+          <rename to="parentWidget" />
+        </modify-argument>
+        <modify-argument index="return">
+           <define-ownership class="target" owner="target"/>
+        </modify-argument>
+        <inject-code>
+            // Avoid calling the original function: %CPPSELF.%FUNCTION_NAME()
+            %PYARG_0 = QUiLoadedLoadUiFromDevice(%CPPSELF, %1, %2);
+        </inject-code>
+     </modify-function>
+
+      <!-- Syntax sugar -->
+      <add-function signature="load(QString, QWidget*)" return-type="QWidget*">
+        <modify-argument index="2">
+          <replace-default-expression with="0" />
+          <rename to="parentWidget" />
+        </modify-argument>
+        <modify-argument index="return">
+          <define-ownership class="target" owner="target"/>
+        </modify-argument>
+        <inject-code>
+            // Avoid calling the original function: %CPPSELF.%FUNCTION_NAME()
+            %PYARG_0 = QUiLoaderLoadUiFromFileName(%CPPSELF, %1, %2);
+        </inject-code>
+      </add-function>
+    </object-type>
+
+</typesystem>

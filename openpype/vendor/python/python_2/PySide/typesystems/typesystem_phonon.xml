@@ -1,0 +1,315 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.phonon">
+    <load-typesystem name="typesystem_gui.xml" generate="no" />
+
+    <rejection class="Phonon::ObjectDescriptionData"/>
+    <rejection class="Phonon::ObjectDescriptionModelData"/>
+    <rejection class="Phonon::MediaNodeDestructionHandler"/>
+    <rejection class="Phonon::GlobalConfig"/>
+    <rejection class="Phonon::IODeviceStream"/>
+    <rejection class="Phonon::Factory"/>
+    <rejection class="Phonon::Experimental"/>
+    <rejection class="AudioOutputAdaptor"/>
+    <rejection class="Phonon::BackendCapabilities::Notifier"/>
+    <rejection class="*" field-name="k_ptr"/>
+    <rejection class="*" field-name="k_func"/>
+
+    <namespace-type name="Phonon">
+        <extra-includes>
+          <include file-name="phononnamespace.h" location="global"/>
+        </extra-includes>
+
+        <namespace-type name="BackendCapabilities" >
+           <inject-code class="native">
+            Phonon::BackendCapabilities::NotifierWrapper* Phonon::BackendCapabilities::NotifierWrapper::m_instance = 0;
+            Phonon::BackendCapabilities::Notifier* Phonon::BackendCapabilities::NotifierWrapper::m_notifier = 0;
+           </inject-code>
+
+           <add-function signature="notifier()" return-type="Phonon::BackendCapabilities::NotifierWrapper">
+              <inject-code class="target">
+                Phonon::BackendCapabilities::NotifierWrapper *_notifierWrapper =  Phonon::BackendCapabilities::NotifierWrapper::notifier();
+                %PYARG_0 = %CONVERTTOPYTHON[Phonon::BackendCapabilities::NotifierWrapper*](_notifierWrapper);
+              </inject-code>
+           </add-function>
+
+            <!-- ### causes moc-related linker error -->
+            <!-- <object-type name="Notifier"/> -->
+            <object-type name="NotifierWrapper" target-lang-name="Notifier">
+              <inject-documentation format="target" mode="append">
+.. class: Notifier
+
+   Notifications about backend capabilities
+
+.. method:: capabilitiesChanged()
+
+    This signal is emitted if the capabilities have changed. This can happen if the user has requested a backend change.
+
+.. method:: availableAudioOutputDevicesChanged()
+
+    This signal is emitted when audio capture devices were plugged or unplugged.
+
+    Check :meth:`PySide.phonon.BackendCapabilities.availableAudioOutputDevices` to get the current list of available devices.
+
+.. method:: availableAudioCaptureDevicesChanged()
+
+    This signal is emitted when audio capture devices were plugged or unplugged.
+
+    Check :meth:`PySide.phonon.BackendCapabilities.availableAudioCaptureDevices` to get the current list of available devices.
+              </inject-documentation>
+                <include file-name="backendcapabilities.h" location="global"/>
+                <include file-name="pyside_phonon.h" location="local"/>
+
+                <!-- ### This isn't part of Qt public API -->
+                <modify-function signature="notifier()" remove="all"/>
+                <modify-function signature="Phonon::BackendCapabilities::NotifierWrapper(Phonon::BackendCapabilities::Notifier*)">
+                  <access modifier="private"/>
+                </modify-function>
+                <!-- ### -->
+              <inject-code class="target" position="end">
+                   PySideSignal* signal_item;
+
+                   signal_item = PySide::Signal::newObject("capabilitiesChanged", "void", NULL);
+                   PyDict_SetItemString(Sbk_Phonon_BackendCapabilities_NotifierWrapper_Type.super.ht_type.tp_dict, "capabilitiesChanged", (PyObject*)signal_item);
+                   Py_DECREF((PyObject*)signal_item);
+
+                   signal_item = PySide::Signal::newObject("availableAudioOutputDevicesChanged", "void", NULL);
+                   PyDict_SetItemString( Sbk_Phonon_BackendCapabilities_NotifierWrapper_Type.super.ht_type.tp_dict, "availableAudioOutputDevicesChanged",  (PyObject*)signal_item);
+                   Py_DECREF((PyObject*)signal_item);
+              </inject-code>
+            </object-type>
+        </namespace-type>
+
+        <enum-type name="Category" />
+        <enum-type name="DiscType"/>
+        <enum-type name="ErrorType"/>
+        <enum-type name="MetaData"/>
+        <enum-type name="ObjectDescriptionType"/>
+        <enum-type name="State"/>
+        <enum-type name="CaptureCategory"/>
+
+        <object-type name="AbstractVideoOutput"/>
+        <object-type name="AddonInterface">
+            <enum-type name="AngleCommand"/>
+            <enum-type name="AudioChannelCommand"/>
+            <enum-type name="ChapterCommand"/>
+            <enum-type name="Interface"/>
+            <enum-type name="NavigationCommand"/>
+            <enum-type name="SubtitleCommand"/>
+            <enum-type name="TitleCommand"/>
+        </object-type>
+        <object-type name="BackendInterface">
+            <enum-type name="Class"/>
+        </object-type>
+        <object-type name="EffectInterface"/>
+        <object-type name="MediaNode"/>
+
+        <object-type name="MediaObjectInterface"/>
+        <object-type name="PlatformPlugin"/>
+        <object-type name="StreamInterface"/>
+        <object-type name="VideoWidgetInterface"/>
+        <object-type name="VolumeFaderInterface"/>
+
+        <value-type name="EffectParameter">
+            <enum-type name="Hint" flags="Hints"/>
+            <!-- ### Internal methods and ctors -->
+            <modify-function signature="EffectParameter()" remove="all"/>
+            <modify-function signature="operator&lt;(const Phonon::EffectParameter &amp;)const" remove="all"/>
+            <modify-function signature="operator&gt;(const Phonon::EffectParameter &amp;)const" remove="all"/>
+            <modify-function signature="id()const" remove="all"/>
+            <modify-function signature="operator==(Phonon::EffectParameter)const" remove="all"/>
+            <!-- ### -->
+        </value-type>
+        <value-type name="MediaSource">
+            <enum-type name="Type"/>
+        </value-type>
+        <value-type name="Path">
+            <modify-function signature="disconnect()" rename="disconnectPath"/>
+            <modify-function signature="insertEffect(Phonon::EffectDescription,Phonon::Effect*)">
+                <modify-argument index="1">
+                    <parent index="this" action="add"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="insertEffect(Phonon::Effect*,Phonon::Effect*)">
+                <modify-argument index="1">
+                    <parent index="this" action="add"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="removeEffect(Phonon::Effect*)">
+                <modify-argument index="1">
+                    <parent index="this" action="remove"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="sink() const">
+                <modify-argument index="return">
+                    <define-ownership class="target" owner="default"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="source() const">
+                <modify-argument index="return">
+                    <define-ownership class="target" owner="default"/>
+                </modify-argument>
+            </modify-function>
+        </value-type>
+        <value-type name="ObjectDescription" generate="no"/>
+        <value-type name="EffectDescription">
+            <modify-function signature="operator==(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::EffectDescription"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="operator!=(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::EffectDescription"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="fromIndex(int)">
+              <modify-argument index="return">
+                <replace-type modified-type="EffectDescription"/>
+              </modify-argument>
+            </modify-function>
+        </value-type>
+        <value-type name="AudioOutputDevice">
+            <modify-function signature="operator==(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::AudioOutputDevice"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="operator!=(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::AudioOutputDevice"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="fromIndex(int)">
+              <modify-argument index="return">
+                <replace-type modified-type="AudioOutputDevice"/>
+              </modify-argument>
+            </modify-function>
+        </value-type>
+       <value-type name="AudioCaptureDevice">
+            <modify-function signature="operator==(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::AudioCaptureDevice"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="operator!=(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::AudioCaptureDevice"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="fromIndex(int)">
+              <modify-argument index="return">
+                <replace-type modified-type="AudioCaptureDevice"/>
+              </modify-argument>
+            </modify-function>
+        </value-type>
+        <value-type name="AudioChannelDescription">
+            <modify-function signature="operator==(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::AudioChannelDescription"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="operator!=(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::AudioChannelDescription"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="fromIndex(int)">
+              <modify-argument index="return">
+                <replace-type modified-type="AudioChannelDescription"/>
+              </modify-argument>
+            </modify-function>
+        </value-type>
+        <value-type name="SubtitleDescription">
+            <modify-function signature="operator==(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::SubtitleDescription"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="operator!=(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::SubtitleDescription"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="fromIndex(int)">
+              <modify-argument index="return">
+                <replace-type modified-type="SubtitleDescription"/>
+              </modify-argument>
+            </modify-function>
+        </value-type>
+        <object-type name="ObjectDescriptionModel" generate="no"/>
+        <object-type name="EffectDescriptionModel" />
+        <object-type name="AudioOutputDeviceModel" />
+
+        <object-type name="AbstractAudioOutput"/>
+        <object-type name="AbstractMediaStream"/>
+        <object-type name="AudioOutput"/>
+        <object-type name="Effect"/>
+        <object-type name="EffectWidget"/>
+        <object-type name="MediaController">
+            <enum-type name="Feature" flags="Features"/>
+            <enum-type name="NavigationMenu"/>
+        </object-type>
+        <object-type name="MediaObject" />
+        <object-type name="SeekSlider">
+            <modify-function signature="setMediaObject(Phonon::MediaObject*)">
+                <modify-argument index="1">
+                    <parent index="this" action="add"/>
+                </modify-argument>
+            </modify-function>
+        </object-type>
+        <object-type name="VideoPlayer"/>
+        <object-type name="VideoWidget">
+            <enum-type name="AspectRatio"/>
+            <enum-type name="ScaleMode"/>
+        </object-type>
+        <object-type name="VolumeFaderEffect">
+            <enum-type name="FadeCurve"/>
+        </object-type>
+        <object-type name="VolumeSlider">
+            <modify-function signature="setAudioOutput(Phonon::AudioOutput*)">
+                <modify-argument index="1">
+                    <parent index="this" action="add"/>
+                </modify-argument>
+            </modify-function>
+        </object-type>
+
+        <!-- ### The following entries may be present in the system or not. Keep this section organized. -->
+        <value-type name="VideoCaptureDevice">
+            <modify-function signature="operator==(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::VideoCaptureDevice" />
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="operator!=(Phonon::ObjectDescription)const">
+                <modify-argument index="1">
+                    <replace-type modified-type="Phonon::VideoCaptureDevice"/>
+                </modify-argument>
+            </modify-function>
+            <modify-function signature="fromIndex(int)">
+              <modify-argument index="return">
+                <replace-type modified-type="VideoCaptureDevice"/>
+              </modify-argument>
+            </modify-function>
+        </value-type>
+        <!-- ### -->
+    </namespace-type>
+</typesystem>

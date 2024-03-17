@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtTest">
+  <load-typesystem name="typesystem_gui.xml" generate="no"/>
+
+  <rejection class="QTest" function-name="qCompare&lt;char&gt;"/>
+  <rejection class="QTest" function-name="qCompare&lt;char*&gt;"/>
+  <rejection class="QTest" function-name="qCompare&lt;double&gt;"/>
+  <rejection class="QTest" function-name="qCompare&lt;float&gt;"/>
+  <rejection class="QTest" function-name="qCompare&lt;double,qreal&gt;"/>
+  <rejection class="QTest" function-name="qCompare&lt;qreal,double&gt;"/>
+  <rejection class="QTest" function-name="qCompare"/>
+  <rejection class="QTest" function-name="qVerify"/>
+  <rejection class="QTest" function-name="qSleep"/>
+  <rejection class="QTest" function-name="toHexRepresentation"/>
+  <rejection class="QTest" function-name="qWait"/>
+  <rejection class="QTest" function-name="qFail"/>
+  <rejection class="QTest" function-name="qExec"/>
+  <rejection class="QTest" function-name="qData"/>
+  <rejection class="QTest" function-name="qWarn"/>
+  <rejection class="QTest" function-name="toString"/>
+  <rejection class="QTest" function-name="toString&lt;bool>"/>
+  <rejection class="QTest" function-name="toString&lt;char>"/>
+  <rejection class="QTest" function-name="toString&lt;double>"/>
+  <rejection class="QTest" function-name="toString&lt;float>"/>
+  <rejection class="QTest" function-name="toString&lt;int>"/>
+  <rejection class="QTest" function-name="toString&lt;long>"/>
+  <rejection class="QTest" function-name="toString&lt;qint64>"/>
+  <rejection class="QTest" function-name="toString&lt;quint64>"/>
+  <rejection class="QTest" function-name="toString&lt;short>"/>
+  <rejection class="QTest" function-name="toString&lt;uint>"/>
+  <rejection class="QTest" function-name="toString&lt;ulong>"/>
+  <rejection class="QTest" function-name="toString&lt;ushort>"/>
+  <rejection class="QTest" function-name="qt_snprintf"/>
+
+  <rejection class="QTest" function-name="compare_helper"/>
+  <rejection class="QTest" function-name="touchEvent"/>
+
+  <namespace-type name="QTest">
+    <enum-type name="AttributeIndex" since="4.6"/>
+    <enum-type name="KeyAction"/>
+    <enum-type name="LogElementType" since="4.6"/>
+    <enum-type name="MouseAction"/>
+    <enum-type name="QBenchmarkMetric" since="4.7"/>
+    <enum-type name="SkipMode"/>
+    <enum-type name="TestFailMode"/>
+    <extra-includes>
+        <include file-name="QtTest" location="global"/>
+    </extra-includes>
+    <!--<modify-function signature="qCompare<char>(char">-->
+    <rejection class="QTouchEventSequence"/>
+    <object-type name="PySideQTouchEventSequence" target-lang-name="QTouchEventSequence" since="4.6" >
+        <modify-function signature="press(int, const QPoint&amp;, QWidget*)">
+            <modify-argument index="return">
+                <define-ownership class="target" owner="default"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="move(int, const QPoint&amp;, QWidget*)">
+            <modify-argument index="return">
+                <define-ownership class="target" owner="default"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="release(int, const QPoint&amp;, QWidget*)">
+            <modify-argument index="return">
+                <define-ownership class="target" owner="default"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="stationary(int)">
+            <modify-argument index="return">
+                <define-ownership class="target" owner="default"/>
+            </modify-argument>
+        </modify-function>
+    </object-type>
+    <modify-function signature="generateTouchEvent(QWidget*, QTouchEvent::DeviceType)" rename="touchEvent" since="4.6">
+        <modify-argument index="return">
+            <define-ownership class="target" owner="target"/>
+        </modify-argument>
+    </modify-function>
+  </namespace-type>
+
+  <rejection class="QSignalSpy"/>
+  <rejection class="QTestEventList"/>
+</typesystem>

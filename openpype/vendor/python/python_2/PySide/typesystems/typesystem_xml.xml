@@ -1,0 +1,417 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtXml">
+    <load-typesystem name="typesystem_templates.xml" generate="no" />
+    <load-typesystem name="typesystem_core.xml" generate="no" />
+
+    <rejection class="QXmlAttributes::Attribute"/>
+    <rejection class="QDomNode" field-name="impl"/>
+    <rejection class="QXmlInputSource" field-name="EndOfData"/>
+    <rejection class="QXmlInputSource" field-name="EndOfDocument"/>
+
+    <value-type name="QDomAttr" />
+    <value-type name="QDomCDATASection" />
+    <value-type name="QDomCharacterData" />
+    <value-type name="QDomComment" />
+
+    <template name="qdomdocument_setcontent">
+    QString _errorMsg_;
+    int _errorLine_ = 0;
+    int _errorColumn_ = 0;
+    %BEGIN_ALLOW_THREADS
+    bool _ret_ = %CPPSELF.%FUNCTION_NAME(%ARGUMENT_NAMES, &amp;_errorMsg_, &amp;_errorLine_, &amp;_errorColumn_);
+    %END_ALLOW_THREADS
+    %PYARG_0 = PyTuple_New(4);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[bool](_ret_));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[QString](_errorMsg_));
+    PyTuple_SET_ITEM(%PYARG_0, 2, %CONVERTTOPYTHON[int](_errorLine_));
+    PyTuple_SET_ITEM(%PYARG_0, 3, %CONVERTTOPYTHON[int](_errorColumn_));
+    </template>
+
+    <value-type name="QDomDocument">
+        <!-- will be replaced in inject code -->
+        <modify-function signature="setContent(const QByteArray&amp;, bool, QString*, int*, int*)">
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="5">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+        <modify-function signature="setContent(const QString&amp;, bool, QString*, int*, int*)">
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="5">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+        <modify-function signature="setContent(QIODevice*, bool, QString*, int*, int*)">
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="5">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+        <modify-function signature="setContent(const QByteArray&amp;, QString*, int*, int*)">
+            <modify-argument index="2">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+        <modify-function signature="setContent(QIODevice*,QString*,int*,int*)">
+            <modify-argument index="2">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+        <modify-function signature="setContent(QXmlInputSource*,bool,QString*,int*,int*)">
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="5">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+        <modify-function signature="setContent(QXmlInputSource*,QXmlReader*,QString*,int*,int*)">
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="5">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+        <modify-function signature="setContent(const QString&amp;, QString*,int*,int*)">
+            <modify-argument index="2">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="3">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="4">
+                <remove-argument/>
+                <remove-default-expression/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(retval, errorMsg, errorLine, errorColumn)"/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="qdomdocument_setcontent" />
+            </inject-code>
+        </modify-function>
+    </value-type>
+
+    <value-type name="QDomDocumentFragment" />
+    <value-type name="QDomDocumentType" />
+    <value-type name="QDomEntity" />
+    <value-type name="QDomEntityReference" />
+    <value-type name="QDomImplementation">
+        <enum-type name="InvalidDataPolicy"/>
+    </value-type>
+
+    <value-type name="QDomNamedNodeMap" />
+
+    <value-type name="QDomNode">
+        <enum-type name="EncodingPolicy"/>
+        <enum-type name="NodeType"/>
+        <modify-function signature="save(QTextStream&amp;, int)const" allow-thread="yes"/>
+        <modify-function signature="save(QTextStream&amp;, int, QDomNode::EncodingPolicy)const" allow-thread="yes"/>
+    </value-type>
+
+    <value-type name="QDomNodeList" />
+    <value-type name="QDomNotation" />
+    <value-type name="QDomProcessingInstruction" />
+
+    <value-type name="QDomText" />
+
+    <object-type name="QXmlParseException"/>
+
+    <value-type name="QXmlAttributes"/>
+
+    <object-type name="QXmlNamespaceSupport"/>
+
+    <value-type name="QDomElement"/>
+
+    <object-type name="QXmlContentHandler">
+        <modify-function signature="setDocumentLocator(QXmlLocator*)">
+            <modify-argument index="1">
+                <define-ownership owner="c++"/>
+            </modify-argument>
+        </modify-function>
+    </object-type>
+    <object-type name="QXmlDTDHandler"/>
+    <object-type name="QXmlDeclHandler"/>
+    <object-type name="QXmlErrorHandler"/>
+    <object-type name="QXmlLexicalHandler"/>
+
+    <template name="QXmlEntityResolver_resolveEntity_return_conversion_native">
+        Shiboken::AutoDecRef  _py_ok_(PySequence_GetItem(%PYARG_0, 0));
+        Shiboken::AutoDecRef  _py_ret_(PySequence_GetItem(%PYARG_0, 1));
+        %RETURN_TYPE %out = %CONVERTTOCPP[%RETURN_TYPE](_py_ok_);
+        %3 = %CONVERTTOCPP[QXmlInputSource*](_py_ret_);
+    </template>
+
+    <object-type name="QXmlEntityResolver">
+        <modify-function signature="resolveEntity(const QString&amp;, const QString&amp;, QXmlInputSource*&amp;)">
+            <modify-argument index="3">
+                <remove-argument/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="PySequence"/>
+                <conversion-rule class="native">
+                    <insert-template name="QXmlEntityResolver_resolveEntity_return_conversion_native"/>
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class="target" position="end">
+            QXmlInputSource* _qxmlinputsource_arg_ = 0;
+            %BEGIN_ALLOW_THREADS
+            %RETURN_TYPE %0 = %CPPSELF.%FUNCTION_NAME(%1, %2, _qxmlinputsource_arg_);
+            %END_ALLOW_THREADS
+            %PYARG_0 = PyTuple_New(2);
+            PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](%0));
+            PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[QXmlInputSource*](_qxmlinputsource_arg_));
+            </inject-code>
+        </modify-function>
+    </object-type>
+    <object-type name="QXmlDefaultHandler">
+        <modify-function signature="setDocumentLocator(QXmlLocator*)">
+            <modify-argument index="1">
+                <define-ownership owner="c++"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="resolveEntity(const QString&amp;, const QString&amp;, QXmlInputSource*&amp;)">
+            <modify-argument index="3">
+                <remove-argument/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="PySequence"/>
+                <conversion-rule class="native">
+                    <insert-template name="QXmlEntityResolver_resolveEntity_return_conversion_native"/>
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class="target" position="end">
+            QXmlInputSource* _qxmlinputsource_arg_ = 0;
+            %BEGIN_ALLOW_THREADS
+            %RETURN_TYPE %0 = %CPPSELF.%TYPE::%FUNCTION_NAME(%1, %2, _qxmlinputsource_arg_);
+            %END_ALLOW_THREADS
+            %PYARG_0 = PyTuple_New(2);
+            PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](%0));
+            PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[QXmlInputSource*](_qxmlinputsource_arg_));
+            </inject-code>
+        </modify-function>
+    </object-type>
+    <object-type name="QXmlInputSource"/>
+    <object-type name="QXmlLocator"/>
+
+    <object-type name="QXmlReader">
+        <modify-function signature="parse(const QXmlInputSource*)">
+            <modify-argument index="1" invalidate-after-use="yes"/>
+        </modify-function>
+        <modify-function signature="feature(QString,bool*)const">
+            <modify-argument index="2">
+                <remove-default-expression/>
+                <remove-argument/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="PySequence" />
+                <conversion-rule class="native">
+                    <insert-template name="fix_virtual_method_return_value_and_bool*"/>
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="fix_args,bool*"/>
+            </inject-code>
+        </modify-function>
+        <modify-function signature="property(QString,bool*)const">
+            <modify-argument index="2">
+                <remove-default-expression/>
+                <remove-argument/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="PySequence" />
+                <conversion-rule class="native">
+                    <insert-template name="fix_virtual_method_return_value_and_bool*"/>
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="fix_args,bool*"/>
+            </inject-code>
+        </modify-function>
+    </object-type>
+    <object-type name="QXmlSimpleReader">
+        <modify-function signature="parse(const QXmlInputSource*,bool)">
+            <modify-argument index="1" invalidate-after-use="yes"/>
+        </modify-function>
+
+        <modify-function signature="setContentHandler(QXmlContentHandler*)">
+            <modify-argument index="1">
+                <parent index="this" action="add"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="setDTDHandler(QXmlDTDHandler*)">
+            <modify-argument index="1">
+                <parent index="this" action="add"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="setDeclHandler(QXmlDeclHandler*)">
+            <modify-argument index="1">
+                <parent index="this" action="add"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="setEntityResolver(QXmlEntityResolver*)">
+            <modify-argument index="1">
+                <parent index="this" action="add"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="setErrorHandler(QXmlErrorHandler*)">
+            <modify-argument index="1">
+                <parent index="this" action="add"/>
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="setLexicalHandler(QXmlLexicalHandler*)">
+            <modify-argument index="1">
+                <parent index="this" action="add"/>
+            </modify-argument>
+        </modify-function>
+
+        <modify-function signature="feature(QString,bool*)const">
+            <modify-argument index="2">
+                <remove-default-expression/>
+                <remove-argument/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="PySequence" />
+                <conversion-rule class="native">
+                    <insert-template name="fix_virtual_method_return_value_and_bool*"/>
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="fix_args,bool*"/>
+            </inject-code>
+        </modify-function>
+        <modify-function signature="property(QString,bool*)const">
+            <modify-argument index="2">
+                <remove-default-expression/>
+                <remove-argument/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="PySequence" />
+                <conversion-rule class="native">
+                    <insert-template name="fix_virtual_method_return_value_and_bool*"/>
+                </conversion-rule>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="fix_args,bool*"/>
+            </inject-code>
+        </modify-function>
+    </object-type>
+</typesystem>

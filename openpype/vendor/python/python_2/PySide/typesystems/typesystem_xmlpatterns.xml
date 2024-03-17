@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtXmlPatterns">
+    <load-typesystem name="typesystem_core.xml" generate="no"/>
+
+    <object-type name="QXmlSchema" since="4.6" /> <!-- Qt scoped pointer does not allow declare this as value type -->
+    <object-type name="QXmlSchemaValidator" since="4.6">
+      <modify-function signature="schema() const">
+        <modify-argument index="return">
+          <replace-type modified-type="QXmlSchema*"/>
+          <define-ownership owner="target"/>
+        </modify-argument>
+        <inject-code>
+          QXmlSchema* %0 = new QXmlSchema(%CPPSELF.schema());
+          %PYARG_0 = %CONVERTTOPYTHON[QXmlSchema*](%0);
+        </inject-code>
+      </modify-function>
+    </object-type>
+    <object-type name="QAbstractMessageHandler" />
+    <object-type name="QAbstractUriResolver" />
+    <object-type name="QAbstractXmlNodeModel">
+        <enum-type name="NodeCopySetting" />
+        <enum-type name="SimpleAxis" />
+    </object-type>
+    <object-type name="QAbstractXmlReceiver" />
+    <value-type name="QSourceLocation" />
+    <object-type name="QXmlFormatter" />
+    <value-type name="QXmlItem" />
+    <value-type name="QXmlName">
+        <!-- ### These methods aren't part of Qt public API -->
+        <modify-function signature="QXmlName(short, short, short)" remove="all" />
+        <modify-function signature="setNamespaceURI(short)" remove="all" />
+        <modify-function signature="localName()const" remove="all" />
+        <modify-function signature="prefix()const" remove="all" />
+        <modify-function signature="hasPrefix()const" remove="all" />
+        <modify-function signature="hasNamespace()const" remove="all" />
+        <modify-function signature="namespaceURI()const" remove="all" />
+        <modify-function signature="isLexicallyEqual(const QXmlName&amp;)const" remove="all" />
+        <modify-function signature="setPrefix(short)" remove="all" />
+        <modify-function signature="setLocalName(short)" remove="all" />
+        <modify-function signature="code()const" remove="all" />
+        <!-- ### -->
+    </value-type>
+    <value-type name="QXmlNamePool" />
+
+    <rejection class="QXmlNodeModelIndex" function-name="type" />
+    <rejection class="QXmlNodeModelIndex" function-name="sequencedTypedValue" />
+    <rejection class="QXmlNodeModelIndex" function-name="iterate" />
+    <!-- ### This enum isn't part of Qt public API -->
+    <suppress-warning text="enum 'QXmlNodeModelIndex::Axis' does not have a type entry or is not an enum"/>
+    <value-type name="QXmlNodeModelIndex">
+        <enum-type name="DocumentOrder" />
+        <enum-type name="NodeKind" />
+        <!-- ### Qt internal methods -->
+        <modify-function signature="name()const" remove="all" />
+        <modify-function signature="root()const" remove="all" />
+        <modify-function signature="documentUri()const" remove="all" />
+        <modify-function signature="baseUri()const" remove="all" />
+        <modify-function signature="kind()const" remove="all" />
+        <modify-function signature="isDeepEqual(const QXmlNodeModelIndex&amp;)const" remove="all" />
+        <modify-function signature="compareOrder(const QXmlNodeModelIndex &amp;)const" remove="all" />
+        <modify-function signature="sendNamespaces(QAbstractXmlReceiver *)const" remove="all" />
+        <modify-function signature="namespaceBindings()const" remove="all" />
+        <modify-function signature="namespaceForPrefix(short)const" remove="all" />
+        <modify-function signature="stringValue()const" remove="all" />
+        <modify-function signature="is(const QXmlNodeModelIndex &amp;)const" remove="all" />
+        <modify-function signature="reset()" remove="all" />
+        <!-- ### -->
+    </value-type>
+
+    <value-type name="QXmlQuery">
+        <!-- ### TODO: must evaluate if anything other than removal is needed. -->
+        <enum-type name="QueryLanguage" />
+        <modify-function signature="evaluateTo(QStringList*)const" remove="all" />
+        <modify-function signature="evaluateTo(QString*)const" remove="all" />
+        <!-- ### -->
+    </value-type>
+    <object-type name="QXmlResultItems" />
+    <object-type name="QXmlSerializer" />
+
+    <suppress-warning text="class 'QAbstractXmlNodeModel' inherits from unknown base class 'QSharedData'"/>
+    <suppress-warning text="class not found for setup inheritance 'QSharedData'"/>
+</typesystem>

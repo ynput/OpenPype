@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtSql">
+  <load-typesystem name="typesystem_gui.xml" generate="no"/>
+
+  <rejection class="QSqlDriverCreator"/>
+  <rejection class="QSqlDriverPlugin"/>
+  <rejection class="QSqlDriverFactoryInterface"/>
+
+  <namespace-type name="QSql">
+    <enum-type name="Location"/>
+    <enum-type name="ParamTypeFlag" flags="ParamType"/>
+    <enum-type name="TableType"/>
+    <enum-type name="NumericalPrecisionPolicy"/>
+    <extra-includes>
+        <include file-name="QtSql/qsql.h" location="global"/>
+    </extra-includes>
+  </namespace-type>
+
+  <value-type name="QSqlDatabase">
+    <extra-includes>
+        <include file-name="QSqlQuery" location="global"/>
+        <include file-name="QSqlError" location="global"/>
+        <include file-name="QSqlIndex" location="global"/>
+        <include file-name="QSqlRecord" location="global"/>
+        <include file-name="QStringList" location="global"/>
+        <include file-name="QSize" location="global"/>
+    </extra-includes>
+    <modify-function signature="exec(QString)const" rename="exec_" allow-thread="yes" />
+    <modify-function signature="open()" allow-thread="yes" />
+    <modify-function signature="open(const QString&amp;, const QString&amp;)" allow-thread="yes" />
+    <modify-function signature="commit()" allow-thread="yes" />
+    <modify-function signature="rollback()" allow-thread="yes" />
+    <modify-function signature="transaction()" allow-thread="yes" />
+    <modify-function signature="registerSqlDriver(const QString &amp;, QSqlDriverCreatorBase*)">
+      <modify-argument index="2">
+        <define-ownership owner="c++"/>
+      </modify-argument>
+    </modify-function>
+  </value-type>
+
+  <value-type name="QSqlQuery">
+    <enum-type name="BatchExecutionMode"/>
+    <extra-includes>
+        <include file-name="QSqlError" location="global"/>
+        <include file-name="QSqlRecord" location="global"/>
+        <include file-name="QStringList" location="global"/>
+        <include file-name="QSize" location="global"/>
+    </extra-includes>
+    <modify-function signature="exec()" rename="exec_" allow-thread="yes" />
+    <modify-function signature="exec(const QString &amp;)" rename="exec_" allow-thread="yes" />
+    <modify-function signature="prepare(const QString&amp;)" allow-thread="yes" />
+    <modify-function signature="clear()" allow-thread="yes" />
+    <modify-function signature="last()" allow-thread="yes" />
+    <modify-function signature="first()" allow-thread="yes" />
+    <modify-function signature="previous()" allow-thread="yes" />
+    <modify-function signature="next()" allow-thread="yes" />
+    <modify-function signature="seek(int,bool)" allow-thread="yes" />
+  </value-type>
+
+  <value-type name="QSqlRecord">
+    <extra-includes>
+        <include file-name="QSqlField" location="global"/>
+    </extra-includes>
+    <modify-function signature="append(QSqlField)" access="non-final"/>
+  </value-type>
+
+  <value-type name="QSqlError">
+    <enum-type name="ErrorType"/>
+  </value-type>
+
+  <value-type name="QSqlIndex" />
+
+  <value-type name="QSqlRelation"/>
+
+  <object-type name="QSqlRelationalDelegate"/>
+
+  <value-type name="QSqlField">
+      <enum-type name="RequiredStatus"/>
+  </value-type>
+
+  <object-type name="QSqlDriver">
+    <enum-type name="DriverFeature"/>
+    <enum-type name="IdentifierType"/>
+    <enum-type name="StatementType"/>
+    <extra-includes>
+        <include file-name="QSqlQuery" location="global"/>
+        <include file-name="QSqlError" location="global"/>
+        <include file-name="QSqlIndex" location="global"/>
+        <include file-name="QSqlRecord" location="global"/>
+        <include file-name="QStringList" location="global"/>
+        <include file-name="QSize" location="global"/>
+    </extra-includes>
+    <modify-function signature="beginTransaction()" allow-thread="yes" />
+    <modify-function signature="commitTransaction()" allow-thread="yes" />
+    <modify-function signature="rollbackTransaction()" allow-thread="yes" />
+    <modify-function signature="open(const QString &amp;, const QString&amp;, const QString&amp;, const QString&amp;, int, const QString&amp;)" allow-thread="yes" />
+    <!-- ### This is too low level for Python, and pointer would be useless for the Python programmer -->
+    <modify-function signature="handle() const" remove="all"/>
+    <!-- ### -->
+  </object-type>
+
+  <object-type name="QSqlQueryModel">
+    <modify-function signature="indexInQuery(QModelIndex)const" access="non-final"/>
+    <modify-function signature="setQuery(QSqlQuery)" access="non-final"/>
+    <extra-includes>
+        <include file-name="QSqlError" location="global"/>
+        <include file-name="QSqlQuery" location="global"/>
+        <include file-name="QSqlRecord" location="global"/>
+        <include file-name="QStringList" location="global"/>
+        <include file-name="QSize" location="global"/>
+    </extra-includes>
+  </object-type>
+  <object-type name="QSqlRelationalTableModel">
+    <extra-includes>
+        <include file-name="QStringList" location="global"/>
+        <include file-name="QSize" location="global"/>
+    </extra-includes>
+  </object-type>
+  <object-type name="QSqlResult">
+      <enum-type name="BindingSyntax"/>
+      <enum-type name="VirtualHookOperation"/>
+      <extra-includes>
+        <include file-name="QSqlError" location="global"/>
+        <include file-name="QSqlQuery" location="global"/>
+        <include file-name="QSqlRecord" location="global"/>
+        <include file-name="QStringList" location="global"/>
+        <include file-name="QSize" location="global"/>
+      </extra-includes>
+      <!-- ### This isn't part of Qt public API -->
+      <modify-function signature="virtual_hook(int,void*)" remove="all" />
+      <!-- ### -->
+      <modify-function signature="exec()" rename="exec_" allow-thread="yes" />
+      <modify-function signature="fetchLast()" allow-thread="yes" />
+      <modify-function signature="fetchFirst()" allow-thread="yes" />
+      <modify-function signature="fetchNext()" allow-thread="yes" />
+      <modify-function signature="fetchPrevious()" allow-thread="yes" />
+      <modify-function signature="fetch(int)" allow-thread="yes" />
+      <modify-function signature="prepare(QString)" allow-thread="yes" />
+  </object-type>
+  <object-type name="QSqlTableModel">
+    <enum-type name="EditStrategy"/>
+    <extra-includes>
+        <include file-name="QSqlIndex" location="global"/>
+        <include file-name="QStringList" location="global"/>
+        <include file-name="QSize" location="global"/>
+    </extra-includes>
+  </object-type>
+  <object-type name="QSqlDriverCreatorBase">
+    <extra-includes>
+        <include file-name="QSqlDriver" location="global"/>
+    </extra-includes>
+  </object-type>
+
+</typesystem>

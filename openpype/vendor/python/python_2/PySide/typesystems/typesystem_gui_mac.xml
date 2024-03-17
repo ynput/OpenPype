@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtGui">
+  <rejection class="*" function-name="qt_mac_set_cursor"/>
+  <rejection class="*" function-name="macMenu"/>
+
+  <primitive-type name="Qt::HANDLE" target-lang-api-name="PyObject"/>
+  <object-type name="QMacStyle" >
+    <enum-type name="FocusRectPolicy"/>
+    <enum-type name="WidgetSizePolicy"/>
+  </object-type>
+
+  <suppress-warning text="enum 'QPixmap::ShareMode' does not have a type entry or is not an enum" />
+  <suppress-warning text="enum 'QSysInfo::Endian' is specified in typesystem, but not declared" />
+  <suppress-warning text="type 'QGtkStyle' is specified in typesystem, but not defined. This could potentially lead to compilation errors." />
+</typesystem>

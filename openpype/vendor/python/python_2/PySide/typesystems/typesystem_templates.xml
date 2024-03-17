@@ -1,0 +1,446 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem>
+    <template name="replace_child">
+        $CHILD_TYPE* oldChild = %CPPSELF.$FUNCTION_GET_OLD();
+        if (oldChild &amp;&amp; (oldChild != $CPPARG)) {
+            Shiboken::AutoDecRef pyChild(%CONVERTTOPYTHON[$CHILD_TYPE*](oldChild));
+            Shiboken::Object::setParent(0, pyChild);
+            Shiboken::Object::releaseOwnership(pyChild);
+        }
+        Shiboken::Object::setParent(%PYSELF, $PYARG);
+    </template>
+
+    <!-- Templates to fix bool* parameters -->
+    <template name="tuple_retval_ok">
+    %PYARG_0 = PyTuple_New(2);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](retval_));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[bool](ok_));
+    </template>
+    <template name="fix_bool*">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(&amp;ok_);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_args,bool*">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(%ARGUMENT_NAMES, &amp;ok_);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_arg,bool*,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(%1, &amp;ok_, %3);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_bool*,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(&amp;ok_, %2);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_bool*,arg,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(&amp;ok_, %2, %3);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_bool*,arg,arg,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(&amp;ok_, %2, %3, %4);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_bool*,arg,arg,arg,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(&amp;ok_, %2, %3, %4, %5);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_arg,arg,arg,arg,arg,arg,arg,bool*,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(%1, %2, %3, %4, %5, %6, %7, &amp;ok_, %9);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_arg,arg,arg,arg,arg,arg,bool*,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(%1, %2, %3, %4, %5, %6, &amp;ok_, %8);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="fix_arg,arg,arg,arg,arg,bool*,arg">
+        bool ok_;
+        %BEGIN_ALLOW_THREADS
+        %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(%1, %2, %3, %4, %5, &amp;ok_, %7);
+        %END_ALLOW_THREADS
+        <insert-template name="tuple_retval_ok"/>
+    </template>
+    <template name="get_slice">
+        %TYPE* sequence;
+        Py_ssize_t start, end;
+        Py_ssize_t len = %CPPSELF->count();
+
+        if (_i1 &gt; len)
+            start = len;
+        else if (_i1 &lt; 0)
+            start = 0;
+        else
+            start = _i1;
+
+        if (_i2 &gt; len)
+            end = len;
+        else if (_i2 &lt; 0)
+           end = 0;
+        else
+           end = _i2;
+
+        sequence = new %TYPE();
+        for (Py_ssize_t i = start; i &lt; end; i++)
+            sequence->append(%CPPSELF->at(i));
+
+        return %CONVERTTOPYTHON[%TYPE](*sequence);
+    </template>
+
+    <template name="fix_args,QRectF*">
+        QRectF rect_;
+        %BEGIN_ALLOW_THREADS
+        %CPPSELF.%FUNCTION_NAME(%ARGUMENT_NAMES, &amp;rect_);
+        %END_ALLOW_THREADS
+        %PYARG_0 = %CONVERTTOPYTHON[QRectF](rect_);
+    </template>
+
+    <template name="fix_args,QRect*">
+        QRect rect_;
+        %BEGIN_ALLOW_THREADS
+        %CPPSELF.%FUNCTION_NAME(%ARGUMENT_NAMES, &amp;rect_);
+        %END_ALLOW_THREADS
+        %PYARG_0 = %CONVERTTOPYTHON[QRect](rect_);
+    </template>
+
+    <template name="fix_char*">
+    char val_;
+    %BEGIN_ALLOW_THREADS
+    %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(&amp;val_);
+    %END_ALLOW_THREADS
+    %PYARG_0 = PyTuple_New(2);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](retval_));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[char](val_));
+    </template>
+
+    <template name="tuple_abcd_same_type">
+    %PYARG_0 = PyTuple_New(4);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[$TYPE](a));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[$TYPE](b));
+    PyTuple_SET_ITEM(%PYARG_0, 2, %CONVERTTOPYTHON[$TYPE](c));
+    PyTuple_SET_ITEM(%PYARG_0, 3, %CONVERTTOPYTHON[$TYPE](d));
+    </template>
+    <template name="fix_number*,number*,number*,number*">
+    $TYPE a, b, c, d;
+    %BEGIN_ALLOW_THREADS
+    %CPPSELF->::%TYPE::%FUNCTION_NAME(&amp;a, &amp;b, &amp;c, &amp;d);
+    %END_ALLOW_THREADS
+    <insert-template name="tuple_abcd_same_type"/>
+    </template>
+    <template name="fix_number*,number*,number*,number*,args">
+    $TYPE a, b, c, d;
+    %BEGIN_ALLOW_THREADS
+    %CPPSELF->::%TYPE::%FUNCTION_NAME(&amp;a, &amp;b, &amp;c, &amp;d, %ARGUMENT_NAMES);
+    %END_ALLOW_THREADS
+    <insert-template name="tuple_abcd_same_type"/>
+    </template>
+
+    <template name="fix_native_return_number*,number*,number*,number*">
+        PyObject* _obj = %PYARG_0.object();
+        if (!PySequence_Check(_obj)
+            || PySequence_Fast_GET_SIZE(_obj) != 4
+            || !SbkNumber_Check(PySequence_Fast_GET_ITEM(_obj, 0))
+            || !SbkNumber_Check(PySequence_Fast_GET_ITEM(_obj, 1))
+            || !SbkNumber_Check(PySequence_Fast_GET_ITEM(_obj, 2))
+            || !SbkNumber_Check(PySequence_Fast_GET_ITEM(_obj, 3))) {
+            PyErr_SetString(PyExc_TypeError, "Sequence of 4 numbers expected");
+        } else {
+            *%1 = %CONVERTTOCPP[$TYPE](PySequence_Fast_GET_ITEM(_obj, 0));
+            *%2 = %CONVERTTOCPP[$TYPE](PySequence_Fast_GET_ITEM(_obj, 1));
+            *%3 = %CONVERTTOCPP[$TYPE](PySequence_Fast_GET_ITEM(_obj, 2));
+            *%4 = %CONVERTTOCPP[$TYPE](PySequence_Fast_GET_ITEM(_obj, 3));
+        }
+    </template>
+
+    <template name="fix_number*,number*,number*,number*,number*">
+    $TYPE a, b, c, d, e;
+    %BEGIN_ALLOW_THREADS
+    %CPPSELF.%FUNCTION_NAME(&amp;a, &amp;b, &amp;c, &amp;d, &amp;e);
+    %END_ALLOW_THREADS
+    %PYARG_0 = PyTuple_New(5);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[$TYPE](a));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[$TYPE](b));
+    PyTuple_SET_ITEM(%PYARG_0, 2, %CONVERTTOPYTHON[$TYPE](c));
+    PyTuple_SET_ITEM(%PYARG_0, 3, %CONVERTTOPYTHON[$TYPE](d));
+    PyTuple_SET_ITEM(%PYARG_0, 4, %CONVERTTOPYTHON[$TYPE](e));
+    </template>
+
+    <template name="read_wrapper">
+        Shiboken::AutoArrayPointer&lt;char&gt; _data(%2);
+        qint64 _size = %CPPSELF.%FUNCTION_NAME(_data, %2);
+        QByteArray ba;
+        if (_size > 0)
+            ba = QByteArray(_data, _size);
+        %PYARG_0 = %CONVERTTOPYTHON[QByteArray](ba);
+    </template>
+
+    <template name="fix_args,number*,number*">
+    $TYPE a, b;
+    %BEGIN_ALLOW_THREADS
+    %CPPSELF.%FUNCTION_NAME(%ARGUMENT_NAMES, &amp;a, &amp;b);
+    %END_ALLOW_THREADS
+    %PYARG_0 = PyTuple_New(2);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[$TYPE](a));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[$TYPE](b));
+    </template>
+
+    <template name="fix_virtual_method_return_value_and_bool*">
+        Shiboken::AutoDecRef _py_ret_(PySequence_GetItem(%PYARG_0, 0));
+        Shiboken::AutoDecRef _py_ok_(PySequence_GetItem(%PYARG_0, 1));
+        %RETURN_TYPE %out = %CONVERTTOCPP[%RETURN_TYPE](_py_ret_);
+        *%2 = %CONVERTTOCPP[bool](_py_ok_);
+    </template>
+
+    <template name="fix_arg,int*,int*">
+    %RETURN_TYPE _ret;
+    int a, b;
+    %BEGIN_ALLOW_THREADS
+    _ret = %CPPSELF.%FUNCTION_NAME(%1, &amp;a, &amp;b);
+    %END_ALLOW_THREADS
+    %PYARG_0 = PyTuple_New(3);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](_ret));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[int](a));
+    PyTuple_SET_ITEM(%PYARG_0, 2, %CONVERTTOPYTHON[int](b));
+    </template>
+
+    <template name="return_QString">
+        %PYARG_0 = %CONVERTTOPYTHON[QString](%1);
+    </template>
+
+    <template name="return_tuple_QValidator_QString_int">
+    %BEGIN_ALLOW_THREADS
+    %RETURN_TYPE retval_ = %RETURN_TYPE(%CPPSELF.%FUNCTION_NAME(%1, %2));
+    %END_ALLOW_THREADS
+    %PYARG_0 = PyTuple_New(3);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](retval_));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[%ARG1_TYPE](%1));
+    PyTuple_SET_ITEM(%PYARG_0, 2, %CONVERTTOPYTHON[%ARG2_TYPE](%2));
+    </template>
+
+    <template name="return_for_QFileDialog">
+    %BEGIN_ALLOW_THREADS
+    %RETURN_TYPE retval_ = %CPPSELF.%FUNCTION_NAME(%1, %2, %3, %4, &amp;%5, %6);
+    %END_ALLOW_THREADS
+    %PYARG_0 = PyTuple_New(2);
+    PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](retval_));
+    PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[%ARG5_TYPE](%5));
+    </template>
+    <template name="set_qapp_parent_for_orphan">
+        if (%PYARG_0 &amp;&amp; (%PYARG_0 != Py_None)) {
+            SbkObject* _pySelf = reinterpret_cast&lt;SbkObject*&gt;(%PYARG_0);
+            if (!Shiboken::Object::hasParentInfo(_pySelf))
+                Shiboken::Object::setParent(%CONVERTTOPYTHON[QApplication*](qApp), %PYARG_0);
+        }
+    </template>
+    <!-- templates for __repr__ -->
+    <template name="repr_code">
+        QString format = QString().sprintf("%s(%REPR_FORMAT)", ((PyObject*)%PYSELF)->ob_type->tp_name, %REPR_ARGS);
+        %PYARG_0 = Shiboken::String::fromCString(qPrintable(format));
+    </template>
+    <template name="repr_code_matrix">
+        QString format= QString("%1((").arg(((PyObject*)%PYSELF)->ob_type->tp_name);
+
+        QList&lt; %MATRIX_TYPE &gt; cppArgs;
+        %MATRIX_TYPE data[%MATRIX_SIZE];
+        %CPPSELF.copyDataTo(data);
+        int matrixSize = %MATRIX_SIZE;
+        for(int size=0; size &lt; matrixSize; size++) {
+            if (size > 0)
+                format += ", ";
+            format += QString::number(data[size]);
+        }
+        format += "))";
+
+        %PYARG_0 = Shiboken::String::fromCString(qPrintable(format));
+    </template>
+
+    <template name="return_internal_pointer">
+        %PYARG_0 = reinterpret_cast&lt;PyObject*>(%CPPSELF.%FUNCTION_NAME());
+        if (!%PYARG_0)
+            %PYARG_0 = Py_None;
+        Py_INCREF(%PYARG_0);
+    </template>
+
+    <!-- templates for __reduce__ -->
+    <template name="reduce_code">
+        %PYARG_0 = Py_BuildValue("(N(%REDUCE_FORMAT))", PyObject_Type(%PYSELF), %REDUCE_ARGS);
+    </template>
+    <template name="reduce_code_matrix">
+        QList&lt; %MATRIX_TYPE &gt; cppArgs;
+        %MATRIX_TYPE data[%MATRIX_SIZE];
+        %CPPSELF.copyDataTo(data);
+        int matrixSize = %MATRIX_SIZE;
+        for(int size=0; size &lt; matrixSize; size++)
+            cppArgs.append(data[size]);
+
+        PyObject *type = PyObject_Type(%PYSELF);
+        PyObject *args = Py_BuildValue("(N)", %CONVERTTOPYTHON[QList&lt;%MATRIX_TYPE&gt; ](cppArgs));
+        %PYARG_0 = Py_BuildValue("(NN)", type, args);
+    </template>
+
+    <!-- Matrix Aux functions -->
+    <template name="matrix_constructor">
+        if (PySequence_Size(%PYARG_1) == %SIZE) {
+            Shiboken::AutoDecRef fast(PySequence_Fast(%PYARG_1, "Failed to parse sequence on %TYPE constructor."));
+            qreal values[%SIZE];
+            for(int i=0; i &lt; %SIZE; i++) {
+                PyObject *pv = PySequence_Fast_GET_ITEM(fast.object(), i);
+                values[i] = %CONVERTTOCPP[qreal](pv);
+            }
+            %0 = new %TYPE(values);
+        }
+    </template>
+
+    <template name="matrix_data_function">
+        const qreal* data = %CPPSELF.constData();
+        PyObject *pyData = PyTuple_New(%MATRIX_SIZE);
+        if (data) {
+            for(int i=0; i &lt; %MATRIX_SIZE; i++)
+                PyTuple_SET_ITEM(pyData, i, %CONVERTTOPYTHON[qreal](data[i]));
+        }
+        return pyData;
+    </template>
+
+    <template name="matrix_fill_function">
+        qreal value = %CONVERTTOCPP[qreal](%PYARG_1);
+        %CPPSELF.fill(value);
+    </template>
+
+    <template name="matrix_transposed_function">
+        %TRANSPOSED_TYPE transp = %CPPSELF.transposed();
+        return %CONVERTTOPYTHON[%TRANSPOSED_TYPE](transp);
+    </template>
+
+    <!-- Replace '#' for the argument number you want. -->
+    <template name="return_argument">
+        Py_INCREF(%PYARG_#);
+        %PYARG_0 = %PYARG_#;
+    </template>
+
+    <!-- Iterator -->
+    <template name="__iter__">
+        Py_INCREF(%PYSELF);
+        %PYARG_0 = %PYSELF;
+    </template>
+
+    <template name="__iter_parent__">
+        %CPPSELF_TYPE _tmp = %CPPSELF.begin();
+        %PYARG_0 = %CONVERTTOPYTHON[%CPPSELF_TYPE](_tmp);
+    </template>
+
+    <template name="__next__">
+        if (!%CPPSELF.atEnd()) {
+            %PYARG_0 = %CONVERTTOPYTHON[%CPPSELF_TYPE](*%CPPSELF);
+            ++(*%CPPSELF);
+        }
+    </template>
+
+    <template name="convertFromMultiMap">
+        %RETURN_NAME = PyDict_New();
+        foreach(%KEY_TYPE _key, %MAP_NAME.keys()) {
+            Shiboken::AutoDecRef _pyValueList(PyList_New(0));
+            foreach(%VALUE_TYPE _value, %MAP_NAME.values(_key)) {
+                Shiboken::AutoDecRef _pyValue(%CONVERTTOPYTHON[%VALUE_TYPE](_value));
+                PyList_Append(_pyValueList, _pyValue);
+            }
+
+            Shiboken::AutoDecRef _pyKey(%CONVERTTOPYTHON[%KEY_TYPE](_key));
+            PyDict_SetItem(%RETURN_NAME, _pyKey, _pyValueList);
+        }
+    </template>
+
+    <template name="to_tuple">
+        %PYARG_0 = Py_BuildValue("%TT_FORMAT", %TT_ARGS);
+    </template>
+
+    <template name="cpplist_to_pylist_conversion">
+    PyObject* %out = PyList_New((int) %in.size());
+    %INTYPE::const_iterator it = %in.begin();
+    for (int idx = 0; it != %in.end(); ++it, ++idx) {
+        %INTYPE_0 cppItem(*it);
+        PyList_SET_ITEM(%out, idx, %CONVERTTOPYTHON[%INTYPE_0](cppItem));
+    }
+    return %out;
+    </template>
+    <template name="pyseq_to_cpplist_conversion">
+    for (int i = 0; i &lt; PySequence_Size(%in); i++) {
+        Shiboken::AutoDecRef pyItem(PySequence_GetItem(%in, i));
+        %OUTTYPE_0 cppItem = %CONVERTTOCPP[%OUTTYPE_0](pyItem);
+        %out &lt;&lt; cppItem;
+    }
+    </template>
+    <template name="cppvector_to_pylist_conversion">
+    %INTYPE::size_type vectorSize = %in.size();
+    PyObject* %out = PyList_New((int) vectorSize);
+    for (%INTYPE::size_type idx = 0; idx &lt; vectorSize; ++idx) {
+        %INTYPE_0 cppItem(%in[idx]);
+        PyList_SET_ITEM(%out, idx, %CONVERTTOPYTHON[%INTYPE_0](cppItem));
+    }
+    return %out;
+    </template>
+    <template name="pyseq_to_cppvector_conversion">
+    int vectorSize = PySequence_Size(%in);
+    %out.reserve(vectorSize);
+    for (int idx = 0; idx &lt; vectorSize; ++idx) {
+        Shiboken::AutoDecRef pyItem(PySequence_GetItem(%in, idx));
+        %OUTTYPE_0 cppItem = %CONVERTTOCPP[%OUTTYPE_0](pyItem);
+        %out.push_back(cppItem);
+    }
+    </template>
+
+    <template name="checkPyCapsuleOrPyCObject_func">
+    static bool checkPyCapsuleOrPyCObject(PyObject* pyObj)
+    {
+        #ifdef IS_PY3K
+        return PyCapsule_CheckExact(pyObj);
+        #else
+        return PyCObject_Check(pyObj);
+        #endif
+    }
+    </template>
+
+</typesystem>

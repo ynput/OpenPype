@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtScript">
+    <load-typesystem name="typesystem_core.xml" generate="no" />
+
+    <object-type name="QScriptable"/>
+    <object-type name="QScriptClass">
+        <enum-type name="Extension"/>
+        <enum-type name="QueryFlag"/>
+    </object-type>
+    <object-type name="QScriptClassPropertyIterator"/>
+    <object-type name="QScriptContext">
+        <enum-type name="Error"/>
+        <enum-type name="ExecutionState"/>
+    </object-type>
+    <value-type name="QScriptContextInfo">
+        <enum-type name="FunctionType"/>
+    </value-type>
+    <object-type name="QScriptEngineAgent">
+        <enum-type name="Extension"/>
+    </object-type>
+    <object-type name="QScriptEngine">
+        <enum-type name="QObjectWrapOption" flags="QObjectWrapOptions"/>
+        <enum-type name="ValueOwnership"/>
+        <!-- Not supported BUG #957-->
+        <modify-function signature="scriptValueFromQMetaObject()" remove="all" />
+    </object-type>
+    <object-type name="QScriptExtensionInterface"/>
+    <object-type name="QScriptExtensionPlugin"/>
+    <value-type name="QScriptProgram" since="4.7"/>
+    <value-type name="QScriptString">
+        <modify-function signature="toArrayIndex(bool*)const">
+            <modify-argument index="1">
+                <remove-argument/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="fix_bool*"/>
+            </inject-code>
+        </modify-function>
+    </value-type>
+    <value-type name="QScriptValue">
+        <enum-type name="PropertyFlag" flags="PropertyFlags"/>
+        <enum-type name="ResolveFlag" flags="ResolveFlags"/>
+        <enum-type name="SpecialValue"/>
+        <add-function signature="__repr__" return-type="PyObject*">
+            <inject-code class="target" position="beginning">
+                if (%CPPSELF.isVariant() || %CPPSELF.isString()) {
+                    QString format = QString().sprintf("%s(\"%s\")", ((PyObject*)%PYSELF)->ob_type->tp_name, qPrintable(%CPPSELF.toString()));
+                    %PYARG_0 = Shiboken::String::fromCString(qPrintable(format));
+                 } else {
+                    %PYARG_0 = Shiboken::String::fromCString(
+                                    ((PyObject* )%PYSELF)->ob_type->tp_name);
+                }
+            </inject-code>
+        </add-function>
+        <add-function signature="__mgetitem__">
+            <inject-code>
+                Shiboken::AutoDecRef key(PyObject_Str(_key));
+                QVariant res = %CPPSELF.property(Shiboken::String::toCString(key.object())).toVariant();
+                if (res.isValid()) {
+                    return %CONVERTTOPYTHON[QVariant](res);
+                } else {
+                    PyObject* errorType = PyInt_Check(_key) ? PyExc_IndexError : PyExc_KeyError;
+                    PyErr_SetString(errorType, "Key not found.");
+                    return 0;
+                }
+            </inject-code>
+        </add-function>
+        <add-function signature="__iter__()" return-type="PyObject*">
+            <inject-code>
+                %PYARG_0 = Shiboken::createWrapper(new QScriptValueIterator(*%CPPSELF), true, true);
+            </inject-code>
+        </add-function>
+    </value-type>
+    <object-type name="QScriptValueIterator">
+        <add-function signature="__iter__()" return-type="PyObject*">
+            <inject-code>
+                <insert-template name="__iter__" />
+            </inject-code>
+        </add-function>
+        <add-function signature="__next__()" return-type="PyObject*">
+            <inject-code>
+            if (%CPPSELF.hasNext()) {
+                %CPPSELF.next();
+                QString name = %CPPSELF.name();
+                QVariant value = %CPPSELF.value().toVariant();
+                %PYARG_0 = PyTuple_New(2);
+                PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[QString](name));
+                PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[QVariant](value));
+            } else {
+                PyErr_SetNone(PyExc_StopIteration);
+            }
+            </inject-code>
+        </add-function>
+    </object-type>
+</typesystem>

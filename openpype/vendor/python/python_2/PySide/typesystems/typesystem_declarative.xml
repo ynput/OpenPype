@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtDeclarative">
+    <load-typesystem name="typesystem_core.xml" generate="no"/>
+    <load-typesystem name="typesystem_network.xml" generate="no"/>
+    <load-typesystem name="typesystem_gui.xml" generate="no"/>
+
+    <add-function signature="qmlRegisterType(PyTypeObject, const char*, int, int, const char*)" return-type="int">
+        <inject-documentation format="target" mode="append">
+            This function registers the Python type in the QML system with the name qmlName, in the library imported from uri having the version number composed from versionMajor and versionMinor.
+            Returns the QML type id.
+
+            For example, this registers a Python class MySliderItem as a QML type named Slider for version 1.0 of a module called "com.mycompany.qmlcomponents":
+
+            ::
+
+                qmlRegisterType(MySliderItem, "com.mycompany.qmlcomponents", 1, 0, "Slider")
+
+            Once this is registered, the type can be used in QML by importing the specified module name and version number:
+
+            ::
+
+                import com.mycompany.qmlcomponents 1.0
+
+                Slider { ... }
+
+            Note that it's perfectly reasonable for a library to register types to older versions than the actual version of the library. Indeed, it is normal for the new library to allow QML written to previous versions to continue to work, even if more advanced versions of some of its types are available.
+        </inject-documentation>
+
+        <inject-code class="target">
+        int %0 = PySide::qmlRegisterType(%ARGUMENT_NAMES);
+        %PYARG_0 = %CONVERTTOPYTHON[int](%0);
+        </inject-code>
+    </add-function>
+
+    <enum-type identified-by-value="QML_HAS_ATTACHED_PROPERTIES" since="4.7">
+        <extra-includes>
+            <include file-name="QtDeclarative" location="global"/>
+            <!-- FIXME The include tag doesn't work on modules -->
+            <include file-name="pysideqmlregistertype.h" location="local"/>
+        </extra-includes>
+    </enum-type>
+
+    <inject-code class="target" position="end">
+    PySide::initQmlSupport(module);
+    </inject-code>
+
+    <object-type name="QDeclarativeExtensionInterface"/>
+    <object-type name="QDeclarativeComponent">
+        <enum-type name="Status"/>
+        <!-- This ctor isn't part of Qt public API -->
+        <modify-function signature="QDeclarativeComponent(QObject*)" remove="all" />
+    </object-type>
+    <object-type name="QDeclarativeContext">
+      <modify-function signature="setContextProperty(const QString &amp;, QObject*)">
+      <inject-code class="target" position="end">
+        QByteArray key("%FUNCTION_NAME_");
+        key.append(%1.toLocal8Bit());
+        Shiboken::Object::keepReference(reinterpret_cast&lt;SbkObject*&gt;(%PYSELF), key.constData(),  %PYARG_2);
+      </inject-code>
+      </modify-function>
+    </object-type>
+
+    <object-type name="QDeclarativeEngine">
+        <enum-type name="ObjectOwnership" />
+        <modify-function signature="QDeclarativeEngine(QObject*)">
+            <modify-argument index="1">
+                <rename to="parent" /> <!-- Qt names this just p -->
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="setNetworkAccessManagerFactory(QDeclarativeNetworkAccessManagerFactory*)">
+            <modify-argument index="1">
+                <parent index="this" action="add" />
+            </modify-argument>
+        </modify-function>
+        <modify-function signature="importPlugin(QString,QString,QString*)">
+            <modify-argument index="3">
+                <remove-argument/>
+            </modify-argument>
+            <modify-argument index="return">
+                <replace-type modified-type="(ok, errorString)" />
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+            QString errorString;
+            %BEGIN_ALLOW_THREADS
+            %RETURN_TYPE ok_ = %CPPSELF.%FUNCTION_NAME(%1, %2, &amp;errorString);
+            %END_ALLOW_THREADS
+            %PYARG_0 = PyTuple_New(2);
+            PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](ok_));
+            PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[QString](errorString));
+            </inject-code>
+        </modify-function>
+    </object-type>
+    <value-type name="QDeclarativeError" />
+    <object-type name="QDeclarativeExpression">
+        <modify-function signature="evaluate(bool*)">
+            <modify-argument index="1">
+                <remove-argument/>
+            </modify-argument>
+            <inject-code class="target" position="beginning">
+                <insert-template name="fix_bool*"/>
+            </inject-code>
+        </modify-function>
+    </object-type>
+    <object-type name="QDeclarativeExtensionPlugin" />
+    <object-type name="QDeclarativeImageProvider">
+        <enum-type name="ImageType" />
+    </object-type>
+    <object-type name="QDeclarativeItem">
+        <extra-includes>
+            <include file-name="pysideqmlregistertype.h" location="local"/>
+        </extra-includes>
+        <enum-type name="TransformOrigin" />
+    </object-type>
+
+    <value-type name="QDeclarativeListReference" />
+    <object-type name="QDeclarativeNetworkAccessManagerFactory" >
+        <modify-function signature="create(QObject *)">
+          <modify-argument index="return">
+            <define-ownership class="target" owner="c++"/>
+          </modify-argument>
+        </modify-function>
+    </object-type>
+    <object-type name="QDeclarativeParserStatus" />
+
+    <value-type name="QDeclarativeProperty">
+        <enum-type name="PropertyTypeCategory" />
+        <enum-type name="Type" />
+    </value-type>
+
+    <object-type name="QDeclarativePropertyMap">
+        <modify-documentation xpath="description/code[1]">&lt;code># create our data
+ownerData = QDeclarativePropertyMap()
+ownerData.insert(&quot;name&quot;, &quot;John Smith&quot;)
+ownerData.insert(&quot;phone&quot;, &quot;555-5555&quot;)
+
+# expose it to the UI layer
+view = QDeclarativeView()
+ctxt = view.rootContext()
+ctxt.setContextProperty(&quot;owner&quot;, ownerData)
+
+view.setSource(QUrl.fromLocalFile(&quot;main.qml&quot;))
+view.show()&lt;/code></modify-documentation>
+    </object-type>
+    <object-type name="QDeclarativePropertyValueSource" />
+    <value-type name="QDeclarativeScriptString" />
+    <object-type name="QDeclarativeView">
+        <enum-type name="ResizeMode" />
+        <enum-type name="Status" />
+    </object-type>
+</typesystem>

@@ -1,0 +1,151 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtMultimedia">
+  <load-typesystem name="typesystem_gui.xml" generate="no" />
+
+  <rejection class="" function-name="qobject_cast&lt;QAudioEngineFactoryInterface*&gt;"/>
+  <rejection class="" function-name="qobject_interface_iid&lt;QAudioEngineFactoryInterface*&gt;"/>
+
+  <namespace-type name="QAudio">
+      <enum-type name="Error"/>
+      <enum-type name="Mode"/>
+      <enum-type name="State"/>
+  </namespace-type>
+
+  <value-type name="QVideoSurfaceFormat">
+      <enum-type name="Direction"/>
+      <enum-type name="YCbCrColorSpace"/>
+  </value-type>
+  <object-type name="QAbstractVideoBuffer">
+      <enum-type name="HandleType"/>
+      <enum-type name="MapMode"/>
+      <modify-function signature="map(QAbstractVideoBuffer::MapMode, int*, int*)" remove="all"/>
+      <!-- TODO: discuss a way to have this working with the virtual method.
+      <modify-function signature="map(QAbstractVideoBuffer::MapMode, int*, int*)">
+          <modify-argument index="0">
+              <replace-type modified-type="PyObject"/>
+          </modify-argument>
+          <modify-argument index="2">
+              <remove-argument/>
+          </modify-argument>
+          <modify-argument index="3">
+              <remove-argument/>
+          </modify-argument>
+          <inject-code class="target" position="beginning">
+              <insert-template name="fix_arg,int*,int*"/>
+          </inject-code>
+      </modify-function>
+      -->
+  </object-type>
+  <object-type name="QAbstractVideoSurface">
+      <enum-type name="Error"/>
+  </object-type>
+  <object-type name="QVideoFrame">
+      <enum-type name="FieldType"/>
+      <enum-type name="PixelFormat"/>
+  </object-type>
+
+  <value-type name="QAudioFormat">
+      <enum-type name="Endian"/>
+      <enum-type name="SampleType"/>
+  </value-type>
+  <value-type name="QAudioDeviceInfo"/>
+  <object-type name="QAbstractAudioDeviceInfo"/>
+
+  <object-type name="QAbstractAudioOutput">
+    <modify-function signature="start(QIODevice *)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="c++"/>
+      </modify-argument>
+    </modify-function>
+  </object-type>
+
+  <object-type name="QAbstractAudioInput">
+    <modify-function signature="start(QIODevice *)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="c++"/>
+      </modify-argument>
+    </modify-function>
+  </object-type>
+
+  <object-type name="QAudioEnginePlugin">
+    <modify-function signature="createInput(const QByteArray&amp;, const QAudioFormat&amp;)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="default"/>
+      </modify-argument>
+    </modify-function>
+    <modify-function signature="createOutput(const QByteArray&amp;, const QAudioFormat&amp;)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="default"/>
+      </modify-argument>
+    </modify-function>
+    <modify-function signature="createDeviceInfo(const QByteArray&amp;, QAudio::Mode)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="default"/>
+      </modify-argument>
+    </modify-function>
+  </object-type>
+
+  <object-type name="QAudioEngineFactoryInterface">
+    <modify-function signature="createInput(const QByteArray&amp;, const QAudioFormat&amp;)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="default"/>
+      </modify-argument>
+    </modify-function>
+    <modify-function signature="createOutput(const QByteArray&amp;, const QAudioFormat&amp;)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="default"/>
+      </modify-argument>
+    </modify-function>
+    <modify-function signature="createDeviceInfo(const QByteArray&amp;, QAudio::Mode)">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="default"/>
+      </modify-argument>
+    </modify-function>
+  </object-type>
+
+  <object-type name="QAudioInput">
+    <modify-function signature="start()">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="c++"/>
+      </modify-argument>
+    </modify-function>
+    <modify-function signature="start(QIODevice*)">
+      <modify-argument index="1">
+        <define-ownership class="target" owner="c++"/>
+      </modify-argument>
+    </modify-function>
+  </object-type>
+
+  <object-type name="QAudioOutput">
+    <modify-function signature="start()">
+      <modify-argument index="return">
+        <define-ownership class="target" owner="c++"/>
+      </modify-argument>
+    </modify-function>
+    <modify-function signature="start(QIODevice*)">
+      <modify-argument index="1">
+        <define-ownership class="target" owner="c++"/>
+      </modify-argument>
+    </modify-function>
+  </object-type>
+
+</typesystem>

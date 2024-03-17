@@ -1,0 +1,232 @@
+<?xml version="1.0"?>
+<!--
+    This file is part of PySide project.
+    Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+    Contact: PySide team <contact@pyside.org>
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-->
+<typesystem package="PySide.QtWebKit">
+  <load-typesystem name="typesystem_core.xml" generate="no"/>
+  <load-typesystem name="typesystem_gui.xml" generate="no"/>
+  <load-typesystem name="typesystem_network.xml" generate="no"/>
+
+  <namespace-type name="WebCore"/>
+
+  <object-type name="QWebView">
+    <modify-function signature="setPage(QWebPage*)">
+        <modify-argument index="1">
+            <reference-count action="set"/>
+        </modify-argument>
+    </modify-function>
+    <modify-function signature="page() const">
+        <modify-argument index="return">
+            <define-ownership class="target" owner="default"/>
+        </modify-argument>
+        <inject-code position="end">
+            SbkObject* _pyReturn = reinterpret_cast&lt;SbkObject*&gt;(%PYARG_0);
+            if (!Shiboken::Object::hasParentInfo(_pyReturn))
+                Shiboken::Object::setParent(%PYSELF, %PYARG_0);
+        </inject-code>
+    </modify-function>
+    <modify-function signature="print(QPrinter*)const" rename="print_" />
+  </object-type>
+  <object-type name="QWebFrame">
+    <enum-type name="RenderLayer" since="4.6"/>
+    <modify-function signature="addToJavaScriptWindowObject(QString,QObject*)">
+      <modify-argument index="2">
+          <parent index="this" action="add"/>
+      </modify-argument>
+    </modify-function>
+    <modify-function signature="print(QPrinter*)const" rename="print_" />
+    <modify-function signature="metaData()const">
+        <modify-argument index="return">
+            <replace-type modified-type="PyObject" />
+        </modify-argument>
+        <inject-code position="end">
+            <insert-template name="convertFromMultiMap">
+                <replace from="%MAP_NAME" to="%0"/>
+                <replace from="%RETURN_NAME" to="%PYARG_0"/>
+                <replace from="%KEY_TYPE" to="QString"/>
+                <replace from="%VALUE_TYPE" to="QString"/>
+            </insert-template>
+        </inject-code>
+    </modify-function>
+  </object-type>
+
+  <object-type name="QWebSettings">
+    <enum-type name="FontFamily"/>
+    <enum-type name="FontSize"/>
+    <enum-type name="WebAttribute"/>
+    <enum-type name="WebGraphic"/>
+  </object-type>
+  <object-type name="QWebPage">
+    <enum-type name="FindFlag" flags="FindFlags"/>
+    <enum-type name="LinkDelegationPolicy"/>
+    <enum-type name="NavigationType"/>
+    <enum-type name="WebAction"/>
+    <enum-type name="WebWindowType"/>
+    <!-- Qt 4.6 -->
+    <enum-type name="ErrorDomain" since="4.6"/>
+    <enum-type name="Extension"/>
+    <!-- Qt 4.8 -->
+    <enum-type name="Feature" since="4.8" revision="4800" />
+    <enum-type name="PermissionPolicy" since="4.8" revision="4800" />
+
+   <value-type name="ChooseMultipleFilesExtensionOption" />
+   <value-type name="ChooseMultipleFilesExtensionReturn" />
+   <value-type name="ErrorPageExtensionOption" since="4.6" />
+   <value-type name="ErrorPageExtensionReturn" since="4.6" />
+   <value-type name="ExtensionOption" />
+   <value-type name="ExtensionReturn" />
+
+   <modify-function signature="extension(QWebPage::Extension, const QWebPage::ExtensionOption*, QWebPage::ExtensionReturn*)">
+        <template name="qwebpage_extension_argument_conversion">
+        PyObject* %out = 0;
+        // Cast the parameters according to the extension type
+        if (extension == QWebPage::ChooseMultipleFilesExtension) {
+            const ChooseMultipleFilesExtension$TYPE_SUFFIX* _in = reinterpret_cast&lt;const ChooseMultipleFilesExtension$TYPE_SUFFIX*>(%in);
+            %out = %CONVERTTOPYTHON[const QWebPage::ChooseMultipleFilesExtension$TYPE_SUFFIX*](_in);
+        #if QT_VERSION >= 0x040600
+        } else if (extension == QWebPage::ErrorPageExtension) {
+            const ErrorPageExtension$TYPE_SUFFIX* _in = reinterpret_cast&lt;const ErrorPageExtension$TYPE_SUFFIX*>(%in);
+            %out = %CONVERTTOPYTHON[const QWebPage::ErrorPageExtension$TYPE_SUFFIX*](_in);
+        #endif
+        }
+        </template>
+        <modify-argument index="2" invalidate-after-use="yes">
+            <conversion-rule class="target">
+                <insert-template name="qwebpage_extension_argument_conversion">
+                    <replace from="$TYPE_SUFFIX" to="Option"/>
+                </insert-template>
+            </conversion-rule>
+        </modify-argument>
+        <modify-argument index="3" invalidate-after-use="yes">
+            <conversion-rule class="target">
+                <insert-template name="qwebpage_extension_argument_conversion">
+                    <replace from="$TYPE_SUFFIX" to="Return"/>
+                </insert-template>
+            </conversion-rule>
+        </modify-argument>
+   </modify-function>
+
+   <modify-function signature="setNetworkAccessManager(QNetworkAccessManager*)">
+        <modify-argument index="1">
+            <reference-count action="set"/>
+        </modify-argument>
+   </modify-function>
+   <modify-function signature="networkAccessManager()const">
+        <modify-argument index="return">
+            <reference-count action="set" variable-name="setNetworkAccessManager(QNetworkAccessManager*)1" />
+        </modify-argument>
+   </modify-function>
+   <modify-function signature="view()const">
+        <modify-argument index="return">
+            <define-ownership owner="default"/>
+        </modify-argument>
+   </modify-function>
+   <modify-function signature="pluginFactory()const">
+        <modify-argument index="return">
+            <define-ownership owner="default"/>
+        </modify-argument>
+   </modify-function>
+
+    <modify-function signature="javaScriptPrompt(QWebFrame*,const QString &amp;,const QString &amp;,QString*)">
+      <modify-argument index="4">
+        <remove-argument />
+        <conversion-rule class="native">
+        QString _local;
+        QString* %4 = &amp;_local;
+        </conversion-rule>
+      </modify-argument>
+      <modify-argument index="return">
+          <replace-type modified-type="PySequence"/>
+          <conversion-rule class="native">
+          Shiboken::AutoDecRef pyRes(PySequence_GetItem(%PYARG_0, 0));
+          Shiboken::AutoDecRef pyStr(PySequence_GetItem(%PYARG_0, 1));
+          %RETURN_TYPE %out = %CONVERTTOCPP[%RETURN_TYPE](pyRes);
+          *%4 = %CONVERTTOCPP[QString](pyStr);
+          </conversion-rule>
+          <conversion-rule class="target">
+          %PYARG_0 = PyTuple_New(2);
+          PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[%RETURN_TYPE](%0));
+          PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[QString](*%4));
+          </conversion-rule>
+      </modify-argument>
+    </modify-function>
+
+    <add-function signature="qt_metacall()">
+        <inject-code class="native">
+            static int _signalIndex = -1;
+            static QMetaMethod _m;
+
+            if (_signalIndex == -1) {
+                _signalIndex = QWebPage::staticMetaObject.indexOfSlot("shouldInterruptJavaScript()");
+                _m = QWebPage::staticMetaObject.method(_signalIndex);
+            }
+
+            if (_signalIndex == id) {
+                Shiboken::GilState gil;
+                PyObject* self = (PyObject*)Shiboken::BindingManager::instance().retrieveWrapper(this);
+                if (self) {
+                    Shiboken::AutoDecRef _pyMethod(PyObject_GetAttrString(self, "shouldInterruptJavaScript"));
+                    return PySide::SignalManager::callPythonMetaMethod(_m, args, _pyMethod, false);
+                }
+            }
+        </inject-code>
+    </add-function>
+  </object-type>
+  <object-type name="QWebHistory"/>
+  <object-type name="QWebHistoryInterface"/>
+  <object-type name="QWebPluginFactory">
+    <enum-type name="Extension"/>
+    <value-type name="Plugin"/>
+    <value-type name="MimeType"/>
+    <modify-function signature="create(const QString &amp;, const QUrl &amp;, const QStringList &amp;, const QStringList &amp;) const">
+        <modify-argument index="return">
+            <define-ownership class="native" owner="c++"/>
+            <define-ownership class="target" owner="target"/>
+        </modify-argument>
+    </modify-function>
+  </object-type>
+  <value-type name="QWebDatabase"/>
+  <value-type name="QWebHistoryItem"/>
+  <value-type name="QWebHitTestResult"/>
+  <value-type name="QWebSecurityOrigin"/>
+
+  <!-- Qt 4.6 -->
+  <object-type name="QGraphicsWebView" since="4.6"/>
+  <object-type name="QWebInspector" since="4.6"/>
+  <value-type name="QWebElement" since="4.6">
+    <enum-type name="StyleResolveStrategy"/>
+  </value-type>
+  <value-type name="QWebElementCollection" since="4.6">
+    <add-function signature="__len__">
+        <inject-code>
+        return %CPPSELF.count();
+        </inject-code>
+    </add-function>
+    <add-function signature="__getitem__">
+        <inject-code>
+        if (_i &lt; 0 || _i >= %CPPSELF.count()) {
+            PyErr_SetString(PyExc_IndexError, "index out of bounds");
+            return 0;
+        }
+        QWebElement element = %CPPSELF.at(_i);
+        return %CONVERTTOPYTHON[QWebElement](element);
+        </inject-code>
+    </add-function>
+  </value-type>
+</typesystem>

@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/">
+	<file>files/cubic.svg</file>
+	<file>files/spheres.svg</file>
+</qresource>
+</RCC>
