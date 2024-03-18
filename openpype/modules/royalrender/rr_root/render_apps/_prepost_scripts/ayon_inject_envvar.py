@@ -239,4 +239,4 @@ if __name__ == "__main__":
 
     log_path = os.path.join(injector.meta_dir, "log.txt")
     with open(log_path, "a") as fp:
-        fp.writelines(s + '\n' for s in logs)
+        fp.writelines(s.replace("\\r\\n", "\n") + '\n' for s in logs)
