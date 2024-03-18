@@ -78,6 +78,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     profiles = None
 
     def process(self, instance):
+
         self.log.debug(str(instance.data["representations"]))
         # Skip review when requested.
         if not instance.data.get("review", True):
@@ -713,6 +714,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ffmpeg_output_args.extend(audio_out_args)
 
         res_filters = self.rescaling_filters(temp_data, output_def, new_repre)
+
+        # Override Scaling filters if source resolution is set as tag
+        if "source_resolution" in output_def['tags']:
+            res_filters = [f for f in res_filters if "scale" not in f]
+            
         ffmpeg_video_filters.extend(res_filters)
 
         ffmpeg_input_args = self.split_ffmpeg_args(ffmpeg_input_args)
@@ -1401,6 +1407,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "Output resolution is same as input's"
                 " and \"letter_box\" key is not set. Skipping reformat part."
             )
+
+        # Check if the output definition's name contains "source_resolution"
+        if "source_resolution" in output_def["tags"]:
+            self.log.debug(
+                "Output definition name contains 'source_resolution'. Skipping scaling."
+            )
             new_repre["resolutionWidth"] = input_width
             new_repre["resolutionHeight"] = input_height
             return filters
@@ -1429,6 +1441,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     output_height
                 )
             )
+
+        self.log.debug(f"Input resolution is: {input_width}x{input_height}")
+        self.log.debug(f"Output resolution is: {output_width}x{output_height}")
+
 
         new_repre["resolutionWidth"] = output_width
         new_repre["resolutionHeight"] = output_height
