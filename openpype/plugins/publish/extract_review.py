@@ -1445,7 +1445,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug(f"Input resolution is: {input_width}x{input_height}")
         self.log.debug(f"Output resolution is: {output_width}x{output_height}")
 
-
         new_repre["resolutionWidth"] = output_width
         new_repre["resolutionHeight"] = output_height
 
