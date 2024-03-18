@@ -1232,6 +1232,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
+        # Skip rescaling filters if "source_resolution" tag is present
+        if "source_resolution" in output_def['tags']:
+            self.log.debug("Source resolution tag present, skipping rescaling filters")
+            return filters
+
         # if reformat input video file is already reforamted from upstream
         reformat_in_baking = bool("reformated" in new_repre["tags"])
         self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
@@ -1407,15 +1412,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "Output resolution is same as input's"
                 " and \"letter_box\" key is not set. Skipping reformat part."
             )
-
-        # Check if the output definition's name contains "source_resolution"
-        if "source_resolution" in output_def["tags"]:
-            self.log.debug(
-                "Output definition name contains 'source_resolution'. Skipping scaling."
-            )
-            new_repre["resolutionWidth"] = input_width
-            new_repre["resolutionHeight"] = input_height
-            return filters
 
         # scaling none square pixels and 1920 width
         if input_height != output_height or input_width != output_width:
