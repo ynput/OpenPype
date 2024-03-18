@@ -13,7 +13,7 @@ from attr import asdict
 from attr.exceptions import NotAnAttrsClassError
 import pyblish.api
 import tde4  # noqa: F401
-from PySide import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 from openpype.host import HostBase, ILoadHost, IPublishHost, IWorkfileHost
 from openpype.hosts.equalizer import EQUALIZER_HOST_DIR
@@ -184,7 +184,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def install(self):
         if not QtCore.QCoreApplication.instance():
-            app = QtGui.QApplication([])
+            app = QtWidgets.QApplication([])
             self._qapp = app
             self._qapp.setQuitOnLastWindowClosed(False)
 
@@ -214,7 +214,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     @staticmethod
     def _timer():
-        QtGui.QApplication.instance().processEvents(
+        QtWidgets.QApplication.instance().processEvents(
             QtCore.QEventLoop.AllEvents)
 
     @classmethod
