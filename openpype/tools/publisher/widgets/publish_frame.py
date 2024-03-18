@@ -138,7 +138,16 @@ class PublishFrame(QtWidgets.QWidget):
         main_layout.setContentsMargins(borders, 0, borders, borders)
         main_layout.addWidget(content_frame)
 
-        shrunk_anim = QtCore.QVariantAnimation()
+        # TODO Edited
+        class VariantAnimation(QtCore.QVariantAnimation):
+            def updateCurrentValue(self, value):
+                pass
+
+        # shrunk_anim = QtCore.QVariantAnimation()
+
+        # Replacement of the above code
+        shrunk_anim = VariantAnimation()
+
         shrunk_anim.setDuration(140)
         shrunk_anim.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
 

@@ -42,7 +42,7 @@ from .widgets import (
 )
 
 
-class PublisherWindow(QtWidgets.QDialog):
+class PublisherWindow(QtWidgets.QWidget):
     """Main window of publisher."""
     default_width = 1300
     default_height = 800
@@ -50,7 +50,7 @@ class PublisherWindow(QtWidgets.QDialog):
     publish_footer_spacer = 2
 
     def __init__(self, parent=None, controller=None, reset_on_show=None):
-        super(PublisherWindow, self).__init__(parent)
+        super(PublisherWindow, self).__init__()
 
         self.setObjectName("PublishWindow")
 
@@ -102,7 +102,7 @@ class PublisherWindow(QtWidgets.QDialog):
         header_layout.addWidget(header_extra_widget, 0)
         header_layout.addWidget(help_btn, 0)
 
-        # Tabs widget under header
+        # # Tabs widget under header
         tabs_widget = PublisherTabsWidget(self)
         create_tab = tabs_widget.add_tab("Create", "create")
         tabs_widget.add_tab("Publish", "publish")
@@ -171,14 +171,15 @@ class PublisherWindow(QtWidgets.QDialog):
         content_stacked_widget = QtWidgets.QWidget(content_widget)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        marings = content_layout.contentsMargins()
-        marings.setLeft(marings.left() * 2)
-        marings.setRight(marings.right() * 2)
-        marings.setTop(marings.top() * 2)
-        marings.setBottom(0)
-        content_layout.setContentsMargins(marings)
+        margins = content_layout.contentsMargins()
+        margins.setLeft(margins.left() * 2)
+        margins.setRight(margins.right() * 2)
+        margins.setTop(margins.top() * 2)
+        margins.setBottom(0)
+        content_layout.setContentsMargins(margins)
         content_layout.addWidget(content_stacked_widget, 1)
 
+        # TODO Edited
         # Overview - create and attributes part
         overview_widget = OverviewWidget(
             controller, content_stacked_widget
@@ -186,6 +187,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         report_widget = ReportPageWidget(controller, content_stacked_widget)
 
+        # TODO Edited
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
             content_stacked_widget
@@ -232,9 +234,11 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.addWidget(tabs_widget, 0)
         main_layout.addWidget(under_publish_stack, 1)
 
+        # TODO Edited
         # Floating publish frame
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
+        # TODO Edited
         create_overlay_button = CreateNextPageOverlay(self)
 
         show_timer = QtCore.QTimer()
@@ -295,6 +299,12 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.process.stopped", self._on_publish_stop
         )
         controller.event_system.add_callback(
+            "publish.process.instance.changed", self._on_instance_change
+        )
+        controller.event_system.add_callback(
+            "publish.process.plugin.changed", self._on_plugin_change
+        )
+        controller.event_system.add_callback(
             "show.card.message", self._on_overlay_message
         )
         controller.event_system.add_callback(
@@ -316,14 +326,12 @@ class PublisherWindow(QtWidgets.QDialog):
             "convertors.find.failed", self._on_convertor_error
         )
         controller.event_system.add_callback(
-            "publish.action.failed", self._on_action_error
-        )
-        controller.event_system.add_callback(
             "export_report.request", self._export_report
         )
         controller.event_system.add_callback(
             "copy_report.request", self._copy_report
         )
+
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -375,7 +383,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._error_messages_to_show = collections.deque()
         self._errors_dialog_message_timer = errors_dialog_message_timer
-
+        # TODO Edit
         self._set_publish_visibility(False)
 
         self._create_overlay_button = create_overlay_button
@@ -487,14 +495,8 @@ class PublisherWindow(QtWidgets.QDialog):
         app.removeEventFilter(self)
 
     def keyPressEvent(self, event):
-        if event.key() in {
-            # Ignore escape button to close window
-            QtCore.Qt.Key_Escape,
-            # Ignore enter keyboard event which by default triggers
-            #   first available button in QDialog
-            QtCore.Qt.Key_Enter,
-            QtCore.Qt.Key_Return,
-        }:
+        # Ignore escape button to close window
+        if event.key() == QtCore.Qt.Key_Escape:
             event.accept()
             return
 
@@ -559,6 +561,18 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._reset_on_show:
             self._reset_on_show = False
             self.reset()
+
+    def _make_sure_on_top(self):
+        """Raise window to top and activate it.
+
+        This may not work for some DCCs without Qt.
+        """
+
+        if not self._window_is_visible:
+            self.show()
+
+        self.setWindowState(QtCore.Qt.WindowActive)
+        self.raise_()
 
     def _checks_before_save(self, explicit_save):
         """Save of changes may trigger some issues.
@@ -872,6 +886,12 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._is_on_create_tab():
             self._go_to_publish_tab()
 
+    def _on_instance_change(self):
+        self._make_sure_on_top()
+
+    def _on_plugin_change(self):
+        self._make_sure_on_top()
+
     def _on_publish_validated_change(self, event):
         if event["value"]:
             self._validate_btn.setEnabled(False)
@@ -882,6 +902,7 @@ class PublisherWindow(QtWidgets.QDialog):
             self._comment_input.setText("")
 
     def _on_publish_stop(self):
+        self._make_sure_on_top()
         self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
@@ -993,18 +1014,6 @@ class PublisherWindow(QtWidgets.QDialog):
             new_failed_info.append(new_item)
         self.add_error_message_dialog(
             event["title"], new_failed_info, "Convertor:"
-        )
-
-    def _on_action_error(self, event):
-        self.add_error_message_dialog(
-            event["title"],
-            [{
-                "message": event["message"],
-                "traceback": event["traceback"],
-                "label": event["label"],
-                "identifier": event["identifier"]
-            }],
-            "Action:"
         )
 
     def _update_create_overlay_size(self):

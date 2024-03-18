@@ -67,7 +67,8 @@ class SelectContextOverlay(QtWidgets.QFrame):
             "Please choose context on the left<br/>&lt",
             self
         )
-        label_widget.setAlignment(QtCore.Qt.AlignCenter)
+        label_widget.setAlignment(QtCore.Qt.
+                                  AlignCenter)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
@@ -254,9 +255,10 @@ class FilesWidget(QtWidgets.QWidget):
         workarea_files_view.customContextMenuRequested.connect(
             self._on_workarea_context_menu
         )
-        workarea_files_view.selectionModel().selectionChanged.connect(
-            self.on_file_select
-        )
+        # TODO: comment this method because it crash equalizer
+        # workarea_files_view.selectionModel().selectionChanged.connect(
+        #     self.on_file_select
+        # )
 
         btn_open.pressed.connect(self._on_workarea_open_pressed)
         btn_browse.pressed.connect(self.on_browse_pressed)
@@ -767,6 +769,7 @@ class FilesWidget(QtWidgets.QWidget):
         self._set_publish_context_select_mode(False)
         self._update_asset_task()
 
+    # TODO: Edited: hide this function disables the syled gui but keep the functionality
     def on_file_select(self):
         self.file_selected.emit(self._get_selected_filepath())
 

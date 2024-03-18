@@ -277,9 +277,15 @@ class CreateWidget(QtWidgets.QWidget):
         creator_basics_widget.resized.connect(self._on_creator_basics_resize)
         variant_input.returnPressed.connect(self._on_create)
         variant_input.textChanged.connect(self._on_variant_change)
-        creators_view.selectionModel().currentChanged.connect(
-            self._on_creator_item_change
-        )
+
+        # TODO Seif
+        # creators_view.selectionModel().currentChanged.connect(
+        #     self._on_creator_item_change
+        # )
+        # Replacement for the code above.
+        QtCore.QObject.connect(creators_view.selectionModel(),
+                               QtCore.SIGNAL('currentChanged(QModelIndex, QModelIndex)'), self._on_creator_item_change)
+
         variant_hints_btn.clicked.connect(self._on_variant_btn_click)
         variant_hints_menu.triggered.connect(self._on_variant_action)
         assets_widget.selection_changed.connect(self._on_asset_change)
@@ -316,13 +322,13 @@ class CreateWidget(QtWidgets.QWidget):
         self._creators_sort_model = creators_sort_model
         self._creators_view = creators_view
         self._create_btn = create_btn
-
+        #
         self._creator_short_desc_widget = creator_short_desc_widget
         self._creator_basics_widget = creator_basics_widget
         self._thumbnail_widget = thumbnail_widget
         self._pre_create_widget = pre_create_widget
         self._attr_separator_widget = attr_separator_widget
-
+        #
         self._prereq_timer = prereq_timer
         self._first_show = True
         self._last_thumbnail_path = None
@@ -625,6 +631,7 @@ class CreateWidget(QtWidgets.QWidget):
             creator_item.create_allow_thumbnail
         )
 
+        # TODO Change 2/26/2024
         default_variants = creator_item.default_variants
         if not default_variants:
             default_variants = [DEFAULT_VARIANT_VALUE]
