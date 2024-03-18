@@ -82,12 +82,13 @@ class TaskItem:
 
 
 class EntitiesModel:
-    def __init__(self, event_system):
+    def __init__(self, event_system, library_filter=True):
         self._event_system = event_system
         self._project_names = None
         self._project_docs_by_name = {}
         self._assets_by_project = {}
         self._tasks_by_asset_id = collections.defaultdict(dict)
+        self.library_filter = library_filter
 
     def has_cached_projects(self):
         return self._project_names is None
@@ -135,7 +136,7 @@ class EntitiesModel:
             project_docs_by_name = {}
             for project_doc in get_projects():
                 library_project = project_doc["data"].get("library_project")
-                if not library_project:
+                if not library_project and self.library_filter:
                     continue
                 project_name = project_doc["name"]
                 project_names.append(project_name)
@@ -366,7 +367,9 @@ class UserPublishValues:
 
 
 class PushToContextController:
-    def __init__(self, project_name=None, version_id=None):
+    def __init__(
+        self, project_name=None, version_id=None, library_filter=True
+    ):
         self._src_project_name = None
         self._src_version_id = None
         self._src_asset_doc = None
@@ -374,7 +377,9 @@ class PushToContextController:
         self._src_version_doc = None
 
         event_system = EventSystem()
-        entities_model = EntitiesModel(event_system)
+        entities_model = EntitiesModel(
+            event_system, library_filter=library_filter
+        )
         selection_model = SelectionModel(event_system)
         user_values = UserPublishValues(event_system)
 
@@ -629,11 +634,14 @@ class PushToContextController:
             return asset_item.name
         return None
 
-    def submit(self, wait=True):
+    def submit(self, wait=True, context_only=False):
         if not self.submission_enabled:
             return
 
         if self._process_thread is not None:
+            return
+
+        if context_only:
             return
 
         item = ProjectPushItem(
