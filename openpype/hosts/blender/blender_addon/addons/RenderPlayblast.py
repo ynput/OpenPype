@@ -2,8 +2,9 @@ import bpy
 import logging
 import os
 import subprocess
+from pathlib import Path
 
-from libs import paths
+from libs import paths, templates
 
 
 logging.basicConfig(level=logging.INFO)
@@ -25,11 +26,8 @@ def get_view_3D_region():
     return next(iter([area.spaces[0].region_3d for area in bpy.context.screen.areas if area.type == 'VIEW_3D']), None)
 
 
-def get_render_filepath(extension, version):
-    return bpy.context.scene.playblast_render_path.format(
-        version=version,
-        extension=extension
-    )
+def get_render_filepath():
+    return templates.get_playblast_path()
 
 
 def get_renders_types_and_extensions():
@@ -74,12 +72,15 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
             region.view_perspective = 'CAMERA'
         scene.render.use_file_extension = False
 
-        version = paths.get_next_version_folder(bpy.context.scene.playblast_render_path)
+        render_filepath = get_render_filepath()
+        Path(render_filepath).resolve().parent.mkdir(parents=True, exist_ok=True)
 
         for file_format, file_extension in get_renders_types_and_extensions():
             scene.render.image_settings.file_format = file_format
-            scene.render.filepath = get_render_filepath(file_extension, version)
+            scene.render.filepath = render_filepath.format(ext=file_extension)
+
             logging.info(f"{'Camera view' if use_camera_view else 'Viewport'} will be rendered at following path : {scene.render.filepath}")
+
             result = bpy.ops.render.opengl(animation=True)
             if result != {'FINISHED'}:
                 logging.error(f'An error has occured when rendering with file_format {file_format} with OpenGL')
@@ -97,13 +98,14 @@ class OBJECT_OT_open_playblast_folder(bpy.types.Operator):
     bl_label = "Open Last Playblast Folder"
 
     def execute(self, context):
-        playblast_version_folderpath = paths.get_version_folder_fullpath(bpy.context.scene.playblast_render_path)
-
-        if not playblast_version_folderpath or not playblast_version_folderpath.exists():
-            self.report({'ERROR'}, "File '{}' not found".format(bpy.context.scene.playblast_render_path))
+        latest_playblast_filepath = paths.get_version_folder_fullpath(
+            templates.get_playblast_path()
+        )
+        if not latest_playblast_filepath or not latest_playblast_filepath.exists():
+            self.report({'ERROR'}, "File '{}' not found".format(latest_playblast_filepath))
             return {'CANCELLED'}
 
-        subprocess.Popen(['start', str(playblast_version_folderpath.resolve())], shell=True)
+        subprocess.Popen(['start', str(latest_playblast_filepath.resolve())], shell=True)
 
         return {'FINISHED'}
 
