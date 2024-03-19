@@ -1,4 +1,3 @@
-import os.path
 import sys
 import traceback
 import re
