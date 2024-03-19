@@ -447,10 +447,15 @@ class InstanceListView(AbstractInstanceView):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(instance_view)
+        # TODO Original
+        # instance_view.selectionModel().selectionChanged.connect(
+        #     self._on_selection_change
+        # )
 
-        instance_view.selectionModel().selectionChanged.connect(
-            self._on_selection_change
-        )
+        # Replacement of the above code
+        QtCore.QObject.connect(instance_view.selectionModel(),
+                               QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self._on_selection_change)
+
         instance_view.collapsed.connect(self._on_collapse)
         instance_view.expanded.connect(self._on_expand)
         instance_view.toggle_requested.connect(self._on_toggle_request)

@@ -439,15 +439,25 @@ class PublishReportViewerWidget(QtWidgets.QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(middle_widget, 0)
         layout.addWidget(details_widget, 1)
+        # TODO Original
+        # instances_view.selectionModel().selectionChanged.connect(
+        #     self._on_instance_change
+        # )
+        # TODO Replacement for the above code.
+        QtCore.QObject.connect(instances_view.selectionModel(),
+                               QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self._on_instance_change)
 
-        instances_view.selectionModel().selectionChanged.connect(
-            self._on_instance_change
-        )
         instances_view.clicked.connect(self._on_instance_view_clicked)
         plugins_view.clicked.connect(self._on_plugin_view_clicked)
-        plugins_view.selectionModel().selectionChanged.connect(
-            self._on_plugin_change
-        )
+
+        # TODO Original
+        # plugins_view.selectionModel().selectionChanged.connect(
+        #     self._on_plugin_change
+        # )
+        #
+        # TODO Replacement for the above code.
+        QtCore.QObject.connect(plugins_view.selectionModel(),
+                               QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self._on_plugin_change)
 
         skipped_plugins_check.stateChanged.connect(
             self._on_skipped_plugin_check
