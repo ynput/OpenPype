@@ -1910,8 +1910,13 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         self._bg_color = (
             get_objected_colors("bg-buttons").get_qcolor()
         )
+        # TODO Edited
+        class VariantAnimation(QtCore.QVariantAnimation):
+            def updateCurrentValue(self, value):
+                pass
 
-        change_anim = QtCore.QVariantAnimation()
+        change_anim = VariantAnimation()
+        # change_anim = QtCore.QVariantAnimation()
         change_anim.setStartValue(0.0)
         change_anim.setEndValue(1.0)
         change_anim.setDuration(200)

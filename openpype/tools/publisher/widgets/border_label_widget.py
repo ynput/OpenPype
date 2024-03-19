@@ -219,7 +219,7 @@ class BorderedLabelWidget(QtWidgets.QFrame):
 
         center_layout = QtWidgets.QHBoxLayout()
         center_layout.setContentsMargins(5, 5, 5, 5)
-
+        #
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)

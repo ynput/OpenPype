@@ -2347,7 +2347,6 @@ class PublisherController(BasePublisherController):
                     "identifier": action.id
                 }
             )
-
         self._publish_report.add_action_result(action, result)
 
         self.emit_card_message("Action finished.")

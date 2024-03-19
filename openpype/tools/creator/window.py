@@ -117,10 +117,15 @@ class CreatorWindow(QtWidgets.QDialog):
         variant_input.textChanged.connect(self._on_data_changed)
         variant_input.report.connect(self.echo)
         asset_name_input.textChanged.connect(self._on_data_changed)
+
+        # TODO Edited
         creators_view.selectionModel().currentChanged.connect(
             self._on_selection_changed
         )
 
+        # Replacement for the above
+        # QtCore.QObject.connect(creators_view.selectionModel(),
+        #                        QtCore.SIGNAL('currentChanged(QModelIndex, QModelIndex)'), self._on_selection_changed)
         # Store valid states and
         self._is_valid = False
         create_btn.setEnabled(self._is_valid)
