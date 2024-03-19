@@ -60,7 +60,12 @@ class BlendSceneLoader(plugin.AssetLoader):
         bpy.context.scene.collection.children.link(container)
 
         # Remove the library from the blend file
-        library = bpy.data.libraries.get(bpy.path.basename(libpath))
+        filepath = bpy.path.basename(libpath)
+        # Blender has a limit of 63 characters for any data name.
+        # If the filepath is longer, it will be truncated.
+        if len(filepath) > 63:
+            filepath = filepath[:63]
+        library = bpy.data.libraries.get(filepath)
         bpy.data.libraries.remove(library)
 
         return container, members

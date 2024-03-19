@@ -15,6 +15,7 @@ from openpype.lib import (
     NumberDef
 )
 
+
 @attr.s
 class DeadlinePluginInfo():
     SceneFile = attr.ib(default=None)
@@ -39,6 +40,12 @@ class MantraRenderDeadlinePluginInfo():
 class VrayRenderPluginInfo():
     InputFilename = attr.ib(default=None)
     SeparateFilesPerFrame = attr.ib(default=True)
+
+
+@attr.s
+class RedshiftRenderPluginInfo():
+    SceneFile = attr.ib(default=None)
+    Version = attr.ib(default=None)
 
 
 class HoudiniSubmitDeadline(
@@ -198,6 +205,7 @@ class HoudiniSubmitDeadline(
             "FTRACK_API_USER",
             "FTRACK_SERVER",
             "OPENPYPE_SG_USER",
+            "AVALON_DB",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
@@ -262,6 +270,25 @@ class HoudiniSubmitDeadline(
                 plugin_info = VrayRenderPluginInfo(
                     InputFilename=instance.data["ifdFile"],
                 )
+            elif family == "redshift_rop":
+                plugin_info = RedshiftRenderPluginInfo(
+                    SceneFile=instance.data["ifdFile"]
+                )
+                # Note: To use different versions of Redshift on Deadline
+                #       set the `REDSHIFT_VERSION` env variable in the Tools
+                #       settings in the AYON Application plugin. You will also
+                #       need to set that version in `Redshift.param` file
+                #       of the Redshift Deadline plugin:
+                #           [Redshift_Executable_*]
+                #           where * is the version number.
+                if os.getenv("REDSHIFT_VERSION"):
+                    plugin_info.Version = os.getenv("REDSHIFT_VERSION")
+                else:
+                    self.log.warning((
+                        "REDSHIFT_VERSION env variable is not set"
+                        " - using version configured in Deadline"
+                    ))
+
             else:
                 self.log.error(
                     "Family '%s' not supported yet to split render job",

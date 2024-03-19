@@ -1,4 +1,8 @@
 {
+    "unit_scale_settings": {
+        "enabled": true,
+        "scene_unit_scale": "Meters"
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
@@ -51,6 +55,16 @@
         "ValidateAttributes": {
             "enabled": false,
             "attributes": {}
+        },
+        "ValidateCameraAttributes": {
+            "enabled": true,
+            "optional": true,
+            "active": false,
+            "fov": 45.0,
+            "nearrange": 0.0,
+            "farrange": 1000.0,
+            "nearclip": 1.0,
+            "farclip": 1000.0
         },
         "ValidateLoadedPlugin": {
             "enabled": false,

@@ -99,10 +99,6 @@ class ProcessSubmittedCacheJobOnFarm(pyblish.api.InstancePlugin,
     def _submit_deadline_post_job(self, instance, job):
         """Submit publish job to Deadline.
 
-        Deadline specific code separated from :meth:`process` for sake of
-        more universal code. Muster post job is sent directly by Muster
-        submitter, so this type of code isn't necessary for it.
-
         Returns:
             (str): deadline_publish_job_id
         """
@@ -135,6 +131,7 @@ class ProcessSubmittedCacheJobOnFarm(pyblish.api.InstancePlugin,
             create_metadata_path(instance, anatomy)
 
         environment = {
+            "AVALON_DB": os.environ["AVALON_DB"],
             "AVALON_PROJECT": instance.context.data["projectName"],
             "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": instance.context.data["task"],

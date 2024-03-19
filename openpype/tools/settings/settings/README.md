@@ -334,7 +334,7 @@
     },
     "is_group": true,
     "key": "templates_mapping",
-    "label": "Muster - Templates mapping",
+    "label": "Deadline - Templates mapping",
     "is_file": true
 }
 ```
@@ -346,7 +346,7 @@
     "object_type": "text",
     "is_group": true,
     "key": "templates_mapping",
-    "label": "Muster - Templates mapping",
+    "label": "Deadline - Templates mapping",
     "is_file": true
 }
 ```

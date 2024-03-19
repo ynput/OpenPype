@@ -79,6 +79,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             clip for clip in otio_timeline.each_child(
                 descended_from_type=otio.schema.Clip)
             if clip.name == otio_clip.name
+            if clip.parent().kind == "Video"
         ]
 
         otio_clip = clips.pop()
