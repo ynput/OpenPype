@@ -262,7 +262,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # TODO Edited replacement fort the above
         QtCore.QObject.connect(workarea_files_view.selectionModel(),
-                               QtCore.SIGNAL('currentChanged(QModelIndex, QModelIndex)'), self.on_file_select)
+                               QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self.on_file_select)
 
         btn_open.pressed.connect(self._on_workarea_open_pressed)
         btn_browse.pressed.connect(self.on_browse_pressed)
