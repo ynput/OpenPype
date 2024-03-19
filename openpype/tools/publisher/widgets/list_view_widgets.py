@@ -454,7 +454,7 @@ class InstanceListView(AbstractInstanceView):
 
         # Replacement of the above code
         QtCore.QObject.connect(instance_view.selectionModel(),
-                               QtCore.SIGNAL('currentChanged(QModelIndex, QModelIndex)'), self._on_selection_change)
+                               QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self._on_selection_change)
 
         instance_view.collapsed.connect(self._on_collapse)
         instance_view.expanded.connect(self._on_expand)
