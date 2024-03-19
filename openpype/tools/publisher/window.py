@@ -42,7 +42,7 @@ from .widgets import (
 )
 
 
-class PublisherWindow(QtWidgets.QWidget):
+class PublisherWindow(QtWidgets.QDialog):
     """Main window of publisher."""
     default_width = 1300
     default_height = 800
@@ -50,7 +50,7 @@ class PublisherWindow(QtWidgets.QWidget):
     publish_footer_spacer = 2
 
     def __init__(self, parent=None, controller=None, reset_on_show=None):
-        super(PublisherWindow, self).__init__()
+        super(PublisherWindow, self).__init__(parent)
 
         self.setObjectName("PublishWindow")
 
@@ -299,12 +299,6 @@ class PublisherWindow(QtWidgets.QWidget):
             "publish.process.stopped", self._on_publish_stop
         )
         controller.event_system.add_callback(
-            "publish.process.instance.changed", self._on_instance_change
-        )
-        controller.event_system.add_callback(
-            "publish.process.plugin.changed", self._on_plugin_change
-        )
-        controller.event_system.add_callback(
             "show.card.message", self._on_overlay_message
         )
         controller.event_system.add_callback(
@@ -331,8 +325,6 @@ class PublisherWindow(QtWidgets.QWidget):
         controller.event_system.add_callback(
             "copy_report.request", self._copy_report
         )
-
-
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
         #   label and help button
@@ -496,7 +488,14 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def keyPressEvent(self, event):
         # Ignore escape button to close window
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() in {
+            # Ignore escape button to close window
+            QtCore.Qt.Key_Escape,
+            # Ignore enter keyboard event which by default triggers
+            #   first available button in QDialog
+            QtCore.Qt.Key_Enter,
+            QtCore.Qt.Key_Return,
+        }:
             event.accept()
             return
 
@@ -886,11 +885,6 @@ class PublisherWindow(QtWidgets.QWidget):
         if self._is_on_create_tab():
             self._go_to_publish_tab()
 
-    def _on_instance_change(self):
-        self._make_sure_on_top()
-
-    def _on_plugin_change(self):
-        self._make_sure_on_top()
 
     def _on_publish_validated_change(self, event):
         if event["value"]:
