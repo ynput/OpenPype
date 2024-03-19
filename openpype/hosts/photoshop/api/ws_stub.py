@@ -552,6 +552,18 @@ class PhotoshopServerStub:
             )
         )
 
+    def rename_layers(self, layers):
+        """Renames set of layers with given name
+        Args:
+            layers (list): ilst of layers to delete
+        """
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.rename_layers',
+                layers=json.dumps(layers)
+            )
+        )
+
     def remove_instance(self, instance_id):
         cleaned_data = []
 
