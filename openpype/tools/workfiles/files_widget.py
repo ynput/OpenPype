@@ -67,8 +67,7 @@ class SelectContextOverlay(QtWidgets.QFrame):
             "Please choose context on the left<br/>&lt",
             self
         )
-        label_widget.setAlignment(QtCore.Qt.
-                                  AlignCenter)
+        label_widget.setAlignment(QtCore.Qt.AlignCenter)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
@@ -260,7 +259,7 @@ class FilesWidget(QtWidgets.QWidget):
         #     self.on_file_select
         # )
 
-        # TODO Edited replacement fort the above
+        # TODO Edited replacement for the above
         QtCore.QObject.connect(workarea_files_view.selectionModel(),
                                QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self.on_file_select)
 
