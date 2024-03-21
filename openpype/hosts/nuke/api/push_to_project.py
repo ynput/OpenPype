@@ -11,6 +11,7 @@ from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.workfile import get_workdir_with_workdir_data
 from openpype import PACKAGE_DIR
 from openpype.lib import get_openpype_execute_args, run_subprocess
+from .utils import bake_gizmos_recursively
 
 import nuke
 
@@ -92,6 +93,9 @@ def main():
 
     for container in host.ls():
         bake_container(container)
+
+    # Bake gizmos.
+    bake_gizmos_recursively()
 
     # Copy all read node files to "resources" folder next to workfile and
     # change file path.
