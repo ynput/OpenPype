@@ -445,7 +445,7 @@ class PublishReportViewerWidget(QtWidgets.QFrame):
         # )
         # TODO Replacement for the above code.
         QtCore.QObject.connect(instances_view.selectionModel(),
-                               QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self._on_instance_change)
+                               QtCore.SIGNAL('selectionChanged(QItemSelection,QItemSelection)'), self._on_instance_change)
 
         instances_view.clicked.connect(self._on_instance_view_clicked)
         plugins_view.clicked.connect(self._on_plugin_view_clicked)
@@ -457,7 +457,7 @@ class PublishReportViewerWidget(QtWidgets.QFrame):
         #
         # TODO Replacement for the above code.
         QtCore.QObject.connect(plugins_view.selectionModel(),
-                               QtCore.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self._on_plugin_change)
+                               QtCore.SIGNAL('selectionChanged(QItemSelection,QItemSelection)'), self._on_plugin_change)
 
         skipped_plugins_check.stateChanged.connect(
             self._on_skipped_plugin_check

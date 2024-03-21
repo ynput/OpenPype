@@ -176,7 +176,6 @@ class Window(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
-
         self.setWindowTitle(self.title)
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
@@ -194,7 +193,6 @@ class Window(QtWidgets.QWidget):
         assets_widget.set_current_asset_btn_visibility(True)
 
         tasks_widget = TasksWidget(legacy_io, home_body_widget)
-        # TODO: there is a method im FilesWidget crash equalizer
         files_widget = FilesWidget(home_body_widget)
         side_panel = SidePanelWidget(home_body_widget)
 
@@ -259,7 +257,7 @@ class Window(QtWidgets.QWidget):
         self._context_to_set = None
 
     def ensure_visible(
-            self, use_context=None, save=None, on_top=None
+        self, use_context=None, save=None, on_top=None
     ):
         if save is None:
             save = True
