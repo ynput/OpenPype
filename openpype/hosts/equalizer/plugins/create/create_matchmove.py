@@ -14,29 +14,31 @@ class CreateMatchMove(EqualizerCreator):
         camera_enum = [
             {"value": "__all__", "label": "All Cameras"},
             {"value": "__current__", "label": "Current Camera"},
+            {"value": "__selected__", "label": "Selected Cameras Only"},
             {"value": "__ref__", "label": "Reference Cameras"},
             {"value": "__seq__", "label": "Sequence Cameras"},
         ]
-        camera_list = tde4.getCameraList()
-        camera_enum.extend(
-            {"label": tde4.getCameraName(camera), "value": camera}
-            for camera in camera_list
-            if tde4.getCameraEnabledFlag(camera)
-        )
+        # camera_list = tde4.getCameraList()
+        # camera_enum.extend(
+        #     {"label": tde4.getCameraName(camera), "value": camera}
+        #     for camera in camera_list
+        #     if tde4.getCameraEnabledFlag(camera)
+        # )
         # try to get list of models
         model_enum = [
             {"value": "__none__", "label": "No 3D Models At All"},
+            {"value": "__selected__", "label": "Selected 3D Models Only"},
             {"value": "__all__", "label": "All 3D Models"},
         ]
-        point_groups = tde4.getPGroupList()
-        for point_group in point_groups:
-            model_list = tde4.get3DModelList(point_group, 0)
-            model_enum.extend(
-                {
-                    "label": tde4.get3DModelName(point_group, model),
-                    "value": model
-                } for model in model_list
-            )
+        # point_groups = tde4.getPGroupList()
+        # for point_group in point_groups:
+        #     model_list = tde4.get3DModelList(point_group, 0)
+        #     model_enum.extend(
+        #         {
+        #             "label": tde4.get3DModelName(point_group, model),
+        #             "value": model
+        #         } for model in model_list
+        #     )
         return [
             EnumDef("camera_selection",
                     items=camera_enum,
@@ -52,4 +54,4 @@ class CreateMatchMove(EqualizerCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         self.log.debug("CreateMatchMove.create")
-        super().create(subset_name, instance_data, pre_create_data)
+        super(CreateMatchMove, self).create(subset_name, instance_data, pre_create_data)

@@ -15,6 +15,7 @@ from openpype.pipeline import (
     Creator,
     OptionalPyblishPluginMixin,
 )
+from openpype.pipeline import PublishValidationError
 
 @six.add_metaclass(ABCMeta)
 class EqualizerCreator(Creator):
@@ -114,7 +115,7 @@ class ExtractScriptBase(OptionalPyblishPluginMixin):
     export_uv_textures = False
     overscan_percent_width = 100
     overscan_percent_height = 100
-    units = "mm"
+    units = "cm"
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
@@ -133,9 +134,14 @@ class ExtractScriptBase(OptionalPyblishPluginMixin):
 
     @classmethod
     def get_attribute_defs(cls):
-        defs = super(ExtractScriptBase, cls).get_attribute_defs()
-
-        defs.extend([
+        overscan = EqualizerHost.get_host().get_overscan()
+        if overscan:
+            overscan_width, overscan_height = overscan.values()
+        else:
+            overscan_width, overscan_height = 100, 100
+            # raise PublishValidationError("You must extract the undistorted footage first to get the overscan") 
+        
+        return [
             BoolDef("hide_reference_frame",
                     label="Hide Reference Frame",
                     default=cls.hide_reference_frame),
@@ -144,13 +150,13 @@ class ExtractScriptBase(OptionalPyblishPluginMixin):
                     default=cls.export_uv_textures),
             NumberDef("overscan_percent_width",
                       label="Overscan Width %",
-                      default=cls.overscan_percent_width,
+                      default=overscan_width,
                       decimals=0,
                       minimum=1,
                       maximum=1000),
             NumberDef("overscan_percent_height",
                       label="Overscan Height %",
-                      default=cls.overscan_percent_height,
+                      default=overscan_height,
                       decimals=0,
                       minimum=1,
                       maximum=1000),
@@ -158,5 +164,4 @@ class ExtractScriptBase(OptionalPyblishPluginMixin):
                     ["mm", "cm", "m", "in", "ft", "yd"],
                     default=cls.units,
                     label="Units"),
-        ])
-        return defs
+        ]

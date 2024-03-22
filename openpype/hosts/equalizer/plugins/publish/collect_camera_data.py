@@ -11,7 +11,7 @@ class CollectCameraData(pyblish.api.InstancePlugin):
     hosts = ["equalizer"]
     label = "Collect camera data"
 
-    def process(self, instance: pyblish.api.Instance):
+    def process(self, instance = pyblish.api.Instance):
         # handle camera selection.
         # possible values are:
         #   - __current__ - current camera

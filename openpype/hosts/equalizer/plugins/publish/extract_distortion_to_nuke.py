@@ -6,7 +6,7 @@ from openpype.lib import import_filepath
 from openpype.pipeline import OptionalPyblishPluginMixin, publish
 
 
-class ExtractLensDistortionNuke(publish.Extractor,
+class ExtractDistortionToNuke(publish.Extractor,
                                 OptionalPyblishPluginMixin):
     """Extract Nuke script for matchmove.
 
@@ -18,7 +18,7 @@ class ExtractLensDistortionNuke(publish.Extractor,
     TODO: Utilize attributes defined in ExtractScriptBase
     """
 
-    label = "Extract Lens Distortion Nuke node"
+    label = "Extract Distortion To Nuke Grid Warp"
     families = ["lensDistortion"]
     hosts = ["equalizer"]
 
@@ -29,27 +29,37 @@ class ExtractLensDistortionNuke(publish.Extractor,
         if not self.is_active(instance.data):
             return
 
-        cam = tde4.getCurrentCamera()
-        offset = tde4.getCameraFrameOffset(cam)
+        camera_id = tde4.getCurrentCamera()
+        lens_id = tde4.getCameraLens(camera_id)
+        img_width = int(tde4.getCameraImageWidth(camera_id))
+        img_height = int(tde4.getCameraImageHeight(camera_id))
+        grid_width, grid_height = 10, 10
+        startframe = tde4.getCameraFrameOffset(camera_id)
+        img_overscan_width, img_overscan_height = img_width, img_height
+        overscan = False
+        flop = False
+
         staging_dir = self.staging_dir(instance)
-        file_path = os.path.join(staging_dir, "nuke_ld_export.nk")
+        file_path = os.path.join(staging_dir, "nuke_ld_export_warp.nk")
 
         # import export script from 3DEqualizer
-        exporter_path = os.path.join(instance.data["tde4_path"], "sys_data", "py_scripts", "export_nuke_LD_3DE4_Lens_Distortion_Node.py")  # noqa: E501
+        exporter_path = os.path.join(instance.data["tde4_path"], "sys_data", "py_scripts", "export_nuke_grid_warp_generic_LD.py")  # noqa: E501
         self.log.debug("Importing {}".format(exporter_path))
-
+        
         # Hide UI with patchin postCustomRequester
-        with patch("tde4.postCustomRequester", lambda *args, **kwargs: 0):
+        with patch("tde4.postCustomRequester", lambda *args, **kwargs: 0),\
+             patch("tde4.postProgressRequesterAndContinue", lambda *args, **kwargs: None),\
+             patch("tde4.updateProgressRequester", lambda *args, **kwargs: True):   
             exporter = import_filepath(exporter_path)
-            exporter.exportNukeDewarpNode(cam, offset, file_path)
+            exporter._export_nuke_grid_warp(file_path, img_width, img_height, grid_width, grid_height, startframe, overscan, img_overscan_width, img_overscan_height, flop)
 
         # create representation data
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': "nuke_ld_export",
-            'ext': "ls.nk",
+            'name': "nuke_ld_export_warp",
+            'ext': "warp.nk",
             'files': os.path.basename(file_path),
             "stagingDir": staging_dir,
         }
