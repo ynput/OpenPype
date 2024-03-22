@@ -26,7 +26,7 @@ class OverviewWidget(QtWidgets.QFrame):
 
     def __init__(self, controller, parent):
         super(OverviewWidget, self).__init__(parent)
-        
+
         self._refreshing_instances = False
         self._controller = controller
 
@@ -42,16 +42,16 @@ class OverviewWidget(QtWidgets.QFrame):
             ),
             subset_content_widget
         )
-        
+
         subset_view_cards = InstanceCardView(controller, subset_views_widget)
         # TODO Edited
         subset_list_view = InstanceListView(controller, subset_views_widget)
-        
+
         subset_views_layout = QtWidgets.QStackedLayout()
         subset_views_layout.addWidget(subset_view_cards)
         subset_views_layout.addWidget(subset_list_view)
         subset_views_layout.setCurrentWidget(subset_view_cards)
-        
+
         # Buttons at the bottom of subset view
         create_btn = CreateInstanceBtn(subset_views_widget)
         delete_btn = RemoveInstanceBtn(subset_views_widget)
@@ -100,7 +100,7 @@ class OverviewWidget(QtWidgets.QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(subset_content_widget, 1)
 
-        
+
         # TODO EDITED
         # change_anim = QtCore.QVariantAnimation()
         class VariantAnimation(QtCore.QVariantAnimation):
@@ -142,7 +142,7 @@ class OverviewWidget(QtWidgets.QFrame):
         subset_attributes_widget.convert_requested.connect(
             self._on_convert_requested
         )
-        
+
         # --- Controller callbacks ---
         controller.event_system.add_callback(
             "publish.process.started", self._on_publish_start
@@ -171,9 +171,9 @@ class OverviewWidget(QtWidgets.QFrame):
         self._create_widget = create_widget
         self._subset_views_widget = subset_views_widget
         self._subset_attributes_wrap = subset_attributes_wrap
-        
+
         self._change_anim = change_anim
-        
+
         # Start in create mode
         self._current_state = "create"
         subset_attributes_wrap.setVisible(False)

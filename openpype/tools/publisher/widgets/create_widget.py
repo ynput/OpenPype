@@ -323,13 +323,13 @@ class CreateWidget(QtWidgets.QWidget):
         self._creators_sort_model = creators_sort_model
         self._creators_view = creators_view
         self._create_btn = create_btn
-        
+
         self._creator_short_desc_widget = creator_short_desc_widget
         self._creator_basics_widget = creator_basics_widget
         self._thumbnail_widget = thumbnail_widget
         self._pre_create_widget = pre_create_widget
         self._attr_separator_widget = attr_separator_widget
-        
+
         self._prereq_timer = prereq_timer
         self._first_show = True
         self._last_thumbnail_path = None

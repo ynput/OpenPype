@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """Collect current work file."""
-from pathlib import Path
-
+import os
 import pyblish.api
 import tde4
-
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
@@ -13,15 +11,15 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     label = "Collect 3DE4 Workfile"
     hosts = ['equalizer']
 
-    def process(self, context: pyblish.api.Context):
+    def process(self, context):
         """Inject the current working file."""
-        project_file = Path(tde4.getProjectPath())
-        current_file = project_file.as_posix()
+        project_file = tde4.getProjectPath()
+        current_file = os.path.normpath(project_file)
 
         context.data['currentFile'] = current_file
 
-        filename = project_file.stem
-        ext = project_file.suffix
+        filename = os.path.splitext(os.path.basename(project_file))[0]
+        ext = os.path.splitext(project_file)[1]
 
         task = context.data["task"]
 
@@ -29,7 +27,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # create instance
         instance = context.create_instance(name=filename)
-        subset = f'workfile{task.capitalize()}'
+        subset = 'workfile{}'.format(task.capitalize())
 
         data = {
             "subset": subset,
@@ -47,15 +45,15 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
                 {
                     "name": ext.lstrip("."),
                     "ext": ext.lstrip("."),
-                    "files": project_file.name,
-                    "stagingDir": project_file.parent.as_posix(),
+                    "files": os.path.basename(project_file),
+                    "stagingDir": os.path.dirname(project_file),
                 }
             ]
         }
 
         instance.data.update(data)
 
-        self.log.info(f'Collected instance: {project_file.name}')
-        self.log.info(f'Scene path: {current_file}')
-        self.log.info(f'staging Dir: {project_file.parent.as_posix()}')
-        self.log.info(f'subset: {subset}')
+        self.log.info('Collected instance: {}'.format(os.path.basename(project_file)))
+        self.log.info('Scene path: {}'.format(current_file))
+        self.log.info('staging Dir: {}'.format(os.path.dirname(project_file)))
+        self.log.info('subset: {}'.format(subset))

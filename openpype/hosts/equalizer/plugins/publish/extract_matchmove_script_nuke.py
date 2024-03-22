@@ -10,13 +10,13 @@ software.
 TODO: This can be refactored even better, split to multiple methods, etc.
 
 """
-from pathlib import Path
-from unittest.mock import patch
-
+import os
+from mock import patch
+import six
 import pyblish.api
 import tde4  # noqa: F401
-
-
+from openpype.lib import import_filepath
+import types
 from openpype.pipeline import OptionalPyblishPluginMixin
 from openpype.pipeline import publish
 
@@ -39,7 +39,7 @@ class ExtractMatchmoveScriptNuke(publish.Extractor,
 
     order = pyblish.api.ExtractorOrder
 
-    def process(self, instance: pyblish.api.Instance):
+    def process(self, instance = pyblish.api.Instance):
 
         if not self.is_active(instance.data):
             return
@@ -49,13 +49,13 @@ class ExtractMatchmoveScriptNuke(publish.Extractor,
         frame0 -= 1
 
         staging_dir = self.staging_dir(instance)
-        file_path = Path(staging_dir) / "nuke_export.nk"
+        file_path = os.path.join(staging_dir, "nuke_export.nk")
 
         # these patched methods are used to silence 3DEqualizer UI:
-        def patched_getWidgetValue(requester, key: str):  # noqa: N802
+        def patched_getWidgetValue(requester, key):  # noqa: N802
             """Return value for given key in widget."""
             if key == "file_browser":
-                return file_path.as_posix()
+                return file_path
             elif key == "startframe_field":
                 return tde4.getCameraFrameOffset(cam)
             return ""
@@ -71,16 +71,20 @@ class ExtractMatchmoveScriptNuke(publish.Extractor,
             return None
 
         # import maya export script from 3DEqualizer
-        exporter_path = instance.data["tde4_path"] / "sys_data" / "py_scripts" / "export_nuke.py"  # noqa: E501
+        exporter_path = os.path.join(instance.data["tde4_path"], "sys_data", "py_scripts", "export_nuke.py")  # noqa: E501
+        module = types.ModuleType("export_nuke")
+        module.__file__ = exporter_path
         self.log.debug("Patching 3dequalizer requester objects ...")
 
         with patch("tde4.getWidgetValue", patched_getWidgetValue), \
              patch("tde4.postCustomRequester", patched_postCustomRequester), \
              patch("tde4.postQuestionRequester", patched_postQuestionRequester):  # noqa: E501
-            with exporter_path.open() as f:
+            with open(exporter_path, 'r') as f:
                 script = f.read()
-            self.log.debug(f"Importing {exporter_path.as_posix()}")
-            exec(script)
+                if not "import tde4" in script:
+                    script = "import tde4\n" + script
+            six.exec_(script, module.__dict__)
+            self.log.debug("Importing {}".format(exporter_path))
 
         # create representation data
         if "representations" not in instance.data:
@@ -89,8 +93,8 @@ class ExtractMatchmoveScriptNuke(publish.Extractor,
         representation = {
             'name': "nk",
             'ext': "nk",
-            'files': file_path.name,
+            'files': "nuke_export.nk",
             "stagingDir": staging_dir,
         }
-        self.log.debug(f"output: {file_path.as_posix()}")
+        self.log.debug("output: {}".format(file_path))
         instance.data["representations"].append(representation)
