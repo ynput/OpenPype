@@ -143,6 +143,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "yeticacheUE",
                 "tycache",
                 "lensDistortion",
+                "warpFootage"
                 ]
 
     default_template_name = "publish"

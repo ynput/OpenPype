@@ -4,7 +4,7 @@ import tde4  # noqa: F401
 from mock import patch
 from openpype.lib import import_filepath
 from openpype.pipeline import OptionalPyblishPluginMixin, publish
-
+from openpype.hosts.equalizer.api import EqualizerHost
 
 class ExtractDistortionToNuke(publish.Extractor,
                                 OptionalPyblishPluginMixin):
@@ -35,8 +35,10 @@ class ExtractDistortionToNuke(publish.Extractor,
         img_height = int(tde4.getCameraImageHeight(camera_id))
         grid_width, grid_height = 10, 10
         startframe = tde4.getCameraFrameOffset(camera_id)
-        img_overscan_width, img_overscan_height = img_width, img_height
-        overscan = False
+        overscan = EqualizerHost.get_host().get_overscan()
+        attr_data = self.get_attr_values_from_data(instance.data)
+        img_overscan_width, img_overscan_height = instance.data["creator_attributes"]["overscan_percent_width"], instance.data["creator_attributes"]["overscan_percent_height"]
+        overscan = True
         flop = False
 
         staging_dir = self.staging_dir(instance)
