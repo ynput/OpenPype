@@ -8,4 +8,4 @@ class CreateLensDistortionData(EqualizerCreator):
     icon = "glasses"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        super().create(subset_name, instance_data, pre_create_data)
+        super(CreateLensDistortionData,self).create(subset_name, instance_data, pre_create_data)

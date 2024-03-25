@@ -18,13 +18,21 @@ class EqualizerAddon(OpenPypeModule, IHostAddon):
         # and PYTHON_CUSTOM_SCRIPTS_3DE4 as a colon separated list of
         # directories to look for additional python scripts.
         # (Windows: list is separated by semicolons).
-        # Ad
 
         startup_path = os.path.join(EQUALIZER_HOST_DIR, "startup")
         if "PYTHON_CUSTOM_SCRIPTS_3DE4" in env:
             startup_path = os.path.join(
                 env["PYTHON_CUSTOM_SCRIPTS_3DE4"],
                 startup_path)
+        python_path = env["PYTHONPATH"]
+
+        python_path_parts = []
+        if python_path:
+            python_path_parts = python_path.split(os.pathsep)
+        vendor_path = os.path.join(EQUALIZER_HOST_DIR, "vendor")
+
+        python_path_parts.insert(0, vendor_path)
+        env["PYTHONPATH"] = os.pathsep.join(python_path_parts)
 
         env["PYTHON_CUSTOM_SCRIPTS_3DE4"] = startup_path
         env["AYON_TDE4_HEARTBEAT_INTERVAL"] = str(self.heartbeat)

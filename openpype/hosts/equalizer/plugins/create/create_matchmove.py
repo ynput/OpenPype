@@ -52,4 +52,4 @@ class CreateMatchMove(EqualizerCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         self.log.debug("CreateMatchMove.create")
-        super().create(subset_name, instance_data, pre_create_data)
+        super(CreateMatchMove,self).create(subset_name, instance_data, pre_create_data)

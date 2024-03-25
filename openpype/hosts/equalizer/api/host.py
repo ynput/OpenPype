@@ -62,14 +62,14 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def save_workfile(self, filepath=None):
         result = tde4.saveProject(filepath)
         if not bool(result):
-            raise RuntimeError("Failed to save workfile %s."%filepath)
+            raise RuntimeError("Failed to save workfile %s." % filepath)
 
         return filepath
 
     def open_workfile(self, filepath):
         result = tde4.loadProject(filepath)
         if not bool(result):
-            raise RuntimeError("Failed to open workfile %s."%filepath)
+            raise RuntimeError("Failed to open workfile %s." % filepath)
 
         return filepath
 
@@ -79,7 +79,6 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             return None
 
         return current_filepath
-
 
     def get_overscan(self):
         context = self.get_context_data()
@@ -176,7 +175,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         tde4.setProjectNotes(
             re.sub(
                 CONTEXT_REGEX,
-                "AYON_CONTEXT::%s::AYON_CONTEXT_END"%update_str,
+                "AYON_CONTEXT::%s::AYON_CONTEXT_END" % update_str,
                 tde4.getProjectNotes()
             )
         )
@@ -198,7 +197,6 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         # tde4.setTimerCallbackFunction(
         #     "EqualizerHost._timer", int(heartbeat_interval))
 
-
     def _set_project(self):
         workdir = legacy_io.Session["AVALON_WORKDIR"]
         if os.path.exists(workdir):
@@ -210,7 +208,6 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                         projects.append(f)
                 projects.sort()
                 tde4.loadProject(os.path.join(workdir, projects[-1]))
-
 
     @staticmethod
     def _timer():

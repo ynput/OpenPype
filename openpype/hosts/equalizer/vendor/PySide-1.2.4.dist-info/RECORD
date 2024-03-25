@@ -1,8 +1,9 @@
-../../Scripts/pyside-uic.exe,sha256=CPKuTv2_Yfxl6XFAUnxnyIF9WUkqFxf016CtH9-cZbU,103260
+../../bin/pyside-uic.exe,sha256=0-fT3AEcqTDMqn7kQ2dum6PUpR2A9_CrCGBfb-V2nCw,106329
 PySide-1.2.4.dist-info/DESCRIPTION.rst,sha256=fTdnver_GJviAybz0YM74a-cSmz8swbzS7-ihdtfTzg,19867
 PySide-1.2.4.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
 PySide-1.2.4.dist-info/METADATA,sha256=OUwoti8DhIXcmIWbp5qgFFbBDJQPSaUee06qFgopmDk,22146
 PySide-1.2.4.dist-info/RECORD,,
+PySide-1.2.4.dist-info/REQUESTED,sha256=47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU,0
 PySide-1.2.4.dist-info/WHEEL,sha256=_facTcPqhbpP_1DzoP9XARwqpr0IjwwKGxYF35-lwDs,105
 PySide-1.2.4.dist-info/entry_points.txt,sha256=JjGDSMNmkWDMCF3PWE5WePDZCd4U68CvnhmE-uuSg0w,56
 PySide-1.2.4.dist-info/metadata.json,sha256=u3eu8oLu5fWbKnJy_j0Eup2nT4QzQdtmX_bTOtsKJ0U,1815
