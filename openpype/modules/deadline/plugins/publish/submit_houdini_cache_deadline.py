@@ -110,6 +110,7 @@ class HoudiniCacheSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             "FTRACK_API_USER",
             "FTRACK_SERVER",
             "OPENPYPE_SG_USER",
+            "AVALON_DB",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",

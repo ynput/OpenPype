@@ -194,7 +194,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 "frameEndHandle": last_frame,
             })
 
-
         # TODO temporarily set stagingDir as persistent for backward
         # compatibility. This is mainly focused on `renders`folders which
         # were previously not cleaned up (and could be used in read notes)
@@ -268,10 +267,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             "stagingDir": output_dir,
             "tags": []
         }
-
-        frame_start_str = self._get_frame_start_str(first_frame, last_frame)
-
-        representation['frameStart'] = frame_start_str
 
         # set slate frame
         collected_frames = self._add_slate_frame_to_collected_frames(

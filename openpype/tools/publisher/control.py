@@ -2337,7 +2337,11 @@ class PublisherController(BasePublisherController):
                     "title": "Action failed",
                     "message": "Action failed.",
                     "traceback": "".join(
-                        traceback.format_exception(exception)
+                        traceback.format_exception(
+                            type(exception),
+                            exception,
+                            exception.__traceback__
+                        )
                     ),
                     "label": action.__name__,
                     "identifier": action.id

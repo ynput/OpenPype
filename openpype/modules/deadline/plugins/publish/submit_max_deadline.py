@@ -16,11 +16,6 @@ from openpype.pipeline.publish.lib import (
     replace_with_published_scene_path
 )
 from openpype.pipeline.publish import KnownPublishError
-from openpype.hosts.max.api.lib import (
-    get_current_renderer,
-    get_multipass_setting
-)
-from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
@@ -108,6 +103,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             "FTRACK_API_USER",
             "FTRACK_SERVER",
             "OPENPYPE_SG_USER",
+            "AVALON_DB",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
@@ -293,6 +289,9 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         Args:
             infos(dict): a dictionary with plugin info.
         """
+        from openpype.hosts.max.api.lib import get_current_renderer
+        from openpype.hosts.max.api.lib_rendersettings import RenderSettings
+
         instance = self._instance
         # set the target camera
         plugin_info = copy.deepcopy(self.plugin_info)
@@ -358,6 +357,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             job_info_list (list): A list of multiple job infos
             plugin_info_list (list): A list of multiple plugin infos
         """
+        from openpype.hosts.max.api.lib import get_multipass_setting
+
         job_info_list = []
         plugin_info_list = []
         instance = self._instance

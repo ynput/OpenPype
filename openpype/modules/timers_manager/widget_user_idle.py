@@ -17,6 +17,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
+            | QtCore.Qt.WindowStaysOnTopHint
         )
 
         self._is_showed = False

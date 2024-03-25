@@ -69,6 +69,10 @@
             "tags_addition": [
                 "review"
             ]
+        },
+        "CollectClipEffects": {
+            "enabled": true,
+            "effect_categories": {}
         }
     },
     "filters": {},
