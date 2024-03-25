@@ -65,9 +65,9 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             representations = instance.data.get("representations", [])
 
             # Subset should have a review or a kitsureview tag
-            is_kitsu_review = self._get_representations_with_sequence_tag(representations)
             is_review = "review" in families
-            if not is_review and not is_kitsu_review:
+
+            if not is_review:
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")
