@@ -19,16 +19,21 @@
             "rules": {}
         },
         "viewer": {
-            "viewerProcess": "sRGB (default)"
+            "viewerProcess": "sRGB (ACES)"
         },
         "baking": {
             "viewerProcess": "rec709 (default)"
         },
         "workfile": {
             "colorManagement": "OCIO",
-            "OCIO_config": "nuke-default",
-            "workingSpaceLUT": "scene_linear",
-            "monitorLut": "sRGB (default)"
+            "OCIO_config": "aces_1.2",
+            "workingSpaceLUT": "scene_linear (ACES - ACEScg)",
+            "monitorLut": "sRGB (ACES)",
+            "monitorOutLUT": "sRGB (ACES)",
+            "int8Lut": "matte_paint (Utility - sRGB - Texture)",
+            "int16Lut": "texture_paint (ACES - ACEScc)",
+            "logLut": "compositing_log (Input - ADX - ADX10)",
+            "floatLut": "scene_linear (ACES - ACEScg)"
         },
         "nodes": {
             "requiredNodes": [
