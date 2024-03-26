@@ -606,11 +606,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self.entity.add_require_restart_change_callback(
                 self._on_require_restart_change
             )
-
+            # SLOW: This is very slow and impact waiting time when switching project in settings
             self.add_children_gui()
 
             self.ignore_input_changes.set_ignore(True)
 
+            # SLOW: This is very slow and impact waiting time when switching project in settings
             for input_field in self.input_fields:
                 input_field.set_entity_value()
 
@@ -742,6 +743,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         ExtractHelper.extract_settings_to_json(
             filepath, settings_data, project_name
         )
+
+    def _on_apply_settings_from_project(self, project_name):
+        self.entity.change_project(project_name, None, only_settings=True)
 
     def _on_reset_crash(self):
         self._reset_crashed = True
@@ -989,6 +993,9 @@ class ProjectWidget(SettingsCategoryWidget):
         )
         project_list_widget.extract_to_file_requested.connect(
             self._on_extract_to_file
+        )
+        project_list_widget.apply_from_project_requested.connect(
+            self._on_apply_settings_from_project
         )
 
         self.project_list_widget = project_list_widget
