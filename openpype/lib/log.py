@@ -102,6 +102,12 @@ class LogStreamHandler(logging.StreamHandler):
 
         except OSError:
             self.handleError(record)
+        except ValueError:
+            # this is raised when logging during interpreter shutdown
+            # or it real edge cases where logging stream is already closed.
+            # In particular, it happens a lot in 3DEqualizer.
+            # TODO: remove this condition when the cause is found.
+            pass
 
         except Exception:
             print(repr(record))

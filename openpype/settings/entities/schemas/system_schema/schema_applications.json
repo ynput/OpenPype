@@ -110,6 +110,10 @@
       "name": "schema_djv"
     },
     {
+      "type": "schema",
+      "name": "schema_3dequalizer"
+    },
+    {
       "type": "dict-modifiable",
       "key": "additional_apps",
       "label": "Additional",

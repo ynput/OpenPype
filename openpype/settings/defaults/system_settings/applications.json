@@ -1584,8 +1584,8 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "5-1": "Unreal 5.1",
-                "5-0": "Unreal 5.0"
+                "5-0": "Unreal 5.0",
+                "5-1": "Unreal 5.1"
             }
         }
     },
@@ -1612,6 +1612,35 @@
             },
             "__dynamic_keys_labels__": {
                 "1-1": "1.1"
+            }
+        }
+    },
+    "3dequalizer": {
+        "enabled": true,
+        "label": "3DEqualizer",
+        "icon": "{}/app_icons/3de4.png",
+        "host_name": "equalizer",
+        "heartbeat_interval": 500,
+        "environment": {},
+        "variants": {
+            "7-1v2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\3DE4_win64_r7.1v2\\bin\\3DE4.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "7-1v2": "7.1v2"
             }
         }
     },

@@ -613,7 +613,13 @@ class Loader(LoaderPlugin):
         """
 
         options["attach_to_root"] = True
-        custom_naming = self.load_settings[loader_key]
+        try:
+            custom_naming = self.load_settings[loader_key]
+        except KeyError:
+            self.log.warning(
+                "No settings found for {} in settings, falling back to "
+                "ReferenceLoader defaults.".format(loader_key))
+            custom_naming = self.load_settings["reference_loader"]
 
         if not custom_naming['namespace']:
             raise LoadError("No namespace specified in "
