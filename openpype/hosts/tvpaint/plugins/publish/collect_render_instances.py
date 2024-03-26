@@ -128,6 +128,10 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
             instance.context.data["layersData"]
         )
 
+        creator_attributes = instance.data["creator_attributes"]
+        if creator_attributes["publish_sequence"]:
+            instance.data["families"].append("sequence")
+            instance.data["families"].append("review")
         ignore_transparency = self._get_ignore_transparency_option(instance)
         if ignore_transparency:
             instance.data["ignoreLayersTransparency"] = (
