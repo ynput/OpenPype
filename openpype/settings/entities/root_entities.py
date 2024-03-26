@@ -709,7 +709,7 @@ class ProjectSettings(RootEntity):
             output = output[path_part]
         return output
 
-    def change_project(self, project_name, source_version=None):
+    def change_project(self, project_name, source_version=None, only_settings=False):
         if project_name == self._project_name:
             if (
                 source_version is None
@@ -722,7 +722,10 @@ class ProjectSettings(RootEntity):
         self._source_version = source_version
         self._anatomy_source_version = None
 
+        if not only_settings:
+            self._project_name = project_name
         self._set_values_for_project(project_name)
+        # SLOW: This is very slow and impact waiting time when switching project in settings
         self.set_project_state()
 
     def _reset_values(self):
@@ -734,10 +737,10 @@ class ProjectSettings(RootEntity):
             value = default_values.get(key, NOT_SET)
             child_obj.update_default_value(value)
 
+        self._project_name = self.project_name
         self._set_values_for_project(self.project_name)
 
     def _set_values_for_project(self, project_name):
-        self._project_name = project_name
         if project_name:
             project_settings_overrides = (
                 get_studio_project_settings_overrides()

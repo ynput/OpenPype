@@ -8,33 +8,37 @@ from pathlib import Path
 
 
 def execute():
-    path = get_repository_path("submission/Blender/Client")
     blender_addons_folder_path = get_addons_folder_path()
+    install_deadline_addon(blender_addons_folder_path)
+    enable_user_addons(blender_addons_folder_path)
+    bpy.ops.wm.save_userpref()
+
+
+def install_deadline_addon(blender_addons_folder_path):
+    path = get_repository_path("submission/Blender/Client")
     if not path:
         logging.warning("Can't find Deadline submission repository for Blender. Abort process.")
-        raise ImportError
+        return
 
     deadline_addon_file_name = get_python_addon_file(path)
     deadline_addon_name = Path(deadline_addon_file_name).stem
 
     if _is_already_installed(deadline_addon_name, blender_addons_folder_path):
         logging.info("Deadline addon is already installed")
-    else:
-        try:
-            deadline_addon_path = os.path.join(path, deadline_addon_file_name)
-        except StopIteration:
-            logging.warning("Can't find Deadline submission addon for Blender. Abort process.")
-            raise StopIteration
+        return
 
-        bpy.ops.preferences.addon_install(
-            overwrite=True,
-            filepath=deadline_addon_path
-        )
-        deadline_addon_name = Path(deadline_addon_file_name).stem
-        logging.info("Deadline addon has been correctly installed.")
+    try:
+        deadline_addon_path = os.path.join(path, deadline_addon_file_name)
+    except StopIteration:
+        logging.warning("Can't find Deadline submission addon for Blender. Abort process.")
+        return
 
-    enable_user_addons(blender_addons_folder_path)
-    bpy.ops.wm.save_userpref()
+    bpy.ops.preferences.addon_install(
+        overwrite=True,
+        filepath=deadline_addon_path
+    )
+    deadline_addon_name = Path(deadline_addon_file_name).stem
+    logging.info("Deadline addon has been correctly installed.")
 
 
 def get_python_addon_file(path):

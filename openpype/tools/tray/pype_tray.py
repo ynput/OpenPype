@@ -522,6 +522,7 @@ class TrayManager:
         # Trigger version validation on start
         self._version_check_timer.timeout.emit()
 
+        # SLOW: This operation is very slow
         self._validate_settings_defaults()
 
         if not op_version_control_available():
@@ -709,7 +710,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :type parent: QtWidgets.QMainWindow
     """
 
-    doubleclick_time_ms = 100
+    doubleclick_time_ms = 500
 
     def __init__(self, parent):
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
