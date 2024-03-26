@@ -1,6 +1,9 @@
 import re
 import os
+import logging
 from pathlib import Path
+
+from openpype.pipeline.anatomy import Anatomy
 
 
 def get_next_version_folder(filepath, create_version_folder=False):
@@ -17,6 +20,19 @@ def get_version_folder_fullpath(filepath):
         return None
 
     return latest_version_folder
+
+
+def get_workdir():
+    anatomy_object = Anatomy()
+    roots = getattr(anatomy_object, "roots", None)
+    if not roots:
+        raise Exception("Can't retrieve roots attribute for given anatomy object.")
+
+    workdir = roots.get('work', None)
+    if not workdir:
+        raise Exception("Anatomy object has not work property. Can't retrive workdir for given entity.")
+
+    return str(workdir)
 
 
 def _get_latest_version_folder(filepath, absolute_path=False, create_version_folder=False):

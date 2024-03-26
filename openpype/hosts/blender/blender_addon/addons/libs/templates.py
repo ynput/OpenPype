@@ -5,15 +5,8 @@ import bpy
 from openpype.pipeline import get_current_project_name
 from openpype.pipeline.anatomy import Anatomy
 
-from openpype.client import get_asset_by_name
-from openpype.pipeline import (
-    get_current_context,
-    get_current_project_name,
-    get_current_asset_name
-)
+from openpype.pipeline import (get_current_project_name)
 from openpype.pipeline.context_tools import get_template_data_from_session
-from openpype.pipeline.template_data import get_general_template_data
-from openpype.pipeline.project_folders import get_project_settings, get_project_basic_paths, get_project_template_data
 from openpype.pipeline.anatomy import Anatomy
 
 from libs import paths
