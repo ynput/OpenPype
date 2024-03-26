@@ -474,7 +474,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
                                "use overwrite" % output)
 
         is_sequence = "%" in output
-        duration = kwargs.get("duration", None)
+        duration = kwargs.get("duration", 0)
 
         command = self.command(
             output=output,
