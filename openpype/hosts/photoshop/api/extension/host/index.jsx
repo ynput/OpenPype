@@ -512,9 +512,9 @@ function renameLayers(layers){
      *    layers(list)
      *
      **/
-    let parsed_layers = JSON.parse(layers);
+    parsed_layers = JSON.parse(layers);
     for (var i = 0; i < parsed_layers.length; i++){
-        let given_layer = parsed_layers[i]
+        given_layer = parsed_layers[i]
         renameLayer(given_layer["id"], given_layer["new_name"]);
     }
 }
