@@ -283,11 +283,11 @@ def _get_all_modifiers():
 
 
 def _replace_path_parts_to_linux(path):
-    workdir = paths.get_workdir()
-    return bpy.path.abspath(path).replace('\\', '/').replace(
-        workdir.replace('\\', '/'),
+    print(paths.get_workdir())
+    return bpy.path.abspath(path).replace(
+        paths.get_workdir(),
         PathsParts.LINUX.value
-    )
+    ).replace('\\', '/')
 
 
 def set_engine(engine):

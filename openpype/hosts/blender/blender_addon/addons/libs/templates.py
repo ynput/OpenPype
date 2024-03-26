@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import bpy
 
@@ -59,7 +60,7 @@ def _format_template_data(anatomy_template, template_path_key, template_data):
         logging.warning(f"Information labelled '{template_path_key}' is needed for this template.")
         return None
 
-    return path_template.format_map(Default(template_data))
+    return str(Path(path_template.format_map(Default(template_data))).resolve())
 
 
 def get_playblast_path():
