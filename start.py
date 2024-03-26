@@ -1094,7 +1094,7 @@ def boot():
         # Get OpenPypeVersion() Object
         op_version_to_extract = prod_dir_version
 
-    if not prod_dir_version and dev_mode:
+    if not prod_dir_version and dev_mode and openpype_path:
         # This isn't a released version, we are in developer mode
         # Generate the version, then copy it on the user/artist directory
 
