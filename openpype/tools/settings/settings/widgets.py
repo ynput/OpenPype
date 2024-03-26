@@ -1163,18 +1163,17 @@ class ProjectListWidget(QtWidgets.QWidget):
             return
 
         versions = self._entity.get_available_source_versions(sorted=True)
-        if not versions:
-            return
 
         menu = QtWidgets.QMenu(self)
-        submenu_versions = QtWidgets.QMenu("Use settings from version", menu)
-        for version in reversed(versions):
-            action_version = VersionAction(version, submenu_versions)
-            action_version.version_triggered.connect(
-                self.version_change_requested
-            )
-            submenu_versions.addAction(action_version)
-        menu.addMenu(submenu_versions)
+        if versions:
+            submenu_versions = QtWidgets.QMenu("Use settings from version", menu)
+            for version in reversed(versions):
+                action_version = VersionAction(version, submenu_versions)
+                action_version.version_triggered.connect(
+                    self.version_change_requested
+                )
+                submenu_versions.addAction(action_version)
+            menu.addMenu(submenu_versions)
 
         submenu_projects = QtWidgets.QMenu("Use settings from project", menu)
         for project_name in self.project_model.get_project_names():
@@ -1187,6 +1186,7 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.apply_from_project_requested
             )
             submenu_projects.addAction(action_project)
+
         menu.addMenu(submenu_projects)
 
         extract_action = QtWidgets.QAction("Extract to file", menu)
