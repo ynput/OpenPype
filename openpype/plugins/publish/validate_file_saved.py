@@ -8,7 +8,7 @@ class ValidateCurrentSaveFile(pyblish.api.ContextPlugin):
 
     label = "Validate File Saved"
     order = pyblish.api.ValidatorOrder - 0.1
-    hosts = ["maya", "houdini", "nuke"]
+    hosts = ["maya", "houdini", "nuke", "gaffer"]
 
     def process(self, context):
 
