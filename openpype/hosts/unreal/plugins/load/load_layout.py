@@ -67,9 +67,9 @@ class LayoutLoader(plugin.Loader):
     @staticmethod
     def _get_fbx_loader(loaders, family):
         name = ""
-        if family == 'rig':
+        if family in ['rig', 'skeletalMesh']:
             name = "SkeletalMeshFBXLoader"
-        elif family == 'model':
+        elif family in ['model', 'staticMesh']:
             name = "StaticMeshFBXLoader"
         elif family == 'camera':
             name = "CameraLoader"
@@ -86,7 +86,7 @@ class LayoutLoader(plugin.Loader):
     @staticmethod
     def _get_abc_loader(loaders, family):
         name = ""
-        if family == 'rig':
+        if family in ['rig', 'skeletalMesh']:
             name = "SkeletalMeshAlembicLoader"
         elif family == 'model':
             name = "StaticMeshAlembicLoader"
