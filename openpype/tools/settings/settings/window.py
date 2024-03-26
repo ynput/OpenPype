@@ -169,7 +169,7 @@ class MainWidget(QtWidgets.QWidget):
         search_dialog = SearchEntitiesDialog(self)
 
         self._shadow_widget = ShadowWidget("Working...", self)
-        self._shadow_widget.setVisible(False)
+        self._shadow_widget.setVisible(True)
 
         controller.event_system.add_callback(
             "edit.mode.changed",

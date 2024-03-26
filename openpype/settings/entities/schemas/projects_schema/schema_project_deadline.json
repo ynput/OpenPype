@@ -537,6 +537,16 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
                             "type": "text",
                             "key": "department",
                             "label": "Deadline apartment"
@@ -570,6 +580,16 @@
                             "type": "boolean",
                             "key": "enabled",
                             "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
                         },
                         {
                             "type": "text",

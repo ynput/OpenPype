@@ -16,10 +16,10 @@ from .settings import (
 
 def main(user_role=None):
     if user_role is None:
-        user_role = "manager"
+        user_role = "user"
 
     user_role_low = user_role.lower()
-    allowed_roles = ("developer", "manager")
+    allowed_roles = ("user", "developer", "administrator")
     if user_role_low not in allowed_roles:
         raise ValueError("Invalid user role \"{}\". Expected {}".format(
             user_role, ", ".join(allowed_roles)

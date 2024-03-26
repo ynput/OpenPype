@@ -28,6 +28,7 @@ class PSItem(object):
     long_name = attr.ib(default=None)
     color_code = attr.ib(default=None)  # color code of layer
     instance_id = attr.ib(default=None)
+    blendMode = attr.ib(default="NORMAL")
 
     @property
     def clean_name(self):
@@ -242,6 +243,50 @@ class PhotoshopServerStub:
         parent_ids = set(layers_ids)
 
         return self._get_layers_in_layers(parent_ids, layers)
+
+    def set_blendmode(self, layer_name, blendMode_name):
+        """
+            Sets blendMode based on 'blendMode_name' on a given 'layerName'
+        Args:
+            layer_name (string): layer name
+            blendMode_name (string): name of the blendMode desired
+
+            list of the possibilities for blendMode:
+            "colorBurn"
+            "colorDodge"
+            "darken"
+            "darkerColor"
+            "difference"
+            "dissolve":
+            "blendDivide"
+            "exclusion"
+            "hardLight"
+            "hardMix"
+            "hue"
+            "lighten"
+            "lighterColor"
+            "linearBurn"
+            "linearDodge"
+            "linearLight"
+            "luminosity"
+            "multiply"
+            "normal"
+            "overlay"
+            "passThrough"
+            "pinLight"
+            "saturation"
+            "screen"
+            "softLight"
+            "subtract"
+            "vividLight"
+        """
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.set_blendmode',
+                layer_name=layer_name,
+                blendMode_name=blendMode_name
+            )
+        )
 
     def _get_layers_in_layers(self, parent_ids, layers=None):
         if not layers:
@@ -507,6 +552,18 @@ class PhotoshopServerStub:
             )
         )
 
+    def rename_layers(self, layers):
+        """Renames set of layers with given name
+        Args:
+            layers (list): ilst of layers to delete
+        """
+        self.websocketserver.call(
+            self.client.call(
+                'Photoshop.rename_layers',
+                layers=json.dumps(layers)
+            )
+        )
+
     def remove_instance(self, instance_id):
         cleaned_data = []
 
@@ -566,6 +623,7 @@ class PhotoshopServerStub:
                 d.get('members'),
                 d.get('long_name'),
                 d.get("color_code"),
-                d.get("instance_id")
+                d.get("instance_id"),
+                d.get("blendMode")
             ))
         return ret
