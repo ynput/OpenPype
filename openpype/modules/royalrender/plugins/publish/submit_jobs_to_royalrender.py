@@ -99,7 +99,8 @@ class SubmitJobsToRoyalRender(pyblish.api.ContextPlugin):
         return temp.name
 
     def get_submission_parameters(self):
-        return [SubmitterParameter("RequiredMemory", "0")]
+        return [SubmitterParameter("RequiredMemory", "0"),
+                SubmitterParameter("PPAyoninjectenvvar", "1~1")]
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):

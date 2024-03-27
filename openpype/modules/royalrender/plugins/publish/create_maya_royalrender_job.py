@@ -38,6 +38,5 @@ class CreateMayaRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         job = self.get_job(instance, self.scene_path, first_file_path,
                            layer_name)
         job = self.update_job_with_host_specific(instance, job)
-        job = self.inject_environment(instance, job)
 
         instance.data["rrJobs"].append(job)
