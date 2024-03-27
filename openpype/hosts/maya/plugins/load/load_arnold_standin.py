@@ -156,12 +156,12 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         )
         cmds.setAttr(
             string_replace_operator + ".match",
-            proxy_basename,
+            proxy_basename.split(".")[0],
             type="string"
         )
         cmds.setAttr(
             string_replace_operator + ".replace",
-            os.path.basename(path),
+            os.path.basename(path).split(".")[0],
             type="string"
         )
 
