@@ -277,8 +277,12 @@ def create_timeline_item(
     timeline = timeline or get_current_timeline()
 
     # timing variables
-    if all([timeline_in, source_start, source_end]):
-        fps = timeline.GetSetting("timelineFrameRate")
+    if (
+        timeline_in is not None
+        or source_start is not None
+        or source_end is not None
+    ):
+        fps = float(timeline.GetSetting("timelineFrameRate"))
         duration = source_end - source_start
         timecode_in = frames_to_timecode(timeline_in, fps)
         timecode_out = frames_to_timecode(timeline_in + duration, fps)
@@ -293,11 +297,11 @@ def create_timeline_item(
             "mediaPoolItem": media_pool_item,
         }
 
-        if source_start:
+        if source_start is not None:
             clip_data["startFrame"] = source_start
-        if source_end:
+        if source_end is not None:
             clip_data["endFrame"] = source_end
-        if timecode_in:
+        if timeline_in is not None:
             clip_data["recordFrame"] = timeline_in
 
         # add to timeline
@@ -861,16 +865,15 @@ def _convert_resolve_list_type(resolve_list):
 
 def create_otio_time_range_from_timeline_item_data(timeline_item_data):
     timeline_item = timeline_item_data["clip"]["item"]
-    project = timeline_item_data["project"]
     timeline = timeline_item_data["timeline"]
     timeline_start = timeline.GetStartFrame()
+    timeline_fps = timeline.GetSetting("timelineFrameRate")
 
     frame_start = int(timeline_item.GetStart() - timeline_start)
     frame_duration = int(timeline_item.GetDuration())
-    fps = project.GetSetting("timelineFrameRate")
 
     return otio_export.create_otio_time_range(
-        frame_start, frame_duration, fps)
+        frame_start, frame_duration, timeline_fps)
 
 
 def get_otio_clip_instance_data(otio_timeline, timeline_item_data):
