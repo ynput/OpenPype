@@ -10,15 +10,15 @@
             "rules": {}
         },
         "workfile": {
-            "ocioConfigName": "nuke-default",
-            "workingSpace": "linear",
-            "sixteenBitLut": "sRGB",
-            "eightBitLut": "sRGB",
-            "floatLut": "linear",
-            "logLut": "Cineon",
-            "viewerLut": "sRGB",
-            "thumbnailLut": "sRGB",
-            "monitorOutLut": "sRGB"
+            "ocioConfigName": "aces_1.2",
+            "workingSpace": "scene_linear (ACES - ACEScg)",
+            "viewerLut": "ACES/sRGB",
+            "thumbnailLut": "ACES/sRGB",
+            "monitorOutLut": "ACES/sRGB",
+            "eightBitLut": "matte_paint (Utility - sRGB - Texture)",
+            "sixteenBitLut": "texture_paint (ACES - ACEScc)",
+            "logLut": "compositing_log (Input - ADX - ADX10)",
+            "floatLut": "scene_linear (ACES - ACEScg)"
         },
         "regexInputs": {
             "inputs": [
