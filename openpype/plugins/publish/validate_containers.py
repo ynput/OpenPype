@@ -25,7 +25,8 @@ class ValidateContainers(OptionalPyblishPluginMixin,
 
     label = "Validate Outdated Containers"
     order = pyblish.api.ValidatorOrder
-    hosts = ["maya", "houdini", "nuke", "harmony", "photoshop", "aftereffects"]
+    hosts = ["maya", "houdini", "nuke", "harmony", "photoshop", "aftereffects",
+             "gaffer"]
     optional = True
     actions = [ShowInventory]
 

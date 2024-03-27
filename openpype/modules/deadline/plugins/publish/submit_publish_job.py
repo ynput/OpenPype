@@ -90,7 +90,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
-             "celaction", "aftereffects", "harmony", "blender"]
+             "celaction", "aftereffects", "harmony", "blender", "gaffer"]
 
     families = ["render.farm", "render.frames_farm",
                 "prerender.farm", "prerender.frames_farm",
@@ -189,8 +189,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         environment = {
             "AVALON_DB": os.environ["AVALON_DB"],
             "AVALON_PROJECT": instance.context.data["projectName"],
-            "AVALON_ASSET": instance.context.data["asset"],
-            "AVALON_TASK": instance.context.data["task"],
+            "AVALON_ASSET": instance.data['asset'] or instance.context.data["asset"],
+            "AVALON_TASK": instance.data['task'] or instance.context.data["task"],
             "OPENPYPE_USERNAME": instance.context.data["user"],
             "OPENPYPE_LOG_NO_COLORS": "1",
             "IS_TEST": str(int(is_in_tests()))
@@ -419,6 +419,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 instance.data.get("attachTo"), instances
             )
 
+        extra_instance_data = [
+            "stagingDir",
+            "stagingDir_persistent",
+            "intent",
+        ]
+
+        for key in extra_instance_data:
+            if key in instance.data.keys(): 
+                instance_skeleton_data[key] = instance.data[key]
+
         r''' SUBMiT PUBLiSH JOB 2 D34DLiN3
           ____
         '     '            .---.  .---. .--. .---. .--..--..--..--. .---.
@@ -547,9 +557,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 version = get_versioning_start(
                     project_name,
                     host_name,
-                    task_name=template_data["task"]["name"],
-                    task_type=template_data["task"]["type"],
+                    task_name=template_data.get("task", {}).get("name", ""),
+                    task_type=template_data.get("task", {}).get("type", ""),
                     family="render",
+
                     subset=subset,
                     project_settings=context.data["project_settings"]
                 )
