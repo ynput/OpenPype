@@ -86,6 +86,10 @@ class PublishersModel(BaseSettingsModel):
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
     )
+    ValidateRenderPasses: BasicValidateModel = SettingsField(
+        default_factory=BasicValidateModel,
+        title="Validate Render Passes"
+    )
     ExtractModelObj: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Extract OBJ",
@@ -133,6 +137,11 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": False,
         "optional": True,
         "family_plugins_mapping": []
+    },
+    "ValidateRenderPasses": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     },
     "ExtractModelObj": {
         "enabled": True,
