@@ -9,8 +9,12 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
     """Validate all subset names are unique.
 
     This only validates whether the instances currently set to publish from
-    the workfile overlap one another for the asset + subset they are publishing
-    to.
+    the workfile overlap one another for the asset + subset they are
+    publishing to.
+
+    There could be also cases where different versions of the same subset
+    are published under same asset. This is allowed and is also validated.
+    For this specific case a unique warning is logged jut to inform the user.
 
     This does not perform any check against existing publishes in the database
     since it is allowed to publish into existing subsets resulting in
@@ -49,17 +53,41 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
                                  "{}".format(instance.name))
                 continue
 
-            instance_per_asset_subset[(asset, subset)].append(instance)
+            # for cases where multiple versions under same subset are published
+            version = instance.data.get("version")
+            if version is None:
+                # this might happen when workfile version sync is disabled
+                # we still need to validate cases where multiple "next version"
+                # instances are published under same subset
+                self.log.info("Instance found without `version` data: "
+                              "{}".format(instance.name))
+            else:
+                # check if asset and subset combination is unique
+                # just to inform the user with warning about the case
+                if any([
+                    asset == a and subset == s
+                    for a, s, _ in instance_per_asset_subset.keys()
+                ]):
+                    self.log.warning(
+                        "Instance found with non unique `asset` and "
+                        "`subset` data: {}".format(instance.name)
+                    )
+
+            key = asset, subset, version
+            instance_per_asset_subset[key].append(instance)
 
         non_unique = []
-        for (asset, subset), instances in instance_per_asset_subset.items():
-
+        for key, instances in instance_per_asset_subset.items():
+            asset, subset, version = key
             # A single instance per asset, subset is fine
             if len(instances) < 2:
                 continue
 
-            non_unique.append("{asset} > {subset}".format(asset=asset,
-                                                          subset=subset))
+            non_unique.append(
+                "{asset} > {subset} > {version}".format(
+                    asset=asset, subset=subset, version=version
+                )
+            )
 
         if not non_unique:
             # All is ok
@@ -71,6 +99,5 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
             "non_unique": ",".join(non_unique)
         }
 
-        if non_unique:
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+        raise PublishXmlValidationError(
+            self, msg, formatting_data=formatting_data)
