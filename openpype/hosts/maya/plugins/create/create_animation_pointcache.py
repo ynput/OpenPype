@@ -54,14 +54,14 @@ def extract_alembic_attributes(node_data, class_name):
         "visibleOnly"
     ]
     attributes = extract_alembic_flags + extract_alembic_attributes
-    plugin_attributes = {"flag_overrides": []}
+    plugin_attributes = {"flags": []}
     for attr in attributes:
         if attr not in node_data["creator_attributes"].keys():
             continue
         value = node_data["creator_attributes"].pop(attr)
 
         if value and attr in extract_alembic_flags:
-            plugin_attributes["flag_overrides"].append(attr)
+            plugin_attributes["flags"].append(attr)
 
         if attr in extract_alembic_attributes:
             plugin_attributes[attr] = value

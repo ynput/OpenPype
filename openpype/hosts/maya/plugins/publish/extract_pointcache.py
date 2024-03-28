@@ -46,7 +46,7 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
     userAttr = ""
     userAttrPrefix = ""
     visibleOnly = False
-    export_overrides = []
+    overrides = []
 
     def process(self, instance):
         if instance.data.get("farm"):
@@ -122,11 +122,10 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
             "writeVisibility": False,
         }
 
-        # Export flags are defined as default enabled flags excluding flags
-        # that are exposed to the user, plus the flags the user has enabled
-        # when publishing.
-        flags = list(set(self.flags) - set(self.export_overrides))
-        flags += attribute_values["flag_overrides"]
+        # Export flags are defined as default enabled flags plus publisher
+        # enabled flags.
+        non_exposed_flags = list(set(self.flags) - set(self.overrides))
+        flags = attribute_values["flags"] + non_exposed_flags
         for flag in flags:
             args[flag] = True
 
@@ -291,11 +290,11 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
         flags = set(getattr(cls, "flags", set()))
 
         enabled_flags = [x for x in flags if x in overrides]
-        flag_overrides = overrides - set(override_defs.keys())
+        flags = overrides - set(override_defs.keys())
         defs.append(
             EnumDef(
-                "flag_overrides",
-                flag_overrides,
+                "flags",
+                flags,
                 default=enabled_flags,
                 multiselection=True,
                 label="Export Flags",
