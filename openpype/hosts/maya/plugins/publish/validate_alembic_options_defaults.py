@@ -100,7 +100,7 @@ class ValidateAlembicOptionsDefaults(
         attributes = cls._get_publish_attributes(instance)
         settings = cls._get_settings(instance.context)
         create_publish_attributes = create_instance.data["publish_attributes"]
-        for key, value in attributes.items():
+        for key in attributes.keys():
             create_publish_attributes[plugin_name][key] = settings[key]
 
         create_context.save_changes()
