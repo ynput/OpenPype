@@ -5,7 +5,7 @@ import copy
 from maya import cmds
 
 import pyblish.api
-from openpype.hosts.maya.api.lib import extract_alembic
+from openpype.hosts.maya.api.alembic import extract_alembic
 from openpype.pipeline import publish
 from openpype.lib import StringTemplate
 

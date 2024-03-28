@@ -132,30 +132,36 @@
                     "label": "This plugin is not optional due to implicit creation through loading the \"rig\" family.\nThis family is also hidden from creation due to complexity in setup."
                 },
                 {
-                    "type": "boolean",
-                    "key": "write_color_sets",
-                    "label": "Write Color Sets"
+                    "type": "list",
+                    "key": "default_variants",
+                    "label": "Default Variants",
+                    "object_type": "text"
                 },
                 {
                     "type": "boolean",
-                    "key": "write_face_sets",
-                    "label": "Write Face Sets"
-                },
-                {
-                    "type": "boolean",
-                    "key": "include_parent_hierarchy",
+                    "key": "includeParentHierarchy",
                     "label": "Include Parent Hierarchy"
+                },
+                {
+                    "type": "boolean",
+                    "key": "farm",
+                    "label": "Submit to the Farm"
+                },
+                {
+                    "type": "number",
+                    "key": "priority",
+                    "label": "Farm Job Priority",
+                    "minimum": 0
+                },
+                {
+                    "type": "boolean",
+                    "key": "refresh",
+                    "label": "Refresh"
                 },
                 {
                     "type": "boolean",
                     "key": "include_user_defined_attributes",
                     "label": "Include User Defined Attributes"
-                },
-                {
-                    "type": "list",
-                    "key": "default_variants",
-                    "label": "Default Variants",
-                    "object_type": "text"
                 }
             ]
         },
@@ -202,25 +208,43 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "boolean",
-                    "key": "write_color_sets",
-                    "label": "Write Color Sets"
+                    "type": "list",
+                    "key": "default_variants",
+                    "label": "Default Variants",
+                    "object_type": "text"
+                },
+                {
+                  "type": "number",
+                  "key": "step",
+                  "label": "Step default",
+                  "minimum": 0.0,
+                  "decimal": 4
                 },
                 {
                     "type": "boolean",
-                    "key": "write_face_sets",
-                    "label": "Write Face Sets"
+                    "key": "includeParentHierarchy",
+                    "label": "Include Parent Hierarchy default"
+                },
+                {
+                    "type": "boolean",
+                    "key": "farm",
+                    "label": "Farm default"
+                },
+                {
+                    "type": "number",
+                    "key": "priority",
+                    "label": "Priority default",
+                    "minimum": 0
+                },
+                {
+                    "type": "boolean",
+                    "key": "refresh",
+                    "label": "Refresh default"
                 },
                 {
                     "type": "boolean",
                     "key": "include_user_defined_attributes",
                     "label": "Include User Defined Attributes"
-                },
-                {
-                    "type": "list",
-                    "key": "default_variants",
-                    "label": "Default Variants",
-                    "object_type": "text"
                 }
             ]
         },
