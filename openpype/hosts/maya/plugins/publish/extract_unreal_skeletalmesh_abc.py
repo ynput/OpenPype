@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from maya import cmds  # noqa
 
 from openpype.pipeline import publish
+from openpype.hosts.maya.api.alembic import extract_alembic
 from openpype.hosts.maya.api.lib import (
-    extract_alembic,
     suspended_refresh,
     maintained_selection
 )

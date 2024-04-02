@@ -753,26 +753,6 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "ExtractAlembic",
-                    "label": "Extract Alembic",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "key": "families",
-                            "label": "Families",
-                            "type": "list",
-                            "object_type": "text"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
                     "key": "ExtractObj",
                     "label": "Extract OBJ",
                     "checkbox_key": "enabled",
@@ -1005,6 +985,166 @@
                     "label": "Families",
                     "type": "list",
                     "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractAlembic",
+            "label": "Extract Pointcache/Animation",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "label",
+                    "label": "Export Defaults"
+                },
+                {
+                    "type": "enum",
+                    "key": "flags",
+                    "multiselection": true,
+                    "label": "Export Flags",
+                    "enum_items": [
+                        {"autoSubd": "autoSubd"},
+                        {"dontSkipUnwrittenFrames": "dontSkipUnwrittenFrames"},
+                        {"eulerFilter": "eulerFilter"},
+                        {"noNormals": "noNormals"},
+                        {"preRoll": "preRoll"},
+                        {"renderableOnly": "renderableOnly"},
+                        {"stripNamespaces": "stripNamespaces"},
+                        {"uvWrite": "uvWrite"},
+                        {"uvsOnly": "uvsOnly"},
+                        {"verbose": "verbose"},
+                        {"wholeFrameGeo": "wholeFrameGeo"},
+                        {"worldSpace": "worldSpace"},
+                        {"writeColorSets": "writeColorSets"},
+                        {"writeFaceSets": "writeFaceSets"},
+                        {"writeNormals": "writeNormals"},
+                        {"writeUVSets": "writeUVSets"},
+                        {"writeVisibility": "writeVisibility"}
+                    ]
+                },
+                {
+                    "type": "text",
+                    "key": "attr",
+                    "label": "Custom Attributes"
+                },
+                {
+                    "type": "text",
+                    "key": "attrPrefix",
+                    "label": "Custom Attributes Prefix"
+                },
+                {
+                    "type": "enum",
+                    "key": "dataFormat",
+                    "label": "Data Format",
+                    "enum_items": [
+                        {
+                            "ogawa": "ogawa"
+                        },
+                        {
+                            "HDF": "HDF"
+                        }
+                    ]
+                },
+                {
+                    "type": "text",
+                    "key": "melPerFrameCallback",
+                    "label": "melPerFrameCallback"
+                },
+                {
+                    "type": "text",
+                    "key": "melPostJobCallback",
+                    "label": "melPostJobCallback"
+                },
+                {
+                    "type": "number",
+                    "key": "preRollStartFrame",
+                    "label": "Pre Roll Start Frame",
+                    "minimum": 0
+                },
+                {
+                    "type": "text",
+                    "key": "pythonPerFrameCallback",
+                    "label": "pythonPerFrameCallback"
+                },
+                {
+                    "type": "text",
+                    "key": "pythonPostJobCallback",
+                    "label": "pythonPostJobCallback"
+                },
+                {
+                    "type": "text",
+                    "key": "userAttr",
+                    "label": "userAttr"
+                },
+                {
+                    "type": "text",
+                    "key": "userAttrPrefix",
+                    "label": "userAttrPrefix"
+                },
+                {
+                    "type": "boolean",
+                    "key": "visibleOnly",
+                    "label": "Visible Only"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "label",
+                    "label": "These attributes are exposed to the user when publishing with default values from above."
+                },
+                {
+                    "type": "enum",
+                    "key": "overrides",
+                    "multiselection": true,
+                    "label": "Exposed Overrides",
+                    "enum_items": [
+                        {"attr": "Custom Attributes"},
+                        {"attrPrefix": "Custom Attributes Prefix"},
+                        {"autoSubd": "autoSubd"},
+                        {"dataFormat": "dataFormat"},
+                        {"dontSkipUnwrittenFrames": "dontSkipUnwrittenFrames"},
+                        {"eulerFilter": "eulerFilter"},
+                        {"melPerFrameCallback": "melPerFrameCallback"},
+                        {"melPostJobCallback": "melPostJobCallback"},
+                        {"noNormals": "noNormals"},
+                        {"preRoll": "preRoll"},
+                        {"preRollStartFrame": "preRollStartFrame"},
+                        {"pythonPerFrameCallback": "pythonPerFrameCallback"},
+                        {"pythonPostJobCallback": "pythonPostJobCallback"},
+                        {"renderableOnly": "renderableOnly"},
+                        {"stripNamespaces": "stripNamespaces"},
+                        {"userAttr": "userAttr"},
+                        {"userAttrPrefix": "userAttrPrefix"},
+                        {"uvWrite": "uvWrite"},
+                        {"uvsOnly": "uvsOnly"},
+                        {"verbose": "verbose"},
+                        {"visibleOnly": "visibleOnly"},
+                        {"wholeFrameGeo": "wholeFrameGeo"},
+                        {"worldSpace": "worldSpace"},
+                        {"writeColorSets": "writeColorSets"},
+                        {"writeCreases": "writeCreases"},
+                        {"writeFaceSets": "writeFaceSets"},
+                        {"writeNormals": "writeNormals"},
+                        {"writeUVSets": "writeUVSets"},
+                        {"writeVisibility": "writeVisibility"}
+                    ]
                 }
             ]
         },
