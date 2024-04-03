@@ -9,7 +9,7 @@ from openpype.pipeline.publish import (
 )
 
 
-class ValidateNodeNoGhosting(pyblish.api.InstancePlugin.
+class ValidateNodeNoGhosting(pyblish.api.InstancePlugin,
                              OptionalPyblishPluginMixin):
     """Ensure nodes do not have ghosting enabled.
 
