@@ -47,10 +47,22 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
             collection = collections[0]
             repres_frames = list(collection.indexes)
 
+            fps = None
+            # Try to retrieve the fps value from asset else project
+            if "assetEntity" in instance.context.data:
+                fps = instance.context.data["assetEntity"]["data"].get("fps", None)
+            elif "projectEntity" in instance.context.data:
+                fps = instance.context.data["projectEntity"]["data"].get("fps", None)
+
+            if fps is None:
+                self.log.warning("Cannot properly retrieve the FPS value.")
+                # Assign a default value to avoid Kitsu error
+                fps = 25
+
             return {
                 "frameStart": repres_frames[0],
                 "frameEnd": repres_frames[-1],
                 "handleStart": 0,
                 "handleEnd": 0,
-                "fps": instance.context.data["assetEntity"]["data"]["fps"]
+                "fps": fps
             }

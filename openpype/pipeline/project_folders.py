@@ -4,6 +4,8 @@ import json
 
 import six
 
+from pathlib import Path
+
 from openpype.settings import get_project_settings
 from openpype.lib import Logger
 
@@ -67,12 +69,35 @@ def create_project_folders(project_name, basic_paths=None):
     filled_paths = fill_paths(concat_paths, anatomy)
 
     # Create folders
-    for path in filled_paths:
-        if os.path.exists(path):
-            log.debug("Folder already exists: {}".format(path))
+    case_sensitivity_issues = []
+    for path_str in filled_paths:
+        path = Path(path_str)
+
+        if path.is_dir():
+            log.debug("Folder already exists: {}".format(path_str))
         else:
-            log.debug("Creating folder: {}".format(path))
-            os.makedirs(path)
+            log.debug("Creating folder: {}".format(path_str))
+            # Check case-insensitive for the whole path
+            # Needed for case-sensitive OSs (Unix based)
+            path_parent = Path(path.absolute().parts[0])
+            path_parts = path.absolute().parts[1:]
+            # We need to check for every part of the path because
+            # os.makedirs can create multiple levels of directory at a time
+            for path_part in path_parts:
+                path_current = path_parent.joinpath(path_part)
+                # Check if the current path already exists, so no need to check for doppelgängers
+                if path_current.exists():
+                    path_parent = path_current
+                    continue
+                for dir_child_path_str in os.listdir(path_parent):
+                    if dir_child_path_str.lower() == path_part.lower():
+                        case_sensitivity_issues.append((path_current, str(path_parent.joinpath(dir_child_path_str))))
+                # Set the current looked dir as the new parent
+                os.makedirs(path_current)
+                path_parent = path_current
+
+
+    return case_sensitivity_issues
 
 
 def _list_path_items(folder_structure):

@@ -14,8 +14,6 @@ try:
     import pysftp
     import paramiko
 except (ImportError, SyntaxError):
-    pass
-
     # handle imports from Python 2 hosts - in those only basic methods are used
     log.warning("Import failed, imported from Python 2, operations will fail.")
 
@@ -49,12 +47,12 @@ class SFTPHandler(AbstractProvider):
             return
 
         # store to instance for reconnect
-        self.sftp_host = presets["sftp_host"]
-        self.sftp_port = presets["sftp_port"]
-        self.sftp_user = presets["sftp_user"]
-        self.sftp_pass = presets["sftp_pass"]
-        self.sftp_key = presets["sftp_key"]
-        self.sftp_key_pass = presets["sftp_key_pass"]
+        self.sftp_host = presets.get("sftp_host", "")
+        self.sftp_port = presets.get("sftp_port", 22)
+        self.sftp_user = presets.get("sftp_user", "")
+        self.sftp_pass = presets.get("sftp_pass", "")
+        self.sftp_key = presets.get("sftp_key", "")
+        self.sftp_key_pass = presets.get("sftp_key_pass", "")
 
         self._tree = None
 

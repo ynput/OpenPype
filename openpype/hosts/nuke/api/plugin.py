@@ -8,7 +8,6 @@ import string
 from collections import OrderedDict, defaultdict
 from abc import abstractmethod
 
-from openpype.settings import get_current_project_settings
 from openpype.lib import (
     BoolDef,
     EnumDef
@@ -21,6 +20,7 @@ from openpype.pipeline import (
     CreatedInstance,
     get_current_task_name
 )
+
 from .lib import (
     INSTANCE_DATA_KNOB,
     Knobby,

@@ -498,6 +498,9 @@ class BaseWidget(QtWidgets.QWidget):
                 dialog.exec_()
 
     def show_actions_menu(self, event=None):
+        if self._read_only:
+            return
+
         if event and event.button() != QtCore.Qt.RightButton:
             return
 
@@ -564,8 +567,17 @@ class BaseWidget(QtWidgets.QWidget):
             event.accept()
         return result
 
+    def is_disabled(self):
+        if self.entity and getattr(self.entity, "disabled", False):
+            return True
+        return False
+
     def set_read_only(self, status):
         self._read_only = status
+        if self.is_disabled():
+            # Enforce read-only (security) since this widget should stay disabled
+            self.setEnabled(False)
+            return
         self.setEnabled(not self._read_only)
 
 

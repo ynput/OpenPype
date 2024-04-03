@@ -3,7 +3,6 @@ from qtpy import QtWidgets, QtGui, QtCore
 from openpype import style
 
 from openpype.lib import is_admin_password_required
-from openpype.lib.openpype_version import is_running_locally
 from openpype.lib.events import EventSystem
 from openpype.widgets import PasswordDialog
 
@@ -151,7 +150,9 @@ class MainWidget(QtWidgets.QWidget):
 
         current_settings = get_system_settings()
         production_version = current_settings.get('general').get("production_version")
-        if not is_running_locally() and production_version != studio_widget._current_version:
+        # If production_version is empty, this means no version can be found
+        # Avoid blocking the system settings in that case
+        if production_version and production_version != studio_widget._current_version:
             self._protect_system_settings = True
             self._controller.set_edit_mode(EditMode.PROTECT)
 
@@ -168,7 +169,7 @@ class MainWidget(QtWidgets.QWidget):
         search_dialog = SearchEntitiesDialog(self)
 
         self._shadow_widget = ShadowWidget("Working...", self)
-        self._shadow_widget.setVisible(False)
+        self._shadow_widget.setVisible(True)
 
         controller.event_system.add_callback(
             "edit.mode.changed",
@@ -288,7 +289,7 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         if not self._user_passed:
-            self._user_passed = not is_admin_password_required(ignore_admin_skip=True)
+            self._user_passed = not is_admin_password_required(admin_bypass_enabled=False)
 
         self._on_state_change()
 

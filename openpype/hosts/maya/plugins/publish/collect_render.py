@@ -94,6 +94,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         # detect if there are sets (subsets) to attach render to
         sets = cmds.sets(objset, query=True) or []
         attach_to = []
+
         for s in sets:
             if not cmds.attributeQuery("family", node=s, exists=True):
                 continue
@@ -275,9 +276,6 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             "pixelAspect": lib.get_attr_in_layer(
                 "defaultResolution.pixelAspect", layer=layer_name
             ),
-            "priority": instance.data.get("priority"),
-            "machineLimit": instance.data.get("machineLimit", 0),
-            "limits": instance.data.get("limits", []),
             # todo: Following are likely not needed due to collecting from the
             #       instance itself if they are attribute definitions
             "tileRendering": instance.data.get("tileRendering", False),  # noqa: E501

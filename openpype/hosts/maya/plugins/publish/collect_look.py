@@ -18,6 +18,13 @@ SHAPE_ATTRS = ["castsShadows",
                "doubleSided",
                "opposite"]
 SHAPE_ATTRS = set(SHAPE_ATTRS)
+ARNOLD_SUBDIV_ATTRS = [
+    "aiSubdivType",
+    "aiSubdivIterations",
+    "aiSubdivSmoothDerivs",
+    "aiSubdivPixelError",
+    "aiDispPadding"
+]
 
 
 def get_pxr_multitexture_file_attrs(node):
@@ -102,6 +109,14 @@ def get_look_attrs(node):
             if attr in SHAPE_ATTRS or \
                     attr not in SHAPE_ATTRS and attr.startswith('ai'):
                 result.append(attr)
+
+        # force arnold subdivision attributes
+        for attr in ARNOLD_SUBDIV_ATTRS:
+            if attr in result:
+                continue
+            if cmds.attributeQuery(attr, node=node, exists=True):
+                result.append(attr)
+
     return result
 
 

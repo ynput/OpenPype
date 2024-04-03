@@ -44,7 +44,7 @@ class LauncherAction(OpenPypeModule, ITrayAction):
         self.show_launcher()
 
     def show_launcher(self):
-        password_required = is_admin_password_required(ignore_admin_skip=True)
+        password_required = is_admin_password_required(admin_bypass_enabled=False)
         if password_required:
             dialog = PasswordDialog(allow_remember=False)
             dialog.setModal(True)

@@ -8,6 +8,9 @@ from openpype.hosts.openrv.api.ocio import (
     set_group_ocio_colorspace
 )
 
+from openpype.hosts.openrv.api.lib import clean_rv_sources
+
+import os
 import rv
 
 
@@ -25,33 +28,22 @@ class MovLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        filepath = self.fname
-        # Command fails on unicode so we must force it to be strings
-        filepath = str(filepath)
+        filepath = str(self.fname)
 
-        # node_name = "{}_{}".format(namespace, name) if namespace else name
-        namespace = namespace if namespace else context["asset"]["name"]
-
-        loaded_node = rv.commands.addSourceVerbose([filepath])
-
-        # update colorspace
-        self.set_representation_colorspace(loaded_node,
-                                           context["representation"])
-
-        imprint_container(
-            loaded_node,
-            name=name,
-            namespace=namespace,
-            context=context,
-            loader=self.__class__.__name__
-        )
+        clean_rv_sources()
+        rv.commands.addSourceVerbose([filepath])
+        view_node = rv.commands.viewNodes()[-1]
+        rv.commands.setViewNode(view_node)
+        # Force new context
+        os.environ["AVALON_PROJECT"] = context["project"]["name"]
+        os.environ["AVALON_ASSET"] = context["asset"]["name"]
+        os.environ["AVALON_TASK"] = context["representation"]["context"]["task"]["name"]
 
     def update(self, container, representation):
         node = container["node"]
 
         context = get_representation_context(representation)
-        filepath = load.get_representation_path_from_context(context)
-        filepath = str(filepath)
+        filepath = str(load.get_representation_path_from_context(context))
 
         # change path
         rv.commands.setSourceMedia(node, [filepath])

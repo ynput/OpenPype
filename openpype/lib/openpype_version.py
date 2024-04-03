@@ -153,6 +153,13 @@ def is_running_staging():
     return is_staging_enabled()
 
 
+def is_version_checking_popup_enabled():
+    value = os.getenv("OPENPYPE_VERSION_CHECK_POPUP", 'False').lower()
+    if value == "true" or value == "1":
+        return True
+    return False
+
+
 # ----------------------------------------
 # Functions dependent on OpenPypeVersion
 #   - Make sense to call only in OpenPype process

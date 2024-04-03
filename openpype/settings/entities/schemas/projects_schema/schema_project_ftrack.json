@@ -147,28 +147,6 @@
                 },
                 {
                     "type": "dict",
-                    "key": "status_update",
-                    "label": "Update status on task action",
-                    "is_group": true,
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "key": "mapping",
-                            "type": "dict-modifiable",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
                     "key": "status_task_to_parent",
                     "label": "Sync status from Task to Parent",
                     "checkbox_key": "enabled",
@@ -449,41 +427,6 @@
             "children": [
                 {
                     "type": "dict",
-                    "key": "application_launch_statuses",
-                    "is_group": true,
-                    "label": "Application - Status change on launch",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b>Do not change status if current status is:</b>"
-                        },
-                        {
-                            "type": "list",
-                            "key": "ignored_statuses",
-                            "object_type": "text"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Change task's status to <b>left side</b> if current task status is in list on <b>right side</b>."
-                        },
-                        {
-                            "type": "dict-modifiable",
-                            "key": "status_change",
-                            "object_type": {
-                                "type": "list",
-                                "object_type": "text"
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
                     "key": "create_update_attributes",
                     "label": "Create/Update Avalon Attributes",
                     "children": [
@@ -604,7 +547,7 @@
                 },
                 {
                     "type": "dict",
-                    "key": "store_thubmnail_to_avalon",
+                    "key": "store_thumbnail_to_avalon",
                     "label": "Store Thumbnails to avalon",
                     "checkbox_key": "enabled",
                     "children": [
@@ -703,6 +646,53 @@
                             "key": "role_list",
                             "label": "Roles",
                             "object_type": "text"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "application_handlers",
+            "label": "Application Events",
+            "children": [
+                {
+                    "type": "dict",
+                    "key": "change_task_status",
+                    "is_group": true,
+                    "label": "Status change",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>On Open</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "status_change_on_file_open",
+                            "label": "Status change on file open",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "ftrack-task-statuses"
+                            }
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>On Save</b> - (Change task's status to <b>left side</b> if current task status is in the list on <b>right side</b>)"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "status_change_on_file_save",
+                            "label": "Status change on file save",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "ftrack-task-statuses"
+                            }
                         }
                     ]
                 }
@@ -924,6 +914,26 @@
                             "type": "text",
                             "key": "description_template",
                             "label": "Description template"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackSourceWorkfile",
+                    "label": "IntegrateFtrackSourceWorkfile",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "full_path",
+                            "label": "Full Path"
                         }
                     ]
                 },

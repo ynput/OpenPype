@@ -208,6 +208,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.key_label_input = None
 
+        self.edit_btn = None
         self.confirm_btn = None
 
         self._key_change_timer = create_deffered_value_change_timer(
@@ -493,6 +494,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.key_input.setFocus()
 
     def set_edit_mode(self, enabled=True):
+        # This code only works when self.collapsible_key is True
         if self.is_invalid and not enabled:
             return
         self.wrapper_widget.label_widget.setVisible(not enabled)
@@ -598,7 +600,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def set_read_only(self, status):
         self._read_only = status
-        self.setEnabled(not self._read_only)
+
+        if self.edit_btn:
+            self.edit_btn.setEnabled(not self._read_only)
+
+        self.input_field.set_read_only(self._read_only)
 
 
 class DictMutableKeysWidget(BaseWidget):

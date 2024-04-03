@@ -46,7 +46,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
                 decimals=0
             ),
             NumberDef(
-                "chunk",
+                "chunkSize",
                 label="Frames Per Task",
                 default=cls.chunk_size,
                 decimals=0,

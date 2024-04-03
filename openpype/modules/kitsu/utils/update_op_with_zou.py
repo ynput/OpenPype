@@ -23,6 +23,11 @@ log = Logger.get_logger(__name__)
 # Accepted namin pattern for OP
 naming_pattern = re.compile("^[a-zA-Z0-9_.]*$")
 
+KitsuStateToBool = {
+    'Closed': False,
+    'Open': True
+}
+
 
 def create_op_asset(gazu_entity: dict) -> dict:
     """Create OP asset dict from gazu entity.
@@ -327,7 +332,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             "code": project_code,
             "fps": float(project["fps"]),
             "zou_id": project["id"],
-            "active": project["project_status_name"] != "Closed",
+            "active": KitsuStateToBool[project["project_status_name"]]
         }
     )
 
@@ -372,6 +377,8 @@ def sync_all_projects(
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
+    # Set default to an empty list to reduce the number of checks
+    ignore_projects = []
 
     # Authenticate
     if not validate_credentials(login, password):
@@ -385,9 +392,9 @@ def sync_all_projects(
     all_projects = gazu.project.all_projects()
 
     project_to_sync = []
+    all_kitsu_projects = {p["name"]: p for p in all_projects}
 
     if filter_projects:
-        all_kitsu_projects = {p["name"]: p for p in all_projects}
         for proj_name in filter_projects:
             if proj_name in all_kitsu_projects:
                 project_to_sync.append(all_kitsu_projects[proj_name])
@@ -400,10 +407,34 @@ def sync_all_projects(
         # all project
         project_to_sync = all_projects
 
+    # Iterate over MongoDB projects and if it's not present in Kitsu project, deactivate it on MongoDB
+    for project in dbcon.projects():
+        if project['name'] in all_kitsu_projects:
+            # Project exists on Kitsu, skip
+            continue
+        update_project_state_in_db(dbcon, project, active=False)
+
     for project in project_to_sync:
-        if ignore_projects and project["name"] in ignore_projects:
+        if project["name"] in ignore_projects:
             continue
         sync_project_from_kitsu(dbcon, project)
+
+
+def update_project_state_in_db(dbcon: AvalonMongoDB, project: dict, active: bool):
+    bulk_writes = []
+    project['data']['active'] = active
+    dbcon.Session["AVALON_PROJECT"] = project["name"]
+    bulk_writes.append(
+            UpdateOne(
+            {"_id": project["_id"]},
+            {
+                "$set": {
+                    "data": project['data']
+                }
+            }
+        )
+    )
+    dbcon.bulk_write(bulk_writes)
 
 
 def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
@@ -431,10 +462,26 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
             project["project_status_name"] = status["name"]
             break
 
-    #  Do not sync closed kitsu project that is not found in openpype
-    if project["project_status_name"] == "Closed" and not get_project(
-        project["name"]
-    ):
+    # Get the project from OpenPype DB
+    project_name = project["name"]
+    project_dict = get_project(project_name)
+    project_active_state_kitsu = KitsuStateToBool[project["project_status_name"]]
+
+    # Early exit condition if the project is deactivated (closed) on Kitsu
+    if not project_active_state_kitsu:
+        if not project_dict:
+            # The project doesn't exist on OpenPype DB, skip
+            return
+
+        # Deactivate the project on the OpenPype DB (if not already), then return
+        op_active_state = project_dict.get('data', {}).get('active', False)
+        if op_active_state != project_active_state_kitsu:
+            log.info(f"Deactivate {project['name']} on OpenPype DB...")
+            update_project_state_in_db(
+                dbcon,
+                project_dict,
+                active=project_active_state_kitsu
+            )
         return
 
     log.info(f"Synchronizing {project['name']}...")
@@ -455,19 +502,15 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         if naming_pattern.match(item["name"])
     ]
 
-    # Sync project. Create if doesn't exist
-    project_name = project["name"]
-    project_dict = get_project(project_name)
     if not project_dict:
         log.info("Project created: {}".format(project_name))
+
     bulk_writes.append(write_project_to_op(project, dbcon))
 
-    if project["project_status_name"] == "Closed":
-        return
-
-    # Try to find project document
     if not project_dict:
+        # Try to find the newly created project document on OpenPype DB
         project_dict = get_project(project_name)
+
     dbcon.Session["AVALON_PROJECT"] = project_name
 
     # Query all assets of the local project

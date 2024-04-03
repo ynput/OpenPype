@@ -137,6 +137,9 @@ class BaseItemEntity(BaseEntity):
         self.key = None
         self.label = None
 
+        # To force an item to be read-only at any time
+        self.disabled = False
+
         # Override state defines which values are used, saved and how.
         # TODO convert to private attribute
         self._override_state = OverrideState.NOT_DEFINED

@@ -18,6 +18,7 @@ class EmptyListItem(QtWidgets.QWidget):
     def __init__(self, entity_widget, parent):
         super(EmptyListItem, self).__init__(parent)
 
+        self._read_only = False
         self.entity_widget = entity_widget
 
         add_btn = create_add_btn(self)
@@ -40,12 +41,17 @@ class EmptyListItem(QtWidgets.QWidget):
     def _on_add_clicked(self):
         self.entity_widget.add_new_item()
 
+    def set_read_only(self, status):
+        self._read_only = status
+        self.setEnabled(not self._read_only)
+
 
 class ListItem(QtWidgets.QWidget):
     def __init__(self, entity, entity_widget):
         super(ListItem, self).__init__(entity_widget.content_widget)
         self.entity_widget = entity_widget
         self.entity = entity
+        self._read_only = False
 
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
@@ -167,6 +173,10 @@ class ListItem(QtWidgets.QWidget):
 
     def trigger_hierarchical_style_update(self):
         self.entity_widget.trigger_hierarchical_style_update()
+
+    def set_read_only(self, status):
+        self._read_only = status
+        self.setEnabled(not self._read_only)
 
 
 class ListWidget(InputWidget):
@@ -340,6 +350,8 @@ class ListWidget(InputWidget):
         item_widget = ListItem(child_entity, self)
         self._input_fields_by_entity_id[child_entity.id] = item_widget
 
+        item_widget.set_read_only(self._read_only)
+
         if row is None:
             self.content_layout.addWidget(item_widget)
             self.input_fields.append(item_widget)
@@ -466,3 +478,9 @@ class ListWidget(InputWidget):
         self.update_style()
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
+
+    def set_read_only(self, status):
+        self._read_only = status
+        self.empty_row.set_read_only(self._read_only)
+        for input_field in self.input_fields:
+            input_field.set_read_only(self._read_only)

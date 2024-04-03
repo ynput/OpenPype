@@ -47,22 +47,6 @@
         "user_assignment": {
             "enabled": true
         },
-        "status_update": {
-            "enabled": true,
-            "mapping": {
-                "In Progress": [
-                    "__any__"
-                ],
-                "Ready": [
-                    "Not Ready"
-                ],
-                "__ignore__": [
-                    "in progress",
-                    "omitted",
-                    "on hold"
-                ]
-            }
-        },
         "status_task_to_parent": {
             "enabled": true,
             "parent_object_types": [
@@ -130,18 +114,6 @@
         }
     },
     "user_handlers": {
-        "application_launch_statuses": {
-            "enabled": true,
-            "ignored_statuses": [
-                "In Progress",
-                "Omitted",
-                "On hold",
-                "Approved"
-            ],
-            "status_change": {
-                "In Progress": []
-            }
-        },
         "create_update_attributes": {
             "role_list": [
                 "Pypeclub",
@@ -189,7 +161,7 @@
                 "Administrator"
             ]
         },
-        "store_thubmnail_to_avalon": {
+        "store_thumbnail_to_avalon": {
             "enabled": true,
             "role_list": [
                 "Pypeclub",
@@ -221,6 +193,31 @@
             "role_list": [
                 "Pypeclub"
             ]
+        }
+    },
+    "application_handlers": {
+        "change_task_status": {
+            "enabled": true,
+            "status_change_on_file_open": {
+                "In Progress": [
+                    "__any__"
+                ],
+                "__ignore__": [
+                    "In Progress",
+                    "Omitted",
+                    "On Hold"
+                ]
+            },
+            "status_change_on_file_save": {
+                "In Progress": [
+                    "__any__"
+                ],
+                "__ignore__": [
+                    "In Progress",
+                    "Omitted",
+                    "On Hold"
+                ]
+            }
         }
     },
     "publish": {
@@ -445,6 +442,10 @@
             "optional": true,
             "active": true,
             "description_template": "{comment}"
+        },
+        "IntegrateFtrackSourceWorkfile": {
+            "enabled": true,
+            "full_path": false
         },
         "ValidateFtrackAttributes": {
             "enabled": false,

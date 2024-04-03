@@ -56,15 +56,27 @@ class CollectContextEntities(pyblish.api.ContextPlugin):
         # Task type
         asset_tasks = data.get("tasks") or {}
         task_info = asset_tasks.get(task_name) or {}
+        task_custom_atr = task_info.get("custom_attributes") or {}
+        task_frame_start = task_custom_atr.get("frameStart")
+        task_frame_end = task_custom_atr.get("frameEnd")
+        task_handle_start = task_custom_atr.get("handleStart")
+        task_handle_end = task_custom_atr.get("handleEnd")
+
         task_type = task_info.get("type")
         context.data["taskType"] = task_type
 
         frame_start = data.get("frameStart")
+        if task_frame_start is not None:
+            frame_start = int(task_frame_start)
+
         if frame_start is None:
             frame_start = 1
             self.log.warning("Missing frame start. Defaulting to 1.")
 
         frame_end = data.get("frameEnd")
+        if task_frame_end is not None:
+            frame_end = int(task_frame_end)
+
         if frame_end is None:
             frame_end = 2
             self.log.warning("Missing frame end. Defaulting to 2.")
@@ -73,7 +85,12 @@ class CollectContextEntities(pyblish.api.ContextPlugin):
         context.data["frameEnd"] = frame_end
 
         handle_start = data.get("handleStart") or 0
+        if task_handle_start is not None:
+            handle_start = int(task_handle_start)
+
         handle_end = data.get("handleEnd") or 0
+        if task_handle_end is not None:
+            handle_end = int(task_handle_end)
 
         context.data["handleStart"] = int(handle_start)
         context.data["handleEnd"] = int(handle_end)
@@ -84,3 +101,8 @@ class CollectContextEntities(pyblish.api.ContextPlugin):
         context.data["frameEndHandle"] = frame_end_h
 
         context.data["fps"] = data["fps"]
+
+        if "tools_env" not in data:
+            data["tools_env"] = []
+
+        context.data["tools_env"] = data["tools_env"]

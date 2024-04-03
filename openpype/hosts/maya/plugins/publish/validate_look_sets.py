@@ -46,6 +46,8 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     label = 'Look Sets'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
+    exclude_sets_with_suffix = []
+
     def process(self, instance):
         """Process all the nodes in the instance"""
 
@@ -66,6 +68,12 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
             for node in instance:
                 # get the connected objectSets of the node
                 sets = lib.get_related_sets(node)
+
+                # exclude sets with suffix from the settings
+                for set in sets:
+                    if set.endswith(tuple(cls.exclude_sets_with_suffix)):
+                        sets.pop(sets.index(set))
+
                 if not sets:
                     continue
 
