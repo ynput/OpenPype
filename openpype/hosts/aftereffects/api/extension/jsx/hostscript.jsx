@@ -650,7 +650,7 @@ function getRenderInfo(comp_id){
 
                 var item = render_item.outputModule(j);
                 var file_url = item.file.toString();
-                var format = app.project.renderQueue.item(1).outputModule(1).getSettings(GetSettingsFormat.STRING)['Format']
+                var format = item.getSettings(GetSettingsFormat.STRING)['Format']
                 output_metadata.push(
                     JSON.stringify({
                         "file_name": file_url,
