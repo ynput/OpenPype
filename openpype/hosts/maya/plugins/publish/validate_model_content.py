@@ -5,12 +5,14 @@ import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateModelContent(pyblish.api.InstancePlugin):
-    """Adheres to the content of 'model' family
+class ValidateModelContent(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
+    """Adheres to the content of 'model' product type
 
     - Must have one top group. (configurable)
     - Must only contain: transforms, meshes and groups
@@ -24,6 +26,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     validate_top_group = True
+    optional = False
 
     @classmethod
     def get_invalid(cls, instance):
@@ -91,7 +94,8 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         return list(invalid)
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
 
         if invalid:

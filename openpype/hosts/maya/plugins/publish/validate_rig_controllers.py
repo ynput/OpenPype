@@ -5,13 +5,15 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import undo_chunk
 
 
-class ValidateRigControllers(pyblish.api.InstancePlugin):
+class ValidateRigControllers(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Validate rig controllers.
 
     Controls must have the transformation attributes on their default
@@ -33,6 +35,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     label = "Rig Controllers"
     hosts = ["maya"]
     families = ["rig"]
+    optional = True
     actions = [RepairAction,
                openpype.hosts.maya.api.action.SelectInvalidAction]
 
@@ -50,6 +53,9 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     }
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

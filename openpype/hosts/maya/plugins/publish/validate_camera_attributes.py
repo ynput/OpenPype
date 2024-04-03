@@ -3,10 +3,14 @@ from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidateContentsOrder)
+    PublishValidationError,
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateCameraAttributes(pyblish.api.InstancePlugin):
+class ValidateCameraAttributes(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Validates Camera has no invalid attribute keys or values.
 
     The Alembic file format does not a specific subset of attributes as such
@@ -20,6 +24,7 @@ class ValidateCameraAttributes(pyblish.api.InstancePlugin):
     hosts = ['maya']
     label = 'Camera Attributes'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = True
 
     DEFAULTS = [
         ("filmFitOffset", 0.0),
@@ -62,7 +67,8 @@ class ValidateCameraAttributes(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the nodes in the instance"""
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
 
         if invalid:

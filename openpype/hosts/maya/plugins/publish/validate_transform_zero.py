@@ -5,11 +5,13 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateTransformZero(pyblish.api.Validator):
+class ValidateTransformZero(pyblish.api.Validator,
+                            OptionalPyblishPluginMixin):
     """Transforms can't have any values
 
     To solve this issue, try freezing the transforms. So long
@@ -29,6 +31,7 @@ class ValidateTransformZero(pyblish.api.Validator):
                  0.0, 0.0, 1.0, 0.0,
                  0.0, 0.0, 0.0, 1.0]
     _tolerance = 1e-30
+    optional = True
 
     @classmethod
     def get_invalid(cls, instance):
@@ -62,7 +65,8 @@ class ValidateTransformZero(pyblish.api.Validator):
 
     def process(self, instance):
         """Process all the nodes in the instance "objectSet"""
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
 
