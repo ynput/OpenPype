@@ -5,6 +5,7 @@ from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin
 )
 
+
 class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin,
                                  OptionalPyblishPluginMixin):
     """Ensure namespaces are not nested

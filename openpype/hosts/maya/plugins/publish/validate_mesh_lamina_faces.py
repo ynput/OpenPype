@@ -2,7 +2,10 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateMeshOrder, OptionalPyblishPluginMixin
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    OptionalPyblishPluginMixin
+)
 
 
 class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin,

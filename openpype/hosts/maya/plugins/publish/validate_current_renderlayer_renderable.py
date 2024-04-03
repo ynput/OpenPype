@@ -6,6 +6,7 @@ from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin
 )
 
+
 class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin,
                                              OptionalPyblishPluginMixin):
     """Validate if current render layer has a renderable camera

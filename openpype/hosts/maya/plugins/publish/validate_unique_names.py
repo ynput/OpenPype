@@ -7,6 +7,7 @@ from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin
 )
 
+
 class ValidateUniqueNames(pyblish.api.Validator,
                           OptionalPyblishPluginMixin):
     """transform names should be unique

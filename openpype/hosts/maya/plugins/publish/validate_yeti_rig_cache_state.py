@@ -8,7 +8,6 @@ from openpype.pipeline.publish import (
 )
 
 
-
 class ValidateYetiRigCacheState(pyblish.api.InstancePlugin,
                                 OptionalPyblishPluginMixin):
     """Validate the I/O attributes of the node

@@ -9,6 +9,7 @@ from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin
 )
 
+
 class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin,
                                  OptionalPyblishPluginMixin):
     """Validate whether the V-Ray Render Elements (AOVs) include references.

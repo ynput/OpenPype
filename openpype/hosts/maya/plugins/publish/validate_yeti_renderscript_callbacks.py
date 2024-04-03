@@ -6,6 +6,7 @@ from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin
 )
 
+
 class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin,
                                         OptionalPyblishPluginMixin):
     """Check if the render script callbacks will be used during the rendering

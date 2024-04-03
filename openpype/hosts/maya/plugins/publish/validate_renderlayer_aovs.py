@@ -8,6 +8,7 @@ from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin
 )
 
+
 class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin,
                               OptionalPyblishPluginMixin):
     """Validate created AOVs / RenderElement is registered in the database

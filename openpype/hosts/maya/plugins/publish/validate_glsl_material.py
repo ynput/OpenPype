@@ -6,7 +6,10 @@ from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder
 )
-from openpype.pipeline import PublishValidationError, OptionalPyblishPluginMixin
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
 
 class ValidateGLSLMaterial(pyblish.api.InstancePlugin,

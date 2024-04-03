@@ -9,7 +9,6 @@ from openpype.pipeline.publish import (
 )
 
 
-
 class ValidateVrayProxyMembers(pyblish.api.InstancePlugin,
                                OptionalPyblishPluginMixin):
     """Validate whether the V-Ray Proxy instance has shape members"""
