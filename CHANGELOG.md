@@ -1,6 +1,226 @@
 # Changelog
 
 
+## [3.18.8](https://github.com/ynput/OpenPype/tree/3.18.8)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.7...3.18.8)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Max: Implementation of Camera Attributes Validator <a href="https://github.com/ynput/OpenPype/pull/6110">#6110</a></summary>
+
+Implement Validate Camera Attributes in camera family in Max host
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Add missing workfile creator <a href="https://github.com/ynput/OpenPype/pull/6203">#6203</a></summary>
+
+Add the missing workfile creator in 3dsMax.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: Expose families transfer setting - OP-8268 <a href="https://github.com/ynput/OpenPype/pull/6217">#6217</a></summary>
+
+This PR exposes the `families_transfer` attribute on the `ProcessSubmittedJobOnFarm` plugin.The use case is to remove `ftrack` from the list if a studio does not want all render passes from Maya to become asset versions in Ftrack.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Deadline: Add AVALON_DB to Deadline submissions - OP-8270 <a href="https://github.com/ynput/OpenPype/pull/6218">#6218</a></summary>
+
+Because testing uses a different database name https://github.com/ynput/OpenPype/blob/develop/tests/lib/testing_classes.py#L46 we need to add `AVALON_DB` to the environment for Deadline submissions.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: fix default render product name in Vray <a href="https://github.com/ynput/OpenPype/pull/6083">#6083</a></summary>
+
+This is fixing key name for default render products in VRay. Original name `RGB Color` caused issues during job submission.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve Clip Load - Slate support <a href="https://github.com/ynput/OpenPype/pull/6126">#6126</a></summary>
+
+Loaded clip should ignore the slate, and be trimmed the same regardless of slate presence.closes: https://github.com/ynput/OpenPype/issues/6124#AY-1684
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Use duration from streams as its more precise <a href="https://github.com/ynput/OpenPype/pull/6171">#6171</a></summary>
+
+When dealing with 30 fps mov of 2 frames, the duration was reduce to 3 decimal places (0.067) which meant that the flag for ffmpeg `-ss` ended up with a time that was not precise enough for ffmpeg to pick a frame; `0.0335`. Should be `0.0333`.Using the duration from the streams is more precise; `0.066667`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Core: Headless publish failing without GL lib <a href="https://github.com/ynput/OpenPype/pull/6205">#6205</a></summary>
+
+Trying to run a headless publish in the farm I hit another blocker:
+```
+2024-02-07 20:42:45:  0: STDOUT: !!! AYON crashed:
+2024-02-07 20:42:45:  0: STDOUT: Traceback (most recent call last):
+2024-02-07 20:42:45:  0: STDOUT:   File "start.py", line 740, in main_cli
+2024-02-07 20:42:45:  0: STDOUT:     ))
+2024-02-07 20:42:45:  0: STDOUT:   File "/usr/ayon-launcher/1.0.0+ax/dependencies/click/core.py", line 1157, in __call__
+2024-02-07 20:42:45:  0: STDOUT:     return self.main(*args, **kwargs)
+2024-02-07 20:42:45:  0: STDOUT:   File "/usr/ayon-launcher/1.0.0+ax/dependencies/click/core.py", line 1078, in main
+2024-02-07 20:42:45:  0: STDOUT:     rv = self.invoke(ctx)
+2024-02-07 20:42:45:  0: STDOUT:   File "/usr/ayon-launcher/1.0.0+ax/dependencies/click/core.py", line 1688, in invoke
+2024-02-07 20:42:45:  0: STDOUT:     return _process_result(sub_ctx.command.invoke(sub_ctx))
+2024-02-07 20:42:45:  0: STDOUT:   File "/usr/ayon-launcher/1.0.0+ax/dependencies/click/core.py", line 1434, in invoke
+2024-02-07 20:42:45:  0: STDOUT:     return ctx.invoke(self.callback, **ctx.params)
+2024-02-07 20:42:45:  0: STDOUT:   File "/usr/ayon-launcher/1.0.0+ax/dependencies/click/core.py", line 783, in invoke
+2024-02-07 20:42:45:  0: STDOUT:     return __callback(*args, **kwargs)
+2024-02-07 20:42:45:  0: STDOUT:   File "/pipe/dev/farrizabalaga/OpenPype/openpype/cli.py", line 197, in publish
+2024-02-07 20:42:45:  0: STDOUT:     PypeCommands.publish(list(paths), targets, gui)
+2024-02-07 20:42:45:  0: STDOUT:   File "/pipe/dev/farrizabalaga/OpenPype/openpype/pype_commands.py", line 100, in publish
+2024-02-07 20:42:45:  0: STDOUT:     from openpype.tools.utils.host_tools import show_publish
+2024-02-07 20:42:45:  0: STDOUT:   File "/pipe/dev/farrizabalaga/OpenPype/openpype/tools/utils/__init__.py", line 1, in <module>
+2024-02-07 20:42:45:  0: STDOUT:     from .layouts import FlowLayout
+2024-02-07 20:42:45:  0: STDOUT:   File "/pipe/dev/farrizabalaga/OpenPype/openpype/tools/utils/layouts.py", line 1, in <module>
+2024-02-07 20:42:45:  0: STDOUT:     from qtpy import QtWidgets, QtCore
+2024-02-07 20:42:45:  0: STDOUT:   File "/usr/ayon-launcher/1.0.0+ax/dependencies/qtpy/QtWidgets.py", line 111, in <module>
+2024-02-07 20:42:45:  0: STDOUT:     from PySide2.QtWidgets import *
+2024-02-07 20:42:45:  0: STDOUT:   File "/usr/ayon-launcher/1.0.0+ax/vendor/python/shiboken2/files.dir/shibokensupport/__feature__.py", line 142, in _import
+2024-02-07 20:42:45:  0: STDOUT:     return original_import(name, *args, **kwargs)
+2024-02-07 20:42:45:  0: STDOUT: ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+```
+The imports of `openpype.tools.utils.host_tools.__init__.py` were throwing an error due to trying to import QtWidgets unnecessarily.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: LoadClip colorspace override - OP-6591 <a href="https://github.com/ynput/OpenPype/pull/6215">#6215</a></summary>
+
+Setting the colorspace from the representation data was not supported.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: Add OP settings and convert in plugin - OP-8338 <a href="https://github.com/ynput/OpenPype/pull/6232">#6232</a></summary>
+
+Missing settings for https://github.com/ynput/OpenPype/pull/6143.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix Render Instance Collector to use folderPath <a href="https://github.com/ynput/OpenPype/pull/6233">#6233</a></summary>
+
+Fix Render Instance Collector to use folderPath instead of just the asset name.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix - Fix "Action Failed" window not showing <a href="https://github.com/ynput/OpenPype/pull/6236">#6236</a></summary>
+
+This PR targets to fix issue #6234.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: render use existing frames with slate offsets the published render - AY-1433 <a href="https://github.com/ynput/OpenPype/pull/6239">#6239</a></summary>
+
+Due to `frameStart` data member on representation for existing frames, the frame indexes would be re-numbered when integrating due to this; https://github.com/ynput/OpenPype/blob/develop/openpype/plugins/publish/integrate.py#L712-L726Removing `frameStart` had no effect on publishing workflows, local or farm.Also fixed an issues with slate collection which could misbehave if the instance node had "slate" in the name.Resolves #5883
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Workfiles tool: Copy and open of published workfile works <a href="https://github.com/ynput/OpenPype/pull/6241">#6241</a></summary>
+
+Fix copy and open published workfiles.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: OCIO and python2 compatibility fixes <a href="https://github.com/ynput/OpenPype/pull/6242">#6242</a></summary>
+
+Nuke 12 is now fully supported with our OCIO wrapping functionalities.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Tests: Fix failing maya automatic test <a href="https://github.com/ynput/OpenPype/pull/6235">#6235</a></summary>
+
+Improvement on https://github.com/ynput/OpenPype/pull/6231
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.7](https://github.com/ynput/OpenPype/tree/3.18.7)
 
 

@@ -45,3 +45,8 @@ class CollectPointcache(pyblish.api.InstancePlugin):
         if proxy_set:
             instance.remove(proxy_set)
             instance.data["setMembers"].remove(proxy_set)
+
+        # User defined attributes.
+        instance.data["includeUserDefinedAttributes"] = (
+            instance.data["creator_attributes"]["includeUserDefinedAttributes"]
+        )
