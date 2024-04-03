@@ -3,8 +3,8 @@ import os
 from maya import cmds
 
 from openpype.pipeline import publish
+from openpype.hosts.maya.api.alembic import extract_alembic
 from openpype.hosts.maya.api.lib import (
-    extract_alembic,
     suspended_refresh,
     maintained_selection,
     iter_visible_nodes_in_range
