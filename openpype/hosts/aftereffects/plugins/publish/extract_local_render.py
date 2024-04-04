@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from openpype.pipeline import publish
 from openpype.hosts.aftereffects.api import get_stub
@@ -35,7 +34,10 @@ class ExtractLocalRender(publish.Extractor):
 
             for found_file_name in os.listdir(staging_dir):
 
-                if found_file_name != Path(file_name).name:
+                self.log.warning(found_file_name)
+                self.log.warning(file_name)
+
+                if not found_file_name.endswith(ext):
                     continue
 
                 self.log.info("found_file_name::{}".format(found_file_name))
@@ -69,15 +71,6 @@ class ExtractLocalRender(publish.Extractor):
                 repre_data["tags"] = ["review"]
                 thumbnail_path = os.path.join(staging_dir, files[0])
                 instance.data["thumbnailSource"] = thumbnail_path
-
-            # For multi export, we add a bypass to later avoid
-            # duplicated files rendered in 'integrate asset (legacy)'
-            if len(file_names) > 1:
-                self.log.warning('ADD TAG')
-                if repre_data.get("tags", None):
-                    repre_data["tags"].append('bypass_asset_integration')
-                else:
-                    repre_data["tags"] = ["bypass_asset_integration"]
 
             representations.append(repre_data)
 
