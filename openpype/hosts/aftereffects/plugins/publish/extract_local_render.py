@@ -34,9 +34,6 @@ class ExtractLocalRender(publish.Extractor):
 
             for found_file_name in os.listdir(staging_dir):
 
-                self.log.warning(found_file_name)
-                self.log.warning(file_name)
-
                 if not found_file_name.endswith(ext):
                     continue
 
@@ -65,7 +62,7 @@ class ExtractLocalRender(publish.Extractor):
                 "files": resulting_files,
                 "stagingDir": staging_dir
             }
-            self.log.warning(repre_data)
+
             first_repre = not representations
             if instance.data["review"] and first_repre:
                 repre_data["tags"] = ["review"]
