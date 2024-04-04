@@ -106,7 +106,7 @@ class CollectAERender(publish.AbstractCollectRender):
                 name=subset_name,
                 resolutionWidth=render_item.width,
                 resolutionHeight=render_item.height,
-                encoding=render_item.encoding,
+                encoding=[item.encoding for item in render_q],
                 pixelAspect=1,
                 tileRendering=False,
                 tilesX=0,
@@ -150,6 +150,7 @@ class CollectAERender(publish.AbstractCollectRender):
 
         for instance in instances_to_remove:
             context.remove(instance)
+
         return instances
 
     def get_expected_files(self, render_instance):

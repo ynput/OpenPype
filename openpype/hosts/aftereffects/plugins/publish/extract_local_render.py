@@ -26,7 +26,8 @@ class ExtractLocalRender(publish.Extractor):
         stub.render(staging_dir, comp_id)
 
         representations = []
-        for file_name in instance.data["file_names"]:
+        encoding = instance.data.get("encoding", None)
+        for file_number, file_name in enumerate(instance.data["file_names"]):
             _, ext = os.path.splitext(os.path.basename(file_name))
             ext = ext[1:]
             files = []
@@ -48,15 +49,20 @@ class ExtractLocalRender(publish.Extractor):
             if len(files) == 1:
                 resulting_files = files[0]
 
+            # Check if multiple encoding informations are passed
+            if type(instance.data.get("encoding", None)) is list:
+                encoding = instance.data["encoding"][file_number]
+
             repre_data = {
                 "frameStart": instance.data["frameStart"],
                 "frameEnd": instance.data["frameEnd"],
-                "encoding": instance.data["encoding"],
+                "encoding": encoding,
                 "name": ext,
                 "ext": ext,
                 "files": resulting_files,
                 "stagingDir": staging_dir
             }
+            self.log.warning(repre_data)
             first_repre = not representations
             if instance.data["review"] and first_repre:
                 repre_data["tags"] = ["review"]
