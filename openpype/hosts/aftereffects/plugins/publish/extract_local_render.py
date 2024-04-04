@@ -18,8 +18,9 @@ class ExtractLocalRender(publish.Extractor):
         staging_dir = instance.data["stagingDir"]
         self.log.debug("staging_dir::{}".format(staging_dir))
 
+        file_names = instance.data["file_names"]
         # pull file name collected value from Render Queue Output module
-        if not instance.data["file_names"]:
+        if not file_names:
             raise ValueError("No file extension set in Render Queue")
 
         comp_id = instance.data['comp_id']
@@ -27,7 +28,7 @@ class ExtractLocalRender(publish.Extractor):
 
         representations = []
         encoding = instance.data.get("encoding", None)
-        for file_number, file_name in enumerate(instance.data["file_names"]):
+        for file_number, file_name in enumerate(file_names):
             _, ext = os.path.splitext(os.path.basename(file_name))
             ext = ext[1:]
             files = []
@@ -68,6 +69,15 @@ class ExtractLocalRender(publish.Extractor):
                 repre_data["tags"] = ["review"]
                 thumbnail_path = os.path.join(staging_dir, files[0])
                 instance.data["thumbnailSource"] = thumbnail_path
+
+            # For multi export, we add a bypass to later avoid
+            # duplicated files rendered in 'integrate asset (legacy)'
+            if len(file_names) > 1:
+                self.log.warning('ADD TAG')
+                if repre_data.get("tags", None):
+                    repre_data["tags"].append('bypass_asset_integration')
+                else:
+                    repre_data["tags"] = ["bypass_asset_integration"]
 
             representations.append(repre_data)
 

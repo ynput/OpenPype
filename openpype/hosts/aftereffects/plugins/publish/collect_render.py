@@ -86,6 +86,7 @@ class CollectAERender(publish.AbstractCollectRender):
             render_q = CollectAERender.get_stub().get_render_info(comp_id)
             if not render_q:
                 raise ValueError("No file extension set in Render Queue")
+
             render_item = render_q[0]
 
             instance_families = inst.data.get("families", [])
