@@ -5,16 +5,18 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateShadingEngine(pyblish.api.InstancePlugin):
+class ValidateShadingEngine(pyblish.api.InstancePlugin,
+                            OptionalPyblishPluginMixin):
     """Validate all shading engines are named after the surface material.
 
     Shading engines should be named "{surface_shader}SG"
     """
-
+    optional = True
     order = ValidateContentsOrder
     families = ["look"]
     hosts = ["maya"]
@@ -25,6 +27,8 @@ class ValidateShadingEngine(pyblish.api.InstancePlugin):
 
     # The default connections to check
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
         if invalid:

@@ -7,17 +7,21 @@ from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline.publish import (
     RepairContextAction,
     ValidateSceneOrder,
-    PublishXmlValidationError
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin,
+
 )
 
 
-class ValidateMayaUnits(pyblish.api.ContextPlugin):
+class ValidateMayaUnits(pyblish.api.ContextPlugin,
+                        OptionalPyblishPluginMixin):
     """Check if the Maya units are set correct"""
 
     order = ValidateSceneOrder
     label = "Maya Units"
     hosts = ['maya']
     actions = [RepairContextAction]
+    optional = True
 
     validate_linear_units = True
     linear_units = "cm"
@@ -52,6 +56,8 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.validate_fps = settings.get("validate_fps", cls.validate_fps)
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
 
         # Collected units
         linearunits = context.data.get('linearUnits')
