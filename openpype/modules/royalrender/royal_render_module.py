@@ -6,7 +6,6 @@ from openpype.modules import OpenPypeModule, IPluginPaths
 from openpype import AYON_SERVER_ENABLED
 from openpype.lib import Logger
 
-log = Logger.get_logger("SyncServer")
 
 
 class RoyalRenderModule(OpenPypeModule, IPluginPaths):
@@ -37,7 +36,7 @@ class RoyalRenderModule(OpenPypeModule, IPluginPaths):
 
         # Ayon only
         if not AYON_SERVER_ENABLED:
-            log.info("RoyalRender is not implemented for Openpype")
+            self.log.info("RoyalRender is not implemented for Openpype")
             self.enabled = False
 
     @staticmethod
