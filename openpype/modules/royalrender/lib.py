@@ -188,6 +188,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             "AYON_BUNDLE_NAME": os.environ["AYON_BUNDLE_NAME"]
         })
 
+        render_dir = render_dir.replace("\\", "/")
         job = RRJob(
             Software="",
             Renderer="",
@@ -198,7 +199,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             Version=0,
             SceneName=script_path,
             IsActive=True,
-            ImageDir=render_dir.replace("\\", "/"),
+            ImageDir=render_dir,
             ImageFilename=file_name,
             ImageExtension=file_ext,
             ImagePreNumberLetter="",
@@ -213,6 +214,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             CustomAttributes=custom_attributes,
             SubmitterParameters=submitter_parameters,
             rrEnvList=environment.serialize(),
+            rrEnvFile=os.path.join(render_dir, "rrEnv.rrEenv"),
         )
 
         return job
