@@ -60,8 +60,6 @@ class CollectAERender(publish.AbstractCollectRender):
             self.log.warning("Can't retrieve format conversion table from after effects custom plugins.")
             format_conversion_table = None
 
-        self.log.warning(format_conversion_table)
-
         compositions = CollectAERender.get_stub().get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
         for inst in context:
