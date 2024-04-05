@@ -650,14 +650,25 @@ function getRenderInfo(comp_id){
 
                 var item = render_item.outputModule(j);
                 var file_url = item.file.toString();
-                var format = item.getSettings(GetSettingsFormat.STRING)['Format']
+                var settings = item.getSettings(GetSettingsFormat.STRING)
+                var format = settings['Format']
+
+                export_data = {
+                    "file_name": file_url,
+                    "width": render_item.comp.width,
+                    "height": render_item.comp.height,
+                    "format": format
+                }
+
+                if (settings.hasOwnProperty['Resize to']){
+                    export_data['resize'] = {
+                        "x": settings['Resize to']['x'],
+                        "y":settings['Resize to']['y']
+                    }
+                }
+
                 output_metadata.push(
-                    JSON.stringify({
-                        "file_name": file_url,
-                        "width": render_item.comp.width,
-                        "height": render_item.comp.height,
-                        "encoding": format
-                    })
+                    JSON.stringify(export_data)
                 );
             }
         }
