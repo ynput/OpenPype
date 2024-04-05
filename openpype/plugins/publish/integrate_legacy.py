@@ -415,7 +415,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
             fps = instance.data.get("fps")
-            encoding = repre.get('encoding')
+            format = repre.get('format')
 
             if resolution_width:
                 template_data["resolution_width"] = resolution_width
@@ -423,8 +423,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 template_data["resolution_height"] = resolution_height
             if resolution_width:
                 template_data["fps"] = fps
-            if encoding:
-                template_data['encoding'] = encoding
+            if format:
+                template_data['format'] = format
 
             if "originalBasename" in instance.data:
                 template_data.update({
