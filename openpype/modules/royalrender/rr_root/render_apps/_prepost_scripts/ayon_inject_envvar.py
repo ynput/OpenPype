@@ -16,15 +16,18 @@ logs = []
 
 
 class InjectEnvironment:
-    """Creates rrEnv file and adds it to the rendered job.
+    """Creates rrEnv file.
 
     RR evnList has limitation on 2000 characters, which might not be enough.
     This script should be triggered by render jobs that were published from
     Ayon, it uses .json metadata to parse context and required Ayon launch
     environments to generate environment variable file for particular context.
 
-    This file is converted into rrEnv file and added to the job to be picked up
-    by RR.
+    This file is converted into rrEnv file.
+
+    Render job already points to non-existent location which got filled only
+    by this process. (Couldn't figure way how to attach new file to existing
+    job.)
 
     Expected set environments on RR worker:
     - AYON_SERVER_URL
@@ -49,11 +52,6 @@ class InjectEnvironment:
     def inject(self):
         logs.append("InjectEnvironment starting")
         meta_dir = self._get_metadata_dir()
-
-        metadata = self._get_metadata(meta_dir)
-        if not metadata:
-            logs.append("No metadata json found {}".format(meta_dir))
-            return
         self.meta_dir = meta_dir
 
         envs = self._get_job_environments()
@@ -74,25 +72,15 @@ class InjectEnvironment:
 
         rrEnv_path = self._create_rrEnv(meta_dir, extracted_env)
 
-        self._set_rrEnv_to_job(rrEnv_path)
-        logs.append("InjectEnvironment ending")
+        logs.append(f"InjectEnvironment ending, rrEnv file {rrEnv_path}")
 
     def _get_metadata_dir(self):
+        """Get folder where metadata.json and renders should be produced."""
         job = self._get_job()
         image_dir = job.imageDir
         logs.append(f"_get_metadata_dir::{image_dir}")
 
         return image_dir
-
-    def _get_metadata(self, meta_dir):
-        search_frm = "{}{}*_metadata.json".format(meta_dir, os.path.sep)
-        metadata_files = glob.glob(search_frm)
-        if not metadata_files:
-            return {}
-
-        logs.append(f"_get_metadata::{metadata_files[0]}")
-        with open(metadata_files[0]) as json_file:
-            return json.load(json_file)
 
     def _is_required_environment(self):
         if (not os.environ.get("AYON_API_KEY") or
@@ -124,7 +112,7 @@ class InjectEnvironment:
         tcp.setServer(rrGlobal.rrServer(), 7773)
         # tcp.setLogin(args.authStr, "")
         tcp.setLogin("", "")
-
+        logs.append("jid:{}".format(int(args.jid)))
         if not tcp.jobList_GetInfo(int(args.jid)):
             print("Error jobList_GetInfo: " + tcp.errorMessage())
             sys.exit()
@@ -148,6 +136,28 @@ class InjectEnvironment:
     def _get_executable(self):
         # rr_python_utils.cache.get_rr_bin_folder()  # TODO maybe useful
         return os.environ["AYON_EXECUTABLE_PATH"]
+
+    def _get_launch_environments(self):
+        """ Enhances environemnt with required for Ayon to be launched."""
+        job_envs = self._get_job_environments()
+        ayon_environment = {
+            "AYON_SERVER_URL": os.environ["AYON_SERVER_URL"],
+            "AYON_API_KEY": os.environ["AYON_API_KEY"],
+            "AYON_BUNDLE_NAME": job_envs["AYON_BUNDLE_NAME"],
+        }
+        logs.append("Ayon launch environments:: {}".format(ayon_environment))
+        environment = os.environ.copy()
+        environment.update(ayon_environment)
+        return environment
+
+    def _get_export_url(self):
+        """Returns unique path with extracted env variables from Ayon."""
+        temp_file_name = "{}_{}.json".format(
+            datetime.utcnow().strftime('%Y%m%d%H%M%S%f'),
+            str(uuid.uuid1())
+        )
+        export_url = os.path.join(tempfile.gettempdir(), temp_file_name)
+        return export_url
 
     def _extract_environments(self, executable, context):
         # tempfile.TemporaryFile cannot be used because of locking
@@ -180,28 +190,8 @@ class InjectEnvironment:
         with open(export_url) as json_file:
             return json.load(json_file)
 
-    def _get_launch_environments(self):
-        """ Enhances environemnt with required for Ayon to be launched."""
-        job_envs = self._get_job_environments()
-        ayon_environment = {
-            "AYON_SERVER_URL": os.environ["AYON_SERVER_URL"],
-            "AYON_API_KEY": os.environ["AYON_API_KEY"],
-            "AYON_BUNDLE_NAME": job_envs["AYON_BUNDLE_NAME"],
-        }
-        logs.append("Ayon launch environments:: {}".format(ayon_environment))
-        environment = os.environ.copy()
-        environment.update(ayon_environment)
-        return environment
-
-    def _get_export_url(self):
-        temp_file_name = "{}_{}.json".format(
-            datetime.utcnow().strftime('%Y%m%d%H%M%S%f'),
-            str(uuid.uuid1())
-        )
-        export_url = os.path.join(tempfile.gettempdir(), temp_file_name)
-        return export_url
-
     def _create_rrEnv(self, meta_dir, extracted_env):
+        """Create rrEnv.rrEnv file in metadata folder that render job points"""
         filter_out = os.environ.get("AYON_FILTER_ENVIRONMENTS")
         filter_envs = set()
         if filter_out:
@@ -221,22 +211,15 @@ class InjectEnvironment:
 
         return rrenv_path
 
-    def _set_rrEnv_to_job(self, rrEnv_path):
-        logs.append(f"_set_rrEnv_to_job::{rrEnv_path}")
-        job = self._get_job()
-
-        job.customDataSet_Str("rrEnvFile", rrEnv_path)
-        rr.setJob(job)
-
 
 if __name__ == "__main__":
-
     try:
         injector = InjectEnvironment()
         injector.inject()
     except Exception as exp:
         logs.append(f"Error happened::{str(exp)}")
 
-    log_path = os.path.join(injector.meta_dir, "log.txt")
+    tmpdir = injector.meta_dir
+    log_path = os.path.join(tmpdir, "log.txt")
     with open(log_path, "a") as fp:
         fp.writelines(s.replace("\\r\\n", "\n") + '\n' for s in logs)
