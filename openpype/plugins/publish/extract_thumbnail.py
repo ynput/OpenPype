@@ -2,6 +2,7 @@ import copy
 import os
 import subprocess
 import tempfile
+import re
 
 import pyblish.api
 from openpype.lib import (
@@ -14,9 +15,10 @@ from openpype.lib import (
     path_to_subprocess_arg,
     run_subprocess,
 )
-from openpype.lib.transcoding import convert_colorspace
-
-from openpype.lib.transcoding import VIDEO_EXTENSIONS
+from openpype.lib.transcoding import (
+    convert_colorspace,
+    VIDEO_EXTENSIONS,
+)
 
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
@@ -35,6 +37,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "traypublisher",
         "substancepainter",
         "nuke",
+        "aftereffects"
     ]
     enabled = False
 
@@ -49,6 +52,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     # attribute presets from settings
     oiiotool_defaults = None
     ffmpeg_args = None
+    subsets = []
+    product_names = []
 
     def process(self, instance):
         # run main process
@@ -102,6 +107,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         if "crypto" in subset_name.lower():
             self.log.debug("Skipping crypto passes.")
             return
+
+        # We only want to process the subsets needed from settings.
+        def validate_string_against_patterns(input_str, patterns):
+            for pattern in patterns:
+                if re.match(pattern, input_str):
+                    return True
+            return False
+
+        product_names = self.subsets + self.product_names
+        if product_names:
+            result = validate_string_against_patterns(
+                instance.data["subset"], product_names
+            )
+            if not result:
+                self.log.debug(
+                    "Subset \"{}\" did not match any valid subsets: {}".format(
+                        instance.data["subset"], product_names
+                    )
+                )
+                return
 
         # first check for any explicitly marked representations for thumbnail
         explicit_repres = self._get_explicit_repres_for_thumbnail(instance)
@@ -445,7 +470,15 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # Set video input attributes
         max_int = str(2147483647)
         video_data = get_ffprobe_data(video_file_path, logger=self.log)
-        duration = float(video_data["format"]["duration"])
+        # Use duration of the individual streams since it is returned with
+        # higher decimal precision than 'format.duration'. We need this
+        # more precise value for calculating the correct amount of frames
+        # for higher FPS ranges or decimal ranges, e.g. 29.97 FPS
+        duration = max(
+            float(stream.get("duration", 0))
+            for stream in video_data["streams"]
+            if stream.get("codec_type") == "video"
+        )
 
         cmd_args = [
             "-y",

@@ -2329,7 +2329,28 @@ class PublisherController(BasePublisherController):
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id
         )
+        exception = result.get("error")
+        if exception:
+            self._emit_event(
+                "publish.action.failed",
+                {
+                    "title": "Action failed",
+                    "message": "Action failed.",
+                    "traceback": "".join(
+                        traceback.format_exception(
+                            type(exception),
+                            exception,
+                            exception.__traceback__
+                        )
+                    ),
+                    "label": action.__name__,
+                    "identifier": action.id
+                }
+            )
+
         self._publish_report.add_action_result(action, result)
+
+        self.emit_card_message("Action finished.")
 
     def _publish_next_process(self):
         # Validations of progress before using iterator
