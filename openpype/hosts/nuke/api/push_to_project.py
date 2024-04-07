@@ -86,7 +86,6 @@ def main():
         project_settings=project_settings
     )
 
-    # Warn about saving current workfile.
     # Save current workfile.
     current_file = host.current_file()
     host.save_file(current_file)
