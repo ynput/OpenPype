@@ -632,10 +632,13 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         # happens with Redshift that forces Cryptomatte renders to be separate
         # files even when the rest of the AOVs are merged into a single EXR.
         # There might be an edge case where the main instance has cryptomatte
-        # in the name even though its a multipart EXR.
-        if (instance.data.get("multipartExr") and
-           "cryptomatte" not in render_file_name.lower()):
-            log.debug("Adding preview tag because its multipartExr")
+        # in the name even though it's a multipart EXR.
+        if (
+            instance.data.get("multipartExr") and
+            instance.data.get("renderer", "") == "redshift" and
+            "cryptomatte" not in render_file_name.lower()
+        ):
+            log.debug("Adding preview tag because it's multipartExr")
             preview = True
         else:
             new_instance["multipartExr"] = False
