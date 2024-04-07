@@ -27,13 +27,13 @@
         "workfile": {
             "colorManagement": "OCIO",
             "OCIO_config": "aces_1.2",
-            "workingSpaceLUT": "scene_linear (ACES - ACEScg)",
+            "workingSpaceLUT": "role_scene_linear",
             "monitorLut": "sRGB (ACES)",
             "monitorOutLUT": "sRGB (ACES)",
-            "int8Lut": "matte_paint (Utility - sRGB - Texture)",
-            "int16Lut": "texture_paint (ACES - ACEScc)",
-            "logLut": "compositing_log (Input - ADX - ADX10)",
-            "floatLut": "scene_linear (ACES - ACEScg)"
+            "int8Lut": "role_matte_paint",
+            "int16Lut": "role_texture_paint",
+            "logLut": "role_compositing_log",
+            "floatLut": "role_scene_linear"
         },
         "nodes": {
             "requiredNodes": [

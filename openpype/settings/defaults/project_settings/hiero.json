@@ -11,14 +11,14 @@
         },
         "workfile": {
             "ocioConfigName": "aces_1.2",
-            "workingSpace": "scene_linear (ACES - ACEScg)",
+            "workingSpace": "role_scene_linear",
             "viewerLut": "ACES/sRGB",
             "thumbnailLut": "ACES/sRGB",
             "monitorOutLut": "ACES/sRGB",
-            "eightBitLut": "matte_paint (Utility - sRGB - Texture)",
-            "sixteenBitLut": "texture_paint (ACES - ACEScc)",
-            "logLut": "compositing_log (Input - ADX - ADX10)",
-            "floatLut": "scene_linear (ACES - ACEScg)"
+            "eightBitLut": "role_matte_paint",
+            "sixteenBitLut": "role_texture_paint",
+            "logLut": "role_compositing_log",
+            "floatLut": "role_scene_linear"
         },
         "regexInputs": {
             "inputs": [
