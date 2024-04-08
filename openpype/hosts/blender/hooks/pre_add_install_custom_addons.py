@@ -30,6 +30,6 @@ class InstallCustomAddons(PreLaunchHook):
         self.launch_context.data.setdefault("script_args", []).extend(
             [
                 '--blender-addons-folder',
-                blender_addons_folder
+                blender_addons_folder.as_posix()
             ]
         )
