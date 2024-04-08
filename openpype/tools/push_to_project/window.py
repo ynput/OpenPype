@@ -367,7 +367,7 @@ class TasksModel(QtGui.QStandardItemModel):
         self.items_changed.emit()
 
 
-class PushToContextSelectWindow(QtWidgets.QWidget):
+class PushToContextSelectWindow(QtWidgets.QDialog):
     def __init__(
         self, controller=None, library_filter=True, context_only=False
     ):
@@ -376,6 +376,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
             controller = PushToContextController(library_filter=library_filter)
         self._controller = controller
         self.context_only = context_only
+        self.context = None
 
         self.setWindowTitle("Push to project (select context)")
         self.setWindowIcon(QtGui.QIcon(get_app_icon_path()))

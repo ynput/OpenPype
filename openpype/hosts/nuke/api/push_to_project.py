@@ -11,6 +11,8 @@ from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.workfile import get_workdir_with_workdir_data
 from openpype import PACKAGE_DIR
 from openpype.lib import get_openpype_execute_args, run_subprocess
+from openpype.tools.push_to_project.app import show
+
 from .utils import bake_gizmos_recursively
 
 import nuke
@@ -47,29 +49,16 @@ def bake_container(container):
 
 
 def main():
-    # Get project name, asset id and task name.
-    push_tool_script_path = os.path.join(
-        PACKAGE_DIR,
-        "tools",
-        "push_to_project",
-        "app.py"
-    )
+    context = show("", "", False, True)
 
-    args = get_openpype_execute_args(
-        "run",
-        push_tool_script_path,
-        "--library_filter", "False",
-        "--context_only", "True"
-    )
-    output = run_subprocess(args)
-    dict_string = re.search(r'\{.*\}', output).group()
-    result = json.loads(dict_string)
+    if context is None:
+        return
 
     # Get workfile path to save to.
-    project_name = result["project_name"]
+    project_name = context["project_name"]
     project_doc = get_project(project_name)
-    asset_doc = get_asset_by_id(project_name, result["asset_id"])
-    task_name = result["task_name"]
+    asset_doc = get_asset_by_id(project_name, context["asset_id"])
+    task_name = context["task_name"]
     host = registered_host()
     system_settings = get_system_settings()
     project_settings = get_project_settings(project_name)
