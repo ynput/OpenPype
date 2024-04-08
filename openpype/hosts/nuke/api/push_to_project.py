@@ -1,16 +1,12 @@
 from collections import defaultdict
 import shutil
 import os
-import json
-import re
 
 from openpype.client import get_project, get_asset_by_id
 from openpype.settings import get_system_settings, get_project_settings
 from openpype.pipeline import Anatomy, registered_host
 from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.workfile import get_workdir_with_workdir_data
-from openpype import PACKAGE_DIR
-from openpype.lib import get_openpype_execute_args, run_subprocess
 from openpype.tools.push_to_project.app import show
 
 from .utils import bake_gizmos_recursively
