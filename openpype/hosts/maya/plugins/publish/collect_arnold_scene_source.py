@@ -10,21 +10,23 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
     # Offset to be after renderable camera collection.
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Arnold Scene Source"
-    families = ["ass"]
+    families = ["ass", "assProxy"]
 
     def process(self, instance):
-        objsets = instance.data["setMembers"]
+        instance.data["members"] = []
+        for set_member in instance.data["setMembers"]:
+            if cmds.nodeType(set_member) != "objectSet":
+                instance.data["members"].extend(self.get_hierarchy(set_member))
+                continue
 
-        for objset in objsets:
-            objset = str(objset)
-            members = cmds.sets(objset, query=True)
+            members = cmds.sets(set_member, query=True)
             members = cmds.ls(members, long=True)
             if members is None:
-                self.log.warning("Skipped empty instance: \"%s\" " % objset)
+                self.log.warning(
+                    "Skipped empty instance: \"%s\" " % set_member
+                )
                 continue
-            if objset.endswith("content_SET"):
-                instance.data["contentMembers"] = self.get_hierarchy(members)
-            if objset.endswith("proxy_SET"):
+            if set_member.endswith("proxy_SET"):
                 instance.data["proxy"] = self.get_hierarchy(members)
 
         # Use camera in object set if present else default to render globals
@@ -33,7 +35,7 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
         renderable = [c for c in cameras if cmds.getAttr("%s.renderable" % c)]
         if renderable:
             camera = renderable[0]
-            for node in instance.data["contentMembers"]:
+            for node in instance.data["members"]:
                 camera_shapes = cmds.listRelatives(
                     node, shapes=True, type="camera"
                 )

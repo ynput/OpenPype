@@ -34,7 +34,15 @@ def get_current_session_fps():
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
 
-    families = ["ass", "animation", "model", "proxyAbc", "pointcache", "usd"]
+    families = [
+        "ass",
+        "assProxy",
+        "animation",
+        "model",
+        "proxyAbc",
+        "pointcache",
+        "usd"
+    ]
     representations = ["ass", "abc", "usda", "usdc", "usd"]
 
     label = "Load as Arnold standin"
@@ -99,7 +107,9 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             sequence = is_sequence(os.listdir(os.path.dirname(repre_path)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
-            fps = float(version["data"].get("fps"))or get_current_session_fps()
+            fps = (
+                float(version["data"].get("fps")) or get_current_session_fps()
+            )
             cmds.setAttr(standin_shape + ".abcFPS", fps)
 
         nodes = [root, standin, standin_shape]

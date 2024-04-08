@@ -11,18 +11,39 @@ from openpype.hosts.maya.api.lib import is_visible
 class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
     """Validate Arnold Scene Source.
 
-    We require at least 1 root node/parent for the meshes. This is to ensure we
-    can duplicate the nodes and preserve the names.
+    Ensure no nodes are hidden.
+    """
 
-    If using proxies we need the nodes to share the same names and not be
+    order = ValidateContentsOrder
+    hosts = ["maya"]
+    families = ["ass", "assProxy"]
+    label = "Validate Arnold Scene Source"
+
+    def process(self, instance):
+        # Validate against having nodes hidden, which will result in the
+        # extraction to ignore the node.
+        nodes = instance.data["members"] + instance.data.get("proxy", [])
+        nodes = [x for x in nodes if cmds.objectType(x, isAType='dagNode')]
+        hidden_nodes = [x for x in nodes if not is_visible(x)]
+        if hidden_nodes:
+            raise PublishValidationError(
+                "Found hidden nodes:\n\n{}\n\nPlease unhide for"
+                " publishing.".format("\n".join(hidden_nodes))
+            )
+
+
+class ValidateArnoldSceneSourceProxy(pyblish.api.InstancePlugin):
+    """Validate Arnold Scene Source Proxy.
+
+    When using proxies we need the nodes to share the same names and not be
     parent to the world. This ends up needing at least two groups with content
     nodes and proxy nodes in another.
     """
 
     order = ValidateContentsOrder
     hosts = ["maya"]
-    families = ["ass"]
-    label = "Validate Arnold Scene Source"
+    families = ["assProxy"]
+    label = "Validate Arnold Scene Source Proxy"
 
     def _get_nodes_by_name(self, nodes):
         ungrouped_nodes = []
@@ -43,31 +64,11 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         return ungrouped_nodes, nodes_by_name, parents
 
     def process(self, instance):
-        # Validate against having raw and content nodes.
-        if instance.data["contentMembers"] and instance[:]:
-            raise PublishValidationError(
-                "Found nodes in both root and content set. It is recommended"
-                " to separate raw and content ass nodes into separate"
-                " instances."
-            )
-
-        # Validate against having nodes hidden, which will result in the
-        # extraction to ignore the node.
-        nodes = instance.data["contentMembers"] + instance[:]
-        nodes += instance.data.get("proxy", [])
-        nodes = [x for x in nodes if cmds.objectType(x, isAType='dagNode')]
-        hidden_nodes = [x for x in nodes if not is_visible(x)]
-        if hidden_nodes:
-            raise PublishValidationError(
-                "Found hidden nodes:\n\n{}\n\nPlease unhide for"
-                " publishing.".format("\n".join(hidden_nodes))
-            )
-
         # Validate against nodes directly parented to world.
         ungrouped_nodes = []
 
         nodes, content_nodes_by_name, content_parents = (
-            self._get_nodes_by_name(instance.data["contentMembers"])
+            self._get_nodes_by_name(instance.data["members"])
         )
         ungrouped_nodes.extend(nodes)
 
@@ -82,17 +83,15 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
                 "All nodes need to be grouped.".format(ungrouped_nodes)
             )
 
-        # Proxy validation.
-        if not instance.data.get("proxy", []):
-            return
-
         # Validate for content and proxy nodes amount being the same.
-        if len(instance.data["contentMembers"]) != len(instance.data["proxy"]):
+        if len(instance.data["members"]) != len(instance.data["proxy"]):
             raise PublishValidationError(
                 "Amount of content nodes ({}) and proxy nodes ({}) needs to "
-                "be the same.".format(
-                    len(instance.data["contentMembers"]),
-                    len(instance.data["proxy"])
+                "be the same.\nContent nodes: {}\nProxy nodes:{}".format(
+                    len(instance.data["members"]),
+                    len(instance.data["proxy"]),
+                    instance.data["members"],
+                    instance.data["proxy"]
                 )
             )
 
