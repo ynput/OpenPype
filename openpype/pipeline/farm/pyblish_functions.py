@@ -628,7 +628,7 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         # toggle preview on if multipart is on
         # Because we cant query the multipartExr data member of each AOV we'll
         # need to have hardcoded rule of excluding any renders with
-        # "crytomatte" in the file name from being a multipart EXR. This issue
+        # "cryptomatte" in the file name from being a multipart EXR. This issue
         # happens with Redshift that forces Cryptomatte renders to be separate
         # files even when the rest of the AOVs are merged into a single EXR.
         # There might be an edge case where the main instance has cryptomatte
