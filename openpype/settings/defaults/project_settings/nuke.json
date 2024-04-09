@@ -22,7 +22,7 @@
             "viewerProcess": "sRGB (ACES)"
         },
         "baking": {
-            "viewerProcess": "rec709 (default)"
+            "viewerProcess": "Rec.709 (ACES)"
         },
         "workfile": {
             "colorManagement": "OCIO",
