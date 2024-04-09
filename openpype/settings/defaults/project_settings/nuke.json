@@ -19,10 +19,10 @@
             "rules": {}
         },
         "viewer": {
-            "viewerProcess": "sRGB (ACES)"
+            "viewerProcess": "ACES/sRGB"
         },
         "baking": {
-            "viewerProcess": "Rec.709 (ACES)"
+            "viewerProcess": "ACES/Rec.709"
         },
         "workfile": {
             "colorManagement": "OCIO",
