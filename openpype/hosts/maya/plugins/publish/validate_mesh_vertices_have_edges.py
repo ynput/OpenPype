@@ -4,10 +4,15 @@ from maya import cmds
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import len_flattened
 from openpype.pipeline.publish import (
-    PublishValidationError, RepairAction, ValidateMeshOrder)
+    PublishValidationError,
+    RepairAction,
+    ValidateMeshOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
+class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Validate meshes have only vertices that are connected to edges.
 
     Maya can have invalid geometry with vertices that have no edges or
@@ -32,6 +37,7 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
     label = 'Mesh Vertices Have Edges'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]
+    optional = True
 
     @classmethod
     def repair(cls, instance):
@@ -72,7 +78,8 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

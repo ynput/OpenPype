@@ -2,12 +2,14 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     PublishValidationError,
-    ValidateContentsOrder
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateAnimationContent(pyblish.api.InstancePlugin):
-    """Adheres to the content of 'animation' family
+class ValidateAnimationContent(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
+    """Adheres to the content of 'animation' product type
 
     - Must have collected `out_hierarchy` data.
     - All nodes in `out_hierarchy` must be in the instance.
@@ -19,6 +21,7 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
     families = ["animation"]
     label = "Animation Content"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = False
 
     @classmethod
     def get_invalid(cls, instance):
@@ -48,6 +51,8 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

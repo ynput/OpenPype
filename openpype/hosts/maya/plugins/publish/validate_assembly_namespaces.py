@@ -1,10 +1,13 @@
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
-class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
+
+class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Ensure namespaces are not nested
 
     In the outliner an item in a normal namespace looks as following:
@@ -20,9 +23,11 @@ class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     families = ["assembly"]
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = False
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         self.log.debug("Checking namespace for %s" % instance.name)
         if self.get_invalid(instance):
             raise PublishValidationError("Nested namespaces found")

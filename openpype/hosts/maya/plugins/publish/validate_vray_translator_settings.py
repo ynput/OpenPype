@@ -5,22 +5,27 @@ from openpype.pipeline.publish import (
     context_plugin_should_run,
     RepairContextAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 from maya import cmds
 
 
-class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
+class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin,
+                                    OptionalPyblishPluginMixin):
     """Validate VRay Translator settings for extracting vrscenes."""
 
     order = ValidateContentsOrder
     label = "VRay Translator Settings"
     families = ["vrayscene_layer"]
     actions = [RepairContextAction]
+    optional = False
 
     def process(self, context):
         """Plugin entry point."""
+        if not self.is_active(context.data):
+            return
         # Workaround bug pyblish-base#250
         if not context_plugin_should_run(self, context):
             return

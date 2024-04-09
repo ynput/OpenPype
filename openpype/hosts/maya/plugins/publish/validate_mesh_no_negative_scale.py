@@ -4,7 +4,8 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateMeshOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
@@ -15,7 +16,8 @@ def _as_report_list(values, prefix="- ", suffix="\n"):
     return prefix + (suffix + prefix).join(values)
 
 
-class ValidateMeshNoNegativeScale(pyblish.api.Validator):
+class ValidateMeshNoNegativeScale(pyblish.api.Validator,
+                                  OptionalPyblishPluginMixin):
     """Ensure that meshes don't have a negative scale.
 
     Using negatively scaled proxies in a VRayMesh results in inverted
@@ -32,6 +34,7 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     families = ['model']
     label = 'Mesh No Negative Scale'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = False
 
     @staticmethod
     def get_invalid(instance):
@@ -52,7 +55,8 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
 
     def process(self, instance):
         """Process all the nodes in the instance 'objectSet'"""
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
 
         if invalid:

@@ -3,8 +3,10 @@ import re
 
 import pyblish.api
 
-from openpype.pipeline.publish import PublishValidationError
-
+from openpype.pipeline.publish import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
 def is_cache_resource(resource):
     """Return whether resource is a cacheFile resource"""
@@ -34,7 +36,8 @@ def filter_ticks(files):
     return tick_files, ticks
 
 
-class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
+class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """Validates all instancer particle systems are cached correctly.
 
     This means they should have the files/frames as required by the start-end
@@ -46,6 +49,7 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = 'Instancer Cache Frame Ranges'
     families = ['instancer']
+    optional = False
 
     @classmethod
     def get_invalid(cls, instance):
@@ -157,7 +161,8 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
 
         if invalid:

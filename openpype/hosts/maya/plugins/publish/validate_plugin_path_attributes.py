@@ -8,11 +8,13 @@ from openpype.hosts.maya.api.lib import pairwise
 from openpype.hosts.maya.api.action import SelectInvalidAction
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
+class ValidatePluginPathAttributes(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """
     Validate plug-in path attributes point to existing file paths.
     """
@@ -22,6 +24,7 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
     families = ["workfile"]
     label = "Plug-in Path Attributes"
     actions = [SelectInvalidAction]
+    optional = False
 
     # Attributes are defined in project settings
     attribute = []
@@ -56,6 +59,8 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all directories Set as Filenames in Non-Maya Nodes"""
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

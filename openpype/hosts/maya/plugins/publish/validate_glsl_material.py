@@ -6,10 +6,14 @@ from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder
 )
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
+class ValidateGLSLMaterial(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """
     Validate if the asset uses GLSL Shader
     """
@@ -23,6 +27,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
     active = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         shading_grp = self.get_material_from_shapes(instance)
         if not shading_grp:
             raise PublishValidationError("No shading group found")

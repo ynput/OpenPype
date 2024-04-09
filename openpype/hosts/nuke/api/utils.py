@@ -1,4 +1,6 @@
 import os
+import re
+
 import nuke
 
 from openpype import resources
@@ -103,9 +105,8 @@ def colorspace_exists_on_node(node, colorspace_name):
     except ValueError:
         # knob is not available on input node
         return False
-    all_clrs = get_colorspace_list(colorspace_knob)
 
-    return colorspace_name in all_clrs
+    return colorspace_name in get_colorspace_list(colorspace_knob)
 
 
 def get_colorspace_list(colorspace_knob):
@@ -117,19 +118,22 @@ def get_colorspace_list(colorspace_knob):
     Returns:
         list: list of strings names of profiles
     """
+    results = []
 
-    all_clrs = list(colorspace_knob.values())
-    reduced_clrs = []
+    # This pattern is to match with roles which uses an indentation and
+    # parentheses with original colorspace. The value returned from the
+    # colorspace is the string before the indentation, so we'll need to
+    # convert the values to match with value returned from the knob,
+    # ei. knob.value().
+    pattern = r".*\t.* \(.*\)"
+    for colorspace in nuke.getColorspaceList(colorspace_knob):
+        match = re.search(pattern, colorspace)
+        if match:
+            results.append(colorspace.split("\t", 1)[0])
+        else:
+            results.append(colorspace)
 
-    if not colorspace_knob.getFlag(nuke.STRIP_CASCADE_PREFIX):
-        return all_clrs
-
-    # strip colorspace with nested path
-    for clrs in all_clrs:
-        clrs = clrs.split('/')[-1]
-        reduced_clrs.append(clrs)
-
-    return reduced_clrs
+    return results
 
 
 def is_headless():
