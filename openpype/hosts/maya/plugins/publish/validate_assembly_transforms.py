@@ -2,10 +2,15 @@ import pyblish.api
 from maya import cmds
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import PublishValidationError, RepairAction
+from openpype.pipeline.publish import (
+    PublishValidationError,
+    RepairAction,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
+class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin,
+                                      OptionalPyblishPluginMixin):
     """Verify only root nodes of the loaded asset have transformations.
 
     Note: This check is temporary and is subject to change.
@@ -34,7 +39,11 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
                       " This can alter the look of your scene. "
                       "Are you sure you want to continue?")
 
+    optional = False
+
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

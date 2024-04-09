@@ -5,14 +5,16 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 from openpype.hosts.maya.api import lib
 import openpype.hosts.maya.api.action
 
 
-class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
+class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin,
+                                             OptionalPyblishPluginMixin):
     """Validate rig control curves have no keyable arnold attributes.
 
     The Arnold plug-in will create curve attributes like:
@@ -35,6 +37,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     label = "Rig Controllers (Arnold Attributes)"
     hosts = ["maya"]
     families = ["rig"]
+    optional = False
     actions = [RepairAction,
                openpype.hosts.maya.api.action.SelectInvalidAction]
 
@@ -48,6 +51,9 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError('{} failed, see log '

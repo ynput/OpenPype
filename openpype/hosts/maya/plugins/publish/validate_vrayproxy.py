@@ -1,18 +1,22 @@
 import pyblish.api
 
 from openpype.pipeline import KnownPublishError
+from openpype.pipeline.publish import OptionalPyblishPluginMixin
 
 
-class ValidateVrayProxy(pyblish.api.InstancePlugin):
+class ValidateVrayProxy(pyblish.api.InstancePlugin,
+                        OptionalPyblishPluginMixin):
 
     order = pyblish.api.ValidatorOrder
     label = "VRay Proxy Settings"
     hosts = ["maya"]
     families = ["vrayproxy"]
+    optional = False
 
     def process(self, instance):
         data = instance.data
-
+        if not self.is_active(data):
+            return
         if not data["setMembers"]:
             raise KnownPublishError(
                 "'%s' is empty! This is a bug" % instance.name
