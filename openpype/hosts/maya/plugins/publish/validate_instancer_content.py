@@ -2,10 +2,14 @@ import maya.cmds as cmds
 import pyblish.api
 
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import PublishValidationError
+from openpype.pipeline.publish import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateInstancerContent(pyblish.api.InstancePlugin):
+class ValidateInstancerContent(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Validates that all meshes in the instance have object IDs.
 
     This skips a check on intermediate objects because we consider them
@@ -14,9 +18,11 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = 'Instancer Content'
     families = ['instancer']
+    optional = False
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         error = False
         members = instance.data['setMembers']
         export_members = instance.data['exactExportMembers']

@@ -5,10 +5,15 @@ import pyblish.api
 from maya import cmds
 
 from openpype.pipeline.publish import (
-    PublishValidationError, RepairAction, ValidateContentsOrder)
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateRenderImageRule(pyblish.api.InstancePlugin):
+class ValidateRenderImageRule(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validates Maya Workpace "images" file rule matches project settings.
 
     This validates against the configured default render image folder:
@@ -22,9 +27,11 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
     actions = [RepairAction]
+    optional = False
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         required_images_rule = os.path.normpath(
             self.get_default_render_image_folder(instance)
         )
