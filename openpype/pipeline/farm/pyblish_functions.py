@@ -642,6 +642,9 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
                 preview = True
             else:
                 new_instance["multipartExr"] = False
+        elif instance.data.get("multipartExr"):
+            log.debug("Adding preview tag because its multipartExr")
+            preview = True
 
         # explicitly disable review by user
         preview = preview and not do_not_add_review
