@@ -1656,7 +1656,6 @@ class PlaceholderLoadMixin(object):
 
         if not placeholder.data.get("keep_placeholder", True):
             self.delete_placeholder(placeholder)
-            self.cleanup_placeholder(placeholder, failed)
 
     def populate_action_placeholder(self, placeholder, repre_load_contexts):
         if "action" not in placeholder.data:
