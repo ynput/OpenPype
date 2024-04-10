@@ -3,11 +3,15 @@
 from maya import cmds
 import pyblish.api
 
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    OptionalPyblishPluginMixin
+)
 import openpype.hosts.maya.api.action
 
 
-class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):
+class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin,
+                                     OptionalPyblishPluginMixin):
     """Validate if mesh is made of triangles for Unreal Engine"""
 
     order = ValidateMeshOrder
@@ -30,6 +34,8 @@ class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         assert len(invalid) == 0, (
             "Found meshes without triangles")

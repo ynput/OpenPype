@@ -7,11 +7,13 @@ from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline.publish import (
     RepairContextAction,
     ValidateSceneOrder,
-    PublishXmlValidationError
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateMayaUnits(pyblish.api.ContextPlugin):
+class ValidateMayaUnits(pyblish.api.ContextPlugin,
+                        OptionalPyblishPluginMixin):
     """Check if the Maya units are set correct"""
 
     order = ValidateSceneOrder
@@ -35,6 +37,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         "Maya scene {setting} must be '{required_value}'. "
         "Current value is '{current_value}'."
     )
+    optional = False
 
     @classmethod
     def apply_settings(cls, project_settings):
@@ -52,7 +55,8 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.validate_fps = settings.get("validate_fps", cls.validate_fps)
 
     def process(self, context):
-
+        if not self.is_active(context.data):
+            return
         # Collected units
         linearunits = context.data.get('linearUnits')
         angularunits = context.data.get('angularUnits')

@@ -1,7 +1,9 @@
 import pyblish.api
 from maya import cmds
-from openpype.pipeline.publish import PublishValidationError
-
+from openpype.pipeline.publish import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
 def _as_report_list(values, prefix="- ", suffix="\n"):
     """Return list as bullet point list for a report"""
@@ -10,15 +12,18 @@ def _as_report_list(values, prefix="- ", suffix="\n"):
     return prefix + (suffix + prefix).join(values)
 
 
-class ValidateNoVRayMesh(pyblish.api.InstancePlugin):
+class ValidateNoVRayMesh(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validate there are no VRayMesh objects in the instance"""
 
     order = pyblish.api.ValidatorOrder
     label = 'No V-Ray Proxies (VRayMesh)'
     families = ["pointcache"]
+    optional = False
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         if not cmds.pluginInfo("vrayformaya", query=True, loaded=True):
             return
 
