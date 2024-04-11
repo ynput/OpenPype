@@ -99,7 +99,7 @@ class OBJECT_OT_open_playblast_folder(bpy.types.Operator):
 
     def execute(self, context):
         latest_playblast_filepath = paths.get_version_folder_fullpath(
-            templates.get_playblast_path()
+            get_render_filepath()
         )
         if not latest_playblast_filepath or not latest_playblast_filepath.exists():
             self.report({'ERROR'}, "File '{}' not found".format(latest_playblast_filepath))

@@ -590,6 +590,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         files = repre["files"]
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
+        format = repre.get('format', None)
+        if format:
+            template_data['format'] = format
 
         # allow overwriting existing version
         template_data["version"] = version["name"]

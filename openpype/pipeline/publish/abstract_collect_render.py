@@ -41,6 +41,7 @@ class RenderInstance(object):
     resolutionWidth = attr.ib()  # resolution width (1920)
     resolutionHeight = attr.ib()  # resolution height (1080)
     pixelAspect = attr.ib()  # pixel aspect (1.0)
+    format = attr.ib()
 
     # time settings
     frameStart = attr.ib()  # start frame

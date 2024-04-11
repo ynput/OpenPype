@@ -645,16 +645,30 @@ function getRenderInfo(comp_id){
                 continue;
             }
             comp_id_count += 1;
-            var item = render_item.outputModule(1);
 
             for (j = 1; j<= render_item.numOutputModules; ++j){
+
+                var item = render_item.outputModule(j);
                 var file_url = item.file.toString();
+                var settings = item.getSettings(GetSettingsFormat.STRING)
+                var format = settings['Format']
+
+                export_data = {
+                    "file_name": file_url,
+                    "width": render_item.comp.width,
+                    "height": render_item.comp.height,
+                    "format": format
+                }
+
+                if (settings.hasOwnProperty['Resize to']){
+                    export_data['resize'] = {
+                        "x": settings['Resize to']['x'],
+                        "y": settings['Resize to']['y']
+                    }
+                }
+
                 output_metadata.push(
-                    JSON.stringify({
-                        "file_name": file_url,
-                        "width": render_item.comp.width,
-                        "height": render_item.comp.height
-                    })
+                    JSON.stringify(export_data)
                 );
             }
         }
@@ -954,17 +968,17 @@ function render(target_folder, comp_id){
 
             render_item.render = true;
 
-            var om1 = app.project.renderQueue.item(i).outputModule(1);
-            var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
-
-            var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings( GetSettingsFormat.STRING_SETTABLE );
-
             var targetFolder = new Folder(target_folder);
             if (!targetFolder.exists) {
                 targetFolder.create();
             }
 
-            om1.file = new File(targetFolder.fsName + '/' + file_name);
+            for (j = 1; j <= render_item.numOutputModules; ++j){
+                var om1 = app.project.renderQueue.item(i).outputModule(j);
+                var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
+
+                om1.file = new File(targetFolder.fsName + '/' + file_name);
+            }
         }else{
             if (render_item.status != RQItemStatus.DONE){
                 render_item.render = false;
