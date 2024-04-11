@@ -1504,6 +1504,11 @@ class PlaceholderLoadMixin(object):
             }
 
         elif builder_type == "linked_asset":
+            if not placeholder.data["asset"]:
+                return list(get_representations(
+                    self.project_name,
+                    context_filters={}
+                ))
             asset_regex = re.compile(placeholder.data["asset"])
             linked_asset_names = []
             for asset_doc in linked_asset_docs:
