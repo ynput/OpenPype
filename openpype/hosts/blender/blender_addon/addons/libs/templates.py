@@ -1,12 +1,7 @@
 import logging
 from pathlib import Path
 
-import bpy
-
 from openpype.pipeline import get_current_project_name
-from openpype.pipeline.anatomy import Anatomy
-
-from openpype.pipeline import (get_current_project_name)
 from openpype.pipeline.context_tools import get_template_data_from_session
 from openpype.pipeline.anatomy import Anatomy
 
@@ -15,7 +10,7 @@ from libs import paths
 
 class Default(dict):
     def __missing__(self, key):
-        return '{'+key+'}'
+        return '{' + key + '}'
 
 
 def _get_anatomy_roots_and_template(template_name):
@@ -26,7 +21,6 @@ def _get_anatomy_roots_and_template(template_name):
         logging.warning(f"Can't retrieve template named {template_name}. Check settings for {project_name}.")
         return None, None
     return anatomy_object.roots, anatomy_object.templates[template_name]
-
 
 
 def _get_template_data(roots, **additional_data):
@@ -49,7 +43,7 @@ def _set_template_version(anatomy_template, template_data):
 
     template_data['version'] = paths.get_next_version_number(
         filepath=folder_template.format(version=1, **template_data)
-        )
+    )
 
     return True
 
@@ -76,9 +70,9 @@ def get_playblast_path():
         template_path_key="path",
     )
     if not _set_template_version(
-        anatomy_template=anatomy_template,
-        template_data=template_data
-    ): return None
+            anatomy_template=anatomy_template,
+            template_data=template_data):
+        return None
 
     return _format_template_data(
         anatomy_template=anatomy_template,
@@ -122,9 +116,9 @@ def get_render_node_output_path(render_layer_name=None):
     )
 
     if not _set_template_version(
-        anatomy_template=anatomy_template,
-        template_data=template_data
-    ): return None
+            anatomy_template=anatomy_template,
+            template_data=template_data):
+        return None
 
     return _format_template_data(
         anatomy_template=anatomy_template,
