@@ -4,6 +4,7 @@ import functools
 import logging
 import uuid
 from enum import Enum
+from pathlib import Path
 
 import bpy
 
@@ -194,7 +195,7 @@ class PrepareTemporaryFile(bpy.types.Operator):
         convert_cache_files_windows_path_to_linux()
         convert_modifiers_windows_path_to_linux()
         set_engine('CYCLES')
-        set_global_output_path()
+        set_global_output_path(create_directory=True)
         set_render_nodes_output_path(convert_to_linux_paths=True)
         save_as_temporary_scene()
 
@@ -294,9 +295,12 @@ def set_engine(engine):
     log.info(f"Engine has been set to {engine}")
 
 
-def set_global_output_path():
+def set_global_output_path(create_directory=False):
     bpy.context.scene.render.filepath = templates.get_render_global_output_path()
     log.info(f"Global output path has been set to '{bpy.context.scene.render.filepath}'")
+    if create_directory:
+        Path(bpy.context.scene.render.filepath).mkdir(parents=True, exist_ok=True)
+        log.info(f"Folder at path '{bpy.context.scene.render.filepath}' has been created.")
 
 
 def set_render_nodes_output_path(convert_to_linux_paths=False):
