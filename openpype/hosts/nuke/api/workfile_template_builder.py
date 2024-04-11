@@ -547,7 +547,7 @@ class NukePlaceholderCreatePlugin(
     NukePlaceholderPlugin, PlaceholderCreateMixin
 ):
     identifier = "nuke.create"
-    label = "Nuke create"
+    label = "Nuke Create"
 
     def _parse_placeholder_node_data(self, node):
         placeholder_data = super(
