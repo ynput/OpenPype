@@ -663,7 +663,7 @@ function getRenderInfo(comp_id){
                 if (settings.hasOwnProperty['Resize to']){
                     export_data['resize'] = {
                         "x": settings['Resize to']['x'],
-                        "y":settings['Resize to']['y']
+                        "y": settings['Resize to']['y']
                     }
                 }
 
