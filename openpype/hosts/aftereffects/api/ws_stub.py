@@ -31,6 +31,7 @@ class AEItem(object):
     frameStart = attr.ib(default=None)
     framesDuration = attr.ib(default=None)
     frameRate = attr.ib(default=None)
+    format = attr.ib(default=None)
     file_name = attr.ib(default=None)
     instance_id = attr.ib(default=None)  # New Publisher
     width = attr.ib(default=None)
@@ -724,6 +725,7 @@ class AfterEffectsServerStub():
                           d.get('frameStart'),
                           d.get('framesDuration'),
                           d.get('frameRate'),
+                          d.get('format'),
                           d.get('file_name'),
                           d.get("instance_id"),
                           d.get("width"),
