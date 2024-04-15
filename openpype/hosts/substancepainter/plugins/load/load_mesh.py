@@ -42,13 +42,13 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
             BoolDef("import_cameras",
                     default=True,
                     label="Import Cameras",
-                    tooltip="Import cameras from the mesh file."
-            ),
+                    tooltip="Import cameras from the mesh file."),
             EnumDef("texture_resolution",
                     items=[128, 256, 512, 1024, 2048, 4096],
                     default=1024,
                     label="Texture Resolution",
-                    tooltip="Set texture resolution when creating new project"),
+                    tooltip=("Set texture resolution "
+                             "when creating new project")),
             EnumDef("project_uv_workflow",
                     items=project_workflow_option,
                     default="default",
