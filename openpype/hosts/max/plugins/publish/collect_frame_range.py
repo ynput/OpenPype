@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from pymxs import runtime as rt
-from openpype.hosts.max.api.lib import (
-    get_tyflow_export_particle_operators
-)
 
 
 class CollectFrameRange(pyblish.api.InstancePlugin):
@@ -24,8 +21,10 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
 
         elif instance.data["family"] == "tycache" or "tyspline":
             operator = instance.data["operator"]
-            instance.data["frameStartHandle"] = rt.getProperty(operator, "frameStart")
-            instance.data["frameEndHandle"] = rt.getProperty(operator, "frameEnd")
+            instance.data["frameStartHandle"] = rt.getProperty(
+                operator, "frameStart")
+            instance.data["frameEndHandle"] = rt.getProperty(
+                operator, "frameEnd")
 
         else:
             instance.data["frameStartHandle"] = int(rt.animationRange.start)

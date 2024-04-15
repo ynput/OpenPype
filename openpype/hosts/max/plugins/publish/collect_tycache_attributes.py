@@ -9,7 +9,6 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
                         AYONPyblishPluginMixin):
     """Collect Channel Attributes for TyCache Export"""
 
-
     order = pyblish.api.CollectorOrder + 0.005
     label = "Collect tyCache attribute Data"
     hosts = ['max']
@@ -28,13 +27,13 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
         context = instance.context
         container = rt.GetNodeByName(instance.data["instance_node"])
         tyc_product_names = [
-                name for name
-                in container.modifiers[0].AYONTyCacheData.tyc_exports
+            name for name
+            in container.modifiers[0].AYONTyCacheData.tyc_exports
         ]
         attr_values = self.get_attr_values_from_data(instance.data)
-        # TODO: need to do regex when the export particle has some names without regex.
         for tyc_product_name in tyc_product_names:
-            self.log.debug(f"Creating instance for operator:{tyc_product_name}")
+            self.log.debug(
+                f"Creating instance for operator:{tyc_product_name}")
             tyc_instance = context.create_instance(tyc_product_name)
             tyc_instance[:] = instance[:]
             tyc_instance.data.update(copy.deepcopy(dict(instance.data)))
@@ -49,11 +48,12 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
                 2 if instance.data["tyc_exportMode"] == "tycache" else 6
             )
             tyc_instance.data["families"] = [instance.data["tyc_exportMode"]]
-            tyc_instance.data["creator_identifier"] = "io.openpype.creators.max.{}".format(
-                instance.data["tyc_exportMode"]
+            tyc_instance.data["creator_identifier"] = (
+                "io.openpype.creators.max.{}".format(
+                instance.data["tyc_exportMode"])
             )
             tyc_instance.data["publish_attributes"] = {
-                "ValidateTyCacheFrameRange":{"active": attr_values.get(
+                "ValidateTyCacheFrameRange": {"active": attr_values.get(
                     "has_frame_range_validator")}}
             instance.append(tyc_instance)
 
