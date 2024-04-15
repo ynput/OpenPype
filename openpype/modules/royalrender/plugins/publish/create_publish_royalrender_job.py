@@ -231,7 +231,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
         ]
 
         job = RRJob(
-            Software="Ayon",
+            Software="AYON",
             Renderer="Once",
             SeqStart=1,
             SeqEnd=1,
