@@ -1,52 +1,52 @@
-from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     MultiplatformPathModel,
     MultiplatformPathListModel,
 )
 
 
 class SubGizmoItem(BaseSettingsModel):
-    title: str = Field(
+    title: str = SettingsField(
         title="Label"
     )
-    sourcetype: str = Field(
+    sourcetype: str = SettingsField(
         title="Type of usage"
     )
-    command: str = Field(
+    command: str = SettingsField(
         title="Python command"
     )
-    icon: str = Field(
+    icon: str = SettingsField(
         title="Icon Path"
     )
-    shortcut: str = Field(
+    shortcut: str = SettingsField(
         title="Hotkey"
     )
 
 
 class GizmoDefinitionItem(BaseSettingsModel):
-    gizmo_toolbar_path: str = Field(
+    gizmo_toolbar_path: str = SettingsField(
         title="Gizmo Menu"
     )
-    sub_gizmo_list: list[SubGizmoItem] = Field(
+    sub_gizmo_list: list[SubGizmoItem] = SettingsField(
         default_factory=list, title="Sub Gizmo List")
 
 
 class GizmoItem(BaseSettingsModel):
     """Nuke gizmo item """
 
-    toolbar_menu_name: str = Field(
+    toolbar_menu_name: str = SettingsField(
         title="Toolbar Menu Name"
     )
-    gizmo_source_dir: MultiplatformPathListModel = Field(
+    gizmo_source_dir: MultiplatformPathListModel = SettingsField(
         default_factory=MultiplatformPathListModel,
         title="Gizmo Directory Path"
     )
-    toolbar_icon_path: MultiplatformPathModel = Field(
+    toolbar_icon_path: MultiplatformPathModel = SettingsField(
         default_factory=MultiplatformPathModel,
         title="Toolbar Icon Path"
     )
-    gizmo_definition: list[GizmoDefinitionItem] = Field(
+    gizmo_definition: list[GizmoDefinitionItem] = SettingsField(
         default_factory=list, title="Gizmo Definition")
 
 

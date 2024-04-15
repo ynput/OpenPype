@@ -10,15 +10,15 @@
             "rules": {}
         },
         "workfile": {
-            "ocioConfigName": "nuke-default",
-            "workingSpace": "linear",
-            "sixteenBitLut": "sRGB",
-            "eightBitLut": "sRGB",
-            "floatLut": "linear",
-            "logLut": "Cineon",
-            "viewerLut": "sRGB",
-            "thumbnailLut": "sRGB",
-            "monitorOutLut": "sRGB"
+            "ocioConfigName": "aces_1.2",
+            "workingSpace": "role_scene_linear",
+            "viewerLut": "ACES/sRGB",
+            "thumbnailLut": "ACES/sRGB",
+            "monitorOutLut": "ACES/sRGB",
+            "eightBitLut": "role_matte_paint",
+            "sixteenBitLut": "role_texture_paint",
+            "logLut": "role_compositing_log",
+            "floatLut": "role_scene_linear"
         },
         "regexInputs": {
             "inputs": [
@@ -69,6 +69,10 @@
             "tags_addition": [
                 "review"
             ]
+        },
+        "CollectClipEffects": {
+            "enabled": true,
+            "effect_categories": {}
         }
     },
     "filters": {},

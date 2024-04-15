@@ -5,7 +5,8 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
@@ -37,7 +38,8 @@ def has_shape_children(node):
     return True
 
 
-class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
+class ValidateNoNullTransforms(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Ensure no null transforms are in the scene.
 
     Warning:
@@ -54,6 +56,7 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
     label = 'No Empty/Null Transforms'
     actions = [RepairAction,
                openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = False
 
     @staticmethod
     def get_invalid(instance):
@@ -70,6 +73,8 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the transform nodes in the instance """
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

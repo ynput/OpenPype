@@ -7,11 +7,13 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
+class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Validate if deformed shapes have related IDs to the original shapes.
 
     When a deformer is applied in the scene on a referenced mesh that already
@@ -30,10 +32,12 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
         RepairAction
     ]
     allow_history_only = False
+    optional = False
 
     def process(self, instance):
         """Process all meshes"""
-
+        if not self.is_active(instance.data):
+            return
         # Ensure all nodes have a cbId and a related ID to the original shapes
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
@@ -114,6 +118,7 @@ class ValidateSkeletonRigOutSetNodeIds(ValidateRigOutSetNodeIds):
     families = ["rig.fbx"]
     hosts = ['maya']
     label = 'Skeleton Rig Out Set Node Ids'
+    optional = False
 
     @classmethod
     def get_node(cls, instance):

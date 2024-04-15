@@ -4,8 +4,8 @@ from openpype.lib import Logger, register_event_callback
 from .lib import (
     sync_avalon_data_to_workfile,
     launch_workfiles_app,
-    selection_changed_timeline,
     before_project_save,
+    apply_colorspace_project
 )
 from .tags import add_tags_to_workfile
 from .menu import update_menu_task_label
@@ -41,6 +41,8 @@ def afterNewProjectCreated(event):
         hiero.core.events.sendEvent("kStartWorkfiles", None)
         # reset workfiles startup not to open any more in session
         os.environ["WORKFILES_STARTUP"] = "0"
+
+    apply_colorspace_project()
 
 
 def beforeProjectLoad(event):

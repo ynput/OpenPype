@@ -34,7 +34,7 @@ As was mentioned schema items define output type of values, how they are stored 
 	- `"is_file"` - this key is used when defaults values are stored in the file. Its value matches the filename where values are stored
 	  - key is validated, must be unique in hierarchy otherwise it won't be possible to store default values
 		- make sense to fill it only if it's value if `true`
-		
+
 	- `"is_group"` - define that all values under a key in settings hierarchy will be overridden if any value is modified
 		  - this key is not allowed for all inputs as they may not have technical ability to handle it
 		  - key is validated, must be unique in hierarchy and is automatically filled on last possible item if is not defined in schemas
@@ -710,7 +710,7 @@ How output of the schema could look like on save:
     "object_type": "text",
     "is_group": true,
     "key": "templates_mapping",
-    "label": "Muster - Templates mapping",
+    "label": "Deadline - Templates mapping",
     "is_file": true
 }
 ```
@@ -726,7 +726,7 @@ How output of the schema could look like on save:
     },
     "is_group": true,
     "key": "templates_mapping",
-    "label": "Muster - Templates mapping",
+    "label": "Deadline - Templates mapping",
     "is_file": true
 }
 ```

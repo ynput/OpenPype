@@ -1175,30 +1175,6 @@
                 }
             ]
         },
-        "djvview": {
-            "enabled": true,
-            "label": "DJV View",
-            "icon": "{}/app_icons/djvView.png",
-            "host_name": "",
-            "environment": "{}",
-            "variants": [
-                {
-                    "name": "1-1",
-                    "label": "1.1",
-                    "executables": {
-                        "windows": [],
-                        "darwin": [],
-                        "linux": []
-                    },
-                    "arguments": {
-                        "windows": [],
-                        "darwin": [],
-                        "linux": []
-                    },
-                    "environment": "{}"
-                }
-            ]
-        },
         "wrap": {
             "enabled": true,
             "label": "Wrap",

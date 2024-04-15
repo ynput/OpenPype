@@ -6,10 +6,12 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
+class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin,
+                                     OptionalPyblishPluginMixin):
     """Ensure no default (startup) cameras are to be rendered."""
 
     order = ValidateContentsOrder
@@ -17,6 +19,7 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
     families = ['renderlayer']
     label = "No Default Cameras Renderable"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = False
 
     @staticmethod
     def get_invalid(instance):
@@ -32,6 +35,8 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the cameras in the instance"""
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

@@ -3,13 +3,17 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
-from openpype.pipeline.publish import PublishValidationError
+from openpype.pipeline.publish import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
+class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validate created AOVs / RenderElement is registered in the database
 
-    Each render element is registered as a subset which is formatted based on
+    Each render element is registered as a product which is formatted based on
     the render layer and the render element, example:
 
         <render layer>.<render element>
@@ -27,8 +31,12 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = False
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(

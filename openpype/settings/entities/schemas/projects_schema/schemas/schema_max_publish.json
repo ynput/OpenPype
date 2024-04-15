@@ -76,6 +76,76 @@
       {
         "type": "dict",
         "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ValidateCameraAttributes",
+        "label": "Validate Camera Attributes",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            },
+            {
+                "type": "number",
+                "key": "fov",
+                "label": "Focal Length",
+                "decimal": 1,
+                "minimum": 0,
+                "maximum": 100.0
+            },
+            {
+                "type": "label",
+                "label": "If the value of the camera attributes set to 0, the system automatically skips checking it"
+            },
+            {
+                "type": "number",
+                "key": "nearrange",
+                "label": "Near Range",
+                "decimal": 1,
+                "minimum": 0,
+                "maximum": 100.0
+            },
+            {
+                "type": "number",
+                "key": "farrange",
+                "label": "Far Range",
+                "decimal": 1,
+                "minimum": 0,
+                "maximum": 2000.0
+            },
+            {
+                "type": "number",
+                "key": "nearclip",
+                "label": "Near Clip",
+                "decimal": 1,
+                "minimum": 0,
+                "maximum": 100.0
+            },
+            {
+                "type": "number",
+                "key": "farclip",
+                "label": "Far Clip",
+                "decimal": 1,
+                "minimum": 0,
+                "maximum": 2000.0
+            }
+        ]
+      },
+
+      {
+        "type": "dict",
+        "collapsible": true,
         "key": "ValidateLoadedPlugin",
         "label": "Validate Loaded Plugin",
         "checkbox_key": "enabled",

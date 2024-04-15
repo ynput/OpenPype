@@ -110,7 +110,6 @@ module.exports = {
                 "module_kitsu",
                 "module_site_sync",
                 "module_deadline",
-                "module_muster",
                 "module_royalrender",
                 "module_clockify",
                 "module_slack"

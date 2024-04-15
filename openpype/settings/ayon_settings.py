@@ -220,22 +220,6 @@ def _convert_deadline_system_settings(
     output["modules"]["deadline"] = deadline_settings
 
 
-def _convert_muster_system_settings(
-    ayon_settings, output, addon_versions, default_settings
-):
-    enabled = addon_versions.get("muster") is not None
-    muster_settings = default_settings["modules"]["muster"]
-    muster_settings["enabled"] = enabled
-    if enabled:
-        ayon_muster = ayon_settings["muster"]
-        muster_settings["MUSTER_REST_URL"] = ayon_muster["MUSTER_REST_URL"]
-        muster_settings["templates_mapping"] = {
-            item["name"]: item["value"]
-            for item in ayon_muster["templates_mapping"]
-        }
-    output["modules"]["muster"] = muster_settings
-
-
 def _convert_royalrender_system_settings(
     ayon_settings, output, addon_versions, default_settings
 ):
@@ -261,7 +245,6 @@ def _convert_modules_system(
         _convert_timers_manager_system_settings,
         _convert_clockify_system_settings,
         _convert_deadline_system_settings,
-        _convert_muster_system_settings,
         _convert_royalrender_system_settings,
     ):
         func(ayon_settings, output, addon_versions, default_settings)
@@ -1236,6 +1219,8 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
     for profile in extract_oiio_transcode_profiles:
         new_outputs = {}
         name_counter = {}
+        if "product_names" in profile:
+            profile["subsets"] = profile.pop("product_names")
         for profile_output in profile["outputs"]:
             if "name" in profile_output:
                 name = profile_output.pop("name")
@@ -1473,7 +1458,7 @@ class _AyonSettingsCache:
 
             variant = "production"
             if is_dev_mode_enabled():
-                variant = cls._get_dev_mode_settings_variant()
+                variant = cls._get_bundle_name()
             elif is_staging_enabled():
                 variant = "staging"
 
@@ -1488,28 +1473,6 @@ class _AyonSettingsCache:
     @classmethod
     def _get_bundle_name(cls):
         return os.environ["AYON_BUNDLE_NAME"]
-
-    @classmethod
-    def _get_dev_mode_settings_variant(cls):
-        """Develop mode settings variant.
-
-        Returns:
-            str: Name of settings variant.
-        """
-
-        con = get_ayon_server_api_connection()
-        bundles = con.get_bundles()
-        user = con.get_user()
-        username = user["name"]
-        for bundle in bundles["bundles"]:
-            if (
-                bundle.get("isDev")
-                and bundle.get("activeUser") == username
-            ):
-                return bundle["name"]
-        # Return fake variant - distribution logic will tell user that he
-        #   does not have set any dev bundle
-        return "dev"
 
     @classmethod
     def get_value_by_project(cls, project_name):

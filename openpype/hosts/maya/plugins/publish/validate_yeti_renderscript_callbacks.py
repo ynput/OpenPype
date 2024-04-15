@@ -1,10 +1,14 @@
 from maya import cmds
 
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
+class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin,
+                                        OptionalPyblishPluginMixin):
     """Check if the render script callbacks will be used during the rendering
 
     In order to ensure the render tasks are executed properly we need to check
@@ -24,6 +28,7 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
     label = "Yeti Render Script Callbacks"
     hosts = ["maya"]
     families = ["renderlayer"]
+    optional = False
 
     # Settings per renderer
     callbacks = {
@@ -37,7 +42,8 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
     }
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise ValueError("Invalid render callbacks found for '%s'!"

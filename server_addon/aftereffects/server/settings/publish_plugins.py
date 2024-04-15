@@ -1,45 +1,43 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 class CollectReviewPluginModel(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
+    enabled: bool = SettingsField(True, title="Enabled")
 
 
 class ValidateSceneSettingsModel(BaseSettingsModel):
     """Validate naming of products and layers"""
 
     # _isGroup = True
-    enabled: bool = Field(True, title="Enabled")
-    optional: bool = Field(False, title="Optional")
-    active: bool = Field(True, title="Active")
-    skip_resolution_check: list[str] = Field(
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
+    skip_resolution_check: list[str] = SettingsField(
         default_factory=list,
         title="Skip Resolution Check for Tasks",
     )
-    skip_timelines_check: list[str] = Field(
+    skip_timelines_check: list[str] = SettingsField(
         default_factory=list,
         title="Skip Timeline Check for Tasks",
     )
 
 
 class ValidateContainersModel(BaseSettingsModel):
-    enabled: bool = Field(True, title="Enabled")
-    optional: bool = Field(True, title="Optional")
-    active: bool = Field(True, title="Active")
+    enabled: bool = SettingsField(True, title="Enabled")
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class AfterEffectsPublishPlugins(BaseSettingsModel):
-    CollectReview: CollectReviewPluginModel = Field(
+    CollectReview: CollectReviewPluginModel = SettingsField(
         default_factory=CollectReviewPluginModel,
         title="Collect Review",
     )
-    ValidateSceneSettings: ValidateSceneSettingsModel = Field(
+    ValidateSceneSettings: ValidateSceneSettingsModel = SettingsField(
         default_factory=ValidateSceneSettingsModel,
         title="Validate Scene Settings",
     )
-    ValidateContainers: ValidateContainersModel = Field(
+    ValidateContainers: ValidateContainersModel = SettingsField(
         default_factory=ValidateContainersModel,
         title="Validate Containers",
     )

@@ -70,6 +70,7 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "subsets": [],
             "integrate_thumbnail": false,
             "background_color": [
                 0,

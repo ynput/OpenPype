@@ -1,6 +1,4 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 def aov_separators_enum():
@@ -26,19 +24,19 @@ def image_format_enum():
 
 
 class RenderSettingsModel(BaseSettingsModel):
-    default_render_image_folder: str = Field(
+    default_render_image_folder: str = SettingsField(
         title="Default render image folder"
     )
-    aov_separator: str = Field(
+    aov_separator: str = SettingsField(
         "underscore",
         title="AOV Separator character",
         enum_resolver=aov_separators_enum
     )
-    image_format: str = Field(
+    image_format: str = SettingsField(
         enum_resolver=image_format_enum,
         title="Output Image Format"
     )
-    multipass: bool = Field(title="multipass")
+    multipass: bool = SettingsField(title="multipass")
 
 
 DEFAULT_RENDER_SETTINGS = {

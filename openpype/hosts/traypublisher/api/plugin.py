@@ -32,6 +32,7 @@ SHARED_DATA_KEY = "openpype.traypublisher.instances"
 
 class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
+    settings_category = "traypublisher"
 
     def collect_instances(self):
         instances_by_identifier = cache_and_get_instances(
@@ -68,6 +69,7 @@ class HiddenTrayPublishCreator(HiddenCreator):
 class TrayPublishCreator(Creator):
     create_allow_context_change = True
     host_name = "traypublisher"
+    settings_category = "traypublisher"
 
     def collect_instances(self):
         instances_by_identifier = cache_and_get_instances(
@@ -221,9 +223,16 @@ class SettingsCreator(TrayPublishCreator):
             ):
                 filtered_instance_data.append(instance)
 
-        asset_names = {
-            instance["asset"]
-            for instance in filtered_instance_data}
+        if AYON_SERVER_ENABLED:
+            asset_names = {
+                instance["folderPath"]
+                for instance in filtered_instance_data
+            }
+        else:
+            asset_names = {
+                instance["asset"]
+                for instance in filtered_instance_data
+            }
         subset_names = {
             instance["subset"]
             for instance in filtered_instance_data}
@@ -231,7 +240,10 @@ class SettingsCreator(TrayPublishCreator):
             asset_names, subset_names
         )
         for instance in filtered_instance_data:
-            asset_name = instance["asset"]
+            if AYON_SERVER_ENABLED:
+                asset_name = instance["folderPath"]
+            else:
+                asset_name = instance["asset"]
             subset_name = instance["subset"]
             version = subset_docs_by_asset_id[asset_name][subset_name]
             instance["creator_attributes"]["version_to_use"] = version
