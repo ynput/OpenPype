@@ -2,11 +2,13 @@ import pyblish.api
 import maya.cmds as cmds
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateAssemblyName(pyblish.api.InstancePlugin):
+class ValidateAssemblyName(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """ Ensure Assembly name ends with `GRP`
 
     Check if assembly name ends with `_GRP` string.
@@ -17,6 +19,7 @@ class ValidateAssemblyName(pyblish.api.InstancePlugin):
     families = ["assembly"]
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     active = False
+    optional = True
 
     @classmethod
     def get_invalid(cls, instance):
@@ -47,7 +50,8 @@ class ValidateAssemblyName(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError("Found {} invalid named assembly "

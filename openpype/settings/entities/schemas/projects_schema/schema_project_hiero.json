@@ -57,26 +57,6 @@
                                 },
                                 {
                                     "type": "text",
-                                    "key": "sixteenBitLut",
-                                    "label": "16 Bit Files"
-                                },
-                                {
-                                    "type": "text",
-                                    "key": "eightBitLut",
-                                    "label": "8 Bit Files"
-                                },
-                                {
-                                    "type": "text",
-                                    "key": "floatLut",
-                                    "label": "Floating Point Files"
-                                },
-                                {
-                                    "type": "text",
-                                    "key": "logLut",
-                                    "label": "Log Files"
-                                },
-                                {
-                                    "type": "text",
                                     "key": "viewerLut",
                                     "label": "Viewer"
                                 },
@@ -89,6 +69,26 @@
                                     "type": "text",
                                     "key": "monitorOutLut",
                                     "label": "Monitor"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "eightBitLut",
+                                    "label": "8 Bit Files"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "sixteenBitLut",
+                                    "label": "16 Bit Files"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "logLut",
+                                    "label": "Log Files"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "floatLut",
+                                    "label": "Floating Point Files"
                                 }
                             ]
                         }
@@ -310,6 +310,31 @@
                             "object_type": "text",
                             "key": "tags_addition",
                             "label": "Tags addition"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "CollectClipEffects",
+                    "label": "Collect Clip Effects",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "effect_categories",
+                            "label": "Effect Categories",
+                            "object_type": {
+                                "type": "list",
+                                "key": "effects_classes",
+                                "object_type": "text"
+                            }
                         }
                     ]
                 }

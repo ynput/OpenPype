@@ -7,11 +7,13 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateShapeZero(pyblish.api.Validator):
+class ValidateShapeZero(pyblish.api.Validator,
+                        OptionalPyblishPluginMixin):
     """Shape components may not have any "tweak" values
 
     To solve this issue, try freezing the shapes.
@@ -26,6 +28,7 @@ class ValidateShapeZero(pyblish.api.Validator):
         openpype.hosts.maya.api.action.SelectInvalidAction,
         RepairAction
     ]
+    optional = True
 
     @staticmethod
     def get_invalid(instance):
@@ -65,6 +68,8 @@ class ValidateShapeZero(pyblish.api.Validator):
 
     def process(self, instance):
         """Process all the nodes in the instance "objectSet"""
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
         if invalid:

@@ -4,17 +4,20 @@ import maya.cmds as cmds
 
 from openpype.pipeline.publish import (
     RepairContextAction,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateLoadedPlugin(pyblish.api.ContextPlugin):
+class ValidateLoadedPlugin(pyblish.api.ContextPlugin,
+                           OptionalPyblishPluginMixin):
     """Ensure there are no unauthorized loaded plugins"""
 
     label = "Loaded Plugin"
     order = pyblish.api.ValidatorOrder
     host = ["maya"]
     actions = [RepairContextAction]
+    optional = True
 
     @classmethod
     def get_invalid(cls, context):
@@ -35,7 +38,8 @@ class ValidateLoadedPlugin(pyblish.api.ContextPlugin):
         return invalid
 
     def process(self, context):
-
+        if not self.is_active(context.data):
+            return
         invalid = self.get_invalid(context)
         if invalid:
             raise PublishValidationError(

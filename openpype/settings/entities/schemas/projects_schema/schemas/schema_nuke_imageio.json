@@ -105,7 +105,32 @@
                         {
                             "type": "text",
                             "key": "monitorLut",
-                            "label": "monitor"
+                            "label": "Thumbnails"
+                        },
+                        {
+                            "type": "text",
+                            "key": "monitorOutLUT",
+                            "label": "Monitor Out"
+                        },
+                        {
+                            "type": "text",
+                            "key": "int8Lut",
+                            "label": "8-bit files"
+                        },
+                        {
+                            "type": "text",
+                            "key": "int16Lut",
+                            "label": "16-bit files"
+                        },
+                        {
+                            "type": "text",
+                            "key": "logLut",
+                            "label": "log files"
+                        },
+                        {
+                            "type": "text",
+                            "key": "floatLut",
+                            "label": "float files"
                         }
                     ]
                 }

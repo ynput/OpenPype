@@ -7,11 +7,13 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
+class ValidateRigJointsHidden(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validate all joints are hidden visually.
 
     This includes being hidden:
@@ -28,6 +30,7 @@ class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
     label = "Joints Hidden"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]
+    optional = True
 
     @staticmethod
     def get_invalid(instance):
@@ -36,6 +39,8 @@ class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the nodes in the instance 'objectSet'"""
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
 
         if invalid:

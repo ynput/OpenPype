@@ -11,6 +11,9 @@ from openpype.pipeline import (
     get_current_project_name,
     get_representation_path,
 )
+from openpype.pipeline.colorspace import (
+    get_imageio_file_rules_colorspace_from_filepath
+)
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace,
     maintained_selection
@@ -101,7 +104,6 @@ class LoadClip(plugin.NukeLoader):
 
         filepath = self.filepath_from_context(context)
         filepath = filepath.replace("\\", "/")
-        self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = options.get(
             "start_at_workfile", self.options_defaults["start_at_workfile"])
@@ -154,8 +156,8 @@ class LoadClip(plugin.NukeLoader):
         with viewer_update_and_undo_stop():
             read_node["file"].setValue(filepath)
 
-            used_colorspace = self._set_colorspace(
-                read_node, version_data, representation["data"], filepath)
+            self.set_colorspace_to_node(
+                read_node, filepath, version, representation)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -180,8 +182,6 @@ class LoadClip(plugin.NukeLoader):
                     colorspace = representation["data"].get(key)
                     colorspace = colorspace or version_data.get(key)
                     data_imprint["db_colorspace"] = colorspace
-                    if used_colorspace:
-                        data_imprint["used_colorspace"] = used_colorspace
                 else:
                     value_ = context["version"]['data'].get(
                         key, str(None))
@@ -302,8 +302,8 @@ class LoadClip(plugin.NukeLoader):
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-            used_colorspace = self._set_colorspace(
-                read_node, version_data, representation["data"], filepath)
+            self.set_colorspace_to_node(
+                read_node, filepath, version_doc, representation)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -319,10 +319,6 @@ class LoadClip(plugin.NukeLoader):
                 "fps": str(version_data.get("fps")),
                 "author": version_data.get("author")
             }
-
-            # add used colorspace if found any
-            if used_colorspace:
-                updated_dict["used_colorspace"] = used_colorspace
 
             last_version_doc = get_last_version_by_subset_id(
                 project_name, version_doc["parent"], fields=["_id"]
@@ -349,6 +345,36 @@ class LoadClip(plugin.NukeLoader):
             self.clear_members(read_node)
 
         self.set_as_member(read_node)
+
+    def set_colorspace_to_node(
+            self,
+            read_node,
+            filepath,
+            version_doc,
+            representation_doc,
+    ):
+        """Set colorspace to read node.
+
+        Sets colorspace with available names validation.
+
+        Args:
+            read_node (nuke.Node): The nuke's read node
+            filepath (str): file path
+            version_doc (dict): version document
+            representation_doc (dict): representation document
+
+        """
+        used_colorspace = self._get_colorspace_data(
+            version_doc, representation_doc, filepath)
+
+        if (
+            used_colorspace
+            and colorspace_exists_on_node(read_node, used_colorspace)
+        ):
+            self.log.info(f"Used colorspace: {used_colorspace}")
+            read_node["colorspace"].setValue(used_colorspace)
+        else:
+            self.log.info("Colorspace not set...")
 
     def remove(self, container):
         read_node = container["node"]
@@ -450,25 +476,49 @@ class LoadClip(plugin.NukeLoader):
 
         return self.node_name_template.format(**name_data)
 
-    def _set_colorspace(self, node, version_data, repre_data, path):
-        output_color = None
-        path = path.replace("\\", "/")
-        # get colorspace
-        colorspace = repre_data.get("colorspace")
-        colorspace = colorspace or version_data.get("colorspace")
+    def _get_colorspace_data(self, version_doc, representation_doc, filepath):
+        """Get colorspace data from version and representation documents
+
+        Args:
+            version_doc (dict): version document
+            representation_doc (dict): representation document
+            filepath (str): file path
+
+        Returns:
+            Any[str,None]: colorspace name or None
+        """
+        # Get backward compatible colorspace key.
+        colorspace = representation_doc["data"].get("colorspace")
+        self.log.debug(
+            f"Colorspace from representation colorspace: {colorspace}"
+        )
+
+        # Get backward compatible version data key if colorspace is not found.
+        colorspace = colorspace or version_doc["data"].get("colorspace")
+        self.log.debug(f"Colorspace from version colorspace: {colorspace}")
+
+        # Get colorspace from representation colorspaceData if colorspace is
+        # not found.
+        colorspace_data = representation_doc["data"].get("colorspaceData", {})
+        colorspace = colorspace or colorspace_data.get("colorspace")
+        self.log.debug(
+            f"Colorspace from representation colorspaceData: {colorspace}"
+        )
+
+        print(f"Colorspace found: {colorspace}")
+
+        # check if any filerules are not applicable
+        new_parsed_colorspace = get_imageio_file_rules_colorspace_from_filepath( # noqa
+            filepath, "nuke", get_current_project_name()
+        )
+        self.log.debug(f"Colorspace new filerules: {new_parsed_colorspace}")
 
         # colorspace from `project_settings/nuke/imageio/regexInputs`
-        iio_colorspace = get_imageio_input_colorspace(path)
+        old_parsed_colorspace = get_imageio_input_colorspace(filepath)
+        self.log.debug(f"Colorspace old filerules: {old_parsed_colorspace}")
 
-        # Set colorspace defined in version data
-        if (
-            colorspace is not None
-            and colorspace_exists_on_node(node, str(colorspace))
-        ):
-            node["colorspace"].setValue(str(colorspace))
-            output_color = str(colorspace)
-        elif iio_colorspace is not None:
-            node["colorspace"].setValue(iio_colorspace)
-            output_color = iio_colorspace
-
-        return output_color
+        return (
+            new_parsed_colorspace
+            or old_parsed_colorspace
+            or colorspace
+        )

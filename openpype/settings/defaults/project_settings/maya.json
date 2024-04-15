@@ -557,13 +557,13 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "write_color_sets": false,
-            "write_face_sets": false,
-            "include_parent_hierarchy": false,
-            "include_user_defined_attributes": false,
-            "default_variants": [
-                "Main"
-            ]
+            "default_variants": [],
+            "step": 1.0,
+            "includeParentHierarchy": false,
+            "farm": false,
+            "priority": 50,
+            "refresh": false,
+            "include_user_defined_attributes": false
         },
         "CreateModel": {
             "enabled": true,
@@ -577,12 +577,15 @@
         },
         "CreatePointCache": {
             "enabled": true,
-            "write_color_sets": false,
-            "write_face_sets": false,
-            "include_user_defined_attributes": false,
             "default_variants": [
                 "Main"
-            ]
+            ],
+            "step": 1.0,
+            "includeParentHierarchy": false,
+            "farm": false,
+            "priority": 50,
+            "refresh": false,
+            "include_user_defined_attributes": false
         },
         "CreateProxyAlembic": {
             "enabled": true,
@@ -1107,6 +1110,32 @@
                 "pointcache",
                 "model",
                 "vrayproxy.alembic"
+            ],
+            "flags": [
+                "stripNamespaces",
+                "writeNormals",
+                "worldSpace"
+            ],
+            "attr": "",
+            "attrPrefix": "",
+            "dataFormat": "ogawa",
+            "melPerFrameCallback": "",
+            "melPostJobCallback": "",
+            "preRollStartFrame": 0,
+            "pythonPerFrameCallback": "",
+            "pythonPostJobCallback": "",
+            "userAttr": "",
+            "userAttrPrefix": "",
+            "visibleOnly": false,
+            "overrides": [
+                "attr",
+                "attrPrefix",
+                "worldSpace",
+                "writeColorSets",
+                "writeNormals",
+                "writeFaceSets",
+                "renderableOnly",
+                "visibleOnly"
             ]
         },
         "ExtractObj": {
