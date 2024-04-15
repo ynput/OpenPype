@@ -21,8 +21,7 @@ class CollectMembers(pyblish.api.InstancePlugin):
         if instance.data["productType"] in {"tycache", "tyspline"}:
             instance.data["operator"] = next(
                 (node for node in get_tyflow_export_operators()
-                 if node.name == instance.data["productName"]),
-                 None)
+                 if node.name == instance.data["productName"]), None)   # noqa
             self.log.debug("operator: {}".format(instance.data["operator"]))
         else:
             if instance.data.get("instance_node"):

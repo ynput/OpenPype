@@ -50,7 +50,7 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
             tyc_instance.data["families"] = [instance.data["tyc_exportMode"]]
             tyc_instance.data["creator_identifier"] = (
                 "io.openpype.creators.max.{}".format(
-                instance.data["tyc_exportMode"])
+                    instance.data["tyc_exportMode"])
             )
             tyc_instance.data["publish_attributes"] = {
                 "ValidateTyCacheFrameRange": {"active": attr_values.get(
