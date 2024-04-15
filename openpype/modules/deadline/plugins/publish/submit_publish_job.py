@@ -187,7 +187,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             create_metadata_path(instance, anatomy)
 
         environment = {
-            "AVALON_DB": os.environ["AVALON_DB"],
+            "AVALON_DB": os.getenv("AVALON_DB"),
             "AVALON_PROJECT": instance.context.data["projectName"],
             "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": instance.context.data["task"],
