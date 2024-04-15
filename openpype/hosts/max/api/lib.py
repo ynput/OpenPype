@@ -545,7 +545,7 @@ def render_resolution(width, height):
         rt.renderHeight = current_renderHeight
 
 
-def get_tyflow_export_particle_operators(members):
+def get_tyflow_export_operators():
     """Get Tyflow Export Particles Operators.
 
     Args:
@@ -555,34 +555,22 @@ def get_tyflow_export_particle_operators(members):
         list: Particle operators
 
     """
-    opt_list = []
-    event_filter = {}
+    operators = []
+    members = [obj for obj in rt.Objects if rt.ClassOf(obj) == rt.tyFlow]
     for member in members:
         obj = member.baseobject
         anim_names = rt.GetSubAnimNames(obj)
         for anim_name in anim_names:
             sub_anim = rt.GetSubAnim(obj, anim_name)
-            # Isolate only the events
             if not rt.isKindOf(sub_anim, rt.tyEvent):
                 continue
-
-            # Look through all the nodes in the events
             node_names = rt.GetSubAnimNames(sub_anim)
-            event_filter[str(sub_anim)] = []
             for node_name in node_names:
                 node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
                 if rt.hasProperty(node_sub_anim, "exportMode"):
-                    element_sets = [(node_sub_anim,
-                                     node_sub_anim.frameStart,
-                                     node_sub_anim.frameEnd,
-                                     node_name)]
-                    # Only the first export particle oeprator
-                    # selected when there are multiple operators
-                    # in the same tyEvent
-                    if not event_filter.get(str(sub_anim), None):
-                        event_filter[str(sub_anim)] = element_sets
-            opt_list.extend(event_filter[str(sub_anim)])
-    return opt_list
+                    operators.append(node_sub_anim)
+    return operators
+
 
 
 def reset_frame_range_tyflow(members, frameStart, frameEnd):

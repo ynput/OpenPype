@@ -22,13 +22,10 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
             instance.data["frameStartHandle"] = int(rt.rendStart)
             instance.data["frameEndHandle"] = int(rt.rendEnd)
 
-        elif instance.data["family"] == "tycache":
-            members = instance.data["members"]
-            for operator in get_tyflow_export_particle_operators(members):
-                _, start, end, operator_name = operator
-                instance.data[operator_name] = {}
-                instance.data[operator_name]["frameStartHandle"] = start
-                instance.data[operator_name]["frameEndHandle"] = end
+        elif instance.data["family"] == "tycache" or "tyspline":
+            operator = instance.data["operator"]
+            instance.data["frameStartHandle"] = rt.getProperty(operator, "frameStart")
+            instance.data["frameEndHandle"] = rt.getProperty(operator, "frameEnd")
 
         else:
             instance.data["frameStartHandle"] = int(rt.animationRange.start)

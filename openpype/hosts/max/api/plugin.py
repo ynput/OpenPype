@@ -5,10 +5,10 @@ from abc import ABCMeta
 import six
 from pymxs import runtime as rt
 
-from openpype.lib import BoolDef
+from openpype.lib import BoolDef, EnumDef
 from openpype.pipeline import CreatedInstance, Creator, CreatorError
 
-from .lib import imprint, lsattr, read
+from .lib import imprint, lsattr, read, get_tyflow_export_operators
 
 MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 (
@@ -150,6 +150,83 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 )"""
 
 
+MS_TYCACHE_ATTRIB = """attributes "AYONTyCacheData"
+(
+    parameters main rollout:Cacheparams
+    (
+        tyc_exports type:#stringTab tabSize:0 tabSizeVariable:on
+        tyc_handles type:#stringTab tabSize:0 tabSizeVariable:on
+        sel_list type:#stringTab tabSize:0 tabSizeVariable:on
+    )
+
+    rollout Cacheparams "AYON TyCache Parameters"
+    (
+        listbox export_node "Export Nodes" items:#()
+        button button_add "Add to Exports"
+        button button_del "Delete from Exports"
+        listbox tyflow_node "TyFlow Export Operators" items:#()
+
+        on button_add pressed do
+        (
+            i_node_arr = #()
+            temp_arr = #()
+            current_sel = tyflow_node.selected
+            idx = finditem export_node.items current_sel
+            if idx == 0 do (
+                append i_node_arr current_sel
+                append temp_arr current_sel
+            )
+            tyc_exports = join i_node_arr tyc_exports
+            export_node.items = join temp_arr export_node.items
+            sel_list = export_node.items
+        )
+        on button_del pressed do
+        (
+            i_node_arr = #()
+            temp_arr = #()
+            updated_node_arr = #()
+            new_temp_arr = #()
+            current_sel = export_node.selected
+            idx = finditem export_node.items current_sel
+            if idx do (
+                updated_node_arr = DeleteItem export_node.items idx
+            )
+            idx = finditem tyc_exports current_sel
+            if idx do (
+                new_temp_arr = DeleteItem tyc_exports idx
+            )
+            tyc_exports = join i_node_arr updated_node_arr
+            export_node.items = join temp_arr new_temp_arr
+            sel_list = export_node.items
+        )
+        on Cacheparams open do
+        (
+            temp_arr = #()
+            tyflow_id_arr = #()
+            if tyc_handles.count != 0 then
+            (
+                for x in tyc_handles do
+                (
+                    if x == undefined do continue
+                    tyflow_op_name = x as string
+                    append temp_arr tyflow_op_name
+                )
+                tyflow_node.items = temp_arr
+            )
+            if sel_list.count != 0 then
+            (
+                sel_arr = #()
+                for x in sel_list do
+                (
+                    append sel_arr x
+                )
+                export_node.items = sel_arr
+            )
+        )
+    )
+)"""
+
+
 class OpenPypeCreatorError(CreatorError):
     pass
 
@@ -193,6 +270,28 @@ class MaxCreatorBase(object):
         rt.addModifier(node, modifier)
         node.modifiers[0].name = "OP Data"
         rt.custAttributes.add(node.modifiers[0], attrs)
+
+        return node
+
+
+class MaxTyFlowDataCreatorBase(MaxCreatorBase):
+    @staticmethod
+    def create_instance_node(node):
+        """Create instance node.
+        If the supplied node is existing node, it will be used to hold the
+        instance, otherwise new node of type Dummy will be created.
+        Args:
+            node (rt.MXSWrapperBase, str): Node or node name to use.
+        Returns:
+            instance
+        """
+        if isinstance(node, str):
+            node = rt.Container(name=node)
+            attrs = rt.Execute(MS_TYCACHE_ATTRIB)
+            modifier = rt.EmptyModifier()
+            rt.addModifier(node, modifier)
+            node.modifiers[0].name = "AYON TyCache Data"
+            rt.custAttributes.add(node.modifiers[0], attrs)
 
         return node
 
@@ -289,4 +388,87 @@ class MaxCreator(Creator, MaxCreatorBase):
     def get_pre_create_attr_defs(self):
         return [
             BoolDef("use_selection", label="Use selection")
+        ]
+
+
+class MaxCacheCreator(Creator, MaxTyFlowDataCreatorBase):
+
+    def create(self, product_name, instance_data, pre_create_data):
+        tyflow_op_nodes = get_tyflow_export_operators()
+        if not tyflow_op_nodes:
+            raise CreatorError("No Export Particle Operators"
+                               " found in tyCache Editor.")
+        instance_node = self.create_instance_node(product_name)
+        instance_data["instance_node"] = instance_node.name
+        instance_data["tyc_exportMode"] = pre_create_data.get(
+            "tyc_exportMode")
+        instance = CreatedInstance(
+            self.product_type,
+            product_name,
+            instance_data,
+            self
+        )
+        # Setting the property
+        node_list = [sub_anim.name for sub_anim in tyflow_op_nodes]
+        rt.setProperty(
+            instance_node.modifiers[0].AYONTyCacheData,
+            "tyc_handles", node_list)
+        self._add_instance_to_context(instance)
+        imprint(instance_node.name, instance.data_to_store())
+
+        return instance
+
+    def collect_instances(self):
+        self.cache_instance_data(self.collection_shared_data)
+        for instance in self.collection_shared_data["max_cached_instances"].get(self.identifier, []):  # noqa
+            created_instance = CreatedInstance.from_existing(
+                read(rt.GetNodeByName(instance)), self
+            )
+            self._add_instance_to_context(created_instance)
+
+    def update_instances(self, update_list):
+        for created_inst, changes in update_list:
+            instance_node = created_inst.get("instance_node")
+            new_values = {
+                key: changes[key].new_value
+                for key in changes.changed_keys
+            }
+            product_name = new_values.get("productName", "")
+            if product_name and instance_node != product_name:
+                node = rt.getNodeByName(instance_node)
+                new_product_name = new_values["productName"]
+                if rt.getNodeByName(new_product_name):
+                    raise CreatorError(
+                        "The product '{}' already exists.".format(
+                            new_product_name))
+                instance_node = new_product_name
+                created_inst["instance_node"] = instance_node
+                node.name = instance_node
+
+            imprint(
+                instance_node,
+                created_inst.data_to_store(),
+            )
+
+    def remove_instances(self, instances):
+        """Remove specified instance from the scene.
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
+        """
+        for instance in instances:
+            instance_node = rt.GetNodeByName(
+                instance.data.get("instance_node"))
+            if instance_node:
+                count = rt.custAttributes.count(instance_node.modifiers[0])
+                rt.custAttributes.delete(instance_node.modifiers[0], count)
+                rt.Delete(instance_node)
+
+            self._remove_instance_from_context(instance)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            EnumDef("tyc_exportMode",
+                    items=["tycache", "tyspline"],
+                    default="tycache",
+                    label="TyCache Export Mode")
         ]

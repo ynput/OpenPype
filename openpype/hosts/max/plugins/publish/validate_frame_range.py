@@ -104,27 +104,11 @@ class ValidateTyCacheFrameRange(ValidateFrameRange):
     optional = True
 
     @classmethod
-    def get_invalid(cls, instance, frameStart, frameEnd):
-        members = instance.data["members"]
-        invalid = []
-        for operators in get_tyflow_export_particle_operators(members):
-            _, inst_frame_start, inst_frame_end, opt_name = operators
-            if frameStart != inst_frame_start:
-                invalid.append(
-                    f"Start frame ({inst_frame_start}) on {opt_name} does not match " # noqa
-                    f"with the start frame ({frameStart}) set on the asset data. ")    # noqa
-            if frameEnd != inst_frame_end:
-                invalid.append(
-                    f"End frame ({inst_frame_end}) on {opt_name} does not match "      # noqa
-                    f"with the end frame ({frameEnd}) "
-                    "from the asset data. ")
-            return invalid
-
-    @classmethod
     def repair(cls, instance):
         frame_range = get_frame_range()
         frame_start_handle = frame_range["frameStartHandle"]
         frame_end_handle = frame_range["frameEndHandle"]
-        reset_frame_range_tyflow(instance.data["members"],
-                                 frame_start_handle,
-                                 frame_end_handle)
+        operator = instance.data["operator"]
+        if rt.hasProperty(operator, "exportMode"):
+            operator.frameStart = frame_start_handle
+            operator.frameEnd = frame_end_handle
