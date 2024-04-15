@@ -27,7 +27,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
 
     @classmethod
     def get_options(cls, contexts):
-        project_workflow_option = {
+        project_uv_workflow_items = {
             substance_painter.project.ProjectWorkflow.Default: "default",
             substance_painter.project.ProjectWorkflow.UVTile: "uvTile",
             substance_painter.project.ProjectWorkflow.TextureSetPerUVTile: "textureSetPerUVTile"     # noqa
@@ -50,7 +50,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
                     tooltip=("Set texture resolution "
                              "when creating new project")),
             EnumDef("project_uv_workflow",
-                    items=project_workflow_option,
+                    items=project_uv_workflow_items,
                     default="default",
                     label="UV Workflow",
                     tooltip="Set UV workflow when creating new project")
