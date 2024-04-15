@@ -1,3 +1,4 @@
+from openpype.lib import BoolDef, EnumDef
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -11,7 +12,6 @@ from openpype.hosts.substancepainter.api.pipeline import (
 from openpype.hosts.substancepainter.api.lib import prompt_new_file_with_mesh
 
 import substance_painter.project
-import qargparse
 
 
 class SubstanceLoadProjectMesh(load.LoaderPlugin):
@@ -25,27 +25,48 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
     icon = "code-fork"
     color = "orange"
 
-    options = [
-        qargparse.Boolean(
-            "preserve_strokes",
-            default=True,
-            help="Preserve strokes positions on mesh.\n"
-                 "(only relevant when loading into existing project)"
-        ),
-        qargparse.Boolean(
-            "import_cameras",
-            default=True,
-            help="Import cameras from the mesh file."
-        )
-    ]
+    @classmethod
+    def get_options(cls, contexts):
+        project_workflow_option = {
+            substance_painter.project.ProjectWorkflow.Default: "default",
+            substance_painter.project.ProjectWorkflow.UVTile: "uvTile",
+            substance_painter.project.ProjectWorkflow.TextureSetPerUVTile: "textureSetPerUVTile"     # noqa
+        }
+        return [
+            BoolDef("preserve_strokes",
+                    default=True,
+                    label="Preserve Strokes",
+                    tooltip=("Preserve strokes positions on mesh.\n"
+                             "(only relevant when loading into "
+                             "existing project)")),
+            BoolDef("import_cameras",
+                    default=True,
+                    label="Import Cameras",
+                    tooltip="Import cameras from the mesh file."
+            ),
+            EnumDef("texture_resolution",
+                    items=[128, 256, 512, 1024, 2048, 4096],
+                    default=1024,
+                    label="Texture Resolution",
+                    tooltip="Set texture resolution when creating new project"),
+            EnumDef("project_uv_workflow",
+                    items=project_workflow_option,
+                    default="default",
+                    label="UV Workflow",
+                    tooltip="Set UV workflow when creating new project")
+        ]
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, options=None):
 
         # Get user inputs
-        import_cameras = data.get("import_cameras", True)
-        preserve_strokes = data.get("preserve_strokes", True)
+        import_cameras = options.get("import_cameras", True)
+        preserve_strokes = options.get("preserve_strokes", True)
+        texture_resolution = options.get("texture_resolution", 1024)
+        uv_workflow = options.get("project_uv_workflow", "default")
         sp_settings = substance_painter.project.Settings(
-            import_cameras=import_cameras
+            default_texture_resolution=texture_resolution,
+            import_cameras=import_cameras,
+            project_workflow=uv_workflow
         )
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
