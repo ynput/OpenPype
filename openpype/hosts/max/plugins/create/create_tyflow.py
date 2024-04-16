@@ -3,7 +3,7 @@
 from openpype.hosts.max.api import plugin
 
 
-class CreateTyCache(plugin.MaxCacheCreator):
+class CreateTyFlow(plugin.MaxCacheCreator):
     """Creator plugin for TyCache."""
     identifier = "io.openpype.creators.max.tyflow"
     label = "TyFlow"
