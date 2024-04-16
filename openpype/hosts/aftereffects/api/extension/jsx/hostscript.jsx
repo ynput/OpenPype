@@ -265,7 +265,11 @@ function importFile(path, item_name, import_options, fps){
      */
     var comp;
     var ret = {};
-    import_options = JSON.parse(import_options);
+    try{
+        import_options = JSON.parse(import_options);
+    } catch (e){
+        return _prepareError("Couldn't parse import options " + import_options);
+    }
 
     app.beginUndoGroup("Import File");
     fp = new File(path);
