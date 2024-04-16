@@ -284,7 +284,7 @@ class AfterEffectsServerStub():
 
         return None
 
-    def import_file(self, path, item_name, import_options=None):
+    def import_file(self, path, item_name, import_options=None, fps=None):
         """
             Imports file as a FootageItem. Used in Loader
         Args:
@@ -298,13 +298,14 @@ class AfterEffectsServerStub():
             self.client.call('AfterEffects.import_file',
                              path=path,
                              item_name=item_name,
-                             import_options=import_options)
+                             import_options=import_options,
+                             fps=fps)
             )
         records = self._to_records(self._handle_return(res))
         if records:
             return records.pop()
 
-    def import_file_with_dialog(self, path, item_name):
+    def import_file_with_dialog(self, path, item_name, fps=None):
         """
             Imports file through ImportFileWithDialog AE command.
             Allow user to import photoshop file as image sequence.
@@ -315,7 +316,8 @@ class AfterEffectsServerStub():
         res = self.websocketserver.call(
             self.client.call('AfterEffects.import_file_with_dialog',
                              path=path,
-                             item_name=item_name)
+                             item_name=item_name,
+                             fps=fps)
         )
 
         if not res:

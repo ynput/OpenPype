@@ -252,7 +252,7 @@ function _getItem(item, comps, folders, footages){
     return JSON.stringify(item);
 }
 
-function importFile(path, item_name, import_options){
+function importFile(path, item_name, import_options, fps){
     /**
      * Imports file (image tested for now) as a FootageItem.
      * Creates new composition
@@ -265,49 +265,42 @@ function importFile(path, item_name, import_options){
      */
     var comp;
     var ret = {};
-    try{
-        import_options = JSON.parse(import_options);
-    } catch (e){
-        return _prepareError("Couldn't parse import options " + import_options);
-    }
+    import_options = JSON.parse(import_options);
 
     app.beginUndoGroup("Import File");
     fp = new File(path);
     if (fp.exists){
-        try {
-            im_opt = new ImportOptions(fp);
-            importAsType = import_options["ImportAsType"];
+        im_opt = new ImportOptions(fp);
+        importAsType = import_options["ImportAsType"];
 
-            if ('ImportAsType' in import_options){ // refactor
-                if (importAsType.indexOf('COMP') > 0){
-                    im_opt.importAs = ImportAsType.COMP;
-                }
-                if (importAsType.indexOf('FOOTAGE') > 0){
-                    im_opt.importAs = ImportAsType.FOOTAGE;
-                }
-                if (importAsType.indexOf('COMP_CROPPED_LAYERS') > 0){
-                    im_opt.importAs = ImportAsType.COMP_CROPPED_LAYERS;
-                }
-                if (importAsType.indexOf('PROJECT') > 0){
-                    im_opt.importAs = ImportAsType.PROJECT;
-                }
-
+        if ('ImportAsType' in import_options){ // refactor
+            if (importAsType.indexOf('COMP') > 0){
+                im_opt.importAs = ImportAsType.COMP;
             }
-            if ('sequence' in import_options){
-                im_opt.sequence = true;
+            if (importAsType.indexOf('FOOTAGE') > 0){
+                im_opt.importAs = ImportAsType.FOOTAGE;
+            }
+            if (importAsType.indexOf('COMP_CROPPED_LAYERS') > 0){
+                im_opt.importAs = ImportAsType.COMP_CROPPED_LAYERS;
+            }
+            if (importAsType.indexOf('PROJECT') > 0){
+                im_opt.importAs = ImportAsType.PROJECT;
             }
 
-            comp = app.project.importFile(im_opt);
-
-            if (app.project.selection.length == 2 &&
-                app.project.selection[0] instanceof FolderItem){
-                 comp.parentFolder = app.project.selection[0]
-            }
-        } catch (error) {
-            return _prepareError(error.toString() + importOptions.file.fsName);
-        } finally {
-            fp.close();
         }
+        if ('sequence' in import_options){
+            im_opt.sequence = true;
+        }
+
+        comp = app.project.importFile(im_opt);
+
+        if (app.project.selection.length == 2 &&
+            app.project.selection[0] instanceof FolderItem){
+                comp.parentFolder = app.project.selection[0]
+        }
+
+        if (fps){ comp.mainSource.conformFrameRate = fps; }
+
     }else{
 	    return _prepareError("File " + path + " not found.");
     }
@@ -322,7 +315,7 @@ function importFile(path, item_name, import_options){
 }
 
 
-function importFileWithDialog(path, item_name){
+function importFileWithDialog(path, item_name, fps){
     app.beginUndoGroup("Import");
     importedCompArray = app.project.importFileWithDialog();
 
@@ -352,9 +345,14 @@ function importFileWithDialog(path, item_name){
     importedCompFolder = getImportedCompFolder(importedComp);
 
     importedCompFolder.name = item_name;
-    importedComp.name = item_name
+    importedComp.name = item_name;
 
     renameFolderItems(importedCompFolder);
+
+    if (fps){
+        importedComp.frameRate = fps ;
+        setFolderItemsFPS(importedCompFolder, fps);
+    }
 
     ret = {"name": importedComp.name, "id": importedComp.id}
     app.endUndoGroup();
