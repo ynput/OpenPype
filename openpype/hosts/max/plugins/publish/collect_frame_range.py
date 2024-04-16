@@ -19,7 +19,7 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
             instance.data["frameStartHandle"] = int(rt.rendStart)
             instance.data["frameEndHandle"] = int(rt.rendEnd)
 
-        elif instance.data["family"] == "tycache" or "tyspline":
+        elif instance.data["family"] in {"tycache", "tyspline"}:
             operator = instance.data["operator"]
             instance.data["frameStartHandle"] = rt.getProperty(
                 operator, "frameStart")

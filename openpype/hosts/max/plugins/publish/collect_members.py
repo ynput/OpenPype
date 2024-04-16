@@ -15,7 +15,8 @@ class CollectMembers(pyblish.api.InstancePlugin):
     def process(self, instance):
         if instance.data["productType"] in {"workfile", "tyflow"}:
             self.log.debug(
-                "Skipping Collecting Members for workfile product type."
+                "Skipping Collecting Members for workfile "
+                "and tyflow product type."
             )
             return
         if instance.data["productType"] in {"tycache", "tyspline"}:
@@ -23,10 +24,10 @@ class CollectMembers(pyblish.api.InstancePlugin):
                 (node for node in get_tyflow_export_operators()
                  if node.name == instance.data["productName"]), None)   # noqa
             self.log.debug("operator: {}".format(instance.data["operator"]))
-        else:
-            if instance.data.get("instance_node"):
-                container = rt.GetNodeByName(instance.data["instance_node"])
-                instance.data["members"] = [
-                    member.node for member
-                    in container.modifiers[0].openPypeData.all_handles
-                ]
+
+        elif instance.data.get("instance_node"):
+            container = rt.GetNodeByName(instance.data["instance_node"])
+            instance.data["members"] = [
+                member.node for member
+                in container.modifiers[0].openPypeData.all_handles
+            ]
