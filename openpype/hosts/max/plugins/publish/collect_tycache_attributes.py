@@ -44,9 +44,11 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
                 "family": export_mode,
                 "families": [export_mode],
                 "productName": tyc_product_name,
-                "exportMode": (2 if instance.data["tyc_exportMode"] == "tycache" else 6),
+                "exportMode": (
+                    2 if instance.data["tyc_exportMode"] == "tycache" else 6),
                 "productType": export_mode,
-                "creator_identifier": f"io.openpype.creators.max.{export_mode}",
+                "creator_identifier": (
+                    f"io.openpype.creators.max.{export_mode}"),
                 "publish_attributes": {
                     "ValidateTyCacheFrameRange": {
                         "active": attr_values.get("has_frame_range_validator")}
