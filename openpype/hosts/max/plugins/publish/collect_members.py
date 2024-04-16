@@ -13,16 +13,16 @@ class CollectMembers(pyblish.api.InstancePlugin):
     hosts = ['max']
 
     def process(self, instance):
-        if instance.data["productType"] in {"workfile", "tyflow"}:
+        if instance.data["family"] in {"workfile", "tyflow"}:
             self.log.debug(
                 "Skipping Collecting Members for workfile "
                 "and tyflow product type."
             )
             return
-        if instance.data["productType"] in {"tycache", "tyspline"}:
+        if instance.data["family"] in {"tycache", "tyspline"}:
             instance.data["operator"] = next(
                 (node for node in get_tyflow_export_operators()
-                 if node.name == instance.data["productName"]), None)   # noqa
+                 if node.name == instance.data["subset"]), None)   # noqa
             self.log.debug("operator: {}".format(instance.data["operator"]))
 
         elif instance.data.get("instance_node"):

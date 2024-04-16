@@ -436,15 +436,15 @@ class MaxCacheCreator(Creator, MaxTyFlowDataCreatorBase):
                 key: changes[key].new_value
                 for key in changes.changed_keys
             }
-            product_name = new_values.get("productName", "")
-            if product_name and instance_node != product_name:
+            subset = new_values.get("subset", "")
+            if subset and instance_node != subset:
                 node = rt.getNodeByName(instance_node)
-                new_product_name = new_values["productName"]
-                if rt.getNodeByName(new_product_name):
+                new_subset_name = new_values["subset"]
+                if rt.getNodeByName(new_subset_name):
                     raise CreatorError(
-                        "The product '{}' already exists.".format(
-                            new_product_name))
-                instance_node = new_product_name
+                        "The subset '{}' already exists.".format(
+                            new_subset_name))
+                instance_node = new_subset_name
                 created_inst["instance_node"] = instance_node
                 node.name = instance_node
 

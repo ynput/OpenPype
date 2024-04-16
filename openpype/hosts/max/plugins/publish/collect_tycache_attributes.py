@@ -43,7 +43,7 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
                 "label": f"{export_mode}_{tyc_product_name}",
                 "family": export_mode,
                 "families": [export_mode],
-                "productName": tyc_product_name,
+                "subset": tyc_product_name,
                 "exportMode": (
                     2 if instance.data["tyc_exportMode"] == "tycache" else 6),
                 "productType": export_mode,
