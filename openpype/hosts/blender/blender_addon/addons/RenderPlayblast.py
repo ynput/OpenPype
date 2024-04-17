@@ -15,7 +15,7 @@ bl_info = {
     "name": "Render Playblast",
     "description": "Render sequences of images + video, with OpenGL, from viewport or camera view",
     "author": "Quad",
-    "version": (1, 0),
+    "version": (1, 1),
     "blender": (2, 80, 0),
     "category": "Render",
     "location": "View 3D > UI",
@@ -30,10 +30,15 @@ def get_render_filepath():
     return templates.get_playblast_path()
 
 
-def get_renders_types_and_extensions():
+def get_renders_types_and_options():
     return {
-        "PNG": '####.png',
-        "FFMPEG": 'mp4'
+        "PNG": {
+            'extension': '####.png',
+        },
+        "FFMPEG": {
+            'extension': 'mp4',
+            'container': 'MPEG4'
+        }
     }.items()
 
 
@@ -75,9 +80,12 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
         render_filepath = get_render_filepath()
         Path(render_filepath).resolve().parent.mkdir(parents=True, exist_ok=True)
 
-        for file_format, file_extension in get_renders_types_and_extensions():
+        for file_format, options in get_renders_types_and_options():
             scene.render.image_settings.file_format = file_format
-            scene.render.filepath = render_filepath.format(ext=file_extension)
+            scene.render.filepath = render_filepath.format(ext=options['extension'])
+
+            container = options.get('container')
+            if container : scene.render.ffmpeg.format = container
 
             logging.info(f"{'Camera view' if use_camera_view else 'Viewport'} will be rendered at following path : {scene.render.filepath}")
 
