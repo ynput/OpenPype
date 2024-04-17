@@ -57,7 +57,7 @@ def _get_latest_version_folder(filepath, absolute_path=False, create_version_fol
 
 
 def _get_version_directory(filepath):
-    capture_version = r'(.*?)(v\d{3})|(.+[\\\/])'
+    capture_version = r'(.*?)(v\d{3})|(.+)'
     captured_groups = re.search(capture_version, filepath).groups()
     try:
         return Path(next(filter(lambda path: path is not None, captured_groups)))
