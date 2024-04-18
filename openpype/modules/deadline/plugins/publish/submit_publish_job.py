@@ -187,7 +187,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             create_metadata_path(instance, anatomy)
 
         environment = {
-            "AVALON_DB": os.environ["AVALON_DB"],
             "AVALON_PROJECT": instance.context.data["projectName"],
             "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": instance.context.data["task"],
@@ -203,6 +202,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
             deadline_plugin = "Ayon"
         else:
+            environment["AVALON_DB"] = os.environ["AVALON_DB"]
             environment["OPENPYPE_PUBLISH_JOB"] = "1"
             environment["OPENPYPE_RENDER_JOB"] = "0"
             environment["OPENPYPE_REMOTE_PUBLISH"] = "0"

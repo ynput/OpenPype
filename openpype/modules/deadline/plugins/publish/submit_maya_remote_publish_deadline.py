@@ -108,7 +108,6 @@ class MayaSubmitRemotePublishDeadline(
                             if key in os.environ}, **legacy_io.Session)
 
         # TODO replace legacy_io with context.data
-        environment["AVALON_DB"] = os.environ.get("AVALON_DB")
         environment["AVALON_PROJECT"] = project_name
         environment["AVALON_ASSET"] = instance.context.data["asset"]
         environment["AVALON_TASK"] = instance.context.data["task"]
@@ -122,6 +121,7 @@ class MayaSubmitRemotePublishDeadline(
             environment["AYON_REMOTE_PUBLISH"] = "1"
         else:
             environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
+            environment["AVALON_DB"] = os.environ.get("AVALON_DB")
         for key, value in environment.items():
             job_info.EnvironmentKeyValue[key] = value
 
