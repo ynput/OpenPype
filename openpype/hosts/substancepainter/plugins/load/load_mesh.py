@@ -67,7 +67,7 @@ class SubstanceProjectConfigurationWindow(QtWidgets.QDialog):
         self.widgets = {
             "label": QtWidgets.QLabel("Project Configuration"),
             "template_options": QtWidgets.QComboBox(),
-            "import_cameras": QtWidgets.QCheckBox("Improve Cameras"),
+            "import_cameras": QtWidgets.QCheckBox("Import Cameras"),
             "preserve_strokes": QtWidgets.QCheckBox("Preserve Strokes"),
             "clickbox": QtWidgets.QWidget(),
             "combobox": QtWidgets.QWidget(),
