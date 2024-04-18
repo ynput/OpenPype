@@ -1,4 +1,4 @@
-from openpype.lib import BoolDef, EnumDef
+from qtpy import QtWidgets, QtCore
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -14,6 +14,79 @@ from openpype.hosts.substancepainter.api.lib import prompt_new_file_with_mesh
 import substance_painter.project
 
 
+def _convert(substance_attr):
+    """Return Substance Painter Python API Project attribute from string.
+
+    This converts a string like "ProjectWorkflow.Default" to for example
+    the Substance Painter Python API equivalent object, like:
+        `substance_painter.project.ProjectWorkflow.Default`
+
+    Args:
+        substance_attr (str): The `substance_painter.project` attribute,
+            for example "ProjectWorkflow.Default"
+
+    Returns:
+        Any: Substance Python API object of the project attribute.
+
+    Raises:
+        ValueError: If attribute does not exist on the
+            `substance_painter.project` python api.
+    """
+    root = substance_painter.project
+    for attr in substance_attr.split("."):
+        root = getattr(root, attr, None)
+        if root is None:
+            raise ValueError(
+                f"Substance Painter project attribute does not exist: {substance_attr}")
+
+    return root
+
+
+def get_template_by_name(name: str, templates: list[dict]) -> dict:
+    return next(
+        template for template in templates
+        if template["name"] == name
+    )
+
+
+class SubstanceProjectConfigurationWindow(QtWidgets.QDialog):
+    """The pop-up dialog allows users to choose material
+    duplicate options for importing Max objects when updating
+    or switching assets.
+    """
+    def __init__(self, project_templates):
+        super(SubstanceProjectConfigurationWindow, self).__init__()
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
+
+        self.template_name = None
+        self.project_templates = project_templates
+
+        self.widgets = {
+            "label": QtWidgets.QLabel("Project Configuration"),
+            "template_options": QtWidgets.QComboBox(),
+            "buttons": QtWidgets.QWidget(),
+            "okButton": QtWidgets.QPushButton("Ok"),
+        }
+        for template in project_templates:
+            self.widgets["template_options"].addItem(template)
+        # Build buttons.
+        layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
+        layout.addWidget(self.widgets["template_options"])
+        layout.addWidget(self.widgets["okButton"])
+        # Build layout.
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(self.widgets["label"])
+        layout.addWidget(self.widgets["buttons"])
+
+        self.widgets["okButton"].pressed.connect(self.on_ok_pressed)
+
+    def on_ok_pressed(self):
+        self.template_name = (
+            self.widgets["template_options"].currentText()
+        )
+        self.close()
+
+
 class SubstanceLoadProjectMesh(load.LoaderPlugin):
     """Load mesh for project"""
 
@@ -25,69 +98,32 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
     icon = "code-fork"
     color = "orange"
 
-    @classmethod
-    def get_options(cls, contexts):
-        project_uv_workflow_items = {
-            substance_painter.project.ProjectWorkflow.Default: "default",
-            substance_painter.project.ProjectWorkflow.UVTile: "uvTile",
-            substance_painter.project.ProjectWorkflow.TextureSetPerUVTile: "textureSetPerUVTile"     # noqa
-        }
-        return [
-            BoolDef("preserve_strokes",
-                    default=True,
-                    label="Preserve Strokes",
-                    tooltip=("Preserve strokes positions on mesh.\n"
-                             "(only relevant when loading into "
-                             "existing project)")),
-            BoolDef("import_cameras",
-                    default=True,
-                    label="Import Cameras",
-                    tooltip="Import cameras from the mesh file."),
-            EnumDef("texture_resolution",
-                    items=[128, 256, 512, 1024, 2048, 4096],
-                    default=1024,
-                    label="Texture Resolution",
-                    tooltip=("Set texture resolution "
-                             "when creating new project")),
-            EnumDef("project_uv_workflow",
-                    items=project_uv_workflow_items,
-                    default="default",
-                    label="UV Workflow",
-                    tooltip="Set UV workflow when creating new project")
-        ]
-
     def load(self, context, name, namespace, options=None):
 
         # Get user inputs
-        import_cameras = options.get("import_cameras", True)
-        preserve_strokes = options.get("preserve_strokes", True)
-        texture_resolution = options.get("texture_resolution", 1024)
-        uv_workflow = options.get("project_uv_workflow", "default")
+        template_enum = [template["name"] for template in self.project_templates]
+        window = SubstanceProjectConfigurationWindow(template_enum)
+        window.exec_()
+        template_name = window.template_name
+        template = get_template_by_name(template_name, self.project_templates)
         sp_settings = substance_painter.project.Settings(
-            default_texture_resolution=texture_resolution,
-            import_cameras=import_cameras,
-            project_workflow=uv_workflow
+            normal_map_format=_convert(template["normal_map_format"]),
+            project_workflow=_convert(template["project_workflow"]),
+            tangent_space_mode=_convert(template["tangent_space_mode"]),
+            default_texture_resolution=template["default_texture_resolution"]
         )
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
             path = self.filepath_from_context(context)
-            # TODO: improve the prompt dialog function to not
-            # only works for simple polygon scene
-            result = prompt_new_file_with_mesh(mesh_filepath=path)
-            if not result:
-                self.log.info("User cancelled new project prompt."
-                              "Creating new project directly from"
-                              " Substance Painter API Instead.")
-                settings = substance_painter.project.create(
-                    mesh_file_path=path, settings=sp_settings
-                )
+            settings = substance_painter.project.create(
+                mesh_file_path=path, settings=sp_settings
+            )
 
         else:
             # Reload the mesh
             settings = substance_painter.project.MeshReloadingSettings(
-                import_cameras=import_cameras,
-                preserve_strokes=preserve_strokes
-            )
+                import_cameras=template["import_cameras"],
+                preserve_strokes=template["preserve_strokes"])
 
             def on_mesh_reload(status: substance_painter.project.ReloadMeshStatus):  # noqa
                 if status == substance_painter.project.ReloadMeshStatus.SUCCESS:  # noqa
@@ -113,7 +149,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         # from the user's original choice. We don't store 'preserve_strokes'
         # as we always preserve strokes on updates.
         container["options"] = {
-            "import_cameras": import_cameras,
+            "import_cameras": template["import_cameras"],
         }
 
         set_container_metadata(project_mesh_object_name, container)
