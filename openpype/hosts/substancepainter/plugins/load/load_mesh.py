@@ -59,29 +59,44 @@ class SubstanceProjectConfigurationWindow(QtWidgets.QDialog):
         super(SubstanceProjectConfigurationWindow, self).__init__()
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
+        self.import_cameras = False
+        self.preserve_strokes = False
         self.template_name = None
         self.project_templates = project_templates
 
         self.widgets = {
             "label": QtWidgets.QLabel("Project Configuration"),
             "template_options": QtWidgets.QComboBox(),
-            "buttons": QtWidgets.QWidget(),
+            "import_cameras": QtWidgets.QCheckBox("Improve Cameras"),
+            "preserve_strokes": QtWidgets.QCheckBox("Preserve Strokes"),
+            "clickbox": QtWidgets.QWidget(),
+            "combobox": QtWidgets.QWidget(),
             "okButton": QtWidgets.QPushButton("Ok"),
         }
         for template in project_templates:
             self.widgets["template_options"].addItem(template)
+
+        # Build clickboxes
+        layout = QtWidgets.QHBoxLayout(self.widgets["clickbox"])
+        layout.addWidget(self.widgets["import_cameras"])
+        layout.addWidget(self.widgets["preserve_strokes"])
         # Build buttons.
-        layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
+        layout = QtWidgets.QHBoxLayout(self.widgets["combobox"])
         layout.addWidget(self.widgets["template_options"])
         layout.addWidget(self.widgets["okButton"])
         # Build layout.
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.widgets["label"])
-        layout.addWidget(self.widgets["buttons"])
+        layout.addWidget(self.widgets["clickbox"])
+        layout.addWidget(self.widgets["combobox"])
 
         self.widgets["okButton"].pressed.connect(self.on_ok_pressed)
 
     def on_ok_pressed(self):
+        if self.widgets["import_cameras"].isChecked():
+            self.import_cameras = True
+        if self.widgets["preserve_strokes"].isChecked():
+            self.preserve_strokes = True
         self.template_name = (
             self.widgets["template_options"].currentText()
         )
@@ -107,6 +122,8 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         window = SubstanceProjectConfigurationWindow(template_enum)
         window.exec_()
         template_name = window.template_name
+        import_cameras = window.import_cameras
+        preserve_strokes = window.preserve_strokes
         template = get_template_by_name(template_name, self.project_templates)
         sp_settings = substance_painter.project.Settings(
             normal_map_format=_convert(template["normal_map_format"]),
@@ -124,8 +141,8 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         else:
             # Reload the mesh
             settings = substance_painter.project.MeshReloadingSettings(
-                import_cameras=template["import_cameras"],
-                preserve_strokes=template["preserve_strokes"])
+                import_cameras=import_cameras,
+                preserve_strokes=preserve_strokes)
 
             def on_mesh_reload(status: substance_painter.project.ReloadMeshStatus):  # noqa
                 if status == substance_painter.project.ReloadMeshStatus.SUCCESS:  # noqa
@@ -151,7 +168,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         # from the user's original choice. We don't store 'preserve_strokes'
         # as we always preserve strokes on updates.
         container["options"] = {
-            "import_cameras": template["import_cameras"],
+            "import_cameras": import_cameras,
         }
 
         set_container_metadata(project_mesh_object_name, container)
