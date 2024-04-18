@@ -37,7 +37,8 @@ def _convert(substance_attr):
         root = getattr(root, attr, None)
         if root is None:
             raise ValueError(
-                f"Substance Painter project attribute does not exist: {substance_attr}")
+                "Substance Painter project attribute"
+                f" does not exist: {substance_attr}")
 
     return root
 
@@ -101,7 +102,8 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
     def load(self, context, name, namespace, options=None):
 
         # Get user inputs
-        template_enum = [template["name"] for template in self.project_templates]
+        template_enum = [template["name"] for template
+                         in self.project_templates]
         window = SubstanceProjectConfigurationWindow(template_enum)
         window.exec_()
         template_name = window.template_name

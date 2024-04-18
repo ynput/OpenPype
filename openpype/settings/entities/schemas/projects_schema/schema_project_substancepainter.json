@@ -25,6 +25,70 @@
             "object_type": {
                 "type": "text"
             }
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "load",
+            "label": "Loaders",
+            "use_label_wrap": true,
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "SubstanceLoadProjectMesh",
+                    "label": "Load Mesh",
+                    "children": [
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "project_templates",
+                            "label": "Project Templates",
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "key": "name",
+                                        "label": "Name"
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "default_texture_resolution",
+                                        "label": "Document Resolution"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "import_cameras",
+                                        "label": "Import Cameras"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "normal_map_format",
+                                        "label": "Normal Map Format"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "project_workflow",
+                                        "label": "UV Tile Settings"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "tangent_space_mode",
+                                        "label": "Normal Map Format"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "preserve_strokes",
+                                        "label": "Preserve Strokes"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+
+            ]
         }
     ]
 }
