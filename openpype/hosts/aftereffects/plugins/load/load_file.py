@@ -1,4 +1,6 @@
 import re
+import io
+import subprocess
 
 from openpype.pipeline import get_representation_path
 from openpype.hosts.aftereffects import api
@@ -46,6 +48,10 @@ class FileLoader(api.AfterEffectsLoader):
 
         frame = None
         if '.psd' in path:
+
+            file_folder_path = "/".join(path.split("/")[:-1])
+            self._add_to_clipboard(file_folder_path)
+
             import_options['ImportAsType'] = 'ImportAsType.COMP'
             comp = stub.import_file_with_dialog(path, stub.LOADED_ICON + comp_name)
         else:
@@ -77,6 +83,18 @@ class FileLoader(api.AfterEffectsLoader):
             context,
             self.__class__.__name__
         )
+
+    def _add_to_clipboard(self, path):
+        """Copie le texte dans le presse-papier de Windows (spécifique Windows!)
+        """
+        raw_path = r"{}".format(path)
+        cmd='echo '+path.strip()+'|clip'
+        return subprocess.check_call(cmd, shell=True)
+        """
+        code pour MAC OS:
+        cmd='echo '+txt.strip()+'|pbcopy'
+        return subprocess.check_call(cmd, shell=True)
+        """
 
     def update(self, container, representation):
         """ Switch asset or change version """
