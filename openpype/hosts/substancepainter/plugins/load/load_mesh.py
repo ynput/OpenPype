@@ -205,7 +205,6 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         # We want store some options for updating to keep consistent behavior
         # from the user's original choice. We don't store 'preserve_strokes'
         # as we always preserve strokes on updates.
-        # TODO: update the code
         container["options"] = {
             "import_cameras": result["import_cameras"],
         }
