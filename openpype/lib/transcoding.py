@@ -1071,7 +1071,6 @@ def _ffmpeg_h264_codec_args(stream_data, source_ffmpeg_cmd):
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
-    output.extend(["-intra"])
     output.extend(["-g", "1"])
 
     return output

@@ -221,8 +221,7 @@ This is just usage example, without relevant data. Do **NOT** use these presets 
                             ],
                             "output": [
                                 "-pix_fmt yuv420p",
-                                "-crf 18",
-                                "-intra"
+                                "-crf 18"
                             ]
                         },
                         "tags": ["burnin", "preview"]
