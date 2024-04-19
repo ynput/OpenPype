@@ -135,9 +135,9 @@ class SubstanceProjectConfigurationWindow(QtWidgets.QDialog):
     def prompt(cls, templates):
         dialog = cls(templates)
         dialog.exec_()
+        configuration = dialog.configuration
         dialog.deleteLater()
-
-        return dialog.configuration
+        return configuration
 
 
 class SubstanceLoadProjectMesh(load.LoaderPlugin):
