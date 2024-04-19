@@ -120,7 +120,7 @@ class SubstanceProjectConfigurationWindow(QtWidgets.QDialog):
         templates = self.project_templates
         template_name = self.widgets["template_options"].currentText()
         template = get_template_by_name(template_name, templates)
-        template = copy.deepcopy(template) # do not edit the original
+        template = copy.deepcopy(template)      # do not edit the original
         template["import_cameras"] = self.widgets["import_cameras"].isChecked()
         template["preserve_strokes"] = (
             self.widgets["preserve_strokes"].isChecked()
