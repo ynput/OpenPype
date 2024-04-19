@@ -60,7 +60,7 @@ class FileLoader(api.AfterEffectsLoader):
             # It's a single PSD file that we want to load as a comp/sequence
 
             # Add parent folder to clipboard
-            self._add_path_to_clipboard(str(path_parent))
+            self._add_to_clipboard(str(path_parent))
 
             import_options['ImportAsType'] = 'ImportAsType.COMP'
             comp = stub.import_file_with_dialog(path_str, stub.LOADED_ICON + comp_name)
@@ -95,17 +95,18 @@ class FileLoader(api.AfterEffectsLoader):
         )
 
     @staticmethod
-    def _add_path_to_clipboard(path):
-        """Copy the path to the clipboard"""
+    def _add_to_clipboard(text):
+        """Copy text to the clipboard"""
         curr_platform = platform.system().lower()
-        raw_path = r"{}".format(path)
-        cmd = 'echo '+path.strip()+'|clip'
-        return subprocess.check_call(cmd, shell=True)
-        """
-        code pour MAC OS:
-        cmd='echo '+txt.strip()+'|pbcopy'
-        return subprocess.check_call(cmd, shell=True)
-        """
+
+        if curr_platform == "windows":
+            subprocess.run("clip", text=True, input=text)
+        elif curr_platform == "darwin":
+            subprocess.run("pbcopy", text=True, input=text)
+        else:
+            # Linux is not handled, After Effects is not officially usable on a Linux platform
+            # Additionally xclip isn't installed on all linux distributions (example: Rocky Linux)
+            pass
 
     def update(self, container, representation):
         """ Switch asset or change version """
