@@ -172,7 +172,13 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
             path = self.filepath_from_context(context)
-
+            sp_settings = substance_painter.project.Settings(
+                import_cameras=result["import_cameras"],
+                normal_map_format=result["normal_map_format"],
+                project_workflow=result["project_workflow"],
+                tangent_space_mode=result["tangent_space_mode"],
+                default_texture_resolution=result["default_texture_resolution"]
+            )
             settings = substance_painter.project.create(
                 mesh_file_path=path, settings=sp_settings
             )
