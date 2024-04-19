@@ -1504,14 +1504,15 @@ class PlaceholderLoadMixin(object):
             }
 
         elif builder_type == "linked_asset":
-            if not placeholder.data["asset"]:
-                return []
             asset_regex = re.compile(placeholder.data["asset"])
             linked_asset_names = []
             for asset_doc in linked_asset_docs:
                 asset_name = asset_doc["name"]
                 if asset_regex.match(asset_name):
                     linked_asset_names.append(asset_name)
+
+            if not linked_asset_names:
+                return []
 
             context_filters = {
                 "asset": linked_asset_names,
