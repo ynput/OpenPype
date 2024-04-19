@@ -56,7 +56,7 @@ class FileLoader(api.AfterEffectsLoader):
         path_str = str(path.resolve())
 
         frame = None
-        if path.suffix is '.psd':
+        if path.suffix == '.psd':
             # It's a single PSD file that we want to load as a comp/sequence
 
             # Add parent folder to clipboard
