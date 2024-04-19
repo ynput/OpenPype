@@ -1,3 +1,4 @@
+import copy
 from qtpy import QtWidgets, QtCore
 from openpype.pipeline import (
     load,
@@ -121,10 +122,12 @@ class SubstanceProjectConfigurationWindow(QtWidgets.QDialog):
         template = get_template_by_name(template_name, templates)
         template = copy.deepcopy(template) # do not edit the original
         template["import_cameras"] = self.widgets["import_cameras"].isChecked()
-        template["preserve_strokes"] = self.widgets["preserve_strokes"].isChecked()
+        template["preserve_strokes"] = (
+            self.widgets["preserve_strokes"].isChecked()
+        )
         for key in ["normal_map_format",
-                   "project_workflow",
-                   "tangent_space_mode"]:
+                    "project_workflow",
+                    "tangent_space_mode"]:
             template[key] = _convert(template[key])
         return template
 
