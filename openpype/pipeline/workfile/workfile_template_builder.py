@@ -1511,6 +1511,9 @@ class PlaceholderLoadMixin(object):
                 if asset_regex.match(asset_name):
                     linked_asset_names.append(asset_name)
 
+            if not linked_asset_names:
+                return []
+
             context_filters = {
                 "asset": linked_asset_names,
                 "subset": [re.compile(placeholder.data["subset"])],
