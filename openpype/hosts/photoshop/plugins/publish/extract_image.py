@@ -63,17 +63,11 @@ class ExtractImage(pyblish.api.ContextPlugin):
                     file_basename = os.path.splitext(
                         stub.get_active_document_name()
                     )[0]
-                    self.log.info("_______________________________________________________________________")
-                    self.log.info("format is : {}".format(self.formats))
-                    self.log.info("_______________________________________________________________________")
 
                     creator_attributes = instance.data["creator_attributes"]
                     if (creator_attributes.get("export_psd")):
                         self.formats.append("psd")
                     for extension in self.formats:
-                        self.log.info("_______________________________________________________________________")
-                        self.log.info("ext is : {}".format(extension))
-                        self.log.info("_______________________________________________________________________")
                         _filename = "{}.{}".format(file_basename,
                                                    extension)
                         files[extension] = _filename
@@ -92,9 +86,6 @@ class ExtractImage(pyblish.api.ContextPlugin):
                             "stagingDir": staging_dir
                         })
                     instance.data["representations"] = representations
-                    self.log.info("_______________________________________________________________________")
-                    self.log.info("rep is : {}".format(representations))
-                    self.log.info("_______________________________________________________________________")
                     instance.data["stagingDir"] = staging_dir
 
                     self.log.info(f"Extracted {instance} to {staging_dir}")
