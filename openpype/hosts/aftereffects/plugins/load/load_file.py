@@ -1,6 +1,8 @@
 import re
-import io
+import platform
 import subprocess
+
+from pathlib import Path
 
 from openpype.pipeline import get_representation_path
 from openpype.hosts.aftereffects import api
@@ -44,31 +46,39 @@ class FileLoader(api.AfterEffectsLoader):
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        path = path.replace("\\", "/")
+        # Convert into a Path object
+        path = Path(path)
+
+        # Parent directory
+        path_parent = path.parent.resolve()
+
+        # Resolve and then get a string
+        path_str = str(path.resolve())
 
         frame = None
-        if '.psd' in path:
+        if path.suffix is '.psd':
+            # It's a single PSD file that we want to load as a comp/sequence
 
-            file_folder_path = "/".join(path.split("/")[:-1])
-            self._add_to_clipboard(file_folder_path)
+            # Add parent folder to clipboard
+            self._add_path_to_clipboard(str(path_parent))
 
             import_options['ImportAsType'] = 'ImportAsType.COMP'
-            comp = stub.import_file_with_dialog(path, stub.LOADED_ICON + comp_name)
+            comp = stub.import_file_with_dialog(path_str, stub.LOADED_ICON + comp_name)
         else:
             frame = repr_cont.get("frame")
             if frame:
                 import_options['sequence'] = True
 
-            comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
+            comp = stub.import_file(path_str, stub.LOADED_ICON + comp_name,
                                     import_options)
 
         if not comp:
             if frame:
                 padding = len(frame)
-                path = path.replace(frame, "#" * padding)
+                path_str = path_str.replace(frame, "#" * padding)
 
             self.log.warning(
-                "Representation `{}` is failing to load".format(path))
+                "Representation `{}` is failing to load".format(path_str))
             self.log.warning("Check host app for alert error.")
 
             return
@@ -84,11 +94,12 @@ class FileLoader(api.AfterEffectsLoader):
             self.__class__.__name__
         )
 
-    def _add_to_clipboard(self, path):
-        """Copie le texte dans le presse-papier de Windows (spécifique Windows!)
-        """
+    @staticmethod
+    def _add_path_to_clipboard(path):
+        """Copy the path to the clipboard"""
+        curr_platform = platform.system().lower()
         raw_path = r"{}".format(path)
-        cmd='echo '+path.strip()+'|clip'
+        cmd = 'echo '+path.strip()+'|clip'
         return subprocess.check_call(cmd, shell=True)
         """
         code pour MAC OS:
