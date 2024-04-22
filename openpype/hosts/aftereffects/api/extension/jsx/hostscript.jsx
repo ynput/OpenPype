@@ -339,6 +339,12 @@ function importFileWithDialog(path, item_name){
     }
 
     importedCompFilePath = getCompFilepath(importedComp);
+
+    if (importedCompFilePath == undefined){
+        undoLastActions();
+        return _prepareError('Wrong file type imported (impossible to access layers composition).');
+    }
+
     if (extensionsAreDifferents(importedCompFilePath, path)){
         undoLastActions();
         return _prepareError('Wrong file selected (incorrect extension).');
@@ -364,7 +370,22 @@ function importFileWithDialog(path, item_name){
 
 
 function getCompFilepath(compItem){
-    return String(compItem.layers[1].source.file)
+    for (var index = 1; index <= compItem.numLayers; index++) {
+        // search if source.file is available aka the layer is not a comp
+        //if one is present , it returns the path
+        if (compItem.layers[index].source.file){
+            return String(compItem.layers[index].source.file)
+        }
+    }
+    //else if none is present, must search in the imported folder of AE for layer.
+    folder = getImportedCompFolder(compItem)
+    for (var index = 1; index <= folder.items.length; index++) {
+        folderItem = folder.items[index];
+        // if item is a footage, get its file path
+        if (folderItem instanceof FootageItem){
+            return String(folderItem.file)
+        }
+    }
 }
 
 
