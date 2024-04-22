@@ -77,6 +77,14 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
         import tempfile
 
+        explicit_cleanup_dirs = instance.data.get("explicit_cleanup_dirs", [])
+        for _dir in explicit_cleanup_dirs:
+            self.log.debug("Removing explicit cleanup dir {}".format(_dir))
+            try:
+                shutil.rmtree(_dir)
+            except Exception as err:
+                self.log.debug(f"Could not remove dir {_dir}: {err}")
+
         temp_root = tempfile.gettempdir()
         staging_dir = instance.data.get("stagingDir", None)
 
