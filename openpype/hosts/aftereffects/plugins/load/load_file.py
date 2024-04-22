@@ -46,10 +46,6 @@ class FileLoader(api.AfterEffectsLoader):
 
         frame = None
         if '.psd' in path:
-
-            comp_name = get_unique_layer_name(
-            existing_layers, "{}_{}".format(context["asset"]["name"], name), is_psd=True)
-
             import_options['ImportAsType'] = 'ImportAsType.COMP'
             comp = stub.import_file_with_dialog(path, stub.LOADED_ICON + comp_name)
         else:
