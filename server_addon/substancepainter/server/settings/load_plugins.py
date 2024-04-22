@@ -44,6 +44,9 @@ class ProjectTemplatesModel(BaseSettingsModel):
         description=("Set texture resolution when "
                      "creating new project.")
     )
+    import_cameras: bool = SettingsField(
+        True, title="Import Cameras",
+        description="Import cameras from the mesh file.")
     normal_map_format: str = SettingsField(
         "DirectX", enum_resolver=normal_map_format_enum,
         title="Normal Map Format",
@@ -61,6 +64,12 @@ class ProjectTemplatesModel(BaseSettingsModel):
         title="Tangent Space",
         description=("An option to compute tangent space "
                      "when creating new project.")
+    )
+    preserve_strokes: bool = SettingsField(
+        True, title="Preserve Strokes",
+        description=("Preserve strokes positions on mesh.\n"
+                     "(only relevant when loading into "
+                     "existing project)")
     )
 
 
@@ -84,23 +93,29 @@ DEFAULT_LOADER_SETTINGS = {
             {
                 "name": "2K(Default)",
                 "default_texture_resolution": 2048,
+                "import_cameras": True,
                 "normal_map_format": "NormalMapFormat.DirectX",
                 "project_workflow": "ProjectWorkflow.Default",
-                "tangent_space_mode": "TangentSpace.PerFragment"
+                "tangent_space_mode": "TangentSpace.PerFragment",
+                "preserve_strokes": True
             },
             {
                 "name": "2K(UV tile)",
                 "default_texture_resolution": 2048,
+                "import_cameras": True,
                 "normal_map_format": "NormalMapFormat.DirectX",
                 "project_workflow": "ProjectWorkflow.UVTile",
-                "tangent_space_mode": "TangentSpace.PerFragment"
+                "tangent_space_mode": "TangentSpace.PerFragment",
+                "preserve_strokes": True
             },
             {
                 "name": "4K(Custom)",
                 "default_texture_resolution": 4096,
+                "import_cameras": True,
                 "normal_map_format": "NormalMapFormat.OpenGL",
                 "project_workflow": "ProjectWorkflow.UVTile",
-                "tangent_space_mode": "TangentSpace.PerFragment"
+                "tangent_space_mode": "TangentSpace.PerFragment",
+                "preserve_strokes": True
             }
         ]
     }

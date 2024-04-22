@@ -58,6 +58,11 @@
                                         "label": "Document Resolution"
                                     },
                                     {
+                                        "type": "boolean",
+                                        "key": "import_cameras",
+                                        "label": "Import Cameras"
+                                    },
+                                    {
                                         "type": "text",
                                         "key": "normal_map_format",
                                         "label": "Normal Map Format"
@@ -71,6 +76,11 @@
                                         "type": "text",
                                         "key": "tangent_space_mode",
                                         "label": "Normal Map Format"
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "preserve_strokes",
+                                        "label": "Preserve Strokes"
                                     }
                                 ]
                             }
