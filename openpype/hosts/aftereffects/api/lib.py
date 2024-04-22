@@ -31,7 +31,7 @@ def get_extension_manifest_path():
     )
 
 
-def get_unique_layer_name(layers, name):
+def get_unique_layer_name(layers, name, is_psd=False):
     """
         Gets all layer names and if 'name' is present in them, increases
         suffix by 1 (eg. creates unique layer name - for Loader)
@@ -49,7 +49,11 @@ def get_unique_layer_name(layers, name):
             names[layer_name] = names[layer_name] + 1
         else:
             names[layer_name] = 1
-    occurrences = names.get(name, 0)
+    occurrences = names.get("{}{}".format(get_stub().LOADED_ICON, name), 0)
+
+    # divide if psd because a psd import 2 elements, a comp and a folder
+    if occurrences != 0 and is_psd:
+        occurrences = int(occurrences/2)
 
     return "{}_{:0>3d}".format(name, occurrences + 1)
 
