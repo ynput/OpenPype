@@ -1748,9 +1748,9 @@ class PlaceholderCreateMixin(object):
             attribute_definitions.UISeparatorDef(),
 
             attribute_definitions.EnumDef(
-                "create",
+                "creator",
                 label="Creator",
-                default=options.get("create"),
+                default=options.get("creator"),
                 items=creator_items,
                 tooltip=(
                     "Creator"
@@ -1798,7 +1798,7 @@ class PlaceholderCreateMixin(object):
         """
 
         legacy_create = self.builder.use_legacy_creators
-        creator_name = placeholder.data["create"]
+        creator_name = placeholder.data["creator"]
         create_variant = placeholder.data["create_variant"]
 
         creator_plugin = self.builder.get_creators_by_name()[creator_name]
@@ -1950,7 +1950,7 @@ class CreatePlaceholderItem(PlaceholderItem):
             "Failed to create {} instance using Creator {}"
         ).format(
             len(self._failed_created_publish_instances),
-            self.data["create"]
+            self.data["creator"]
         )
         return [message]
 
