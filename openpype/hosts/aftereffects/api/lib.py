@@ -51,6 +51,9 @@ def get_unique_layer_name(layers, name, is_psd=False):
             names[layer_name] = 1
     occurrences = names.get("{}{}".format(get_stub().LOADED_ICON, name), 0)
 
+    # when a psd is load, it creates a compostion AND a folder,
+    # so 2 element have the "layer_name"
+    # To avoid passing from 1 to 3, we must divide the occurence
     if occurrences !=0 and is_psd:
         occurrences = int(occurrences/2)
 
