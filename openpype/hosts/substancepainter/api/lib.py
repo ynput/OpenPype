@@ -606,7 +606,7 @@ def prompt_new_file_with_mesh(mesh_filepath):
         mesh_select.setVisible(False)
 
         # Ensure UI is visually up-to-date
-        app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents)
+        app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 8000)
 
         # Trigger the 'select file' dialog to set the path and have the
         # new file dialog to use the path.
@@ -623,8 +623,6 @@ def prompt_new_file_with_mesh(mesh_filepath):
                 "Failed to set mesh path with the prompt dialog:"
                 f"{mesh_filepath}\n\n"
                 "Creating new project directly with the mesh path instead.")
-        else:
-            dialog.done(dialog.Accepted)
 
     new_action = _get_new_project_action()
     if not new_action:
