@@ -322,8 +322,20 @@ function importFile(path, item_name, import_options){
 }
 
 
-function importFileWithDialog(path, item_name){
+function importFileWithDialog(path, item_name, fps){
     app.beginUndoGroup("Import");
+
+    _importFileWithDialog(path, item_name, fps)
+
+    ret = {"name": importedComp.name, "id": importedComp.id}
+    app.endUndoGroup();
+
+    return JSON.stringify(ret);
+}
+
+
+function _importFileWithDialog(path, item_name, fps){
+
     importedCompArray = app.project.importFileWithDialog();
 
     if (importedCompArray == undefined){
@@ -352,14 +364,17 @@ function importFileWithDialog(path, item_name){
     importedCompFolder = getImportedCompFolder(importedComp);
 
     importedCompFolder.name = item_name;
-    importedComp.name = item_name
+    importedComp.name = item_name;
 
     renameFolderItems(importedCompFolder);
 
-    ret = {"name": importedComp.name, "id": importedComp.id}
-    app.endUndoGroup();
+    if (fps){
+        importedComp.frameRate = fps ;
+        setFolderItemsFPS(importedCompFolder, fps);
+    }
 
-    return JSON.stringify(ret);
+    return [importedComp, importedCompFolder]
+
 }
 
 
@@ -415,6 +430,16 @@ function getImportedCompFolder(importedComp){
 }
 
 
+function getLayerFromFolder(folder, layerName){
+    for (var index = 1; index <= folder.items.length; index++) {
+        if(folder.items[index].name == layerName){
+            return folder.items[index];
+        }
+    }
+    return undefined
+}
+
+
 function renameFolderItems(folder){
     for (var index = 1; index <= folder.items.length; index++) {
         folderItem = folder.items[index];
@@ -465,18 +490,24 @@ function replaceItem(item_id, path, item_name){
         return _prepareError("File " + path + " not found.");
     }
     var item = app.project.itemByID(item_id);
+
     if (item){
         try{
-            if (isFileSequence(item)) {
+            if (isComp(item)){
+                result = replaceCompSequenceItems(item, path, item_name)
+                if (!(result)){ return '' }
+            }else if (isFileSequence(item)) {
                 item.replaceWithSequence(fp, false);
             }else{
                 item.replace(fp);
             }
 
             item.name = item_name;
+
         } catch (error) {
             return _prepareError(error.toString() + path);
         } finally {
+
             fp.close();
         }
     }else{
@@ -484,6 +515,128 @@ function replaceItem(item_id, path, item_name){
     }
     app.endUndoGroup();
 }
+
+
+function replaceCompSequenceItems(item, path, item_name){
+    /**
+     * Replaces all elements from given composition with selected comp.
+     * It will also delete elements that are absent in newer version
+     * and add newer elements to already loaded composition.
+     *
+     * Args:
+     *    item_id (int): id of composition, not a index!
+     *    path (string): absolute path to new file
+     *    item_name (string): new composition name
+     */
+
+    var previousCompFolder = getImportedCompFolder(item);
+    app.project.setDefaultImportFolder(new Folder(path));
+
+    var importedObjects = _importFileWithDialog(path, item_name, undefined)
+    if (importedComp == undefined){
+        throw new Error("An error occured when importing file through After Effects dialog. Abort action.");
+    }
+    var importedComp = importedObjects[0]
+    var importedFolder = importedObjects[1]
+
+    var deletedLayers = []
+    var deletedLayersNames = []
+    for (var index = 1; index <= item.numLayers; index++) {
+        var sourceLayer = item.layer(index);
+        var targetLayer = getLayerFromFolder(importedFolder, sourceLayer)
+        if (targetLayer){
+            sourceLayer.replaceSource(targetLayer, true);
+        } else {
+            deletedLayers.push(sourceLayer)
+            deletedLayersNames.push(sourceLayer.name)
+        }
+    }
+
+    _delete_layers_dialog(item, importedComp)
+    _add_new_layers_dialog(item, importedComp)
+
+    importedComp.remove();
+    previousCompFolder.remove();
+}
+
+
+function _delete_layers_dialog(compItem, deletedLayers){
+    /**
+     * Delete all elements in given compItem that are
+     * listed in given deletedLayers array.
+     * A prompt ask for confirmation before deletion.
+     * Args:
+     *    compItem(compItem): given compItem on which we wants to perform deletion
+     *    deletedLayers(array): array of layers to delete.
+     */
+
+
+    if (deletedLayers.length > 0){
+        var importConfirmation = confirm(
+            "Composition '" + compItem.name +
+            "' : some elements has been deleted from newer version. Do you want to continue import ?"
+        )
+        if (!(importConfirmation)){
+            // User has canceled the action, so we stop the script here
+            // and return an empty value to avoid parse errors later
+            undoLastActions();
+            return ''
+        }
+
+        var deletionConfirmation = confirm(
+            "Do you want to delete the following elements from composition '" +
+            compItem.name + "' :\n -" +
+            deletedLayersNames.join('\n -')
+        )
+        if (deletionConfirmation){
+            for (var index = 0; index < deletedLayers.length; index++) {
+                deletedLayers[index].remove()
+            }
+        }
+    }
+
+}
+
+
+function _add_new_layers_dialog(compItem, importedComp){
+    /**
+     * Add in composition all imported elements from
+     * importedComp that are missing in compItem.
+     * A prompt ask for confirmation before addition.
+     * Args:
+     *    compItem(compItem): given compItem in which we wants to add missing layers
+     *    importedComp(compItem): compItem used for comparison
+     */
+
+    var additionalLayers = []
+    var additionalLayersNames = []
+    for (var index=1; index <= importedComp.numLayers; index++){
+        var target_layer = importedComp.layer(index)
+        var source_layer = compItem.layer(target_layer.name)
+        if (!(source_layer)){
+            additionalLayers.push(target_layer)
+            additionalLayersNames.push(target_layer.name)
+        }
+    }
+
+    if (additionalLayersNames.length > 0){
+        var additionConfirmation = confirm(
+            "New elements have been detected in newer version. Do you want to add them to composition '" +
+            compItem.name + "' ?\n -" +
+            additionalLayersNames.join('\n -')
+        )
+        if (additionConfirmation){
+            for(var index=0; index < additionalLayers.length; index++){
+                var additionalLayer = additionalLayers[index]
+                additionalLayer.copyToComp(compItem)
+                var duplicatedLayer = compItem.layer(additionalLayer.name)
+                var targetIndex = importedComp.layer(duplicatedLayer.name).index
+                duplicatedLayer.moveAfter(compItem.layer(targetIndex))
+            }
+        }
+    }
+}
+
 
 function renameItem(item_id, new_name){
     /**
@@ -952,6 +1105,12 @@ function isFileSequence (item){
 
     return false;
 }
+
+
+function isComp(item){
+    return (item instanceof CompItem)
+}
+
 
 function render(target_folder, comp_id){
     var out_dir = new Folder(target_folder);
