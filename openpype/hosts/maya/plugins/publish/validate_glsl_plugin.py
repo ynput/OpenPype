@@ -5,11 +5,13 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateGLSLPlugin(pyblish.api.InstancePlugin):
+class ValidateGLSLPlugin(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """
     Validate if the asset uses GLSL Shader
     """
@@ -19,8 +21,11 @@ class ValidateGLSLPlugin(pyblish.api.InstancePlugin):
     hosts = ['maya']
     label = 'maya2glTF plugin'
     actions = [RepairAction]
+    optional = False
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         if not cmds.pluginInfo("maya2glTF", query=True, loaded=True):
             raise PublishValidationError("maya2glTF is not loaded")
 

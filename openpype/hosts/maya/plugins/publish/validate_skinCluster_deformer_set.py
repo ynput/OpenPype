@@ -3,10 +3,14 @@ from maya import cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin):
+class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin,
+                                     OptionalPyblishPluginMixin):
     """Validate skinClusters on meshes have valid member relationships.
 
     In rare cases it can happen that a mesh has a skinCluster in its history
@@ -20,9 +24,12 @@ class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin):
     families = ['fbx']
     label = "Skincluster Deformer Relationships"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = False
 
     def process(self, instance):
         """Process all the transform nodes in the instance"""
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
 
         if invalid:

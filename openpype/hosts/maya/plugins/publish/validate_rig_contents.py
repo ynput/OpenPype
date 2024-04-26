@@ -3,11 +3,13 @@ from maya import cmds
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     PublishValidationError,
-    ValidateContentsOrder
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateRigContents(pyblish.api.InstancePlugin):
+class ValidateRigContents(pyblish.api.InstancePlugin,
+                          OptionalPyblishPluginMixin):
     """Ensure rig contains pipeline-critical content
 
     Every rig must contain at least two object sets:
@@ -21,11 +23,14 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["rig"]
     action = [openpype.hosts.maya.api.action.SelectInvalidAction]
+    optional = True
 
     accepted_output = ["mesh", "transform"]
     accepted_controllers = ["transform"]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(
@@ -213,6 +218,7 @@ class ValidateSkeletonRigContents(ValidateRigContents):
     label = "Skeleton Rig Contents"
     hosts = ["maya"]
     families = ["rig.fbx"]
+    optional = True
 
     @classmethod
     def get_invalid(cls, instance):

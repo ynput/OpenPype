@@ -8,11 +8,13 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
+class ValidateAssRelativePaths(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Ensure exporting ass file has set relative texture paths"""
 
     order = ValidateContentsOrder
@@ -20,8 +22,11 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
     families = ['ass']
     label = "ASS has relative texture paths"
     actions = [RepairAction]
+    optional = False
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         # we cannot ask this until user open render settings as
         # `defaultArnoldRenderOptions` doesn't exist
         errors = []

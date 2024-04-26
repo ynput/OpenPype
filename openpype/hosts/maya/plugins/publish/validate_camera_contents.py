@@ -3,10 +3,13 @@ from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidateContentsOrder)
+    PublishValidationError,
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin)
 
 
-class ValidateCameraContents(pyblish.api.InstancePlugin):
+class ValidateCameraContents(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Validates Camera instance contents.
 
     A Camera instance may only hold a SINGLE camera's transform, nothing else.
@@ -22,6 +25,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
     label = 'Camera Contents'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     validate_shapes = True
+    optional = False
 
     @classmethod
     def get_invalid(cls, instance):
@@ -71,7 +75,8 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the nodes in the instance"""
-
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError("Invalid camera contents: "

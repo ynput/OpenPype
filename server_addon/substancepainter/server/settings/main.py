@@ -1,5 +1,6 @@
 from ayon_server.settings import BaseSettingsModel, SettingsField
 from .imageio import ImageIOSettings, DEFAULT_IMAGEIO_SETTINGS
+from .load_plugins import LoadersModel, DEFAULT_LOADER_SETTINGS
 
 
 class ShelvesSettingsModel(BaseSettingsModel):
@@ -17,9 +18,12 @@ class SubstancePainterSettings(BaseSettingsModel):
         default_factory=list,
         title="Shelves"
     )
+    load: LoadersModel = SettingsField(
+        default_factory=DEFAULT_LOADER_SETTINGS, title="Loaders")
 
 
 DEFAULT_SPAINTER_SETTINGS = {
     "imageio": DEFAULT_IMAGEIO_SETTINGS,
-    "shelves": []
+    "shelves": [],
+    "load": DEFAULT_LOADER_SETTINGS,
 }
