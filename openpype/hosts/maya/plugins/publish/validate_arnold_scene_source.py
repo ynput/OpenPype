@@ -24,7 +24,9 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         # extraction to ignore the node.
         nodes = instance.data["members"] + instance.data.get("proxy", [])
         nodes = [x for x in nodes if cmds.objectType(x, isAType='dagNode')]
-        hidden_nodes = [x for x in nodes if not is_visible(x)]
+        hidden_nodes = [
+            x for x in nodes if not is_visible(x, intermediateObject=False)
+        ]
         if hidden_nodes:
             raise PublishValidationError(
                 "Found hidden nodes:\n\n{}\n\nPlease unhide for"
