@@ -163,6 +163,10 @@
                     "name": "schema_project_unreal"
                 },
                 {
+                    "type": "schema",
+                    "name": "schema_project_equalizer"
+                },
+                {
                     "type": "dynamic_schema",
                     "name": "project_settings/global"
                 }

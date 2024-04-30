@@ -186,6 +186,8 @@ class ApplicationsSettings(BaseSettingsModel):
         default_factory=AppGroupWithPython, title="Unreal Editor")
     wrap: AppGroup = SettingsField(
         default_factory=AppGroupWithPython, title="Wrap")
+    equalizer: AppGroup = SettingsField(
+        default_factory=AppGroupWithPython, title="3DEqualizer")
     additional_apps: list[AdditionalAppGroup] = SettingsField(
         default_factory=list, title="Additional Applications")
 

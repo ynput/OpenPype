@@ -1175,6 +1175,57 @@
                 }
             ]
         },
+        "djvview": {
+            "enabled": true,
+            "label": "DJV View",
+            "icon": "{}/app_icons/djvView.png",
+            "host_name": "",
+            "environment": "{}",
+            "variants": [
+                {
+                    "name": "1-1",
+                    "label": "1.1",
+                    "executables": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": "{}"
+                }
+            ]
+        },
+        "equalizer": {
+            "enabled": true,
+            "label": "3DEqualizer",
+            "icon": "{}/app_icons/3de4.png",
+            "host_name": "equalizer",
+            "environment": "{}",
+            "variants": [
+                {
+                    "name": "7-1v2",
+                    "label": "7.1v2",
+                    "use_python_2": false,
+                    "executables": {
+                        "windows": [
+                            "C:\\Program Files\\3DE4_win64_r7.1v2\\bin\\3DE4.exe"
+                        ],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": "{}"
+                }
+            ]
+        },
         "wrap": {
             "enabled": true,
             "label": "Wrap",
