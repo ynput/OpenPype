@@ -89,11 +89,6 @@ class CreateArnoldSceneSource(plugin.MayaCreator):
 
         return defs
 
-    def create(self, subset_name, instance_data, pre_create_data):
-        super(CreateArnoldSceneSource, self).create(
-            subset_name, instance_data, pre_create_data
-        )
-
 
 class CreateArnoldSceneSourceProxy(CreateArnoldSceneSource):
     """Arnold Scene Source Proxy
