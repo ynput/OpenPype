@@ -129,6 +129,23 @@
                             }
                         },
                         {
+                            "type": "text",
+                            "key": "workfile_start_frame",
+                            "label": "Workfile Start Frame"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "auto_assign_to_asset",
+                            "label": "Auto Asset Assign",
+                            "default": false
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "keep_clip",
+                            "label": "Don't Delete Clip When Review",
+                            "default": false
+                        },
+                        {
                             "type": "splitter"
                         },
                         {
