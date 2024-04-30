@@ -74,7 +74,7 @@ def get_containers():
 
 def add_container(container: Container):
     context_data = get_context_data()
-    containers = get_containers()
+    containers = get_context_data().get("containers", [])
 
     for _container in containers:
         if _container["name"] == container.name and _container["namespace"] == container.namespace:  # noqa: E501

@@ -37,6 +37,9 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     _instance = None
 
     def __new__(cls):
+        # singleton - ensure only one instance of the host is created.
+        # This is necessary because 3DEqualizer doesn't have a way to
+        # store custom data, so we need to store it in the project notes.
         if not hasattr(cls, "_instance") or not cls._instance:
             cls._instance = super(EqualizerHost, cls).__new__(cls)
         return cls._instance
