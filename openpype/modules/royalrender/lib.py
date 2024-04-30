@@ -18,6 +18,7 @@ from openpype.modules.royalrender.rr_job import (
     RRJob,
     RREnvList,
     get_rr_platform,
+    SubmitterParameter
 )
 from openpype.pipeline import OpenPypePyblishPluginMixin
 from openpype.pipeline.publish import KnownPublishError
@@ -110,7 +111,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         if not self._rr_root:
             raise KnownPublishError(
                 ("Missing RoyalRender root. "
-                 "You need to configure RoyalRender module."))
+                 "Admin needs to configure RoyalRender module in Settings ."))
 
         self.rr_api = rrApi(self._rr_root)
 
@@ -175,6 +176,19 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             instance, render_path, start_frame, end_frame)
         instance.data["expectedFiles"].extend(expected_files)
 
+        submitter_parameters = []
+
+        anatomy_data = instance.context.data["anatomyData"]
+        environment = RREnvList({
+            "AVALON_PROJECT": anatomy_data["project"]["name"],
+            "AVALON_ASSET": instance.context.data["asset"],
+            "AVALON_TASK": anatomy_data["task"]["name"],
+            "AVALON_APP_NAME": instance.context.data.get("appName"),
+            "AYON_RENDER_JOB": "1",
+            "AYON_BUNDLE_NAME": os.environ["AYON_BUNDLE_NAME"]
+        })
+
+        render_dir = render_dir.replace("\\", "/")
         job = RRJob(
             Software="",
             Renderer="",
@@ -185,7 +199,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             Version=0,
             SceneName=script_path,
             IsActive=True,
-            ImageDir=render_dir.replace("\\", "/"),
+            ImageDir=render_dir,
             ImageFilename=file_name,
             ImageExtension=file_ext,
             ImagePreNumberLetter="",
@@ -197,7 +211,10 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             CompanyProjectName=instance.context.data["projectName"],
             ImageWidth=instance.data["resolutionWidth"],
             ImageHeight=instance.data["resolutionHeight"],
-            CustomAttributes=custom_attributes
+            CustomAttributes=custom_attributes,
+            SubmitterParameters=submitter_parameters,
+            rrEnvList=environment.serialize(),
+            rrEnvFile=os.path.join(render_dir, "rrEnv.rrEenv"),
         )
 
         return job
@@ -307,68 +324,3 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             path = path.replace(first_frame, "#" * padding)
 
         return path
-
-    def inject_environment(self, instance, job):
-        # type: (pyblish.api.Instance, RRJob) -> RRJob
-        """Inject environment variables for RR submission.
-
-        This function mimics the behaviour of the Deadline
-        integration. It is just temporary solution until proper
-        runtime environment injection is implemented in RR.
-
-        Args:
-            instance (pyblish.api.Instance): Publishing instance
-            job (RRJob): RRJob instance to be injected.
-
-        Returns:
-            RRJob: Injected RRJob instance.
-
-        Throws:
-            RuntimeError: If any of the required env vars is missing.
-
-        """
-
-        temp_file_name = "{}_{}.json".format(
-            datetime.utcnow().strftime('%Y%m%d%H%M%S%f'),
-            str(uuid.uuid1())
-        )
-
-        export_url = os.path.join(tempfile.gettempdir(), temp_file_name)
-        print(">>> Temporary path: {}".format(export_url))
-
-        args = [
-            "--headless",
-            "extractenvironments",
-            export_url
-        ]
-
-        anatomy_data = instance.context.data["anatomyData"]
-
-        add_kwargs = {
-            "project": anatomy_data["project"]["name"],
-            "asset": instance.context.data["asset"],
-            "task": anatomy_data["task"]["name"],
-            "app": instance.context.data.get("appName"),
-            "envgroup": "farm"
-        }
-
-        if os.getenv('IS_TEST'):
-            args.append("--automatic-tests")
-
-        if not all(add_kwargs.values()):
-            raise RuntimeError((
-                "Missing required env vars: AVALON_PROJECT, AVALON_ASSET,"
-                " AVALON_TASK, AVALON_APP_NAME"
-            ))
-
-        for key, value in add_kwargs.items():
-            args.extend([f"--{key}", value])
-        self.log.debug("Executing: {}".format(" ".join(args)))
-        run_openpype_process(*args, logger=self.log)
-
-        self.log.debug("Loading file ...")
-        with open(export_url) as fp:
-            contents = json.load(fp)
-
-        job.rrEnvList = RREnvList(contents).serialize()
-        return job
