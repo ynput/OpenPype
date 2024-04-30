@@ -1326,18 +1326,12 @@ def is_visible(node,
             return False
 
     if displayLayer:
-        # If a display layer is connected, it'll override the value of
-        # "overrideVisibility" which ends up returning 0, so we need to query
-        # the connected display layer.
-        display_layers = cmds.listConnections(node, type="displayLayer")
-        if display_layers:
-            if not cmds.getAttr("{}.visibility".format(display_layers[0])):
-                return False
-        else:
+        # Display layers set overrideEnabled and overrideVisibility on members
+        if cmds.attributeQuery('overrideEnabled', node=node, exists=True):
             override_enabled = cmds.getAttr('{}.overrideEnabled'.format(node))
             override_visibility = cmds.getAttr('{}.overrideVisibility'.format(
                 node))
-            if override_enabled and override_visibility:
+            if override_enabled and not override_visibility:
                 return False
 
     if parentHidden:
