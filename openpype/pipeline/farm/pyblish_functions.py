@@ -620,14 +620,31 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         aov_patterns = aov_filter
 
         preview = match_aov_pattern(app, aov_patterns, render_file_name)
-        # toggle preview on if multipart is on
-        if instance.data.get("multipartExr"):
-            log.debug("Adding preview tag because its multipartExr")
-            preview = True
 
         new_instance = deepcopy(skeleton)
         new_instance["subset"] = subset_name
         new_instance["subsetGroup"] = group_name
+
+        # toggle preview on if multipart is on
+        # Because we cant query the multipartExr data member of each AOV we'll
+        # need to have hardcoded rule of excluding any renders with
+        # "cryptomatte" in the file name from being a multipart EXR. This issue
+        # happens with Redshift that forces Cryptomatte renders to be separate
+        # files even when the rest of the AOVs are merged into a single EXR.
+        # There might be an edge case where the main instance has cryptomatte
+        # in the name even though it's a multipart EXR.
+        if instance.data.get("renderer") == "redshift":
+            if (
+                instance.data.get("multipartExr") and
+                "cryptomatte" not in render_file_name.lower()
+            ):
+                log.debug("Adding preview tag because it's multipartExr")
+                preview = True
+            else:
+                new_instance["multipartExr"] = False
+        elif instance.data.get("multipartExr"):
+            log.debug("Adding preview tag because its multipartExr")
+            preview = True
 
         # explicitly disable review by user
         preview = preview and not do_not_add_review

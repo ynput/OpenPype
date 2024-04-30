@@ -121,6 +121,7 @@ class MayaSubmitRemotePublishDeadline(
             environment["AYON_REMOTE_PUBLISH"] = "1"
         else:
             environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
+            environment["AVALON_DB"] = os.environ.get("AVALON_DB")
         for key, value in environment.items():
             job_info.EnvironmentKeyValue[key] = value
 

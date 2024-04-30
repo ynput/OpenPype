@@ -146,6 +146,7 @@ class ProcessSubmittedCacheJobOnFarm(pyblish.api.InstancePlugin,
             environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
             deadline_plugin = "Ayon"
         else:
+            environment["AVALON_DB"] = os.environ["AVALON_DB"]
             environment["OPENPYPE_PUBLISH_JOB"] = "1"
             environment["OPENPYPE_RENDER_JOB"] = "0"
             environment["OPENPYPE_REMOTE_PUBLISH"] = "0"

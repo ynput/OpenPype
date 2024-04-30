@@ -18,10 +18,9 @@ Providing functionality:
                  - returning all available viewers
                    found in input config path.
 """
-
+import os
 import click
 import json
-from pathlib import Path
 import PyOpenColorIO as ocio
 
 
@@ -76,14 +75,12 @@ def get_colorspace(in_path, out_path):
     > pyton.exe ./ocio_wrapper.py config get_colorspace
         --in_path=<path> --out_path=<path>
     """
-    json_path = Path(out_path)
-
     out_data = _get_colorspace_data(in_path)
 
-    with open(json_path, "w") as f_:
+    with open(out_path, "w") as f_:
         json.dump(out_data, f_)
 
-    print(f"Colorspace data are saved to '{json_path}'")
+    print("Colorspace data are saved to '{}'".format(out_path))
 
 
 def _get_colorspace_data(config_path):
@@ -98,13 +95,11 @@ def _get_colorspace_data(config_path):
     Returns:
         dict: aggregated available colorspaces
     """
-    config_path = Path(config_path)
-
-    if not config_path.is_file():
+    if not os.path.isfile(config_path):
         raise IOError(
-            f"Input path `{config_path}` should be `config.ocio` file")
+            "Input path `{}` should be `config.ocio` file".format(config_path))
 
-    config = ocio.Config().CreateFromFile(str(config_path))
+    config = ocio.Config().CreateFromFile(config_path)
 
     colorspace_data = {
         "roles": {},
@@ -118,10 +113,9 @@ def _get_colorspace_data(config_path):
             for color in config.getColorSpaces()
         },
         "displays_views": {
-            f"{view} ({display})": {
+            "{} ({})".format(display, view): {
                 "display": display,
                 "view": view
-
             }
             for display in config.getDisplays()
             for view in config.getViews(display)
@@ -174,14 +168,12 @@ def get_views(in_path, out_path):
     > pyton.exe ./ocio_wrapper.py config get_views \
         --in_path=<path> --out_path=<path>
     """
-    json_path = Path(out_path)
-
     out_data = _get_views_data(in_path)
 
-    with open(json_path, "w") as f_:
+    with open(out_path, "w") as f_:
         json.dump(out_data, f_)
 
-    print(f"Viewer data are saved to '{json_path}'")
+    print("Viewer data are saved to '{}'".format(out_path))
 
 
 def _get_views_data(config_path):
@@ -196,22 +188,21 @@ def _get_views_data(config_path):
     Returns:
         dict: aggregated available viewers
     """
-    config_path = Path(config_path)
-
-    if not config_path.is_file():
+    if not os.path.isfile(config_path):
         raise IOError("Input path should be `config.ocio` file")
 
-    config = ocio.Config().CreateFromFile(str(config_path))
+    config = ocio.Config().CreateFromFile(config_path)
 
     data_ = {}
     for display in config.getDisplays():
         for view in config.getViews(display):
             colorspace = config.getDisplayViewColorSpaceName(display, view)
-            # Special token. See https://opencolorio.readthedocs.io/en/latest/guides/authoring/authoring.html#shared-views # noqa
+            # Special token.
+            # See https://opencolorio.readthedocs.io/en/latest/guides/authoring/authoring.html#shared-views # noqa
             if colorspace == "<USE_DISPLAY_NAME>":
                 colorspace = display
 
-            data_[f"{display}/{view}"] = {
+            data_["{}/{}".format(display, view)] = {
                 "display": display,
                 "view": view,
                 "colorspace": colorspace
@@ -247,14 +238,12 @@ def get_version(config_path, out_path):
     > pyton.exe ./ocio_wrapper.py config get_version \
         --config_path=<path> --out_path=<path>
     """
-    json_path = Path(out_path)
-
     out_data = _get_version_data(config_path)
 
-    with open(json_path, "w") as f_:
+    with open(out_path, "w") as f_:
         json.dump(out_data, f_)
 
-    print(f"Config version data are saved to '{json_path}'")
+    print("Config version data are saved to '{}'".format(out_path))
 
 
 def _get_version_data(config_path):
@@ -269,12 +258,10 @@ def _get_version_data(config_path):
     Returns:
         dict: minor and major keys with values
     """
-    config_path = Path(config_path)
-
-    if not config_path.is_file():
+    if not os.path.isfile(config_path):
         raise IOError("Input path should be `config.ocio` file")
 
-    config = ocio.Config().CreateFromFile(str(config_path))
+    config = ocio.Config().CreateFromFile(config_path)
 
     return {
         "major": config.getMajorVersion(),
@@ -317,15 +304,13 @@ def get_config_file_rules_colorspace_from_filepath(
         colorspace get_config_file_rules_colorspace_from_filepath \
         --config_path=<path> --filepath=<path> --out_path=<path>
     """
-    json_path = Path(out_path)
-
     colorspace = _get_config_file_rules_colorspace_from_filepath(
         config_path, filepath)
 
-    with open(json_path, "w") as f_:
+    with open(out_path, "w") as f_:
         json.dump(colorspace, f_)
 
-    print(f"Colorspace name is saved to '{json_path}'")
+    print("Colorspace name is saved to '{}'".format(out_path))
 
 
 def _get_config_file_rules_colorspace_from_filepath(config_path, filepath):
@@ -341,16 +326,14 @@ def _get_config_file_rules_colorspace_from_filepath(config_path, filepath):
     Returns:
         dict: aggregated available colorspaces
     """
-    config_path = Path(config_path)
-
-    if not config_path.is_file():
+    if not os.path.isfile(config_path):
         raise IOError(
-            f"Input path `{config_path}` should be `config.ocio` file")
+            "Input path `{}` should be `config.ocio` file".format(config_path))
 
-    config = ocio.Config().CreateFromFile(str(config_path))
+    config = ocio.Config().CreateFromFile(config_path)
 
     # TODO: use `parseColorSpaceFromString` instead if ocio v1
-    colorspace = config.getColorSpaceFromFilepath(str(filepath))
+    colorspace = config.getColorSpaceFromFilepath(filepath)
 
     return colorspace
 
@@ -370,13 +353,10 @@ def _get_display_view_colorspace_name(config_path, display, view):
     Returns:
         view color space name (str) e.g. "Output - sRGB"
     """
-
-    config_path = Path(config_path)
-
-    if not config_path.is_file():
+    if not os.path.isfile(config_path):
         raise IOError("Input path should be `config.ocio` file")
 
-    config = ocio.Config.CreateFromFile(str(config_path))
+    config = ocio.Config.CreateFromFile(config_path)
     colorspace = config.getDisplayViewColorSpaceName(display, view)
 
     return colorspace
@@ -427,7 +407,8 @@ def get_display_view_colorspace_name(in_path, out_path,
     with open(out_path, "w") as f:
         json.dump(out_data, f)
 
-    print(f"Display view colorspace saved to '{out_path}'")
+    print("Display view colorspace saved to '{}'".format(out_path))
+
 
 if __name__ == '__main__':
     main()
