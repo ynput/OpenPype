@@ -107,10 +107,8 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             sequence = is_sequence(os.listdir(os.path.dirname(repre_path)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
-            fps = (
-                float(version["data"].get("fps")) or get_current_session_fps()
-            )
-            cmds.setAttr(standin_shape + ".abcFPS", fps)
+            fps = version["data"].get("fps") or get_current_session_fps()
+            cmds.setAttr(standin_shape + ".abcFPS", float(fps))
 
         nodes = [root, standin, standin_shape]
         if operator is not None:
