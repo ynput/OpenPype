@@ -1,0 +1,28 @@
+{
+  "type": "dict",
+  "collapsible": true,
+  "key": "create",
+  "label": "Creator plugins",
+  "children": [
+    {
+      "type": "dict",
+      "collapsible": true,
+      "key": "CreateMatchMove",
+      "label": "Create Match Move",
+      "checkbox_key": "enabled",
+      "children": [
+        {
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "type": "list",
+          "key": "default_variants",
+          "label": "Default Variants",
+          "object_type": "text"
+        }
+      ]
+    }
+  ]
+}

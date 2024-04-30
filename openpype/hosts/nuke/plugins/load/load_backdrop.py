@@ -25,7 +25,7 @@ from openpype.hosts.nuke.api import containerise, update_container
 class LoadBackdropNodes(load.LoaderPlugin):
     """Loading Published Backdrop nodes (workfile, nukenodes)"""
 
-    families = ["workfile", "nukenodes"]
+    families = ["workfile", "nukenodes", "matchmove"]
     representations = ["*"]
     extensions = {"nk"}
 

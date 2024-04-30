@@ -25,7 +25,7 @@ from openpype.hosts.nuke.api import (
 class LoadGizmo(load.LoaderPlugin):
     """Loading nuke Gizmo"""
 
-    families = ["gizmo"]
+    families = ["gizmo", "lensDistortion"]
     representations = ["*"]
     extensions = {"nk"}
 

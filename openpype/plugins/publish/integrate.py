@@ -142,7 +142,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "blendScene",
                 "yeticacheUE",
                 "tycache",
-                "tyspline"
+                "tyspline",
+                "lensDistortion",
                 ]
 
     default_template_name = "publish"
