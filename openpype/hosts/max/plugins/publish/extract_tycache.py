@@ -110,7 +110,8 @@ class ExtractTyCache(publish.Extractor):
             filenames.append(filename)
         return filenames
 
-    def _extract_tyflow_particles(self, operator, filepath, export_mode, material_cache):
+    def _extract_tyflow_particles(self, operator, filepath,
+                                  export_mode, material_cache):
         """Exports tyCache particle with the necessary export settings
 
         Args:
@@ -119,7 +120,8 @@ class ExtractTyCache(publish.Extractor):
             end (int): End frame.
             filepath (str): Output path of the TyCache file.
             export_mode (int): Export Mode for the TyCache Output.
-            material_cache (bool): Whether tycache should publish along with material
+            material_cache (bool): Whether tycache should publish
+                along with material
 
         """
         if rt.getProperty(operator, "exportMode") != export_mode:
