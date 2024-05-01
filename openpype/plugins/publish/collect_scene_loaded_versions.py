@@ -20,7 +20,8 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
         "nuke",
         "photoshop",
         "resolve",
-        "tvpaint"
+        "tvpaint",
+        "equalizer",
     ]
 
     def process(self, context):

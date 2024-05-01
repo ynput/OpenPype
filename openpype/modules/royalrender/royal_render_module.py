@@ -3,6 +3,9 @@
 import os
 import openpype.modules
 from openpype.modules import OpenPypeModule, IPluginPaths
+from openpype import AYON_SERVER_ENABLED
+from openpype.lib import Logger
+
 
 
 class RoyalRenderModule(OpenPypeModule, IPluginPaths):
@@ -30,6 +33,11 @@ class RoyalRenderModule(OpenPypeModule, IPluginPaths):
         rr_settings = module_settings[self.name]
         self.enabled = rr_settings["enabled"]
         self.rr_paths = rr_settings.get("rr_paths")
+
+        # Ayon only
+        if not AYON_SERVER_ENABLED:
+            self.log.info("RoyalRender is not implemented for Openpype")
+            self.enabled = False
 
     @staticmethod
     def get_plugin_paths():

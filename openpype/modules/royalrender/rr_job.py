@@ -173,6 +173,7 @@ class RRJob(object):
     # Environment
     # only used in RR 8.3 and newer
     rrEnvList = attr.ib(default=None, type=str)  # type: str
+    rrEnvFile = attr.ib(default=None, type=str)  # type: str
 
 
 class SubmitterParameter:
