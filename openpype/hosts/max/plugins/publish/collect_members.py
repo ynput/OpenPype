@@ -22,9 +22,8 @@ class CollectMembers(pyblish.api.InstancePlugin):
         if instance.data["family"] in {"tycache", "tyspline"}:
             instance.data["operator"] = next(
                 (node for node in get_tyflow_export_operators()
-                 if node.name == instance.data["subset"]), None)   # noqa
+                 if node.name == instance.data["operatorName"]), None)   # noqa
             self.log.debug("operator: {}".format(instance.data["operator"]))
-
         elif instance.data.get("instance_node"):
             container = rt.GetNodeByName(instance.data["instance_node"])
             instance.data["members"] = [

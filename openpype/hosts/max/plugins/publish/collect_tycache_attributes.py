@@ -1,4 +1,5 @@
 import pyblish.api
+import re
 import copy
 from openpype.lib import BoolDef
 from openpype.pipeline.publish import AYONPyblishPluginMixin
@@ -37,15 +38,19 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
             tyc_instance = context.create_instance(tyc_product_name)
             tyc_instance[:] = instance[:]
             tyc_instance.data.update(copy.deepcopy(dict(instance.data)))
+            # Replace all runs of whitespace with underscore
+            prod_name = re.sub(r"\s+", "_", tyc_product_name)
             export_mode = instance.data["tyc_exportMode"]
             tyc_instance.data.update({
-                "name": f"{export_mode}_{tyc_product_name}",
-                "label": f"{export_mode}_{tyc_product_name}",
+                "name": f"{export_mode}_{prod_name}",
+                "label": f"{export_mode}_{prod_name}",
                 "family": export_mode,
                 "families": [export_mode],
-                "subset": tyc_product_name,
+                "subset": prod_name,
+                "operatorName": tyc_product_name,
                 "exportMode": (
                     2 if instance.data["tyc_exportMode"] == "tycache" else 6),
+                "material_cache": attr_values.get("material"),
                 "productType": export_mode,
                 "creator_identifier": (
                     f"io.openpype.creators.max.{export_mode}"),
@@ -61,5 +66,8 @@ class CollectTyFlowData(pyblish.api.InstancePlugin,
         return [
             BoolDef("has_frame_range_validator",
                     label="Validate TyCache Frame Range",
-                    default=cls.validate_tycache_frame_range)
+                    default=cls.validate_tycache_frame_range),
+            BoolDef("material",
+                    label="Publish along with Material",
+                    default=True)
         ]

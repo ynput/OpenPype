@@ -33,6 +33,7 @@ class ExtractTyCache(publish.Extractor):
         stagingdir = self.staging_dir(instance)
 
         export_mode = instance.data.get("exportMode", 2)
+        material_cache = instance.data.get("material_cache", True)
         operator = instance.data["operator"]
         representations = instance.data.setdefault("representations", [])
         start_frame = instance.data["frameStartHandle"]
@@ -45,7 +46,8 @@ class ExtractTyCache(publish.Extractor):
             path = os.path.join(stagingdir, filename)
             filenames = self.get_files(
                 instance, name, start_frame, end_frame)
-            self._extract_tyflow_particles(operator, path, export_mode)
+            self._extract_tyflow_particles(
+                operator, path, export_mode, material_cache)
             mesh_filename = f"{instance.name}_{name}__tyMesh.tyc"
             tyc_fnames.extend(filenames)
             tyc_mesh_fnames.append(mesh_filename)
@@ -67,6 +69,20 @@ class ExtractTyCache(publish.Extractor):
             "stagingDir": stagingdir
         }
         representations.append(mesh_repres)
+        # Get the material filename of which assigned in
+        # tyCache for extraction
+        material_filename = f"{instance.name}__tyMtl.mat"
+        full_material_name = os.path.join(stagingdir, material_filename)
+        full_material_name = full_material_name.replace("\\", "/")
+        if material_cache and os.path.exists(full_material_name):
+            mateiral_repres = {
+                "name": 'tyMtl',
+                "ext": 'mat',
+                'files': material_filename,
+                'stagingDir': stagingdir,
+                "outputName": '__tyMtl'
+            }
+            representations.append(mateiral_repres)
         self.log.debug(
             f"Extracted instance '{instance.name}' to: {stagingdir}")
 
@@ -94,7 +110,7 @@ class ExtractTyCache(publish.Extractor):
             filenames.append(filename)
         return filenames
 
-    def _extract_tyflow_particles(self, operator, filepath, export_mode):
+    def _extract_tyflow_particles(self, operator, filepath, export_mode, material_cache):
         """Exports tyCache particle with the necessary export settings
 
         Args:
@@ -103,6 +119,7 @@ class ExtractTyCache(publish.Extractor):
             end (int): End frame.
             filepath (str): Output path of the TyCache file.
             export_mode (int): Export Mode for the TyCache Output.
+            material_cache (bool): Whether tycache should publish along with material
 
         """
         if rt.getProperty(operator, "exportMode") != export_mode:
@@ -110,6 +127,7 @@ class ExtractTyCache(publish.Extractor):
         export_settings = {
             "tycacheCreateObject": False,
             "tycacheCreateObjectIfNotCreated": False,
+            "tycacheChanMaterials": True if material_cache else False,
             "tyCacheFilename": filepath.replace("\\", "/"),
         }
 
