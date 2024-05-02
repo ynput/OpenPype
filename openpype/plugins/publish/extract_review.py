@@ -314,10 +314,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         layer_name
     ):
         fill_data = copy.deepcopy(instance.data["anatomyData"])
-        from pprint import pprint
-        print ("___________________________________________________________________________")
-        pprint(instance.data)
-        print("___________________________________________________________________________")
 
         for _output_def in output_definitions:
             output_def = copy.deepcopy(_output_def)
