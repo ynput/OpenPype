@@ -199,6 +199,37 @@ MS_TYCACHE_ATTRIB = """attributes "AYONTyCacheData"
             export_node.items = join temp_arr new_temp_arr
             sel_list = export_node.items
         )
+        on button_refresh pressed do
+        (
+            handle_arr = #()
+            for obj in Objects do
+            (
+                if classof obj == tyflow then
+                (
+                    member = obj.baseobject
+                    anim_names = GetSubAnimNames member
+                    for anim_name in anim_names do
+                    (
+                        sub_anim = GetSubAnim member anim_name
+                        if isKindOf sub_anim tyEvent do
+                        (
+                            node_names = GetSubAnimNames sub_anim
+                            for node_name in node_names do
+                            (
+                                node_sub_anim = GetSubAnim sub_anim node_name
+                                if hasProperty node_sub_anim "exportMode" do
+                                (
+                                    node_str = node_sub_anim.name as string
+                                    append handle_arr node_str
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            tyc_handles = handle_arr
+            tyflow_node.items = handle_arr
+        )
         on Cacheparams open do
         (
             temp_arr = #()
