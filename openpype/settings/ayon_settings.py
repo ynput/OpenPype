@@ -1041,11 +1041,6 @@ def _convert_deadline_project_settings(ayon_settings, output):
         ayon_deadline.pop(key)
 
     ayon_deadline_publish = ayon_deadline["publish"]
-    limit_groups = {
-        item["name"]: item["value"]
-        for item in ayon_deadline_publish["NukeSubmitDeadline"]["limit_groups"]
-    }
-    ayon_deadline_publish["NukeSubmitDeadline"]["limit_groups"] = limit_groups
 
     maya_submit = ayon_deadline_publish["MayaSubmitDeadline"]
     for json_key in ("jobInfo", "pluginInfo"):
