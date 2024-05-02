@@ -1,6 +1,123 @@
 # Changelog
 
 
+## [3.18.9](https://github.com/ynput/OpenPype/tree/3.18.9)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.8...3.18.9)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Integration: 3DEqualizer integration <a href="https://github.com/ynput/OpenPype/pull/5868">#5868</a></summary>
+
+This PR is adding basic integration for 3DEqualizer4 from Science-D-Vision. Integration includes:
+- Workfiles
+- Loading plates (cameras)
+- Publishing scripts to Maya and Nuke
+- Publishing of lens data
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: abc options for Pointcache/Animation family - OP-5920 <a href="https://github.com/ynput/OpenPype/pull/5173">#5173</a></summary>
+
+Add all options for alembic extraction on `pointcache` and `animation` families.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>RoyalRender: environment injection on the server <a href="https://github.com/ynput/OpenPype/pull/6160">#6160</a></summary>
+
+Previously env vars were injected directly on the client during submission. That could have issues when environment on client machines is different than on workers.This PR tries similar approach as on DL when before job is rendered it queries Ayon to get environment variables for context.These variables are used to create `.rrEnv` file  and attach it to the job. That should provide rendering environment controlled by Ayon.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: colorspace settings aligned with nuke - AY-978 <a href="https://github.com/ynput/OpenPype/pull/6249">#6249</a></summary>
+
+In order to share the same colorspaces in the workfile in Hiero and Nuke, we need to bring back the workfile settings for colorspaces in Nuke.In Hiero we also need code to edit the project settings in memory and apply the colorspaces when launching Hiero so any new project gets the correct colorspaces. Due to Foundry not providing Python API methods for setting the project colorspaces, we need to go through the UI widgets to set them, when dealing with in-memory projects.Also small bugfix when saving the workfile without any sequences.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Make sure validators being shown in the Publisher UI when they set to be optional in AYON setting   <a href="https://github.com/ynput/OpenPype/pull/6257">#6257</a></summary>
+
+This PR is to make sure validators being shown correctly in the Publisher UI when they are being set to be optional in AYON setting.Ported from https://github.com/ynput/ayon-core/pull/201
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix Redshift cryptomatte multipartEXR <a href="https://github.com/ynput/OpenPype/pull/6240">#6240</a></summary>
+
+When using Redshift and rendering multipart EXRs, the instances for cryptomatte AOVs are getting falsely marked as multipart EXR even though they are being forced to be separate files by Redshift.Since we cannot query the AOVs multipart individually, we'll need a hardcoded rule.Ideally I guess AOVs should be separate instances in the publishing process but that is too big of a scope atm.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Substance Painter: Allow users to set texture resolutions when loading mesh to create project <a href="https://github.com/ynput/OpenPype/pull/6262">#6262</a></summary>
+
+This PR is to add the support of template settings in the mesh loaders for Substance project creation. User can customize and add template settings in AYON settings and apply it through the option mode(the button with memo icon).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: Submit Publish job error <a href="https://github.com/ynput/OpenPype/pull/6263">#6263</a></summary>
+
+Use get env to get the value of `AVALON_DB``AVALON_DB` environment variable is not initialized when using OpenPype in Ayon mode. which raise an error when using `os.environ["AVALON_DB"]`This PR changes it to `os.getenv("AVALON_DB")`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix: Removed double conversion of limit_groups <a href="https://github.com/ynput/OpenPype/pull/6265">#6265</a></summary>
+
+`limit_groups` settings got transformed twice. Kept nicer looking conversion.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.8](https://github.com/ynput/OpenPype/tree/3.18.8)
 
 
