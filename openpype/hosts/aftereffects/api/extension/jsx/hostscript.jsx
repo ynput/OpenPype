@@ -301,8 +301,13 @@ function importFile(path, item_name, import_options){
 
             if (app.project.selection.length == 2 &&
                 app.project.selection[0] instanceof FolderItem){
-                 comp.parentFolder = app.project.selection[0]
+                    comp.parentFolder = app.project.selection[0]
             }
+
+            if ('fps' in import_options){
+                comp.mainSource.conformFrameRate = import_options["fps"];
+            }
+
         } catch (error) {
             return _prepareError(error.toString() + importOptions.file.fsName);
         } finally {
@@ -322,7 +327,7 @@ function importFile(path, item_name, import_options){
 }
 
 
-function importFileWithDialog(path, item_name){
+function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
     importedCompArray = app.project.importFileWithDialog();
 
@@ -355,12 +360,23 @@ function importFileWithDialog(path, item_name){
         return _prepareError('Wrong file selected (incorrect asset / version).');
     }
 
-    importedCompFolder = getImportedCompFolder(importedComp);
+    try{
+        importedCompFolder = getImportedCompFolder(importedComp);
 
-    importedCompFolder.name = item_name;
-    importedComp.name = item_name
+        importedCompFolder.name = item_name;
+        importedComp.name = item_name;
 
-    renameFolderItems(importedCompFolder);
+        renameFolderItems(importedCompFolder);
+
+        if ('fps' in import_options){
+            fps = import_options['fps']
+            importedComp.frameRate = fps ;
+            setFolderItemsFPS(importedCompFolder, fps);
+        }
+
+    } catch (error) {
+        return _prepareError(error.toString() + item_name);
+    }
 
     ret = {"name": importedComp.name, "id": importedComp.id}
     app.endUndoGroup();
@@ -443,6 +459,14 @@ function renameFolderItems(folder){
         folderItem.name = _exctractFirstPart(folderItem.name);
     }
 
+}
+
+
+function setFolderItemsFPS(folder, fps){
+    for (var index = 1; index <= folder.items.length; index++) {
+        folderItem = folder.items[index]
+        folderItem.mainSource.conformFrameRate = fps
+    }
 }
 
 

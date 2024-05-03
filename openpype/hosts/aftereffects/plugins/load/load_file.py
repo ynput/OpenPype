@@ -5,8 +5,10 @@ import subprocess
 from pathlib import Path
 
 from openpype.pipeline import get_representation_path
+from openpype.pipeline.anatomy import Anatomy
 from openpype.hosts.aftereffects import api
 from openpype.hosts.aftereffects.api.lib import get_unique_layer_name
+from openpype.settings import get_project_settings
 
 
 class FileLoader(api.AfterEffectsLoader):
@@ -26,13 +28,24 @@ class FileLoader(api.AfterEffectsLoader):
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
+
+        import_options = {}
+
+        try:
+            import_options['fps'] = context['asset']['data']['fps']
+        except KeyError:
+            self.log.warning(f"Can't retrieve fps information for asset {name}. Will try to load data from project.")
+            try:
+                project_name = context['project']['name']
+                import_options['fps'] = Anatomy(project_name)['attributes']['fps']
+            except KeyError:
+                self.log.warning(f"Can't retrieve fps information for project {project_name}. Frame rate will not be set at import.")
+
         stub = self.get_stub()
         layers = stub.get_items(comps=True, folders=True, footages=True)
         existing_layers = [layer.name for layer in layers]
         comp_name = get_unique_layer_name(
             existing_layers, "{}_{}".format(context["asset"]["name"], name))
-
-        import_options = {}
 
         path = self.filepath_from_context(context)
         repr_cont = context["representation"]["context"]
@@ -56,14 +69,14 @@ class FileLoader(api.AfterEffectsLoader):
         path_str = str(path.resolve())
 
         frame = None
+
         if path.suffix == '.psd':
-            # It's a single PSD file that we want to load as a comp/sequence
-
-            # Add parent folder to clipboard
-            self._add_to_clipboard(str(path_parent))
-
             import_options['ImportAsType'] = 'ImportAsType.COMP'
-            comp = stub.import_file_with_dialog(path_str, stub.LOADED_ICON + comp_name)
+            comp = stub.import_file_with_dialog(
+                path,
+                stub.LOADED_ICON + comp_name,
+                import_options
+            )
         else:
             frame = repr_cont.get("frame")
             if frame:
