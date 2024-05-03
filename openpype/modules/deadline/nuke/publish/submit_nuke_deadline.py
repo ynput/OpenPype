@@ -2,6 +2,7 @@ import os
 import re
 import json
 import getpass
+import platform
 from datetime import datetime
 
 import requests
@@ -326,6 +327,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "SecondaryPool": self.get_attr_value(self, instance, "pool_secondary"),
                 "MachineLimit": self.get_attr_value(self, instance, "limit_machine"),
                 "Group": self.group,
+
+                "MachineName": self.get_attr_value(self, instance, "machine",
+                                                   fallback=instance.context.data.get("machine", platform.node())),
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
