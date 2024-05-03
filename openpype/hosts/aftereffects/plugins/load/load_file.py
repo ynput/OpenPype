@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from openpype.pipeline import get_representation_path
 from openpype.hosts.aftereffects import api
@@ -45,20 +46,22 @@ class FileLoader(api.AfterEffectsLoader):
         path = path.replace("\\", "/")
 
         frame = None
-        if '.psd' in path:
+        path_obj = Path(path)
+        # Determine if the imported file is a PSD file (Special case)
+        is_psd = path_obj.suffix == '.psd'
 
-            comp_name = get_unique_layer_name(
-            existing_layers, "{}_{}".format(context["asset"]["name"], name), is_psd=True)
+        comp_name = get_unique_layer_name(
+            existing_layers, "{}_{}".format(context["asset"]["name"], name), is_psd=is_psd)
 
-            import_options['ImportAsType'] = 'ImportAsType.COMP'
+        if is_psd:
+            #import_options['ImportAsType'] = 'ImportAsType.COMP' # This isn't used currently
             comp = stub.import_file_with_dialog(path, stub.LOADED_ICON + comp_name)
         else:
             frame = repr_cont.get("frame")
             if frame:
                 import_options['sequence'] = True
 
-            comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
-                                    import_options)
+            comp = stub.import_file(path, stub.LOADED_ICON + comp_name, import_options)
 
         if not comp:
             if frame:
