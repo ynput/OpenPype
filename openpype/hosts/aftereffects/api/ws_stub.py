@@ -304,7 +304,7 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
-    def import_file_with_dialog(self, path, item_name, fps=None):
+    def import_file_with_dialog(self, path, item_name, import_options=None):
         """
             Imports file through ImportFileWithDialog AE command.
             Allow user to import photoshop file as image sequence.
