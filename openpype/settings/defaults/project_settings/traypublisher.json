@@ -280,6 +280,9 @@
             "default_variants": [
                 "Main"
             ],
+            "workfile_start_frame": 1001,
+            "auto_assign_to_asset": false,
+            "keep_clip": false,
             "clip_name_tokenizer": {
                 "_sequence_": "(sc\\d{3})",
                 "_shot_": "(sh\\d{3})"
