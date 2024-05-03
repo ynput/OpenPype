@@ -301,8 +301,13 @@ function importFile(path, item_name, import_options){
 
             if (app.project.selection.length == 2 &&
                 app.project.selection[0] instanceof FolderItem){
-                 comp.parentFolder = app.project.selection[0]
+                    comp.parentFolder = app.project.selection[0]
             }
+
+            if ('fps' in import_options){
+                comp.mainSource.conformFrameRate = import_options["fps"];
+            }
+
         } catch (error) {
             return _prepareError(error.toString() + importOptions.file.fsName);
         } finally {
@@ -321,6 +326,9 @@ function importFile(path, item_name, import_options){
     return JSON.stringify(ret);
 }
 
+function _pathIsFile(path){
+    return path.match(new RegExp(".[a-zA-Z]{3}$"));
+}
 
 function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
@@ -333,33 +341,37 @@ function importFileWithDialog(path, item_name, import_options){
     return JSON.stringify(ret);
 }
 
-
 function _importFileWithDialog(path, item_name, import_options){
-
+    var folderPath = undefined;
     if (_pathIsFile(path)){
-        var folderPath = new Folder(path.match(new RegExp("(.*)[/\\\\]"))[0] || '')
-    }
-    else {
-        var folderPath = new Folder(path)
+        folderPath = new Folder(path.match(new RegExp("(.*)[/\\\\]"))[0] || '')
+    } else {
+        folderPath = new Folder(path)
     }
 
     app.project.setDefaultImportFolder(new Folder(folderPath));
     importedCompArray = app.project.importFileWithDialog();
     app.project.setDefaultImportFolder();
 
-    if (importedCompArray == undefined){
+    if (importedCompArray === undefined){
         // User has canceled the action, so we stop the script here
         // and return an empty value to avoid parse errors later
         return ''
     }
 
     importedComp = importedCompArray[0]
-    if (importedComp.layers == undefined){
+    if (importedComp.layers === undefined){
         undoLastActions();
         return _prepareError('Wrong file type imported (impossible to access layers composition).');
     }
 
     importedCompFilePath = getCompFilepath(importedComp);
+
+    if (importedCompFilePath === undefined){
+        undoLastActions();
+        return _prepareError('Wrong file type imported (impossible to access layers composition).');
+    }
+
     if (extensionsAreDifferents(importedCompFilePath, path)){
         undoLastActions();
         return _prepareError('Wrong file selected (incorrect extension).');
@@ -370,31 +382,45 @@ function _importFileWithDialog(path, item_name, import_options){
         return _prepareError('Wrong file selected (incorrect asset / version).');
     }
 
-    importedCompFolder = getImportedCompFolder(importedComp);
+    try {
+        importedCompFolder = getImportedCompFolder(importedComp);
 
-    importedCompFolder.name = item_name;
-    importedComp.name = item_name;
+        importedCompFolder.name = item_name;
+        importedComp.name = item_name;
 
-    renameFolderItems(importedCompFolder);
+        renameFolderItems(importedCompFolder);
 
-    if ('fps' in import_options){
-        fps = import_options['fps']
-        importedComp.frameRate = fps ;
-        setFolderItemsFPS(importedCompFolder, fps);
+        if ('fps' in import_options){
+            fps = import_options['fps']
+            importedComp.frameRate = fps;
+            setFolderItemsFPS(importedCompFolder, fps);
+        }
+    } catch (error) {
+        return _prepareError(error.toString() + item_name);
     }
 
-    return [importedComp, importedCompFolder]
-
-}
-
-
-function _pathIsFile(path){
-    return path.match(new RegExp(".[a-zA-Z]{3}$"));
+    return [importedComp, importedCompFolder];
 }
 
 
 function getCompFilepath(compItem){
-    return String(compItem.layers[1].source.file)
+    for (var indexLayer = 1; indexLayer <= compItem.numLayers; indexLayer++) {
+        // search if source.file is available aka the layer is not a comp
+        //if one is present , it returns the path
+        if (compItem.layers[indexLayer].source.file){
+            return String(compItem.layers[indexLayer].source.file)
+        }
+    }
+    // Else if none is present, must search in the imported folder of AE for layer.
+    var folder = getImportedCompFolder(compItem);
+    for (var indexItem = 1; indexItem <= folder.items.length; indexItem++) {
+        var folderItem = folder.items[indexItem];
+        // if item is a footage, get its file path
+        if (folderItem instanceof FootageItem){
+            return String(folderItem.file);
+        }
+    }
+    return undefined;
 }
 
 
@@ -444,16 +470,14 @@ function getImportedCompFolder(importedComp){
     }
 }
 
-
 function getLayerFromFolder(folder, layerName){
     for (var index = 1; index <= folder.items.length; index++) {
-        if(folder.items[index].name == layerName){
+        if(folder.items[index].name === layerName){
             return folder.items[index];
         }
     }
     return undefined
 }
-
 
 function renameFolderItems(folder){
     for (var index = 1; index <= folder.items.length; index++) {
@@ -461,6 +485,14 @@ function renameFolderItems(folder){
         folderItem.name = _exctractFirstPart(folderItem.name);
     }
 
+}
+
+
+function setFolderItemsFPS(folder, fps){
+    for (var index = 1; index <= folder.items.length; index++) {
+        folderItem = folder.items[index]
+        folderItem.mainSource.conformFrameRate = fps
+    }
 }
 
 
@@ -489,6 +521,10 @@ function setLabelColor(comp_id, color_idx){
     }
 }
 
+function isComp(item){
+    return (item instanceof CompItem)
+}
+
 function replaceItem(item_id, path, item_name){
     /**
      * Replaces loaded file with new file and updates name
@@ -506,23 +542,23 @@ function replaceItem(item_id, path, item_name){
     }
     var item = app.project.itemByID(item_id);
 
-    if (item){
-        try{
+    if (item) {
+        try {
             if (isComp(item)){
                 result = replaceCompSequenceItems(item, path, item_name)
-                if (!(result)){ return '' }
-            }else if (isFileSequence(item)) {
+                if (!result) {
+                    return ''
+                }
+            } else if (isFileSequence(item)) {
                 item.replaceWithSequence(fp, false);
-            }else{
+            } else {
                 item.replace(fp);
             }
 
             item.name = item_name;
-
         } catch (error) {
             return _prepareError(error.toString() + path);
         } finally {
-
             fp.close();
         }
     }else{
@@ -530,7 +566,6 @@ function replaceItem(item_id, path, item_name){
     }
     app.endUndoGroup();
 }
-
 
 function replaceCompSequenceItems(item, path, item_name){
     /**
@@ -665,13 +700,12 @@ function _add_new_layers_dialog(compItem, importedComp, newLayers){
             var duplicatedLayer = compItem.layer(additionalLayer.name)
             var targetIndex = importedComp.layer(duplicatedLayer.name).index
 
-            if (targetIndex == duplicatedLayer.index){ continue; }
+            if (targetIndex === duplicatedLayer.index){ continue; }
 
             duplicatedLayer.moveAfter(compItem.layer(targetIndex))
         }
     }
 }
-
 
 function renameItem(item_id, new_name){
     /**
@@ -1140,12 +1174,6 @@ function isFileSequence (item){
 
     return false;
 }
-
-
-function isComp(item){
-    return (item instanceof CompItem)
-}
-
 
 function render(target_folder, comp_id){
     var out_dir = new Folder(target_folder);
