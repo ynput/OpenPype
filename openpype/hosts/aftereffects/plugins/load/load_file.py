@@ -64,7 +64,7 @@ class FileLoader(api.AfterEffectsLoader):
             comp = stub.import_file_with_dialog(
                 path,
                 stub.LOADED_ICON + comp_name,
-                import_options['fps']
+                import_options
             )
         else:
             frame = repr_cont.get("frame")
