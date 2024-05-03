@@ -1,4 +1,8 @@
 import re
+import platform
+import subprocess
+
+from pathlib import Path
 
 from openpype.pipeline import get_representation_path
 from openpype.pipeline.anatomy import Anatomy
@@ -55,11 +59,18 @@ class FileLoader(api.AfterEffectsLoader):
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        path = path.replace("\\", "/")
+        # Convert into a Path object
+        path = Path(path)
+
+        # Parent directory
+        path_parent = path.parent.resolve()
+
+        # Resolve and then get a string
+        path_str = str(path.resolve())
 
         frame = None
 
-        if '.psd' in path:
+        if path.suffix == '.psd':
             import_options['ImportAsType'] = 'ImportAsType.COMP'
             comp = stub.import_file_with_dialog(
                 path,
@@ -71,18 +82,16 @@ class FileLoader(api.AfterEffectsLoader):
             if frame:
                 import_options['sequence'] = True
 
-            comp = stub.import_file(
-                path, stub.LOADED_ICON + comp_name,
-                import_options
-            )
+            comp = stub.import_file(path_str, stub.LOADED_ICON + comp_name,
+                                    import_options)
 
         if not comp:
             if frame:
                 padding = len(frame)
-                path = path.replace(frame, "#" * padding)
+                path_str = path_str.replace(frame, "#" * padding)
 
             self.log.warning(
-                "Representation `{}` is failing to load".format(path))
+                "Representation `{}` is failing to load".format(path_str))
             self.log.warning("Check host app for alert error.")
 
             return
@@ -97,6 +106,20 @@ class FileLoader(api.AfterEffectsLoader):
             context,
             self.__class__.__name__
         )
+
+    @staticmethod
+    def _add_to_clipboard(text):
+        """Copy text to the clipboard"""
+        curr_platform = platform.system().lower()
+
+        if curr_platform == "windows":
+            subprocess.run("clip", text=True, input=text)
+        elif curr_platform == "darwin":
+            subprocess.run("pbcopy", text=True, input=text)
+        else:
+            # Linux is not handled, After Effects is not officially usable on a Linux platform
+            # Additionally xclip isn't installed on all linux distributions (example: Rocky Linux)
+            pass
 
     def update(self, container, representation):
         """ Switch asset or change version """

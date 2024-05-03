@@ -331,19 +331,25 @@ function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
     importedCompArray = app.project.importFileWithDialog();
 
-    if (importedCompArray == undefined){
+    if (importedCompArray === undefined){
         // User has canceled the action, so we stop the script here
         // and return an empty value to avoid parse errors later
         return ''
     }
 
     importedComp = importedCompArray[0]
-    if (importedComp.layers == undefined){
+    if (importedComp.layers === undefined){
         undoLastActions();
         return _prepareError('Wrong file type imported (impossible to access layers composition).');
     }
 
     importedCompFilePath = getCompFilepath(importedComp);
+
+    if (importedCompFilePath === undefined){
+        undoLastActions();
+        return _prepareError('Wrong file type imported (impossible to access layers composition).');
+    }
+
     if (extensionsAreDifferents(importedCompFilePath, path)){
         undoLastActions();
         return _prepareError('Wrong file selected (incorrect extension).');
@@ -380,7 +386,23 @@ function importFileWithDialog(path, item_name, import_options){
 
 
 function getCompFilepath(compItem){
-    return String(compItem.layers[1].source.file)
+    for (var indexLayer = 1; indexLayer <= compItem.numLayers; indexLayer++) {
+        // search if source.file is available aka the layer is not a comp
+        //if one is present , it returns the path
+        if (compItem.layers[indexLayer].source.file){
+            return String(compItem.layers[indexLayer].source.file)
+        }
+    }
+    // Else if none is present, must search in the imported folder of AE for layer.
+    var folder = getImportedCompFolder(compItem);
+    for (var indexItem = 1; indexItem <= folder.items.length; indexItem++) {
+        var folderItem = folder.items[indexItem];
+        // if item is a footage, get its file path
+        if (folderItem instanceof FootageItem){
+            return String(folderItem.file);
+        }
+    }
+    return undefined;
 }
 
 
