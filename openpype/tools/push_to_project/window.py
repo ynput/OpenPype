@@ -367,12 +367,16 @@ class TasksModel(QtGui.QStandardItemModel):
         self.items_changed.emit()
 
 
-class PushToContextSelectWindow(QtWidgets.QWidget):
-    def __init__(self, controller=None):
+class PushToContextSelectWindow(QtWidgets.QDialog):
+    def __init__(
+        self, controller=None, library_filter=True, context_only=False
+    ):
         super(PushToContextSelectWindow, self).__init__()
         if controller is None:
-            controller = PushToContextController()
+            controller = PushToContextController(library_filter=library_filter)
         self._controller = controller
+        self.context_only = context_only
+        self.context = None
 
         self.setWindowTitle("Push to project (select context)")
         self.setWindowIcon(QtGui.QIcon(get_app_icon_path()))
@@ -455,13 +459,13 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         # --- Buttons widget ---
         btns_widget = QtWidgets.QWidget(self)
         cancel_btn = QtWidgets.QPushButton("Cancel", btns_widget)
-        publish_btn = QtWidgets.QPushButton("Publish", btns_widget)
+        push_btn = QtWidgets.QPushButton("Push", btns_widget)
 
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addStretch(1)
         btns_layout.addWidget(cancel_btn, 0)
-        btns_layout.addWidget(publish_btn, 0)
+        btns_layout.addWidget(push_btn, 0)
 
         sep_1 = SeparatorWidget(parent=main_context_widget)
         sep_2 = SeparatorWidget(parent=main_context_widget)
@@ -535,7 +539,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
             self._on_task_change
         )
         task_model.items_changed.connect(self._on_task_model_change)
-        publish_btn.clicked.connect(self._on_select_click)
+        push_btn.clicked.connect(self._on_select_click)
         cancel_btn.clicked.connect(self._on_close_click)
         overlay_close_btn.clicked.connect(self._on_close_click)
         overlay_try_btn.clicked.connect(self._on_try_again_click)
@@ -588,7 +592,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self._asset_name_input = asset_name_input
         self._comment_input = comment_input
 
-        self._publish_btn = publish_btn
+        self._push_btn = push_btn
 
         self._overlay_widget = overlay_widget
         self._overlay_close_btn = overlay_close_btn
@@ -612,7 +616,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self._last_submit_message = None
         self._process_item = None
 
-        publish_btn.setEnabled(False)
+        push_btn.setEnabled(False)
         overlay_close_btn.setVisible(False)
         overlay_try_btn.setVisible(False)
 
@@ -774,13 +778,28 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self._controller.selection_model.select_task(task_name)
 
     def _on_submission_change(self, event):
-        self._publish_btn.setEnabled(event["enabled"])
+        self._push_btn.setEnabled(event["enabled"])
 
     def _on_close_click(self):
         self.close()
 
     def _on_select_click(self):
-        self._process_item = self._controller.submit(wait=False)
+        result = self._controller.submit(
+            wait=True, context_only=self.context_only
+        )
+
+        if self.context_only:
+            self.context = {
+                "project_name": self._controller.selection_model.project_name,
+                "asset_id": self._controller.selection_model.asset_id,
+                "task_name": self._controller.selection_model.task_name,
+                "variant": self._controller.user_values.variant,
+                "comment": self._controller.user_values.comment,
+                "asset_name": self._controller.user_values.new_asset_name
+            }
+            self.close()
+
+        self._process_item = result
 
     def _on_try_again_click(self):
         self._process_item = None
