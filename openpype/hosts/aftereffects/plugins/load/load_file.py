@@ -54,7 +54,6 @@ class FileLoader(api.AfterEffectsLoader):
             existing_layers, "{}_{}".format(context["asset"]["name"], name), is_psd=is_psd)
 
         if is_psd:
-            #import_options['ImportAsType'] = 'ImportAsType.COMP' # This isn't used currently
             comp = stub.import_file_with_dialog(path, stub.LOADED_ICON + comp_name)
         else:
             frame = repr_cont.get("frame")
