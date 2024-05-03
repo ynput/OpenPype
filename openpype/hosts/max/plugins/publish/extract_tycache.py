@@ -71,10 +71,11 @@ class ExtractTyCache(publish.Extractor):
         representations.append(mesh_repres)
         # Get the material filename of which assigned in
         # tyCache for extraction
-        material_filename = f"{instance.name}__tyMtl.mat"
+        material_filename = f"{instance.name}_{name}__tyMtl.mat"
         full_material_name = os.path.join(stagingdir, material_filename)
         full_material_name = full_material_name.replace("\\", "/")
         if material_cache and os.path.exists(full_material_name):
+            self.log.debug(f"Extracting material along with tycache.")
             mateiral_repres = {
                 "name": 'tyMtl',
                 "ext": 'mat',
