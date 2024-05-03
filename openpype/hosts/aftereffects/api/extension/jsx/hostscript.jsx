@@ -322,10 +322,10 @@ function importFile(path, item_name, import_options){
 }
 
 
-function importFileWithDialog(path, item_name, fps){
+function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
 
-    _importFileWithDialog(path, item_name, fps)
+    _importFileWithDialog(path, item_name, import_options)
 
     ret = {"name": importedComp.name, "id": importedComp.id}
     app.endUndoGroup();
@@ -334,7 +334,7 @@ function importFileWithDialog(path, item_name, fps){
 }
 
 
-function _importFileWithDialog(path, item_name, fps){
+function _importFileWithDialog(path, item_name, import_options){
 
     if (_pathIsFile(path)){
         var folderPath = new Folder(path.match(new RegExp("(.*)[/\\\\]"))[0] || '')
@@ -377,7 +377,8 @@ function _importFileWithDialog(path, item_name, fps){
 
     renameFolderItems(importedCompFolder);
 
-    if (fps){
+    if ('fps' in import_options){
+        fps = import_options['fps']
         importedComp.frameRate = fps ;
         setFolderItemsFPS(importedCompFolder, fps);
     }
