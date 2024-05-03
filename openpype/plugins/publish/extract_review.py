@@ -90,6 +90,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Make sure cleanup happens and pop representations with "delete" tag.
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
+            # must create a security to not delete the clip as set by default when reviewing with ftrack
+            if instance.data.get('creator_attributes', {}).get('keep_clip') and "delete" in tags:
+                tags.remove("delete")
             if "delete" in tags and "thumbnail" not in tags:
                 instance.data["representations"].remove(repre)
 
@@ -311,6 +314,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         layer_name
     ):
         fill_data = copy.deepcopy(instance.data["anatomyData"])
+
         for _output_def in output_definitions:
             output_def = copy.deepcopy(_output_def)
             # Make sure output definition has "tags" key

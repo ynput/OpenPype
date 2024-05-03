@@ -304,7 +304,7 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
-    def import_file_with_dialog(self, path, item_name):
+    def import_file_with_dialog(self, path, item_name, import_options=None):
         """
             Imports file through ImportFileWithDialog AE command.
             Allow user to import photoshop file as image sequence.
@@ -315,7 +315,8 @@ class AfterEffectsServerStub():
         res = self.websocketserver.call(
             self.client.call('AfterEffects.import_file_with_dialog',
                              path=path,
-                             item_name=item_name)
+                             item_name=item_name,
+                             import_options=import_options)
         )
 
         if not res:

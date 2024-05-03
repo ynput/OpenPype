@@ -301,8 +301,13 @@ function importFile(path, item_name, import_options){
 
             if (app.project.selection.length == 2 &&
                 app.project.selection[0] instanceof FolderItem){
-                 comp.parentFolder = app.project.selection[0]
+                    comp.parentFolder = app.project.selection[0]
             }
+
+            if ('fps' in import_options){
+                comp.mainSource.conformFrameRate = import_options["fps"];
+            }
+
         } catch (error) {
             return _prepareError(error.toString() + importOptions.file.fsName);
         } finally {
@@ -322,23 +327,29 @@ function importFile(path, item_name, import_options){
 }
 
 
-function importFileWithDialog(path, item_name){
+function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
     importedCompArray = app.project.importFileWithDialog();
 
-    if (importedCompArray == undefined){
+    if (importedCompArray === undefined){
         // User has canceled the action, so we stop the script here
         // and return an empty value to avoid parse errors later
         return ''
     }
 
     importedComp = importedCompArray[0]
-    if (importedComp.layers == undefined){
+    if (importedComp.layers === undefined){
         undoLastActions();
         return _prepareError('Wrong file type imported (impossible to access layers composition).');
     }
 
     importedCompFilePath = getCompFilepath(importedComp);
+
+    if (importedCompFilePath === undefined){
+        undoLastActions();
+        return _prepareError('Wrong file type imported (impossible to access layers composition).');
+    }
+
     if (extensionsAreDifferents(importedCompFilePath, path)){
         undoLastActions();
         return _prepareError('Wrong file selected (incorrect extension).');
@@ -349,12 +360,23 @@ function importFileWithDialog(path, item_name){
         return _prepareError('Wrong file selected (incorrect asset / version).');
     }
 
-    importedCompFolder = getImportedCompFolder(importedComp);
+    try{
+        importedCompFolder = getImportedCompFolder(importedComp);
 
-    importedCompFolder.name = item_name;
-    importedComp.name = item_name
+        importedCompFolder.name = item_name;
+        importedComp.name = item_name;
 
-    renameFolderItems(importedCompFolder);
+        renameFolderItems(importedCompFolder);
+
+        if ('fps' in import_options){
+            fps = import_options['fps']
+            importedComp.frameRate = fps ;
+            setFolderItemsFPS(importedCompFolder, fps);
+        }
+
+    } catch (error) {
+        return _prepareError(error.toString() + item_name);
+    }
 
     ret = {"name": importedComp.name, "id": importedComp.id}
     app.endUndoGroup();
@@ -364,7 +386,23 @@ function importFileWithDialog(path, item_name){
 
 
 function getCompFilepath(compItem){
-    return String(compItem.layers[1].source.file)
+    for (var indexLayer = 1; indexLayer <= compItem.numLayers; indexLayer++) {
+        // search if source.file is available aka the layer is not a comp
+        //if one is present , it returns the path
+        if (compItem.layers[indexLayer].source.file){
+            return String(compItem.layers[indexLayer].source.file)
+        }
+    }
+    // Else if none is present, must search in the imported folder of AE for layer.
+    var folder = getImportedCompFolder(compItem);
+    for (var indexItem = 1; indexItem <= folder.items.length; indexItem++) {
+        var folderItem = folder.items[indexItem];
+        // if item is a footage, get its file path
+        if (folderItem instanceof FootageItem){
+            return String(folderItem.file);
+        }
+    }
+    return undefined;
 }
 
 
@@ -421,6 +459,14 @@ function renameFolderItems(folder){
         folderItem.name = _exctractFirstPart(folderItem.name);
     }
 
+}
+
+
+function setFolderItemsFPS(folder, fps){
+    for (var index = 1; index <= folder.items.length; index++) {
+        folderItem = folder.items[index]
+        folderItem.mainSource.conformFrameRate = fps
+    }
 }
 
 
