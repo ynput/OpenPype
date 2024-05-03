@@ -243,7 +243,7 @@ class ExtractSequence(pyblish.api.Extractor):
                 first_frame_filepath.replace("\\", "/")
             ),
             "tv_projectsavesequence '\"'export_path'\"' \"{}\" {} {}".format(
-                export_type, mark_in, mark_out
+                export_type, 0, mark_out - mark_in
             )
         ]
 
