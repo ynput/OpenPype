@@ -252,7 +252,7 @@ function _getItem(item, comps, folders, footages){
     return JSON.stringify(item);
 }
 
-function importFile(path, item_name, import_options, fps){
+function importFile(path, item_name, import_options){
     /**
      * Imports file (image tested for now) as a FootageItem.
      * Creates new composition
@@ -304,7 +304,9 @@ function importFile(path, item_name, import_options, fps){
                     comp.parentFolder = app.project.selection[0]
             }
 
-            if (fps){ comp.mainSource.conformFrameRate = fps; }
+            if ('fps' in import_options){
+                comp.mainSource.conformFrameRate = import_options["fps"];
+            }
 
         } catch (error) {
             return _prepareError(error.toString() + importOptions.file.fsName);
@@ -325,7 +327,7 @@ function importFile(path, item_name, import_options, fps){
 }
 
 
-function importFileWithDialog(path, item_name, fps){
+function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
     importedCompArray = app.project.importFileWithDialog();
 
@@ -360,7 +362,8 @@ function importFileWithDialog(path, item_name, fps){
 
         renameFolderItems(importedCompFolder);
 
-        if (fps){
+        if ('fps' in import_options){
+            fps = import_options['fps']
             importedComp.frameRate = fps ;
             setFolderItemsFPS(importedCompFolder, fps);
         }

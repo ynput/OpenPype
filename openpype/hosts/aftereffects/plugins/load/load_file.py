@@ -24,14 +24,16 @@ class FileLoader(api.AfterEffectsLoader):
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
-        fps=None
+
+        import_options = {}
+
         try:
-            fps = context['asset']['data']['fps']
+            import_options['fps'] = context['asset']['data']['fps']
         except KeyError:
             self.log.warning(f"Can't retrieve fps information for asset {name}. Will try to load data from project.")
             try:
                 project_name = context['project']['name']
-                fps = Anatomy(project_name)['attributes']['fps']
+                import_options['fps'] = Anatomy(project_name)['attributes']['fps']
             except KeyError:
                 self.log.warning(f"Can't retrieve fps information for project {project_name}. Frame rate will not be set at import.")
 
@@ -40,8 +42,6 @@ class FileLoader(api.AfterEffectsLoader):
         existing_layers = [layer.name for layer in layers]
         comp_name = get_unique_layer_name(
             existing_layers, "{}_{}".format(context["asset"]["name"], name))
-
-        import_options = {}
 
         path = self.filepath_from_context(context)
         repr_cont = context["representation"]["context"]
@@ -61,14 +61,20 @@ class FileLoader(api.AfterEffectsLoader):
 
         if '.psd' in path:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
-            comp = stub.import_file_with_dialog(path, stub.LOADED_ICON + comp_name, fps)
+            comp = stub.import_file_with_dialog(
+                path,
+                stub.LOADED_ICON + comp_name,
+                import_options['fps']
+            )
         else:
             frame = repr_cont.get("frame")
             if frame:
                 import_options['sequence'] = True
 
-            comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
-                                    import_options, fps)
+            comp = stub.import_file(
+                path, stub.LOADED_ICON + comp_name,
+                import_options
+            )
 
         if not comp:
             if frame:

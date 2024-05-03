@@ -284,7 +284,7 @@ class AfterEffectsServerStub():
 
         return None
 
-    def import_file(self, path, item_name, import_options=None, fps=None):
+    def import_file(self, path, item_name, import_options=None):
         """
             Imports file as a FootageItem. Used in Loader
         Args:
@@ -298,8 +298,7 @@ class AfterEffectsServerStub():
             self.client.call('AfterEffects.import_file',
                              path=path,
                              item_name=item_name,
-                             import_options=import_options,
-                             fps=fps)
+                             import_options=import_options)
             )
         records = self._to_records(self._handle_return(res))
         if records:
@@ -317,7 +316,7 @@ class AfterEffectsServerStub():
             self.client.call('AfterEffects.import_file_with_dialog',
                              path=path,
                              item_name=item_name,
-                             fps=fps)
+                             import_options=import_options)
         )
 
         if not res:

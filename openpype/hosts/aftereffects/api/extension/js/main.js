@@ -156,8 +156,7 @@ function main(websocket_url){
         return runEvalScript("importFile('" + escapedPath +"', " +
                                          "'" + data.item_name + "'," +
                                          "'" + JSON.stringify(
-                                         data.import_options) + "', " +
-                                         "'" + data.fps + "')")
+                                         data.import_options) + "')")
             .then(function(result){
                 log.warn("importFile: " + result);
                 return result;
@@ -168,8 +167,9 @@ function main(websocket_url){
         log.warn('Server called client route "import_file_with_dialog":', data);
         var escapedPath = EscapeStringForJSX(data.path);
         return runEvalScript("importFileWithDialog('" + escapedPath +"', " +
-                                         "'" + data.item_name + "', " +
-                                         "'" + data.fps + "')")
+                                         "'" + data.item_name + "'," +
+                                         "'" + JSON.stringify(
+                                         data.import_options) + "')")
             .then(function(result){
                 log.warn("importFileWithDialog: " + result);
                 return result;
