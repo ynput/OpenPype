@@ -1,6 +1,4 @@
 import re
-import platform
-import subprocess
 
 from pathlib import Path
 
@@ -8,7 +6,6 @@ from openpype.pipeline import get_representation_path
 from openpype.pipeline.anatomy import Anatomy
 from openpype.hosts.aftereffects import api
 from openpype.hosts.aftereffects.api.lib import get_unique_layer_name
-from openpype.settings import get_project_settings
 
 
 class FileLoader(api.AfterEffectsLoader):
@@ -62,13 +59,11 @@ class FileLoader(api.AfterEffectsLoader):
         # Convert into a Path object
         path = Path(path)
 
-        # Parent directory
-        path_parent = path.parent.resolve()
-
         # Resolve and then get a string
         path_str = str(path.resolve())
 
         frame = None
+
         # Determine if the imported file is a PSD file (Special case)
         is_psd = path.suffix == '.psd'
 
@@ -108,20 +103,6 @@ class FileLoader(api.AfterEffectsLoader):
             self.__class__.__name__
         )
 
-    @staticmethod
-    def _add_to_clipboard(text):
-        """Copy text to the clipboard"""
-        curr_platform = platform.system().lower()
-
-        if curr_platform == "windows":
-            subprocess.run("clip", text=True, input=text)
-        elif curr_platform == "darwin":
-            subprocess.run("pbcopy", text=True, input=text)
-        else:
-            # Linux is not handled, After Effects is not officially usable on a Linux platform
-            # Additionally xclip isn't installed on all linux distributions (example: Rocky Linux)
-            pass
-
     def update(self, container, representation):
         """ Switch asset or change version """
         stub = self.get_stub()
@@ -143,7 +124,14 @@ class FileLoader(api.AfterEffectsLoader):
             layer_name = container["namespace"]
         path = get_representation_path(representation)
         # with aftereffects.maintained_selection():  # TODO
-        stub.replace_item(layer.id, path, stub.LOADED_ICON + layer_name)
+
+        # Convert into a Path object
+        path = Path(path)
+
+        # Resolve and then get a string
+        path_str = str(path.resolve())
+
+        stub.replace_item(layer.id, path_str, stub.LOADED_ICON + layer_name)
         stub.imprint(
             layer.id, {"representation": str(representation["_id"]),
                        "name": context["subset"],
