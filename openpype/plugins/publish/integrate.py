@@ -95,6 +95,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "setdress",
                 "layout",
                 "ass",
+                "assProxy",
                 "vdbcache",
                 "scene",
                 "vrayproxy",

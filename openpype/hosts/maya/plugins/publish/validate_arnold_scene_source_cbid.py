@@ -13,7 +13,7 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
 
     order = ValidateContentsOrder
     hosts = ["maya"]
-    families = ["ass"]
+    families = ["assProxy"]
     label = "Validate Arnold Scene Source CBID"
     actions = [RepairAction]
 
@@ -28,15 +28,11 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid_couples(cls, instance):
-        content_nodes_by_name = cls._get_nodes_by_name(
-            instance.data["contentMembers"]
-        )
-        proxy_nodes_by_name = cls._get_nodes_by_name(
-            instance.data.get("proxy", [])
-        )
+        nodes_by_name = cls._get_nodes_by_name(instance.data["members"])
+        proxy_nodes_by_name = cls._get_nodes_by_name(instance.data["proxy"])
 
         invalid_couples = []
-        for content_name, content_node in content_nodes_by_name.items():
+        for content_name, content_node in nodes_by_name.items():
             proxy_node = proxy_nodes_by_name.get(content_name, None)
 
             if not proxy_node:
@@ -56,7 +52,7 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Proxy validation.
-        if not instance.data.get("proxy", []):
+        if not instance.data["proxy"]:
             return
 
         # Validate for proxy nodes sharing the same cbId as content nodes.
