@@ -8,6 +8,31 @@
         "type": "dict",
         "collapsible": true,
         "checkbox_key": "enabled",
+        "key": "ValidateInstanceInContext",
+        "label": "Validate Instance In Context",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
         "key": "ValidateFrameRange",
         "label": "Validate Frame Range",
         "is_group": true,
@@ -158,6 +183,31 @@
                         }
                     ]
                 }
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ValidateRenderPasses",
+        "label": "Validate Render Passes",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
             }
         ]
       },

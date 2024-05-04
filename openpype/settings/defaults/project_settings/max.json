@@ -47,6 +47,11 @@
         }
     },
     "publish": {
+        "ValidateInstanceInContext": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateFrameRange": {
             "enabled": true,
             "optional": true,
@@ -70,6 +75,11 @@
             "enabled": false,
             "optional": true,
             "family_plugins_mapping": []
+        },
+        "ValidateRenderPasses": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ExtractModelObj": {
             "enabled": true,
