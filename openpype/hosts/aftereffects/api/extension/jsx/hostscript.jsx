@@ -333,6 +333,12 @@ function _pathIsFile(path){
 function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
 
+    try{
+        import_options = JSON.parse(import_options);
+    } catch (e){
+        return _prepareError("Couldn't parse import options " + import_options);
+    }
+
     _importFileWithDialog(path, item_name, import_options)
 
     ret = {"name": importedComp.name, "id": importedComp.id}
@@ -342,6 +348,7 @@ function importFileWithDialog(path, item_name, import_options){
 }
 
 function _importFileWithDialog(path, item_name, import_options){
+    if (import_options === undefined){ import_options = {}; }
     var folderPath = undefined;
     if (_pathIsFile(path)){
         folderPath = new Folder(path.match(new RegExp("(.*)[/\\\\]"))[0] || '')
@@ -391,7 +398,6 @@ function _importFileWithDialog(path, item_name, import_options){
         renameFolderItems(importedCompFolder);
 
         if ('fps' in import_options){
-            fps = import_options['fps']
             importedComp.frameRate = fps;
             setFolderItemsFPS(importedCompFolder, fps);
         }
@@ -543,7 +549,7 @@ function replaceItem(item_id, path, item_name){
     var item = app.project.itemByID(item_id);
 
     if (item) {
-        try {
+            try {
             if (isComp(item)){
                 result = replaceCompSequenceItems(item, path, item_name)
                 if (!result) {
@@ -582,9 +588,9 @@ function replaceCompSequenceItems(item, path, item_name){
     var previousCompFolder = getImportedCompFolder(item);
 
     var importedObjects = _importFileWithDialog(path, item_name, undefined)
-    // if (importedComp == undefined){
-    //     throw new Error("An error occured when importing file through After Effects dialog. Abort action.");
-    // }
+    if (importedObjects == undefined){
+        throw new Error("An error occured when importing file through After Effects dialog. Abort action.");
+    }
     var importedComp = importedObjects[0]
     var importedFolder = importedObjects[1]
 
@@ -624,7 +630,6 @@ function replaceCompSequenceItems(item, path, item_name){
 
         if (layersToDelete) { _delete_layers_dialog(item, deletedLayers); }
         if (layersToAdd) { _add_new_layers_dialog(item, importedComp, newLayers); }
-
 
     }
 
