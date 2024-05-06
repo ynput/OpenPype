@@ -109,6 +109,7 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         export_type = instance.data["creator_attributes"].get("export_type", "project")
+        apply_background = instance.data["creator_attributes"].get("apply_background", True)
         is_review = instance.data["family"] == "review"
         is_playblast = instance.data["creator_identifier"] == "render.playblast"
         publish_sequence_with_transparency = (
@@ -117,7 +118,11 @@ class ExtractSequence(pyblish.api.Extractor):
 
         if is_review or is_playblast or publish_sequence_with_transparency:
             result = self.render_review(
-                output_dir, export_type, mark_in, mark_out, scene_bg_color
+                output_dir,
+                export_type,
+                mark_in,
+                mark_out,
+                scene_bg_color if apply_background else None
             )
         else:
             # Render output
@@ -233,11 +238,7 @@ class ExtractSequence(pyblish.api.Extractor):
             filename_template.format(frame=mark_in)
         )
 
-        bg_color = self._get_review_bg_color()
-
         george_script_lines = [
-            # Change bg color to color from settings
-            "tv_background \"color\" {} {} {}".format(*bg_color),
             "tv_SaveMode \"PNG\"",
             "export_path = \"{}\"".format(
                 first_frame_filepath.replace("\\", "/")
@@ -248,6 +249,11 @@ class ExtractSequence(pyblish.api.Extractor):
         ]
 
         if scene_bg_color:
+            bg_color = self._get_review_bg_color()
+
+            # Change bg color to color from settings
+            george_script_lines.insert(0, "tv_background \"color\" {} {} {}".format(*bg_color)),
+
             # Change bg color back to previous scene bg color
             _scene_bg_color = copy.deepcopy(scene_bg_color)
             bg_type = _scene_bg_color.pop(0)
