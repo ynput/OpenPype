@@ -15,10 +15,9 @@ class ExtractArnoldSceneSource(publish.Extractor):
     label = "Extract Arnold Scene Source"
     hosts = ["maya"]
     families = ["ass"]
-    asciiAss = False
+    asciiAss = True
 
-    def process(self, instance):
-        staging_dir = self.staging_dir(instance)
+    def _pre_process(self, instance, staging_dir):
         file_path = os.path.join(staging_dir, "{}.ass".format(instance.name))
 
         # Mask
@@ -70,24 +69,38 @@ class ExtractArnoldSceneSource(publish.Extractor):
             "mask": mask
         }
 
-        filenames, nodes_by_id = self._extract(
-            instance.data["contentMembers"], attribute_data, kwargs
-        )
-
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
+        return attribute_data, kwargs
+
+    def process(self, instance):
+        staging_dir = self.staging_dir(instance)
+        attribute_data, kwargs = self._pre_process(instance, staging_dir)
+
+        filenames = self._extract(
+            instance.data["members"], attribute_data, kwargs
+        )
+
+        self._post_process(
+            instance, filenames, staging_dir, kwargs["startFrame"]
+        )
+
+    def _post_process(self, instance, filenames, staging_dir, frame_start):
+        nodes_by_id = self._nodes_by_id(instance[:])
         representation = {
             "name": "ass",
             "ext": "ass",
             "files": filenames if len(filenames) > 1 else filenames[0],
             "stagingDir": staging_dir,
-            "frameStart": kwargs["startFrame"]
+            "frameStart": frame_start
         }
 
         instance.data["representations"].append(representation)
 
-        json_path = os.path.join(staging_dir, "{}.json".format(instance.name))
+        json_path = os.path.join(
+            staging_dir, "{}.json".format(instance.name)
+        )
         with open(json_path, "w") as f:
             json.dump(nodes_by_id, f)
 
@@ -104,13 +117,68 @@ class ExtractArnoldSceneSource(publish.Extractor):
             "Extracted instance {} to: {}".format(instance.name, staging_dir)
         )
 
-        # Extract proxy.
-        if not instance.data.get("proxy", []):
-            return
+    def _nodes_by_id(self, nodes):
+        nodes_by_id = defaultdict(list)
 
-        kwargs["filename"] = file_path.replace(".ass", "_proxy.ass")
+        for node in nodes:
+            id = lib.get_id(node)
 
-        filenames, _ = self._extract(
+            if id is None:
+                continue
+
+            # Converting Maya hierarchy separator "|" to Arnold separator "/".
+            nodes_by_id[id].append(node.replace("|", "/"))
+
+        return nodes_by_id
+
+    def _extract(self, nodes, attribute_data, kwargs):
+        filenames = []
+        with lib.attribute_values(attribute_data):
+            with lib.maintained_selection():
+                self.log.debug(
+                    "Writing: {}".format(nodes)
+                )
+                cmds.select(nodes, noExpand=True)
+
+                self.log.debug(
+                    "Extracting ass sequence with: {}".format(kwargs)
+                )
+
+                exported_files = cmds.arnoldExportAss(**kwargs)
+
+                for file in exported_files:
+                    filenames.append(os.path.split(file)[1])
+
+                self.log.debug("Exported: {}".format(filenames))
+
+        return filenames
+
+
+class ExtractArnoldSceneSourceProxy(ExtractArnoldSceneSource):
+    """Extract the content of the instance to an Arnold Scene Source file."""
+
+    label = "Extract Arnold Scene Source Proxy"
+    hosts = ["maya"]
+    families = ["assProxy"]
+    asciiAss = True
+
+    def process(self, instance):
+        staging_dir = self.staging_dir(instance)
+        attribute_data, kwargs = self._pre_process(instance, staging_dir)
+
+        filenames, _ = self._duplicate_extract(
+            instance.data["members"], attribute_data, kwargs
+        )
+
+        self._post_process(
+            instance, filenames, staging_dir, kwargs["startFrame"]
+        )
+
+        kwargs["filename"] = os.path.join(
+            staging_dir, "{}_proxy.ass".format(instance.name)
+        )
+
+        filenames, _ = self._duplicate_extract(
             instance.data["proxy"], attribute_data, kwargs
         )
 
@@ -125,12 +193,11 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
         instance.data["representations"].append(representation)
 
-    def _extract(self, nodes, attribute_data, kwargs):
+    def _duplicate_extract(self, nodes, attribute_data, kwargs):
         self.log.debug(
             "Writing {} with:\n{}".format(kwargs["filename"], kwargs)
         )
         filenames = []
-        nodes_by_id = defaultdict(list)
         # Duplicating nodes so they are direct children of the world. This
         # makes the hierarchy of any exported ass file the same.
         with lib.delete_after() as delete_bin:
@@ -147,7 +214,9 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 if not shapes:
                     continue
 
-                duplicate_transform = cmds.duplicate(node)[0]
+                basename = cmds.duplicate(node)[0]
+                parents = cmds.ls(node, long=True)[0].split("|")[:-1]
+                duplicate_transform = "|".join(parents + [basename])
 
                 if cmds.listRelatives(duplicate_transform, parent=True):
                     duplicate_transform = cmds.parent(
@@ -172,28 +241,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 duplicate_nodes.extend(shapes)
                 delete_bin.append(duplicate_transform)
 
-            # Copy cbId to mtoa_constant.
-            for node in duplicate_nodes:
-                # Converting Maya hierarchy separator "|" to Arnold
-                # separator "/".
-                nodes_by_id[lib.get_id(node)].append(node.replace("|", "/"))
-
-            with lib.attribute_values(attribute_data):
-                with lib.maintained_selection():
-                    self.log.debug(
-                        "Writing: {}".format(duplicate_nodes)
-                    )
-                    cmds.select(duplicate_nodes, noExpand=True)
-
-                    self.log.debug(
-                        "Extracting ass sequence with: {}".format(kwargs)
-                    )
-
-                    exported_files = cmds.arnoldExportAss(**kwargs)
-
-                    for file in exported_files:
-                        filenames.append(os.path.split(file)[1])
-
-                    self.log.debug("Exported: {}".format(filenames))
+            nodes_by_id = self._nodes_by_id(duplicate_nodes)
+            filenames = self._extract(duplicate_nodes, attribute_data, kwargs)
 
         return filenames, nodes_by_id

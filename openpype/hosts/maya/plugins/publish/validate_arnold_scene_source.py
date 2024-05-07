@@ -1,30 +1,56 @@
+from maya import cmds
+
 import pyblish.api
+
 from openpype.pipeline.publish import (
     ValidateContentsOrder, PublishValidationError
 )
+from openpype.hosts.maya.api.lib import is_visible
 
 
 class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
     """Validate Arnold Scene Source.
 
-    We require at least 1 root node/parent for the meshes. This is to ensure we
-    can duplicate the nodes and preserve the names.
+    Ensure no nodes are hidden.
+    """
 
-    If using proxies we need the nodes to share the same names and not be
+    order = ValidateContentsOrder
+    hosts = ["maya"]
+    families = ["ass", "assProxy"]
+    label = "Validate Arnold Scene Source"
+
+    def process(self, instance):
+        # Validate against having nodes hidden, which will result in the
+        # extraction to ignore the node.
+        nodes = instance.data["members"] + instance.data.get("proxy", [])
+        nodes = [x for x in nodes if cmds.objectType(x, isAType='dagNode')]
+        hidden_nodes = [
+            x for x in nodes if not is_visible(x, intermediateObject=False)
+        ]
+        if hidden_nodes:
+            raise PublishValidationError(
+                "Found hidden nodes:\n\n{}\n\nPlease unhide for"
+                " publishing.".format("\n".join(hidden_nodes))
+            )
+
+
+class ValidateArnoldSceneSourceProxy(pyblish.api.InstancePlugin):
+    """Validate Arnold Scene Source Proxy.
+
+    When using proxies we need the nodes to share the same names and not be
     parent to the world. This ends up needing at least two groups with content
     nodes and proxy nodes in another.
     """
 
     order = ValidateContentsOrder
     hosts = ["maya"]
-    families = ["ass"]
-    label = "Validate Arnold Scene Source"
+    families = ["assProxy"]
+    label = "Validate Arnold Scene Source Proxy"
 
     def _get_nodes_by_name(self, nodes):
         ungrouped_nodes = []
         nodes_by_name = {}
         parents = []
-        same_named_nodes = {}
         for node in nodes:
             node_split = node.split("|")
             if len(node_split) == 2:
@@ -35,33 +61,16 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
                 parents.append(parent)
 
             node_name = node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
-
-            # Check for same same nodes, which can happen in different
-            # hierarchies.
-            if node_name in nodes_by_name:
-                try:
-                    same_named_nodes[node_name].append(node)
-                except KeyError:
-                    same_named_nodes[node_name] = [
-                        nodes_by_name[node_name], node
-                    ]
-
             nodes_by_name[node_name] = node
-
-        if same_named_nodes:
-            message = "Found nodes with the same name:"
-            for name, nodes in same_named_nodes.items():
-                message += "\n\n\"{}\":\n{}".format(name, "\n".join(nodes))
-
-            raise PublishValidationError(message)
 
         return ungrouped_nodes, nodes_by_name, parents
 
     def process(self, instance):
+        # Validate against nodes directly parented to world.
         ungrouped_nodes = []
 
         nodes, content_nodes_by_name, content_parents = (
-            self._get_nodes_by_name(instance.data["contentMembers"])
+            self._get_nodes_by_name(instance.data["members"])
         )
         ungrouped_nodes.extend(nodes)
 
@@ -70,24 +79,21 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         )
         ungrouped_nodes.extend(nodes)
 
-        # Validate against nodes directly parented to world.
         if ungrouped_nodes:
             raise PublishValidationError(
                 "Found nodes parented to the world: {}\n"
                 "All nodes need to be grouped.".format(ungrouped_nodes)
             )
 
-        # Proxy validation.
-        if not instance.data.get("proxy", []):
-            return
-
         # Validate for content and proxy nodes amount being the same.
-        if len(instance.data["contentMembers"]) != len(instance.data["proxy"]):
+        if len(instance.data["members"]) != len(instance.data["proxy"]):
             raise PublishValidationError(
                 "Amount of content nodes ({}) and proxy nodes ({}) needs to "
-                "be the same.".format(
-                    len(instance.data["contentMembers"]),
-                    len(instance.data["proxy"])
+                "be the same.\nContent nodes: {}\nProxy nodes:{}".format(
+                    len(instance.data["members"]),
+                    len(instance.data["proxy"]),
+                    instance.data["members"],
+                    instance.data["proxy"]
                 )
             )
 

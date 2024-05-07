@@ -64,6 +64,7 @@ from .workio import (
     current_file
 )
 from .constants import ASSIST
+from . import push_to_project
 
 log = Logger.get_logger(__name__)
 
@@ -336,6 +337,10 @@ def _install_menu():
     menu.addCommand(
         "Experimental tools...",
         lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
+    )
+    menu.addCommand(
+        "Push to Project",
+        lambda: push_to_project.main()
     )
     menu.addSeparator()
     # add reload pipeline only in debug mode

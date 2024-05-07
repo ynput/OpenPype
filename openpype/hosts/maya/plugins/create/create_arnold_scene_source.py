@@ -1,3 +1,5 @@
+from maya import cmds
+
 from openpype.hosts.maya.api import (
     lib,
     plugin
@@ -87,16 +89,24 @@ class CreateArnoldSceneSource(plugin.MayaCreator):
 
         return defs
 
+
+class CreateArnoldSceneSourceProxy(CreateArnoldSceneSource):
+    """Arnold Scene Source Proxy
+
+    This product type facilitates working with proxy geometry in the viewport.
+    """
+
+    identifier = "io.openpype.creators.maya.assproxy"
+    label = "Arnold Scene Source Proxy"
+    family = "assProxy"
+    icon = "cube"
+
     def create(self, subset_name, instance_data, pre_create_data):
-
-        from maya import cmds
-
         instance = super(CreateArnoldSceneSource, self).create(
             subset_name, instance_data, pre_create_data
         )
 
         instance_node = instance.get("instance_node")
 
-        content = cmds.sets(name=instance_node + "_content_SET", empty=True)
         proxy = cmds.sets(name=instance_node + "_proxy_SET", empty=True)
-        cmds.sets([content, proxy], forceElement=instance_node)
+        cmds.sets([proxy], forceElement=instance_node)
