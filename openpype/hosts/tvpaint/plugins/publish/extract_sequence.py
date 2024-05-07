@@ -243,8 +243,10 @@ class ExtractSequence(pyblish.api.Extractor):
             "export_path = \"{}\"".format(
                 first_frame_filepath.replace("\\", "/")
             ),
+            # TvPaint seems to consider software markin as frame 0. If we set a frame start at export,
+            # it will add the frame start to the markin frame and will add an offset for the rest of the export.
             "tv_projectsavesequence '\"'export_path'\"' \"{}\" {} {}".format(
-                export_type, mark_in, mark_out
+                export_type, 0, mark_out - mark_in
             )
         ]
 
