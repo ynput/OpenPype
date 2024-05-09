@@ -1,6 +1,77 @@
 # Changelog
 
 
+## [3.18.10](https://github.com/ynput/OpenPype/tree/3.18.10)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.9...3.18.10)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Arnold Scene Source Raw - OP-8014 <a href="https://github.com/ynput/OpenPype/pull/6182">#6182</a></summary>
+
+This PR is to try and re-instate some flexibility to the `Arnold Scene Source` family, which got restricted by https://github.com/ynput/OpenPype/pull/4449The proxy workflow introduced was actually broken due to https://github.com/ynput/OpenPype/pull/4460.We can now have any nodes directly in the instance set, which should be backwards compatible of the `Arnold Scene Source` before the overhaul in https://github.com/ynput/OpenPype/pull/4449.The `content` and `proxy` sets works as well, but not at the same time as the raw nodes directly in the instance set. There is a validator in place to prevent using a single instance for both workflows.Now the question is whether we should have this as a single family or split somehow?The workflow of having nodes directly in the instance set, compared to `content` and `proxy` set, can be documented, so I see this as most a matter of terminology.`Arnold Scene Source` makes sense to have as a family, but only if its a the raw output with little to no validation, similar to `Maya Scene`. But then I'm not sure what to call the other family that has more of a workflow in place, which is similar to `Model` and `Pointcache`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Push to project - AY-742 <a href="https://github.com/ynput/OpenPype/pull/6245">#6245</a></summary>
+
+This introduces the "Push to Project" menu item in Nuke.This enables users to push the current workfile to a different project and copy all files from Read nodes to a `resources` folder next to the workfile. Containers will be baked to normal Read nodes.Also gizmos will be baked to groups.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Max: Implementation of Validate Render Passes <a href="https://github.com/ynput/OpenPype/pull/6138">#6138</a></summary>
+
+This PR is to enhance the current validator of checking the render output before deadline publish. It does the following:
+- The validator `Render Output for Deadline` would be renamed as `Validate Render Passes`
+- The validator would not only check on the invalid render output folder but the invalid filename of render passes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max : Optional validator to check invalid context data <a href="https://github.com/ynput/OpenPype/pull/6198">#6198</a></summary>
+
+Add optional validator check on invalid context data for asset and task in 3dsMax
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Account for no Alembic overrides. <a href="https://github.com/ynput/OpenPype/pull/6267">#6267</a></summary>
+
+Fix for if no overrides are present in `project_settings/maya/publish/ExtractAlembic/overrides`
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.9](https://github.com/ynput/OpenPype/tree/3.18.9)
 
 
