@@ -291,15 +291,16 @@ class ExtractAlembic(publish.Extractor, OpenPypePyblishPluginMixin):
 
         enabled_flags = [x for x in flags if x in overrides]
         flags = overrides - set(override_defs.keys())
-        defs.append(
-            EnumDef(
-                "flags",
-                flags,
-                default=enabled_flags,
-                multiselection=True,
-                label="Export Flags",
+        if flags:
+            defs.append(
+                EnumDef(
+                    "flags",
+                    flags,
+                    default=enabled_flags,
+                    multiselection=True,
+                    label="Export Flags",
+                )
             )
-        )
 
         for key, value in override_defs.items():
             if key not in overrides:
