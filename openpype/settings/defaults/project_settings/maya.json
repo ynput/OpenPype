@@ -1115,7 +1115,7 @@
                 "stripNamespaces",
                 "writeNormals",
                 "worldSpace",
-                "writeUVs"
+                "uvWrite"
             ],
             "attr": "",
             "attrPrefix": "",
