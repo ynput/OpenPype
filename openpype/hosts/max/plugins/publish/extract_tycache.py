@@ -38,17 +38,17 @@ class ExtractTyCache(publish.Extractor):
         representations = instance.data.setdefault("representations", [])
         start_frame = instance.data["frameStartHandle"]
         end_frame = instance.data["frameEndHandle"]
-        name = instance.data.get("productName")
+        subset_name = instance.data.get("subset")
         tyc_fnames = []
         tyc_mesh_fnames = []
         with maintained_selection():
-            filename = f"{instance.name}_{name}.tyc"
+            filename = f"{subset_name}.tyc"
             path = os.path.join(stagingdir, filename)
             filenames = self.get_files(
-                instance, name, start_frame, end_frame)
+                subset_name, start_frame, end_frame)
             self._extract_tyflow_particles(
                 operator, path, export_mode, material_cache)
-            mesh_filename = f"{instance.name}_{name}__tyMesh.tyc"
+            mesh_filename = f"{subset_name}__tyMesh.tyc"
             tyc_fnames.extend(filenames)
             tyc_mesh_fnames.append(mesh_filename)
         representation = {
@@ -71,7 +71,7 @@ class ExtractTyCache(publish.Extractor):
         representations.append(mesh_repres)
         # Get the material filename of which assigned in
         # tyCache for extraction
-        material_filename = f"{instance.name}_{name}__tyMtl.mat"
+        material_filename = f"{subset_name}__tyMtl.mat"
         full_material_name = os.path.join(stagingdir, material_filename)
         full_material_name = full_material_name.replace("\\", "/")
         if material_cache and os.path.exists(full_material_name):
@@ -87,7 +87,7 @@ class ExtractTyCache(publish.Extractor):
         self.log.debug(
             f"Extracted instance '{instance.name}' to: {stagingdir}")
 
-    def get_files(self, instance, operator, start_frame, end_frame):
+    def get_files(self, subset_name, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
 
         Set the filenames accordingly to the tyCache file
@@ -99,7 +99,9 @@ class ExtractTyCache(publish.Extractor):
         e.g. tycacheMain__tyPart_00000.tyc
 
         Args:
-            instance (pyblish.api.Instance): instance.
+            subset_name (str): subset name
+            start_frame (int): frame start
+            end_frame (int): frame end
 
         Returns:
             filenames(list): list of filenames
@@ -107,7 +109,7 @@ class ExtractTyCache(publish.Extractor):
         """
         filenames = []
         for frame in range(int(start_frame), int(end_frame) + 1):
-            filename = f"{instance.name}_{operator}__tyPart_{frame:05}.tyc"
+            filename = f"{subset_name}__tyPart_{frame:05}.tyc"
             filenames.append(filename)
         return filenames
 
