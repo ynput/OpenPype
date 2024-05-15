@@ -62,9 +62,6 @@ class FileLoader(api.AfterEffectsLoader):
         # Convert into a Path object
         path = Path(path)
 
-        # Parent directory
-        path_parent = path.parent.resolve()
-
         # Resolve and then get a string
         path_str = str(path.resolve())
 
@@ -73,7 +70,7 @@ class FileLoader(api.AfterEffectsLoader):
         if path.suffix == '.psd':
             import_options['ImportAsType'] = 'ImportAsType.COMP'
             comp = stub.import_file_with_dialog(
-                path,
+                path_str,
                 stub.LOADED_ICON + comp_name,
                 import_options
             )

@@ -327,9 +327,40 @@ function importFile(path, item_name, import_options){
 }
 
 
+function _pathIsFile(path){
+    return path.match(new RegExp(".[a-zA-Z]{3}$"));
+}
+
+
 function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
+
+    try{
+        import_options = JSON.parse(import_options);
+    } catch (e){
+        return _prepareError("Couldn't parse import options " + import_options);
+    }
+
+    _importFileWithDialog(path, item_name, import_options)
+
+    ret = {"name": importedComp.name, "id": importedComp.id}
+    app.endUndoGroup();
+
+    return JSON.stringify(ret);
+}
+
+function _importFileWithDialog(path, item_name, import_options){
+    if (import_options === undefined){ import_options = {}; }
+    var folderPath = undefined;
+    if (_pathIsFile(path)){
+        folderPath = new Folder(path.match(new RegExp("(.*)[/\\\\]"))[0] || '')
+    } else {
+        folderPath = new Folder(path)
+    }
+
+    app.project.setDefaultImportFolder(new Folder(folderPath));
     importedCompArray = app.project.importFileWithDialog();
+    app.project.setDefaultImportFolder();
 
     if (importedCompArray === undefined){
         // User has canceled the action, so we stop the script here
@@ -360,7 +391,7 @@ function importFileWithDialog(path, item_name, import_options){
         return _prepareError('Wrong file selected (incorrect asset / version).');
     }
 
-    try{
+    try {
         importedCompFolder = getImportedCompFolder(importedComp);
 
         importedCompFolder.name = item_name;
@@ -370,18 +401,14 @@ function importFileWithDialog(path, item_name, import_options){
 
         if ('fps' in import_options){
             fps = import_options['fps']
-            importedComp.frameRate = fps ;
+            importedComp.frameRate = fps;
             setFolderItemsFPS(importedCompFolder, fps);
         }
-
     } catch (error) {
         return _prepareError(error.toString() + item_name);
     }
 
-    ret = {"name": importedComp.name, "id": importedComp.id}
-    app.endUndoGroup();
-
-    return JSON.stringify(ret);
+    return [importedComp, importedCompFolder];
 }
 
 
