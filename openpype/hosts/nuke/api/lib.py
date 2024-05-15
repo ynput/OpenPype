@@ -2597,12 +2597,82 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
     def set_context_settings(self):
         os.environ["OP_NUKE_SKIP_SAVE_EVENT"] = "True"
         # replace reset resolution from avalon core to pype's
-        #self.reset_resolution()
+        self.reset_resolution()
         # replace reset resolution from avalon core to pype's
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
         del os.environ["OP_NUKE_SKIP_SAVE_EVENT"]
+
+    def set_custom_settings(self,):
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+
+        custom_settings = project_settings.get('fix_custom_settings')
+        if not custom_settings:
+            log.warning("Can't access to quad custom settings. Custom settings will not be applied.")
+            return
+
+        self.set_workfile_overrides(custom_settings, project_name)
+
+    def set_workfile_overrides(self, custom_settings, project_name):
+        resolution_overrides = custom_settings.get("general", []).get("working_resolution_overrides", None)
+        if not resolution_overrides:
+            log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
+            return
+
+        import re
+        regex_str = f'(nuke)[\/.]({nuke.NUKE_VERSION_MAJOR})[\\\/\.\-\_\:]({nuke.NUKE_VERSION_MINOR})'
+        application_regex = re.compile(regex_str)
+
+        overrides_group = None
+        for resolution_overrides_set in resolution_overrides:
+            for application in resolution_overrides_set.get('applications', []):
+                match = application_regex.search(application)
+                if match:
+                    overrides_group = resolution_overrides_set
+
+        if not overrides_group:
+            log.warning("Can't find overrides group that fit application. Abort.")
+
+        asset_data = self._asset_entity["data"]
+        format_data = {"419-enhancement-dissocier-res-de-travail-et-res-final"
+            "width": int(overrides_group.get('working_resolution_width')),
+            "height": int(overrides_group.get('working_resolution_height')),
+            "pixel_aspect": asset_data.get(
+                'pixelAspect',
+                asset_data.get('pixel_aspect', 1)),
+            "name": f"{project_name}_{match.group()}"
+        }
+
+        if any(x_ for x_ in format_data.values() if x_ is None):
+            msg = ("Missing override from custom settings."
+                   "\nContact your supervisor!."
+                   "\n\nWidth: `{width}`"
+                   "\nHeight: `{height}`"
+                   "\nPixel Aspect: `{pixel_aspect}`").format(**format_data)
+            log.error(msg)
+            nuke.message(msg)
+
+        existing_format = None
+        for format in nuke.formats():
+            if format_data["name"] == format.name():
+                existing_format = format
+                break
+
+        if existing_format:
+            # Enforce existing format to be correct.
+            existing_format.setWidth(format_data["width"])
+            existing_format.setHeight(format_data["height"])
+            existing_format.setPixelAspect(format_data["pixel_aspect"])
+        else:
+            format_string = self.make_format_string(**format_data)
+            log.info("Creating new format: {}".format(format_string))
+            nuke.addFormat(format_string)
+
+        nuke.root()["format"].setValue(format_data["name"])
+        log.info(f"Format is set with values : {format_data}")
+
 
     def set_favorites(self):
         from .utils import set_context_favorites
