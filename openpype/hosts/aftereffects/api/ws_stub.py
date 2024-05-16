@@ -299,7 +299,7 @@ class AfterEffectsServerStub():
                              path=path,
                              item_name=item_name,
                              import_options=import_options)
-            )
+        )
         records = self._to_records(self._handle_return(res))
         if records:
             return records.pop()
