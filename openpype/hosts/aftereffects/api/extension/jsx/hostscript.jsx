@@ -549,7 +549,7 @@ function replaceItem(item_id, path, item_name){
     var item = app.project.itemByID(item_id);
 
     if (item) {
-            try {
+        try {
             if (isComp(item)){
                 result = replaceCompSequenceItems(item, path, item_name)
                 if (!result) {
