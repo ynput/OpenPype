@@ -9,6 +9,7 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 from maya import cmds
+from maya.plugin.evaluator.cache_preferences import CachePreferenceEnabled
 
 
 @contextlib.contextmanager
@@ -124,7 +125,14 @@ class ExtractPlayblast(publish.Extractor):
         preset["filename"] = path
         preset["overwrite"] = True
 
+        # Bugfix: to avoid playblast generation issues with sequence image plane,
+        # cached playblack need to be enabled, save prev value, then enable it
+        prev_cached_playblast_status = cmds.optionVar(query="cachedPlaybackEnable")
+        cmds.optionVar(intValue=("cachedPlaybackEnable", 1))
+
         cmds.refresh(force=True)
+
+        CachePreferenceEnabled().set_state_from_preference()
 
         refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
         cmds.currentTime(refreshFrameInt - 1, edit=True)
@@ -210,6 +218,10 @@ class ExtractPlayblast(publish.Extractor):
                 )
 
                 self._capture(preset)
+
+        # Restoring the cached playback value
+        cmds.optionVar(intValue=("cachedPlaybackEnable", int(prev_cached_playblast_status)))
+        CachePreferenceEnabled().set_state_from_preference()
 
         # Restoring viewport options.
         if viewport_defaults:
