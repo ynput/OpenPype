@@ -2623,8 +2623,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
             return
 
-        import re
-        regex_str = f'(nuke)[\/.]({nuke.NUKE_VERSION_MAJOR})[\\\/\.\-\_\:]({nuke.NUKE_VERSION_MINOR})'
+        regex_str = f'(nuke)[\/\.]({nuke.NUKE_VERSION_MAJOR})[\\\/\.\-\_\:]({nuke.NUKE_VERSION_MINOR})'
         application_regex = re.compile(regex_str)
 
         overrides_group = None

@@ -4,7 +4,7 @@ import json
 import contextlib
 import logging
 
-from openpype.pipeline.context_tools import get_current_context
+from openpype.pipeline.context_tools import get_current_context, get_project_settings
 from openpype.client import get_asset_by_name
 from .ws_stub import get_stub
 
@@ -114,6 +114,38 @@ def get_asset_settings(asset_doc):
     }
 
 
+def get_custom_settings(project_name):
+    project_settings = get_project_settings(project_name)
+    custom_settings = project_settings.get('fix_custom_settings')
+    if not custom_settings:
+        log.warning("Can't access to quad custom settings. Custom settings will not be applied.")
+        return
+
+    return custom_settings
+
+def get_workfile_overrides(custom_settings):
+    resolution_overrides = custom_settings.get("general", []).get("working_resolution_overrides", None)
+    if not resolution_overrides:
+        log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
+        return
+
+    app_year = f"20{get_stub().get_app_version().split('.')[0]}"
+    regex_str = f'(aftereffects)[\\\/\.\-\_\:]({app_year}$)'
+    application_regex = re.compile(regex_str)
+
+    overrides_group = None
+    for resolution_overrides_set in resolution_overrides:
+        for application in resolution_overrides_set.get('applications', []):
+            match = application_regex.search(application)
+            if match:
+                overrides_group = resolution_overrides_set
+
+    if not overrides_group:
+        log.warning("Can't find overrides group that fit application. Abort.")
+
+    return overrides_group
+
+
 def set_settings(frames, resolution, comp_ids=None, print_msg=True):
     """Sets number of frames and resolution to selected comps.
 
@@ -130,6 +162,7 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True):
     asset_doc = get_asset_by_name(current_context["project_name"],
                                   current_context["asset_name"])
     settings = get_asset_settings(asset_doc)
+    custom_settings = get_custom_settings(current_context["project_name"])
 
     msg = ''
     if frames:
@@ -138,7 +171,16 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True):
         fps = settings["fps"]
         msg += f"frame start:{frame_start}, duration:{frames_duration}, "\
                f"fps:{fps}"
+
     if resolution:
+
+        workfile_overrides = get_workfile_overrides(custom_settings)
+        if workfile_overrides:
+            override_width = workfile_overrides.get('working_resolution_width')
+            if override_width: settings["resolutionWidth"] = override_width
+            override_height = workfile_overrides.get('working_resolution_height')
+            if override_height: settings["resolutionHeight"] = override_height
+
         width = settings["resolutionWidth"]
         height = settings["resolutionHeight"]
         msg += f"width:{width} and height:{height}"
