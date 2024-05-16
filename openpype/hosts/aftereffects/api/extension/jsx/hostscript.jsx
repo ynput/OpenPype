@@ -398,6 +398,7 @@ function _importFileWithDialog(path, item_name, import_options){
         renameFolderItems(importedCompFolder);
 
         if ('fps' in import_options){
+            fps = import_options['fps']
             importedComp.frameRate = fps;
             setFolderItemsFPS(importedCompFolder, fps);
         }
