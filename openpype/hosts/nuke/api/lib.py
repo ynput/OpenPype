@@ -2626,13 +2626,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         regex_str = f'(nuke)[\\\/\.\-\_\:]({nuke.NUKE_VERSION_MAJOR})[\\\/\.\-\_\:]({nuke.NUKE_VERSION_MINOR})'
         application_regex = re.compile(regex_str)
 
-        overrides_group = None
-        for resolution_overrides_set in resolution_overrides:
-            for application in resolution_overrides_set.get('applications', []):
-                match = application_regex.search(application)
-                if match:
-                    overrides_group = resolution_overrides_set
-                    break
+        overrides_group, application_name = self._get_override_group(resolution_overrides, application_regex)
 
         if not overrides_group:
             log.warning("Can't find overrides group that fit application. Abort.")
@@ -2644,7 +2638,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             "pixel_aspect": asset_data.get(
                 'pixelAspect',
                 asset_data.get('pixel_aspect', 1)),
-            "name": f"{project_name}_{match.group()}"
+            "name": f"{project_name}_{application_name}"
         }
 
         if any(x_ for x_ in format_data.values() if x_ is None):
@@ -2675,6 +2669,13 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         nuke.root()["format"].setValue(format_data["name"])
         log.info(f"Format is set with values : {format_data}")
 
+    def _get_override_group(self, resolution_overrides, application_regex):
+        for resolution_overrides_set in resolution_overrides:
+            for application in resolution_overrides_set.get('applications', []):
+                match = application_regex.search(application)
+                if match: return resolution_overrides_set, match.group()
+
+        return None, None
 
     def set_favorites(self):
         from .utils import set_context_favorites

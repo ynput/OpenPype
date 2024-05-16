@@ -133,18 +133,20 @@ def get_workfile_overrides(custom_settings):
     regex_str = f'(aftereffects)[\\\/\.\-\_\:]({app_year}$)'
     application_regex = re.compile(regex_str)
 
-    overrides_group = None
-    for resolution_overrides_set in resolution_overrides:
-        for application in resolution_overrides_set.get('applications', []):
-            match = application_regex.search(application)
-            if match:
-                overrides_group = resolution_overrides_set
-                break
-
+    overrides_group = _get_override_group(resolution_overrides, application_regex)
     if not overrides_group:
         log.warning("Can't find overrides group that fit application. Abort.")
 
     return overrides_group
+
+
+def _get_override_group(resolution_overrides, application_regex):
+    for resolution_overrides_set in resolution_overrides:
+        for application in resolution_overrides_set.get('applications', []):
+            match = application_regex.search(application)
+            if match: return resolution_overrides_set
+
+    return None, None
 
 
 def set_settings(frames, resolution, comp_ids=None, print_msg=True):
