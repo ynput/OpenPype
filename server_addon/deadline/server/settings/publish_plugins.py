@@ -335,7 +335,7 @@ class PublishPluginsModel(BaseSettingsModel):
     MayaSubmitDeadline: MayaSubmitDeadlineModel = SettingsField(
         default_factory=MayaSubmitDeadlineModel,
         title="Maya Submit to deadline")
-    HoudiniCacheSubmitDeadline: HoudiniCacheSubmitDeadlineModel = SettingsField(
+    HoudiniCacheSubmitDeadline: HoudiniCacheSubmitDeadlineModel = SettingsField(  # noqa
         default_factory=HoudiniCacheSubmitDeadlineModel,
         title="Houdini Submit cache to deadline")
     HoudiniSubmitDeadline: HoudiniSubmitDeadlineModel = SettingsField(
