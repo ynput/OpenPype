@@ -2632,6 +2632,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                 match = application_regex.search(application)
                 if match:
                     overrides_group = resolution_overrides_set
+                    break
 
         if not overrides_group:
             log.warning("Can't find overrides group that fit application. Abort.")
