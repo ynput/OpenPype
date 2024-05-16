@@ -2543,6 +2543,8 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             "name": project_name
         }
 
+        log.info(format_data)
+
         if any(x_ for x_ in format_data.values() if x_ is None):
             msg = ("Missing set shot attributes in DB."
                    "\nContact your supervisor!."
@@ -2636,7 +2638,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             log.warning("Can't find overrides group that fit application. Abort.")
 
         asset_data = self._asset_entity["data"]
-        format_data = {"419-enhancement-dissocier-res-de-travail-et-res-final"
+        format_data = {
             "width": int(overrides_group.get('working_resolution_width')),
             "height": int(overrides_group.get('working_resolution_height')),
             "pixel_aspect": asset_data.get(
