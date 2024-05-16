@@ -330,11 +330,6 @@ function _pathIsFile(path){
     return path.match(new RegExp(".[a-zA-Z]{3}$"));
 }
 
-function _pathIsFile(path){
-    return path.match(new RegExp(".[a-zA-Z]{3}$"));
-}
-
-
 function importFileWithDialog(path, item_name, import_options){
     app.beginUndoGroup("Import");
 
