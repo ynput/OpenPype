@@ -72,8 +72,12 @@ class FileLoader(api.AfterEffectsLoader):
 
         if is_psd:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
-            comp = stub.import_file_with_dialog(path_str, stub.LOADED_ICON + comp_name,
-                                                import_options)
+            comp = stub.import_file_with_dialog(
+                path_str,
+                stub.LOADED_ICON + comp_name,
+                import_options
+            )
+
         else:
             frame = repr_cont.get("frame")
             if frame:

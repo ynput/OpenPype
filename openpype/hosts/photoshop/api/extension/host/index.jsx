@@ -234,7 +234,13 @@ function getActiveDocumentName(){
     if (documents.length == 0){
         return null;
     }
-    return app.activeDocument.name;
+
+    try {
+        return app.activeDocument.name;
+    }catch(e){
+        // Document has not been saved yet and has no name
+        return
+    };
 }
 
 function getActiveDocumentFullName(){
@@ -245,10 +251,16 @@ function getActiveDocumentFullName(){
     if (documents.length == 0){
         return null;
     }
-    var f = new File(app.activeDocument.fullName);
-    var path = f.fsName;
-    f.close();
-    return path;
+
+    try {
+        var f = new File(app.activeDocument.fullName);
+        var path = f.fsName;
+        f.close();
+        return path;
+    }catch(e){
+        // Document has not been saved yet and has no name
+        return
+    };
 }
 
 function imprint(payload){

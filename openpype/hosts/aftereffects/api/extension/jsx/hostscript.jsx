@@ -398,6 +398,7 @@ function _importFileWithDialog(path, item_name, import_options){
         renameFolderItems(importedCompFolder);
 
         if ('fps' in import_options){
+            fps = import_options['fps']
             importedComp.frameRate = fps;
             setFolderItemsFPS(importedCompFolder, fps);
         }
@@ -549,7 +550,7 @@ function replaceItem(item_id, path, item_name){
     var item = app.project.itemByID(item_id);
 
     if (item) {
-            try {
+        try {
             if (isComp(item)){
                 result = replaceCompSequenceItems(item, path, item_name)
                 if (!result) {
