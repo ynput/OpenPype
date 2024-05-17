@@ -127,9 +127,14 @@ class ExtractPlayblast(publish.Extractor):
 
         # Bugfix: to avoid playblast generation issues with sequence image plane,
         # cached playblack need to be enabled
-        # Firstly, save the current value to be able to apply it again after playblast capture
+        # Firstly, save and switch the anim evaluation mode to parallel
+        # (needed for the cached playback option)
+        prev_evaluation_mode_info = cmds.evaluationManager(query=True, mode=True)
+        # Switch to parallel
+        cmds.evaluationManager(mode="parallel")
+        # Then, save the current cachedPlayback value to be able to apply it again after playblast capture
         prev_cached_playblast_status = cmds.optionVar(query="cachedPlaybackEnable")
-        # Force the value
+        # Force the value cachedPlayback value to ON
         cmds.optionVar(intValue=("cachedPlaybackEnable", 1))
 
         cmds.refresh(force=True)
@@ -224,6 +229,12 @@ class ExtractPlayblast(publish.Extractor):
 
         # Restoring the cached playback option value and update the engine internal value
         cmds.optionVar(intValue=("cachedPlaybackEnable", int(prev_cached_playblast_status)))
+
+        # Restore anim evaluation mode
+        # (directly access index 0 sice it should be a list with a least one value)
+        cmds.evaluationManager(mode=prev_evaluation_mode_info[0])
+
+        # Update the engine internal value for the cached playback option
         CachePreferenceEnabled().set_state_from_preference()
 
         # Restoring viewport options.
