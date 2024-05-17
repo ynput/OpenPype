@@ -59,7 +59,7 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def current_file(self):
         try:
             full_name = lib.stub().get_active_document_full_name()
-            if full_name and full_name != "null":
+            if full_name and full_name not in ["null", "undefined"]:
                 return os.path.normpath(full_name).replace("\\", "/")
         except Exception:
             pass

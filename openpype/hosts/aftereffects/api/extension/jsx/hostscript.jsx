@@ -263,6 +263,8 @@ function importFile(path, item_name, import_options){
      * Returns:
      *    JSON {name, id}
      */
+    if (!import_options) { import_options = "{}"; }
+
     var comp;
     var ret = {};
     try{
@@ -301,8 +303,13 @@ function importFile(path, item_name, import_options){
 
             if (app.project.selection.length == 2 &&
                 app.project.selection[0] instanceof FolderItem){
-                 comp.parentFolder = app.project.selection[0]
+                    comp.parentFolder = app.project.selection[0]
             }
+
+            if ('fps' in import_options){
+                comp.mainSource.conformFrameRate = import_options["fps"];
+            }
+
         } catch (error) {
             return _prepareError(error.toString() + importOptions.file.fsName);
         } finally {
@@ -321,24 +328,67 @@ function importFile(path, item_name, import_options){
     return JSON.stringify(ret);
 }
 
+function _pathIsFile(path){
+    return path.match(new RegExp(".[a-zA-Z]{3}$"));
+}
 
-function importFileWithDialog(path, item_name){
+function importFileWithDialog(path, item_name, import_options){
+    if (!import_options) { import_options = "{}"; }
+
     app.beginUndoGroup("Import");
-    importedCompArray = app.project.importFileWithDialog();
 
-    if (importedCompArray == undefined){
+    try{
+        import_options = JSON.parse(import_options);
+    } catch (e){
+        return _prepareError("Couldn't parse import options " + import_options);
+    }
+
+    var importedObjects = _importFileWithDialog(path, item_name, import_options)
+    if (typeof importedObjects === 'string') {
+        // We return the object because it's a string error
+        return importedObjects;
+    }
+
+    var importedComp = importedObjects[0]
+    ret = {"name": importedComp.name, "id": importedComp.id}
+    app.endUndoGroup();
+
+    return JSON.stringify(ret);
+}
+
+function _importFileWithDialog(path, item_name, import_options){
+    if (!import_options) { import_options = {}; }
+
+    var folderPath = undefined;
+    if (_pathIsFile(path)){
+        folderPath = new Folder(path.match(new RegExp("(.*)[/\\\\]"))[0] || '')
+    } else {
+        folderPath = new Folder(path)
+    }
+
+    app.project.setDefaultImportFolder(new Folder(folderPath));
+    importedCompArray = app.project.importFileWithDialog();
+    app.project.setDefaultImportFolder();
+
+    if (importedCompArray === undefined){
         // User has canceled the action, so we stop the script here
         // and return an empty value to avoid parse errors later
         return ''
     }
 
     importedComp = importedCompArray[0]
-    if (importedComp.layers == undefined){
+    if (importedComp.layers === undefined){
         undoLastActions();
         return _prepareError('Wrong file type imported (impossible to access layers composition).');
     }
 
     importedCompFilePath = getCompFilepath(importedComp);
+
+    if (importedCompFilePath === undefined){
+        undoLastActions();
+        return _prepareError('Wrong file type imported (impossible to access layers composition).');
+    }
+
     if (extensionsAreDifferents(importedCompFilePath, path)){
         undoLastActions();
         return _prepareError('Wrong file selected (incorrect extension).');
@@ -349,22 +399,45 @@ function importFileWithDialog(path, item_name){
         return _prepareError('Wrong file selected (incorrect asset / version).');
     }
 
-    importedCompFolder = getImportedCompFolder(importedComp);
+    try {
+        importedCompFolder = getImportedCompFolder(importedComp);
 
-    importedCompFolder.name = item_name;
-    importedComp.name = item_name
+        importedCompFolder.name = item_name;
+        importedComp.name = item_name;
 
-    renameFolderItems(importedCompFolder);
+        renameFolderItems(importedCompFolder);
 
-    ret = {"name": importedComp.name, "id": importedComp.id}
-    app.endUndoGroup();
+        if ('fps' in import_options){
+            fps = import_options['fps']
+            importedComp.frameRate = fps;
+            setFolderItemsFPS(importedCompFolder, fps);
+        }
+    } catch (error) {
+        return _prepareError(error.toString() + item_name);
+    }
 
-    return JSON.stringify(ret);
+    return [importedComp, importedCompFolder];
 }
 
 
 function getCompFilepath(compItem){
-    return String(compItem.layers[1].source.file)
+    for (var indexLayer = 1; indexLayer <= compItem.numLayers; indexLayer++) {
+        // search if source.file is available aka the layer is not a comp
+        //if one is present , it returns the path
+        if (compItem.layers[indexLayer].source.file){
+            return String(compItem.layers[indexLayer].source.file)
+        }
+    }
+    // Else if none is present, must search in the imported folder of AE for layer.
+    var folder = getImportedCompFolder(compItem);
+    for (var indexItem = 1; indexItem <= folder.items.length; indexItem++) {
+        var folderItem = folder.items[indexItem];
+        // if item is a footage, get its file path
+        if (folderItem instanceof FootageItem){
+            return String(folderItem.file);
+        }
+    }
+    return undefined;
 }
 
 
@@ -414,6 +487,14 @@ function getImportedCompFolder(importedComp){
     }
 }
 
+function getLayerFromFolder(folder, layerName){
+    for (var index = 1; index <= folder.items.length; index++) {
+        if(folder.items[index].name === layerName){
+            return folder.items[index];
+        }
+    }
+    return undefined
+}
 
 function renameFolderItems(folder){
     for (var index = 1; index <= folder.items.length; index++) {
@@ -421,6 +502,14 @@ function renameFolderItems(folder){
         folderItem.name = _exctractFirstPart(folderItem.name);
     }
 
+}
+
+
+function setFolderItemsFPS(folder, fps){
+    for (var index = 1; index <= folder.items.length; index++) {
+        folderItem = folder.items[index]
+        folderItem.mainSource.conformFrameRate = fps
+    }
 }
 
 
@@ -449,6 +538,10 @@ function setLabelColor(comp_id, color_idx){
     }
 }
 
+function isComp(item){
+    return (item instanceof CompItem)
+}
+
 function replaceItem(item_id, path, item_name){
     /**
      * Replaces loaded file with new file and updates name
@@ -465,11 +558,17 @@ function replaceItem(item_id, path, item_name){
         return _prepareError("File " + path + " not found.");
     }
     var item = app.project.itemByID(item_id);
-    if (item){
-        try{
-            if (isFileSequence(item)) {
+
+    if (item) {
+        try {
+            if (isComp(item)){
+                result = replaceCompSequenceItems(item, path, item_name)
+                if (!result) {
+                    return ''
+                }
+            } else if (isFileSequence(item)) {
                 item.replaceWithSequence(fp, false);
-            }else{
+            } else {
                 item.replace(fp);
             }
 
@@ -483,6 +582,147 @@ function replaceItem(item_id, path, item_name){
         return _prepareError("There is no item with "+ item_id);
     }
     app.endUndoGroup();
+}
+
+function replaceCompSequenceItems(item, path, item_name){
+    /**
+     * Replaces all elements from given composition with selected comp.
+     * It will also delete elements that are absent in newer version
+     * and add newer elements to already loaded composition.
+     *
+     * Args:
+     *    item_id (int): id of composition, not a index!
+     *    path (string): absolute path to new file
+     *    item_name (string): new composition name
+     */
+
+    var previousCompFolder = getImportedCompFolder(item);
+
+    var importedObjects = _importFileWithDialog(path, item_name, undefined)
+    if (typeof importedObjects === 'string') {
+        // We return the object because it's a string error
+        return importedObjects
+    }
+
+    var importedComp = importedObjects[0]
+    var importedFolder = importedObjects[1]
+
+    var deletedLayers = [];
+    for (var index = 1; index <= item.numLayers; index++) {
+        var sourceLayer = item.layer(index);
+        var targetLayer = getLayerFromFolder(importedFolder, sourceLayer.name);
+        if (targetLayer){
+            sourceLayer.replaceSource(targetLayer, true);
+        } else {
+            deletedLayers.push(sourceLayer);
+        }
+    }
+
+    var newLayers = _list_new_layers(item, importedComp);
+
+    var layersToDelete = deletedLayers.length > 0;
+    var layersToAdd = newLayers.length > 0;
+
+    if (layersToDelete || layersToAdd){
+
+        var firstPartMsg = ''
+        var secondPartMsg = ''
+        if (layersToDelete){ firstPartMsg = "\n- " + deletedLayers.length + " element(s) have been deleted."}
+        if (layersToAdd){ secondPartMsg = "\n- " + newLayers.length + " element(s) have been added."}
+
+        var importConfirmation = confirm(
+            "Composition '" + item.name +
+            "' :" + firstPartMsg + secondPartMsg + "\nDo you want to continue import ?"
+        )
+        if (!(importConfirmation)){
+            // User has canceled the action, so we stop the script here
+            // and return an empty value to avoid parse errors later
+            undoLastActions();
+            return ''
+        }
+
+        if (layersToDelete) { _delete_layers_dialog(item, deletedLayers); }
+        if (layersToAdd) { _add_new_layers_dialog(item, importedComp, newLayers); }
+
+    }
+
+    importedComp.remove();
+    previousCompFolder.remove();
+}
+
+
+function _delete_layers_dialog(compItem, deletedLayers){
+    /**
+     * Delete all elements in given compItem that are
+     * listed in given deletedLayers array.
+     * A prompt ask for confirmation before deletion.
+     * Args:
+     *    compItem(compItem): given compItem on which we wants to perform deletion
+     *    deletedLayers(array): array of layers to delete.
+     */
+
+    var deletionConfirmation = confirm(
+        "Do you want to delete the following elements from composition '" +
+        compItem.name + "' :\n -" +
+        deletedLayers.map(function(layer){ return layer.name }).join('\n -')
+    );
+    if (deletionConfirmation){
+        for (var index = 0; index < deletedLayers.length; index++) {
+            deletedLayers[index].remove();
+        }
+    }
+
+}
+
+
+function _list_new_layers(compItem, importedComp){
+    /**
+     * List all layers added in importedComp that are
+     * missing from compItem.
+     * * Args:
+     *    compItem(compItem): given compItem in which the layers may be missing
+     *    importedComp(compItem): compItem with potentially new layers
+     */
+
+    var additionalLayers = []
+    for (var index=1; index <= importedComp.numLayers; index++){
+        var target_layer = importedComp.layer(index)
+        var source_layer = compItem.layer(target_layer.name)
+        if (!(source_layer)){
+            additionalLayers.push(target_layer);
+        }
+    }
+    return additionalLayers
+}
+
+
+function _add_new_layers_dialog(compItem, importedComp, newLayers){
+    /**
+     * Add in composition all imported elements from
+     * importedComp that are missing in compItem.
+     * A prompt ask for confirmation before addition.
+     * Args:
+     *    compItem(compItem): given compItem in which we wants to add missing layers
+     *    importedComp(compItem): compItem used for comparison
+     */
+    var additionConfirmation = confirm(
+        "New elements have been detected in newer version. Do you want to add them to composition '" +
+        compItem.name + "' ?\n -" +
+        newLayers.map(function(layer){ return layer.name }).join('\n -')
+    );
+    if (additionConfirmation){
+        for(var index=0; index < newLayers.length; index++){
+
+            var additionalLayer = newLayers[index]
+            additionalLayer.copyToComp(compItem)
+            var duplicatedLayer = compItem.layer(additionalLayer.name)
+            var targetIndex = importedComp.layer(duplicatedLayer.name).index
+
+            if (targetIndex === duplicatedLayer.index){ continue; }
+
+            duplicatedLayer.moveAfter(compItem.layer(targetIndex))
+        }
+    }
 }
 
 function renameItem(item_id, new_name){
