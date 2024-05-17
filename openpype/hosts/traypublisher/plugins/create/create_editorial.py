@@ -660,7 +660,7 @@ or updating already created. Publishing will create OTIO file.
         fps = instance_data["fps"]
         variant_name = instance_data["variant"]
 
-        # basic unique asset name, with no modification of the min/maj syntax
+        # Unique asset name (without converting to lowercase)
         clip_name = os.path.splitext(otio_clip.name)[0]
         project_doc = get_project(self.project_name)
 
