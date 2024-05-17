@@ -2606,18 +2606,24 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         self.set_colorspace()
         del os.environ["OP_NUKE_SKIP_SAVE_EVENT"]
 
-    def set_custom_settings(self,):
-        project_name = get_current_project_name()
-        project_settings = get_project_settings(project_name)
-
-        custom_settings = project_settings.get('fix_custom_settings')
+    def set_custom_resolution(self):
+        custom_settings = self.get_custom_settings()
         if not custom_settings:
             log.warning("Can't access to quad custom settings. Custom settings will not be applied.")
             return
 
-        self.set_workfile_overrides(custom_settings, project_name)
+        self.set_workfile_overrides(
+            custom_settings=custom_settings
+        )
 
-    def set_workfile_overrides(self, custom_settings, project_name):
+    def get_custom_settings(self):
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+
+        return project_settings.get('fix_custom_settings')
+
+    def set_workfile_overrides(self, custom_settings):
+        project_name = get_current_project_name()
         resolution_overrides = custom_settings.get("general", []).get("working_resolution_overrides", None)
         if not resolution_overrides:
             log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
