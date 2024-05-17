@@ -339,8 +339,13 @@ function importFileWithDialog(path, item_name, import_options){
         return _prepareError("Couldn't parse import options " + import_options);
     }
 
-    _importFileWithDialog(path, item_name, import_options)
+    var importedObjects = _importFileWithDialog(path, item_name, import_options)
+    if (typeof importedObjects === 'string') {
+        // We return the object because it's a string error
+        return importedObjects;
+    }
 
+    var importedComp = importedObjects[0]
     ret = {"name": importedComp.name, "id": importedComp.id}
     app.endUndoGroup();
 
@@ -589,9 +594,11 @@ function replaceCompSequenceItems(item, path, item_name){
     var previousCompFolder = getImportedCompFolder(item);
 
     var importedObjects = _importFileWithDialog(path, item_name, undefined)
-    if (importedObjects == undefined){
-        throw new Error("An error occured when importing file through After Effects dialog. Abort action.");
+    if (typeof importedObjects === 'string') {
+        // We return the object because it's a string error
+        return importedObjects
     }
+
     var importedComp = importedObjects[0]
     var importedFolder = importedObjects[1]
 
