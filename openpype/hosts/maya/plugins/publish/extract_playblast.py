@@ -227,7 +227,7 @@ class ExtractPlayblast(publish.Extractor):
 
                 self._capture(preset)
 
-        # Restoring the cached playback option value and update the engine internal value
+        # Restoring the cached playback option value
         cmds.optionVar(intValue=("cachedPlaybackEnable", int(prev_cached_playblast_status)))
 
         # Restore anim evaluation mode
