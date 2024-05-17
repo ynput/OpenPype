@@ -263,6 +263,8 @@ function importFile(path, item_name, import_options){
      * Returns:
      *    JSON {name, id}
      */
+    if (!import_options) { import_options = "{}"; }
+
     var comp;
     var ret = {};
     try{
@@ -331,6 +333,8 @@ function _pathIsFile(path){
 }
 
 function importFileWithDialog(path, item_name, import_options){
+    if (!import_options) { import_options = "{}"; }
+
     app.beginUndoGroup("Import");
 
     try{
@@ -348,7 +352,8 @@ function importFileWithDialog(path, item_name, import_options){
 }
 
 function _importFileWithDialog(path, item_name, import_options){
-    if (import_options === undefined){ import_options = {}; }
+    if (!import_options) { import_options = {}; }
+
     var folderPath = undefined;
     if (_pathIsFile(path)){
         folderPath = new Folder(path.match(new RegExp("(.*)[/\\\\]"))[0] || '')
