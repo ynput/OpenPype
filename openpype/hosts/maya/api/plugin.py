@@ -524,9 +524,9 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         # Rename the set to match the new layer name
         set_layer_name = node.split(":")[-1]
         new_set_name = node.replace(set_layer_name, layer_name)
-        cmds.rename(node, new_set_name)
+        renamed_node = cmds.rename(node, new_set_name)
 
-        return node
+        return renamed_node
 
     def _create_layer_instance_node(self, layer):
         # We only collect if a CreateRender instance exists
