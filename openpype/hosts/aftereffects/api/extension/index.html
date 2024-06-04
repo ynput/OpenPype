@@ -84,6 +84,17 @@
 
     <script type=text/javascript>
       $(function() {
+        $("a#setcustomresolution-button").bind("click", function() {
+          RPC.call('AfterEffects.setcustomresolution_route').then(function (data) {
+          }, function (error) {
+              alert(error);
+          });
+        });
+      });
+    </script>
+
+    <script type=text/javascript>
+      $(function() {
         $("a#setframes-button").bind("click", function() {
           RPC.call('AfterEffects.setframes_route').then(function (data) {
           }, function (error) {
@@ -162,6 +173,7 @@
             <div><a href=# id=sceneinventory-button><button class="hostFontSize">Manage...</button></a></div>
             <div><a href=# id=separator0><button class="hostFontSize">&nbsp;</button></a></div>
             <div><a href=# id=setresolution-button><button class="hostFontSize">Set Resolution</button></a></div>
+            <div><a href=# id=setcustomresolution-button><button class="hostFontSize">Set Custom Resolution</button></a></div>
             <div><a href=# id=setframes-button><button class="hostFontSize">Set Frame Range</button></a></div>
             <div><a href=# id=setall-button><button class="hostFontSize">Apply All Settings</button></a></div>
             <div><a href=# id=separator1><button class="hostFontSize">&nbsp;</button></a></div>

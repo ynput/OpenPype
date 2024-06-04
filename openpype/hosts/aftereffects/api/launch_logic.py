@@ -23,7 +23,7 @@ from openpype.tools.utils import host_tools, get_openpype_qt_app
 from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import get_stub
-from .lib import set_settings
+from .lib import set_settings, set_custom_settings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -328,6 +328,9 @@ class AfterEffectsRoute(WebSocketRoute):
     async def setresolution_route(self):
         self._settings_route(False, True)
 
+    async def setcustomresolution_route(self):
+        self._custom_settings_route(False, True, True)
+
     async def setframes_route(self):
         self._settings_route(True, False)
 
@@ -357,6 +360,18 @@ class AfterEffectsRoute(WebSocketRoute):
 
         # Required return statement.
         return "nothing"
+
+    def _custom_settings_route(self, frames, resolution, use_custom_settings):
+        partial_method = functools.partial(set_settings,
+                                           frames,
+                                           resolution,
+                                           use_custom_settings=use_custom_settings)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
+
 
     def create_placeholder_route(self):
         from openpype.hosts.aftereffects.api.workfile_template_builder import \

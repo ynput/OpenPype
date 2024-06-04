@@ -149,7 +149,7 @@ def _get_override_group(resolution_overrides, application_regex):
     return None, None
 
 
-def set_settings(frames, resolution, comp_ids=None, print_msg=True):
+def set_settings(frames, resolution, comp_ids=None, print_msg=True, use_custom_settings=False):
     """Sets number of frames and resolution to selected comps.
 
     Args:
@@ -165,7 +165,6 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True):
     asset_doc = get_asset_by_name(current_context["project_name"],
                                   current_context["asset_name"])
     settings = get_asset_settings(asset_doc)
-    custom_settings = get_custom_settings(current_context["project_name"])
 
     msg = ''
     if frames:
@@ -176,14 +175,11 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True):
                f"fps:{fps}"
 
     if resolution:
-
-        workfile_overrides = get_workfile_overrides(custom_settings)
-        if workfile_overrides:
-            override_width = workfile_overrides.get('working_resolution_width')
-            if override_width: settings["resolutionWidth"] = override_width
-            override_height = workfile_overrides.get('working_resolution_height')
-            if override_height: settings["resolutionHeight"] = override_height
-
+        if use_custom_settings:
+            retrieve_custom_settings(
+                project_name=current_context["project_name"],
+                settings=settings
+            )
         width = settings["resolutionWidth"]
         height = settings["resolutionHeight"]
         msg += f"width:{width} and height:{height}"
@@ -203,3 +199,12 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True):
                                  fps, width, height)
         if print_msg:
             stub.print_msg(msg)
+
+def retrieve_custom_settings(project_name, settings):
+    custom_settings = get_custom_settings(project_name)
+    workfile_overrides = get_workfile_overrides(custom_settings)
+    if workfile_overrides:
+        override_width = workfile_overrides.get('working_resolution_width')
+        if override_width: settings["resolutionWidth"] = override_width
+        override_height = workfile_overrides.get('working_resolution_height')
+        if override_height: settings["resolutionHeight"] = override_height
