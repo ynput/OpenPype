@@ -6,6 +6,7 @@ import logging
 
 from openpype.pipeline.context_tools import get_current_context, get_project_settings
 from openpype.client import get_asset_by_name
+from openpype.pipeline import get_current_host_name
 from .ws_stub import get_stub
 
 log = logging.getLogger(__name__)
@@ -128,25 +129,22 @@ def get_workfile_overrides(custom_settings):
     if not resolution_overrides:
         log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
         return
-
-    app_year = f"20{get_stub().get_app_version().split('.')[0]}"
-    regex_str = f'(aftereffects)[\\\/\.\-\_\:]({app_year}$)'
-    application_regex = re.compile(regex_str)
-
-    overrides_group = _get_override_group(resolution_overrides, application_regex)
+    print('@@ OVERRIDE')
+    print(resolution_overrides)
+    current_host_name = get_current_host_name()
+    overrides_group = _get_override_group(resolution_overrides, current_host_name)
     if not overrides_group:
         log.warning("Can't find overrides group that fit application. Abort.")
 
     return overrides_group
 
 
-def _get_override_group(resolution_overrides, application_regex):
+def _get_override_group(resolution_overrides, current_host_name):
     for resolution_overrides_set in resolution_overrides:
-        for application in resolution_overrides_set.get('applications', []):
-            match = application_regex.search(application)
-            if match: return resolution_overrides_set
+        if current_host_name in resolution_overrides_set.get('hosts', []):
+            return resolution_overrides_set
 
-    return None, None
+    return None
 
 
 def set_settings(frames, resolution, comp_ids=None, print_msg=True, use_custom_settings=False):
@@ -203,6 +201,7 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True, use_custom_s
 def retrieve_custom_settings(project_name, settings):
     custom_settings = get_custom_settings(project_name)
     workfile_overrides = get_workfile_overrides(custom_settings)
+
     if workfile_overrides:
         override_width = workfile_overrides.get('working_resolution_width')
         if override_width: settings["resolutionWidth"] = override_width

@@ -2629,13 +2629,8 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
             return
 
-        application_name = self._get_application_name()
-        major_version = nuke.NUKE_VERSION_MAJOR
-        minor_version = nuke.NUKE_VERSION_MINOR
-        regex_str = f'({application_name})[\\\/\.\-\_\:]({major_version})[\\\/\.\-\_\:]({minor_version})'
-        application_regex = re.compile(regex_str)
-
-        overrides_group, application_name = self._get_override_group(resolution_overrides, application_regex)
+        host_name = get_current_host_name()
+        overrides_group = self._get_override_group(resolution_overrides, host_name)
 
         if not overrides_group:
             log.warning("Can't find overrides group that fit application. Abort.")
@@ -2647,7 +2642,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             "pixel_aspect": asset_data.get(
                 'pixelAspect',
                 asset_data.get('pixel_aspect', 1)),
-            "name": f"{project_name}_{application_name}"
+            "name": f"{project_name}_{host_name}"
         }
 
         if any(x_ for x_ in format_data.values() if x_ is None):
@@ -2678,18 +2673,12 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         nuke.root()["format"].setValue(format_data["name"])
         log.info(f"Format is set with values : {format_data}")
 
-    def _get_application_name(self):
-        return  "nukex" if nuke.env['nukex'] \
-            else "studio" if nuke.env["studio"] \
-            else "nuke"
-
-    def _get_override_group(self, resolution_overrides, application_regex):
+    def _get_override_group(self, resolution_overrides, host_name):
         for resolution_overrides_set in resolution_overrides:
-            for application in resolution_overrides_set.get('applications', []):
-                match = application_regex.search(application)
-                if match: return resolution_overrides_set, match.group()
+            if host_name in resolution_overrides_set.get('hosts', []):
+                return resolution_overrides_set
 
-        return None, None
+        return None
 
     def set_favorites(self):
         from .utils import set_context_favorites

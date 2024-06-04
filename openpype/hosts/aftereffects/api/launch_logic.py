@@ -23,7 +23,7 @@ from openpype.tools.utils import host_tools, get_openpype_qt_app
 from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import get_stub
-from .lib import set_settings, set_custom_settings
+from .lib import set_settings, retrieve_custom_settings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
