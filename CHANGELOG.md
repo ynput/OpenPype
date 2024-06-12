@@ -1,6 +1,53 @@
 # Changelog
 
 
+## [3.18.11](https://github.com/ynput/OpenPype/tree/3.18.11)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.10...3.18.11)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Deadline: Houdini submission settings in OP <a href="https://github.com/ynput/OpenPype/pull/6269">#6269</a></summary>
+
+Make houdini submissions respect pools groups.This is done by:
+- Make collect pools works with some Houdini families/product types.
+- Make Ayon Houdini submitters get group names from Houdini deadline settings.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Ensure unique class name compared to `extract_yeti_cache.py` <a href="https://github.com/ynput/OpenPype/pull/6251">#6251</a></summary>
+
+Fix duplicate `ExtractYetiCache` plug-in name.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Correct Alembic export defaults AY-5273 <a href="https://github.com/ynput/OpenPype/pull/6268">#6268</a></summary>
+
+Missing `writeUVs` on the Alembic extraction.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.10](https://github.com/ynput/OpenPype/tree/3.18.10)
 
 
