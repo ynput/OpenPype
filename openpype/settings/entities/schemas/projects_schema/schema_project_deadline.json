@@ -207,6 +207,99 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "HoudiniCacheSubmitDeadline",
+                    "label": "Houdini Submit cache to deadline",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "chunk_size",
+                            "label": "Chunk Size"
+                        },
+                        {
+                            "type": "text",
+                            "key": "group",
+                            "label": "Group Name"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "HoudiniSubmitDeadline",
+                    "label": "Houdini Submit render to deadline",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "chunk_size",
+                            "label": "Chunk Size"
+                        },
+                        {
+                            "type": "text",
+                            "key": "group",
+                            "label": "Group Name"
+                        },
+                        {
+                            "type": "number",
+                            "key": "export_priority",
+                            "label": "Export Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "export_chunk_size",
+                            "label": "Export Chunk Size"
+                        },
+                        {
+                            "type": "text",
+                            "key": "export_group",
+                            "label": "Export Group"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "MaxSubmitDeadline",
                     "label": "3dsMax Submit to Deadline",
                     "checkbox_key": "enabled",

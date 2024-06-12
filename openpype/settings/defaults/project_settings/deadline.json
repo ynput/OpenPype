@@ -36,6 +36,25 @@
             "scene_patches": [],
             "strict_error_checking": true
         },
+        "HoudiniCacheSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "priority": 50,
+            "chunk_size": 999999,
+            "group": ""
+        },
+        "HoudiniSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "priority": 50,
+            "chunk_size": 1,
+            "group": "",
+            "export_priority": 50,
+            "export_chunk_size": 10,
+            "export_group": ""
+        },
         "MaxSubmitDeadline": {
             "enabled": true,
             "optional": false,
