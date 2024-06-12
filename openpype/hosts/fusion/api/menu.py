@@ -1,3 +1,4 @@
+import os
 import sys
 
 from qtpy import QtWidgets, QtCore, QtGui
@@ -14,9 +15,14 @@ from openpype.hosts.fusion.api.lib import (
 )
 from openpype.pipeline import get_current_asset_name
 from openpype.resources import get_openpype_icon_filepath
+from openpype.tools.utils import get_qt_app
 
 from .pipeline import FusionEventHandler
 from .pulse import FusionPulse
+
+
+MENU_LABEL = os.environ["AVALON_LABEL"]
+
 
 self = sys.modules[__name__]
 self.menu = None
@@ -26,7 +32,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super(OpenPypeMenu, self).__init__(*args, **kwargs)
 
-        self.setObjectName("OpenPypeMenu")
+        self.setObjectName(f"{MENU_LABEL}Menu")
 
         icon_path = get_openpype_icon_filepath()
         icon = QtGui.QIcon(icon_path)
@@ -41,7 +47,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
             | QtCore.Qt.WindowStaysOnTopHint
         )
         self.render_mode_widget = None
-        self.setWindowTitle("OpenPype")
+        self.setWindowTitle(MENU_LABEL)
 
         asset_label = QtWidgets.QLabel("Context", self)
         asset_label.setStyleSheet(
@@ -169,7 +175,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
 
 def launch_openpype_menu():
-    app = QtWidgets.QApplication(sys.argv)
+
+    app = get_qt_app()
 
     pype_menu = OpenPypeMenu()
 

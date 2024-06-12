@@ -1,7 +1,8 @@
 import json
-from pydantic import Field, validator
+from pydantic import validator
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     MultiplatformPathListModel,
     ensure_unique_names,
     task_types_enum,
@@ -12,16 +13,37 @@ from .publish_plugins import PublishPuginsModel, DEFAULT_PUBLISH_VALUES
 from .tools import GlobalToolsModel, DEFAULT_TOOLS_VALUES
 
 
+class DiskMappingItemModel(BaseSettingsModel):
+    _layout = "expanded"
+    source: str = SettingsField("", title="Source")
+    destination: str = SettingsField("", title="Destination")
+
+
+class DiskMappingModel(BaseSettingsModel):
+    windows: list[DiskMappingItemModel] = SettingsField(
+        title="Windows",
+        default_factory=list,
+    )
+    linux: list[DiskMappingItemModel] = SettingsField(
+        title="Linux",
+        default_factory=list,
+    )
+    darwin: list[DiskMappingItemModel] = SettingsField(
+        title="MacOS",
+        default_factory=list,
+    )
+
+
 class ImageIOFileRuleModel(BaseSettingsModel):
-    name: str = Field("", title="Rule name")
-    pattern: str = Field("", title="Regex pattern")
-    colorspace: str = Field("", title="Colorspace name")
-    ext: str = Field("", title="File extension")
+    name: str = SettingsField("", title="Rule name")
+    pattern: str = SettingsField("", title="Regex pattern")
+    colorspace: str = SettingsField("", title="Colorspace name")
+    ext: str = SettingsField("", title="File extension")
 
 
 class CoreImageIOFileRulesModel(BaseSettingsModel):
-    activate_global_file_rules: bool = Field(False)
-    rules: list[ImageIOFileRuleModel] = Field(
+    activate_global_file_rules: bool = SettingsField(False)
+    rules: list[ImageIOFileRuleModel] = SettingsField(
         default_factory=list,
         title="Rules"
     )
@@ -33,19 +55,21 @@ class CoreImageIOFileRulesModel(BaseSettingsModel):
 
 
 class CoreImageIOConfigModel(BaseSettingsModel):
-    filepath: list[str] = Field(default_factory=list, title="Config path")
+    filepath: list[str] = SettingsField(
+        default_factory=list, title="Config path"
+    )
 
 
 class CoreImageIOBaseModel(BaseSettingsModel):
-    activate_global_color_management: bool = Field(
+    activate_global_color_management: bool = SettingsField(
         False,
         title="Enable Color Management"
     )
-    ocio_config: CoreImageIOConfigModel = Field(
+    ocio_config: CoreImageIOConfigModel = SettingsField(
         default_factory=CoreImageIOConfigModel,
         title="OCIO config"
     )
-    file_rules: CoreImageIOFileRulesModel = Field(
+    file_rules: CoreImageIOFileRulesModel = SettingsField(
         default_factory=CoreImageIOFileRulesModel,
         title="File Rules"
     )
@@ -53,28 +77,28 @@ class CoreImageIOBaseModel(BaseSettingsModel):
 
 class VersionStartCategoryProfileModel(BaseSettingsModel):
     _layout = "expanded"
-    host_names: list[str] = Field(
+    host_names: list[str] = SettingsField(
         default_factory=list,
         title="Host names"
     )
-    task_types: list[str] = Field(
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    task_names: list[str] = Field(
+    task_names: list[str] = SettingsField(
         default_factory=list,
         title="Task names"
     )
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types"
     )
-    product_names: list[str] = Field(
+    product_names: list[str] = SettingsField(
         default_factory=list,
         title="Product names"
     )
-    version_start: int = Field(
+    version_start: int = SettingsField(
         1,
         title="Version Start",
         ge=0
@@ -82,48 +106,52 @@ class VersionStartCategoryProfileModel(BaseSettingsModel):
 
 
 class VersionStartCategoryModel(BaseSettingsModel):
-    profiles: list[VersionStartCategoryProfileModel] = Field(
+    profiles: list[VersionStartCategoryProfileModel] = SettingsField(
         default_factory=list,
         title="Profiles"
     )
 
 
 class CoreSettings(BaseSettingsModel):
-    studio_name: str = Field("", title="Studio name", scope=["studio"])
-    studio_code: str = Field("", title="Studio code", scope=["studio"])
-    environments: str = Field(
+    studio_name: str = SettingsField("", title="Studio name", scope=["studio"])
+    studio_code: str = SettingsField("", title="Studio code", scope=["studio"])
+    environments: str = SettingsField(
         "{}",
         title="Global environment variables",
         widget="textarea",
         scope=["studio"],
     )
-    tools: GlobalToolsModel = Field(
+    disk_mapping: DiskMappingModel = SettingsField(
+        default_factory=DiskMappingModel,
+        title="Disk mapping",
+    )
+    tools: GlobalToolsModel = SettingsField(
         default_factory=GlobalToolsModel,
         title="Tools"
     )
-    version_start_category: VersionStartCategoryModel = Field(
+    version_start_category: VersionStartCategoryModel = SettingsField(
         default_factory=VersionStartCategoryModel,
         title="Version start"
     )
-    imageio: CoreImageIOBaseModel = Field(
+    imageio: CoreImageIOBaseModel = SettingsField(
         default_factory=CoreImageIOBaseModel,
         title="Color Management (ImageIO)"
     )
-    publish: PublishPuginsModel = Field(
+    publish: PublishPuginsModel = SettingsField(
         default_factory=PublishPuginsModel,
         title="Publish plugins"
     )
-    project_plugins: MultiplatformPathListModel = Field(
+    project_plugins: MultiplatformPathListModel = SettingsField(
         default_factory=MultiplatformPathListModel,
         title="Additional Project Plugin Paths",
     )
-    project_folder_structure: str = Field(
+    project_folder_structure: str = SettingsField(
         "{}",
         widget="textarea",
         title="Project folder structure",
         section="---"
     )
-    project_environments: str = Field(
+    project_environments: str = SettingsField(
         "{}",
         widget="textarea",
         title="Project environments",
@@ -173,7 +201,7 @@ DEFAULT_VALUES = {
     },
     "studio_name": "",
     "studio_code": "",
-    "environments": "{}",
+    "environments": "{\n\"STUDIO_SW\": {\n        \"darwin\": \"/mnt/REPO_SW\",\n        \"linux\": \"/mnt/REPO_SW\",\n        \"windows\": \"P:/REPO_SW\"\n    }\n}",
     "tools": DEFAULT_TOOLS_VALUES,
     "version_start_category": {
         "profiles": []

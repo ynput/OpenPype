@@ -1,7 +1,8 @@
 from typing import Literal
-from pydantic import validator, Field
+from pydantic import validator
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     ensure_unique_names,
 )
 
@@ -10,15 +11,35 @@ from .common import KnobModel
 
 class NodesModel(BaseSettingsModel):
     _layout = "expanded"
-    plugins: list[str] = Field(
+    plugins: list[str] = SettingsField(
         default_factory=list,
         title="Used in plugins"
     )
-    nukeNodeClass: str = Field(
+    nuke_node_class: str = SettingsField(
         title="Nuke Node Class",
     )
 
-    knobs: list[KnobModel] = Field(
+
+class RequiredNodesModel(NodesModel):
+    knobs: list[KnobModel] = SettingsField(
+        default_factory=list,
+        title="Knobs",
+    )
+
+    @validator("knobs")
+    def ensure_unique_names(cls, value):
+        """Ensure name fields within the lists have unique names."""
+        ensure_unique_names(value)
+        return value
+
+
+class OverrideNodesModel(NodesModel):
+    subsets: list[str] = SettingsField(
+        default_factory=list,
+        title="Subsets"
+    )
+
+    knobs: list[KnobModel] = SettingsField(
         default_factory=list,
         title="Knobs",
     )
@@ -31,13 +52,11 @@ class NodesModel(BaseSettingsModel):
 
 
 class NodesSetting(BaseSettingsModel):
-    # TODO: rename `requiredNodes` to `required_nodes`
-    requiredNodes: list[NodesModel] = Field(
+    required_nodes: list[RequiredNodesModel] = SettingsField(
         title="Plugin required",
         default_factory=list
     )
-    # TODO: rename `overrideNodes` to `override_nodes`
-    overrideNodes: list[NodesModel] = Field(
+    override_nodes: list[OverrideNodesModel] = SettingsField(
         title="Plugin's node overrides",
         default_factory=list
     )
@@ -46,82 +65,84 @@ class NodesSetting(BaseSettingsModel):
 def ocio_configs_switcher_enum():
     return [
         {"value": "nuke-default", "label": "nuke-default"},
-        {"value": "spi-vfx", "label": "spi-vfx"},
-        {"value": "spi-anim", "label": "spi-anim"},
-        {"value": "aces_0.1.1", "label": "aces_0.1.1"},
-        {"value": "aces_0.7.1", "label": "aces_0.7.1"},
-        {"value": "aces_1.0.1", "label": "aces_1.0.1"},
-        {"value": "aces_1.0.3", "label": "aces_1.0.3"},
-        {"value": "aces_1.1", "label": "aces_1.1"},
-        {"value": "aces_1.2", "label": "aces_1.2"},
-        {"value": "aces_1.3", "label": "aces_1.3"},
-        {"value": "custom", "label": "custom"}
+        {"value": "spi-vfx", "label": "spi-vfx (11)"},
+        {"value": "spi-anim", "label": "spi-anim (11)"},
+        {"value": "aces_0.1.1", "label": "aces_0.1.1 (11)"},
+        {"value": "aces_0.7.1", "label": "aces_0.7.1 (11)"},
+        {"value": "aces_1.0.1", "label": "aces_1.0.1 (11)"},
+        {"value": "aces_1.0.3", "label": "aces_1.0.3 (11, 12)"},
+        {"value": "aces_1.1", "label": "aces_1.1 (12, 13)"},
+        {"value": "aces_1.2", "label": "aces_1.2 (13, 14)"},
+        {"value": "studio-config-v1.0.0_aces-v1.3_ocio-v2.1",
+         "label": "studio-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"},
+        {"value": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1",
+         "label": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"},
     ]
 
 
 class WorkfileColorspaceSettings(BaseSettingsModel):
     """Nuke workfile colorspace preset. """
 
-    colorManagement: Literal["Nuke", "OCIO"] = Field(
-        title="Color Management"
+    color_management: Literal["Nuke", "OCIO"] = SettingsField(
+        title="Color Management Workflow"
     )
 
-    OCIO_config: str = Field(
-        title="OpenColorIO Config",
-        description="Switch between OCIO configs",
+    native_ocio_config: str = SettingsField(
+        title="Native OpenColorIO Config",
+        description="Switch between native OCIO configs",
         enum_resolver=ocio_configs_switcher_enum,
         conditionalEnum=True
     )
 
-    workingSpaceLUT: str = Field(
+    working_space: str = SettingsField(
         title="Working Space"
     )
-    monitorLut: str = Field(
-        title="Monitor"
+    thumbnail_space: str = SettingsField(
+        title="Thumbnail Space"
     )
 
 
 class ReadColorspaceRulesItems(BaseSettingsModel):
     _layout = "expanded"
 
-    regex: str = Field("", title="Regex expression")
-    colorspace: str = Field("", title="Colorspace")
+    regex: str = SettingsField("", title="Regex expression")
+    colorspace: str = SettingsField("", title="Colorspace")
 
 
 class RegexInputsModel(BaseSettingsModel):
-    inputs: list[ReadColorspaceRulesItems] = Field(
+    inputs: list[ReadColorspaceRulesItems] = SettingsField(
         default_factory=list,
         title="Inputs"
     )
 
 
 class ViewProcessModel(BaseSettingsModel):
-    viewerProcess: str = Field(
+    viewerProcess: str = SettingsField(
         title="Viewer Process Name"
     )
 
 
 class ImageIOConfigModel(BaseSettingsModel):
-    override_global_config: bool = Field(
+    override_global_config: bool = SettingsField(
         False,
         title="Override global OCIO config"
     )
-    filepath: list[str] = Field(
+    filepath: list[str] = SettingsField(
         default_factory=list,
         title="Config path"
     )
 
 
 class ImageIOFileRuleModel(BaseSettingsModel):
-    name: str = Field("", title="Rule name")
-    pattern: str = Field("", title="Regex pattern")
-    colorspace: str = Field("", title="Colorspace name")
-    ext: str = Field("", title="File extension")
+    name: str = SettingsField("", title="Rule name")
+    pattern: str = SettingsField("", title="Regex pattern")
+    colorspace: str = SettingsField("", title="Colorspace name")
+    ext: str = SettingsField("", title="File extension")
 
 
 class ImageIOFileRulesModel(BaseSettingsModel):
-    activate_host_rules: bool = Field(False)
-    rules: list[ImageIOFileRuleModel] = Field(
+    activate_host_rules: bool = SettingsField(False)
+    rules: list[ImageIOFileRuleModel] = SettingsField(
         default_factory=list,
         title="Rules"
     )
@@ -142,17 +163,17 @@ class ImageIOSettings(BaseSettingsModel):
     now: nuke/imageio/viewer/viewerProcess
     future: nuke/imageio/viewer
     """
-    activate_host_color_management: bool = Field(
+    activate_host_color_management: bool = SettingsField(
         True, title="Enable Color Management")
-    ocio_config: ImageIOConfigModel = Field(
+    ocio_config: ImageIOConfigModel = SettingsField(
         default_factory=ImageIOConfigModel,
         title="OCIO config"
     )
-    file_rules: ImageIOFileRulesModel = Field(
+    file_rules: ImageIOFileRulesModel = SettingsField(
         default_factory=ImageIOFileRulesModel,
         title="File Rules"
     )
-    viewer: ViewProcessModel = Field(
+    viewer: ViewProcessModel = SettingsField(
         default_factory=ViewProcessModel,
         title="Viewer",
         description="""Viewer profile is used during
@@ -165,29 +186,27 @@ class ImageIOSettings(BaseSettingsModel):
     now: nuke/imageio/baking/viewerProcess
     future: nuke/imageio/baking
     """
-    baking: ViewProcessModel = Field(
+    baking: ViewProcessModel = SettingsField(
         default_factory=ViewProcessModel,
         title="Baking",
         description="""Baking profile is used during
         publishing baked colorspace data at knob viewerProcess"""
     )
 
-    workfile: WorkfileColorspaceSettings = Field(
+    workfile: WorkfileColorspaceSettings = SettingsField(
         default_factory=WorkfileColorspaceSettings,
         title="Workfile"
     )
 
-    nodes: NodesSetting = Field(
+    nodes: NodesSetting = SettingsField(
         default_factory=NodesSetting,
         title="Nodes"
     )
     """# TODO: enhance settings with host api:
-    - [ ] old settings are using `regexInputs` key but we
-      need to rename to `regex_inputs`
     - [ ] no need for `inputs` middle part. It can stay
       directly on `regex_inputs`
     """
-    regexInputs: RegexInputsModel = Field(
+    regex_inputs: RegexInputsModel = SettingsField(
         default_factory=RegexInputsModel,
         title="Assign colorspace to read nodes via rules"
     )
@@ -195,24 +214,24 @@ class ImageIOSettings(BaseSettingsModel):
 
 DEFAULT_IMAGEIO_SETTINGS = {
     "viewer": {
-        "viewerProcess": "sRGB"
+        "viewerProcess": "sRGB (default)"
     },
     "baking": {
-        "viewerProcess": "rec709"
+        "viewerProcess": "rec709 (default)"
     },
     "workfile": {
-        "colorManagement": "Nuke",
-        "OCIO_config": "nuke-default",
-        "workingSpaceLUT": "linear",
-        "monitorLut": "sRGB",
+        "color_management": "OCIO",
+        "native_ocio_config": "nuke-default",
+        "working_space": "scene_linear",
+        "thumbnail_space": "sRGB (default)",
     },
     "nodes": {
-        "requiredNodes": [
+        "required_nodes": [
             {
                 "plugins": [
                     "CreateWriteRender"
                 ],
-                "nukeNodeClass": "Write",
+                "nuke_node_class": "Write",
                 "knobs": [
                     {
                         "type": "text",
@@ -251,7 +270,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                     {
                         "type": "text",
                         "name": "colorspace",
-                        "text": "linear"
+                        "text": "scene_linear"
                     },
                     {
                         "type": "boolean",
@@ -264,7 +283,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                 "plugins": [
                     "CreateWritePrerender"
                 ],
-                "nukeNodeClass": "Write",
+                "nuke_node_class": "Write",
                 "knobs": [
                     {
                         "type": "text",
@@ -303,7 +322,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                     {
                         "type": "text",
                         "name": "colorspace",
-                        "text": "linear"
+                        "text": "scene_linear"
                     },
                     {
                         "type": "boolean",
@@ -316,7 +335,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                 "plugins": [
                     "CreateWriteImage"
                 ],
-                "nukeNodeClass": "Write",
+                "nuke_node_class": "Write",
                 "knobs": [
                     {
                         "type": "text",
@@ -350,7 +369,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                     {
                         "type": "text",
                         "name": "colorspace",
-                        "text": "sRGB"
+                        "text": "texture_paint"
                     },
                     {
                         "type": "boolean",
@@ -360,9 +379,9 @@ DEFAULT_IMAGEIO_SETTINGS = {
                 ]
             }
         ],
-        "overrideNodes": []
+        "override_nodes": []
     },
-    "regexInputs": {
+    "regex_inputs": {
         "inputs": [
             {
                 "regex": "(beauty).*(?=.exr)",

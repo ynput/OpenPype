@@ -13,6 +13,7 @@ from collections import OrderedDict
 import nuke
 from qtpy import QtCore, QtWidgets
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_project,
     get_asset_by_name,
@@ -40,7 +41,6 @@ from openpype.settings import (
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
-    get_current_project_name,
     discover_legacy_creator_plugins,
     Anatomy,
     get_current_host_name,
@@ -48,20 +48,15 @@ from openpype.pipeline import (
     get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
-    get_current_project_asset,
     get_custom_workfile_template_from_session
 )
-from openpype.pipeline.colorspace import (
-    get_imageio_config
-)
+from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.workfile import BuildWorkfile
 from . import gizmo_menu
 from .constants import ASSIST
 
-from .workio import (
-    save_file,
-    open_file
-)
+from .workio import save_file
+from .utils import get_node_outputs
 
 log = Logger.get_logger(__name__)
 
@@ -126,7 +121,7 @@ def deprecated(new_destination):
 
 class Context:
     main_window = None
-    context_label = None
+    context_action_item = None
     project_name = os.getenv("AVALON_PROJECT")
     # Workfile related code
     workfiles_launched = False
@@ -1104,26 +1099,6 @@ def check_subsetname_exists(nodes, subset_name):
                 False)
 
 
-def get_render_path(node):
-    ''' Generate Render path from presets regarding avalon knob data
-    '''
-    avalon_knob_data = read_avalon_data(node)
-
-    nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["families"],
-        plugin_name=avalon_knob_data["creator"],
-        subset=avalon_knob_data["subset"]
-    )
-
-    data = {
-        "avalon": avalon_knob_data,
-        "nuke_imageio_writes": nuke_imageio_writes
-    }
-
-    anatomy_filled = format_anatomy(data)
-    return anatomy_filled["render"]["path"].replace("\\", "/")
-
-
 def format_anatomy(data):
     ''' Helping function for formatting of anatomy paths
 
@@ -1133,7 +1108,9 @@ def format_anatomy(data):
     Return:
         path (str)
     '''
-    anatomy = Anatomy()
+
+    project_name = get_current_project_name()
+    anatomy = Anatomy(project_name)
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
     padding = None
@@ -1151,8 +1128,10 @@ def format_anatomy(data):
         file = script_name()
         data["version"] = get_version_from_path(file)
 
-    project_name = anatomy.project_name
-    asset_name = data["asset"]
+    if AYON_SERVER_ENABLED:
+        asset_name = data["folderPath"]
+    else:
+        asset_name = data["asset"]
     task_name = data["task"]
     host_name = get_current_host_name()
     context_data = get_template_data_with_names(
@@ -2222,7 +2201,6 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         """
         # replace path with env var if possible
         ocio_path = self._replace_ocio_path_with_env_var(config_data)
-        ocio_path = ocio_path.replace("\\", "/")
 
         log.info("Setting OCIO config path to: `{}`".format(
             ocio_path))
@@ -2802,8 +2780,15 @@ def find_free_space_to_paste_nodes(
 
 
 @contextlib.contextmanager
-def maintained_selection():
+def maintained_selection(exclude_nodes=None):
     """Maintain selection during context
+
+    Maintain selection during context and unselect
+    all nodes after context is done.
+
+    Arguments:
+        exclude_nodes (list[nuke.Node]): list of nodes to be unselected
+                                         before context is done
 
     Example:
         >>> with maintained_selection():
@@ -2811,7 +2796,12 @@ def maintained_selection():
         >>> print(node["selected"].value())
         False
     """
+    if exclude_nodes:
+        for node in exclude_nodes:
+            node["selected"].setValue(False)
+
     previous_selection = nuke.selectedNodes()
+
     try:
         yield
     finally:
@@ -2821,6 +2811,51 @@ def maintained_selection():
         # and select all previously selected nodes
         if previous_selection:
             select_nodes(previous_selection)
+
+
+@contextlib.contextmanager
+def swap_node_with_dependency(old_node, new_node):
+    """ Swap node with dependency
+
+    Swap node with dependency and reconnect all inputs and outputs.
+    It removes old node.
+
+    Arguments:
+        old_node (nuke.Node): node to be replaced
+        new_node (nuke.Node): node to replace with
+
+    Example:
+        >>> old_node_name = old_node["name"].value()
+        >>> print(old_node_name)
+        old_node_name_01
+        >>> with swap_node_with_dependency(old_node, new_node) as node_name:
+        ...     new_node["name"].setValue(node_name)
+        >>> print(new_node["name"].value())
+        old_node_name_01
+    """
+    # preserve position
+    xpos, ypos = old_node.xpos(), old_node.ypos()
+    # preserve selection after all is done
+    outputs = get_node_outputs(old_node)
+    inputs = old_node.dependencies()
+    node_name = old_node["name"].value()
+
+    try:
+        nuke.delete(old_node)
+
+        yield node_name
+    finally:
+
+        # Reconnect inputs
+        for i, node in enumerate(inputs):
+            new_node.setInput(i, node)
+        # Reconnect outputs
+        if outputs:
+            for n, pipes in outputs.items():
+                for i in pipes:
+                    n.setInput(i, new_node)
+        # return to original position
+        new_node.setXYpos(xpos, ypos)
 
 
 def reset_selection():
@@ -2833,9 +2868,10 @@ def select_nodes(nodes):
     """Selects all inputted nodes
 
     Arguments:
-        nodes (list): nuke nodes to be selected
+        nodes (Union[list, tuple, set]): nuke nodes to be selected
     """
-    assert isinstance(nodes, (list, tuple)), "nodes has to be list or tuple"
+    assert isinstance(nodes, (list, tuple, set)), \
+        "nodes has to be list, tuple or set"
 
     for node in nodes:
         node["selected"].setValue(True)
@@ -2919,13 +2955,13 @@ def process_workfile_builder():
         "workfile_builder", {})
 
     # get settings
-    createfv_on = workfile_builder.get("create_first_version") or None
+    create_fv_on = workfile_builder.get("create_first_version") or None
     builder_on = workfile_builder.get("builder_on_start") or None
 
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     # generate first version in file not existing and feature is enabled
-    if createfv_on and not os.path.exists(last_workfile_path):
+    if create_fv_on and not os.path.exists(last_workfile_path):
         # get custom template path if any
         custom_template_path = get_custom_workfile_template_from_session(
             project_settings=project_settings
@@ -3447,3 +3483,43 @@ def get_filenames_without_hash(filename, frame_start, frame_end):
             new_filename = filename_without_hashes.format(frame)
             filenames.append(new_filename)
     return filenames
+
+
+def create_camera_node_by_version():
+    """Function to create the camera with the latest node class
+    For Nuke version 14.0 or later, the Camera4 camera node class
+        would be used
+    For the version before, the Camera2 camera node class
+        would be used
+    Returns:
+        Node: camera node
+    """
+    nuke_number_version = nuke.NUKE_VERSION_MAJOR
+    if nuke_number_version >= 14:
+        return nuke.createNode("Camera4")
+    else:
+        return nuke.createNode("Camera2")
+
+
+def link_knobs(knobs, node, group_node):
+    """Link knobs from inside `group_node`"""
+
+    missing_knobs = []
+    for knob in knobs:
+        if knob in group_node.knobs():
+            continue
+
+        if knob not in node.knobs().keys():
+            missing_knobs.append(knob)
+
+        link = nuke.Link_Knob("")
+        link.makeLink(node.name(), knob)
+        link.setName(knob)
+        link.setFlag(0x1000)
+        group_node.addKnob(link)
+
+    if missing_knobs:
+        raise ValueError(
+            "Write node exposed knobs missing:\n\n{}\n\nPlease review"
+            " project settings.".format("\n".join(missing_knobs))
+        )

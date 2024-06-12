@@ -1,45 +1,79 @@
-from pydantic import Field
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 from .imageio import ImageIOSettings
 from .render_settings import (
     RenderSettingsModel, DEFAULT_RENDER_SETTINGS
+)
+from .create_review_settings import (
+    CreateReviewModel, DEFAULT_CREATE_REVIEW_SETTINGS
 )
 from .publishers import (
     PublishersModel, DEFAULT_PUBLISH_SETTINGS
 )
 
 
+def unit_scale_enum():
+    """Return enumerator for scene unit scale."""
+    return [
+        {"label": "mm", "value": "Millimeters"},
+        {"label": "cm", "value": "Centimeters"},
+        {"label": "m", "value": "Meters"},
+        {"label": "km", "value": "Kilometers"}
+    ]
+
+
+class UnitScaleSettings(BaseSettingsModel):
+    enabled: bool = SettingsField(True, title="Enabled")
+    scene_unit_scale: str = SettingsField(
+        "Centimeters",
+        title="Scene Unit Scale",
+        enum_resolver=unit_scale_enum
+    )
+
+
 class PRTAttributesModel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field(title="Name")
-    value: str = Field(title="Attribute")
+    name: str = SettingsField(title="Name")
+    value: str = SettingsField(title="Attribute")
 
 
 class PointCloudSettings(BaseSettingsModel):
-    attribute: list[PRTAttributesModel] = Field(
+    attribute: list[PRTAttributesModel] = SettingsField(
         default_factory=list, title="Channel Attribute")
 
 
 class MaxSettings(BaseSettingsModel):
-    imageio: ImageIOSettings = Field(
+    unit_scale_settings: UnitScaleSettings = SettingsField(
+        default_factory=UnitScaleSettings,
+        title="Set Unit Scale"
+    )
+    imageio: ImageIOSettings = SettingsField(
         default_factory=ImageIOSettings,
         title="Color Management (ImageIO)"
     )
-    RenderSettings: RenderSettingsModel = Field(
+    RenderSettings: RenderSettingsModel = SettingsField(
         default_factory=RenderSettingsModel,
         title="Render Settings"
     )
-    PointCloud: PointCloudSettings = Field(
+    CreateReview: CreateReviewModel = SettingsField(
+        default_factory=CreateReviewModel,
+        title="Create Review"
+    )
+    PointCloud: PointCloudSettings = SettingsField(
         default_factory=PointCloudSettings,
         title="Point Cloud"
     )
-    publish: PublishersModel = Field(
+    publish: PublishersModel = SettingsField(
         default_factory=PublishersModel,
         title="Publish Plugins")
 
 
 DEFAULT_VALUES = {
+    "unit_scale_settings": {
+        "enabled": True,
+        "scene_unit_scale": "Centimeters"
+    },
     "RenderSettings": DEFAULT_RENDER_SETTINGS,
+    "CreateReview": DEFAULT_CREATE_REVIEW_SETTINGS,
     "PointCloud": {
         "attribute": [
             {"name": "Age", "value": "age"},

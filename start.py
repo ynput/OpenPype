@@ -366,8 +366,8 @@ def run_disk_mapping_commands(settings):
             destination = destination.replace("/", "\\").rstrip("\\")
             source = source.replace("/", "\\").rstrip("\\")
             # Add slash after ':' ('G:' -> 'G:\')
-            if destination.endswith(":"):
-                destination += "\\"
+            if source.endswith(":"):
+                source += "\\"
         else:
             destination = destination.rstrip("/")
             source = source.rstrip("/")
@@ -1185,10 +1185,6 @@ def get_info(use_staging=None) -> list:
     if os.environ.get('DEADLINE_REST_URL'):
         inf.append(("Using Deadline webservice at",
                     os.environ.get("DEADLINE_REST_URL")))
-
-    if os.environ.get('MUSTER_REST_URL'):
-        inf.append(("Using Muster at",
-                    os.environ.get("MUSTER_REST_URL")))
 
     # Reinitialize
     Logger.initialize()

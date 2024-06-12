@@ -1,7 +1,8 @@
-from pydantic import Field, validator
+from pydantic import validator
 
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     MultiplatformPathModel,
     normalize_name,
     ensure_unique_names,
@@ -13,46 +14,46 @@ from ayon_server.types import ColorRGBA_uint8
 
 class ValidateBaseModel(BaseSettingsModel):
     _isGroup = True
-    enabled: bool = Field(True)
-    optional: bool = Field(True, title="Optional")
-    active: bool = Field(True, title="Active")
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(True, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class CollectAnatomyInstanceDataModel(BaseSettingsModel):
     _isGroup = True
-    follow_workfile_version: bool = Field(
-        True, title="Collect Anatomy Instance Data"
+    follow_workfile_version: bool = SettingsField(
+        True, title="Follow workfile version"
     )
 
 
 class CollectAudioModel(BaseSettingsModel):
     _isGroup = True
-    enabled: bool = Field(True)
-    audio_product_name: str = Field(
+    enabled: bool = SettingsField(True)
+    audio_product_name: str = SettingsField(
         "", title="Name of audio variant"
     )
 
 
 class CollectSceneVersionModel(BaseSettingsModel):
     _isGroup = True
-    hosts: list[str] = Field(
+    hosts: list[str] = SettingsField(
         default_factory=list,
         title="Host names"
     )
-    skip_hosts_headless_publish: list[str] = Field(
+    skip_hosts_headless_publish: list[str] = SettingsField(
         default_factory=list,
         title="Skip for host if headless publish"
     )
 
 
 class CollectCommentPIModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    families: list[str] = Field(default_factory=list, title="Families")
+    enabled: bool = SettingsField(True)
+    families: list[str] = SettingsField(default_factory=list, title="Families")
 
 
 class CollectFramesFixDefModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    rewrite_version_enable: bool = Field(
+    enabled: bool = SettingsField(True)
+    rewrite_version_enable: bool = SettingsField(
         True,
         title="Show 'Rewrite latest version' toggle"
     )
@@ -60,15 +61,15 @@ class CollectFramesFixDefModel(BaseSettingsModel):
 
 class ValidateIntentProfile(BaseSettingsModel):
     _layout = "expanded"
-    hosts: list[str] = Field(default_factory=list, title="Host names")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Host names")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    tasks: list[str] = Field(default_factory=list, title="Task names")
+    tasks: list[str] = SettingsField(default_factory=list, title="Task names")
     # TODO This was 'validate' in v3
-    validate_intent: bool = Field(True, title="Validate")
+    validate_intent: bool = SettingsField(True, title="Validate")
 
 
 class ValidateIntentModel(BaseSettingsModel):
@@ -79,26 +80,129 @@ class ValidateIntentModel(BaseSettingsModel):
     """
 
     _isGroup = True
-    enabled: bool = Field(False)
-    profiles: list[ValidateIntentProfile] = Field(default_factory=list)
+    enabled: bool = SettingsField(False)
+    profiles: list[ValidateIntentProfile] = SettingsField(default_factory=list)
 
 
 class ExtractThumbnailFFmpegModel(BaseSettingsModel):
-    _layout = "expanded"
-    input: list[str] = Field(
+    input: list[str] = SettingsField(
         default_factory=list,
         title="FFmpeg input arguments"
     )
-    output: list[str] = Field(
+    output: list[str] = SettingsField(
         default_factory=list,
         title="FFmpeg input arguments"
+    )
+
+
+class ResizeItemModel(BaseSettingsModel):
+    _layout = "expanded"
+    width: int = SettingsField(
+        1920,
+        ge=0,
+        le=100000,
+        title="Width",
+        description="Width and Height must be both set to higher value than 0"
+        " else source resolution is used."
+    )
+    height: int = SettingsField(
+        1080,
+        title="Height",
+        ge=0,
+        le=100000,
+    )
+
+
+_resize_types_enum = [
+    {"value": "source", "label": "Image source"},
+    {"value": "resize", "label": "Resize"},
+]
+
+
+class ResizeModel(BaseSettingsModel):
+    _layout = "expanded"
+
+    type: str = SettingsField(
+        title="Type",
+        description="Type of resizing",
+        enum_resolver=lambda: _resize_types_enum,
+        conditionalEnum=True,
+        default="source"
+    )
+
+    resize: ResizeItemModel = SettingsField(
+        default_factory=ResizeItemModel,
+        title="Resize"
+    )
+
+
+_thumbnail_oiio_transcoding_type = [
+    {"value": "colorspace", "label": "Use Colorspace"},
+    {"value": "display_and_view", "label": "Use Display&View"}
+]
+
+
+class DisplayAndViewModel(BaseSettingsModel):
+    _layout = "expanded"
+    display: str = SettingsField(
+        "default",
+        title="Display"
+    )
+    view: str = SettingsField(
+        "sRGB",
+        title="View"
+    )
+
+
+class ExtractThumbnailOIIODefaultsModel(BaseSettingsModel):
+    type: str = SettingsField(
+        title="Type",
+        description="Transcoding type",
+        enum_resolver=lambda: _thumbnail_oiio_transcoding_type,
+        conditionalEnum=True,
+        default="colorspace"
+    )
+
+    colorspace: str = SettingsField(
+        "",
+        title="Colorspace"
+    )
+    display_and_view: DisplayAndViewModel = SettingsField(
+        default_factory=DisplayAndViewModel,
+        title="Display&View"
     )
 
 
 class ExtractThumbnailModel(BaseSettingsModel):
     _isGroup = True
-    enabled: bool = Field(True)
-    ffmpeg_args: ExtractThumbnailFFmpegModel = Field(
+    enabled: bool = SettingsField(True)
+    product_names: list[str] = SettingsField(
+        default_factory=list,
+        title="Product names"
+    )
+    integrate_thumbnail: bool = SettingsField(
+        True,
+        title="Integrate Thumbnail Representation"
+    )
+    target_size: ResizeModel = SettingsField(
+        default_factory=ResizeModel,
+        title="Target size"
+    )
+    background_color: ColorRGBA_uint8 = SettingsField(
+        (0, 0, 0, 0.0),
+        title="Background color"
+    )
+    duration_split: float = SettingsField(
+        0.5,
+        title="Duration split",
+        ge=0.0,
+        le=1.0
+    )
+    oiiotool_defaults: ExtractThumbnailOIIODefaultsModel = SettingsField(
+        default_factory=ExtractThumbnailOIIODefaultsModel,
+        title="OIIOtool defaults"
+    )
+    ffmpeg_args: ExtractThumbnailFFmpegModel = SettingsField(
         default_factory=ExtractThumbnailFFmpegModel
     )
 
@@ -111,57 +215,59 @@ def _extract_oiio_transcoding_type():
 
 
 class OIIOToolArgumentsModel(BaseSettingsModel):
-    additional_command_args: list[str] = Field(
+    additional_command_args: list[str] = SettingsField(
         default_factory=list, title="Arguments")
 
 
 class ExtractOIIOTranscodeOutputModel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field("", title="Name")
-    extension: str = Field("", title="Extension")
-    transcoding_type: str = Field(
+    name: str = SettingsField("", title="Name")
+    extension: str = SettingsField("", title="Extension")
+    transcoding_type: str = SettingsField(
         "colorspace",
         title="Transcoding type",
         enum_resolver=_extract_oiio_transcoding_type
     )
-    colorspace: str = Field("", title="Colorspace")
-    display: str = Field("", title="Display")
-    view: str = Field("", title="View")
-    oiiotool_args: OIIOToolArgumentsModel = Field(
+    colorspace: str = SettingsField("", title="Colorspace")
+    display: str = SettingsField("", title="Display")
+    view: str = SettingsField("", title="View")
+    oiiotool_args: OIIOToolArgumentsModel = SettingsField(
         default_factory=OIIOToolArgumentsModel,
         title="OIIOtool arguments")
 
-    tags: list[str] = Field(default_factory=list, title="Tags")
-    custom_tags: list[str] = Field(default_factory=list, title="Custom Tags")
+    tags: list[str] = SettingsField(default_factory=list, title="Tags")
+    custom_tags: list[str] = SettingsField(
+        default_factory=list, title="Custom Tags"
+    )
 
 
 class ExtractOIIOTranscodeProfileModel(BaseSettingsModel):
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types"
     )
-    hosts: list[str] = Field(
+    hosts: list[str] = SettingsField(
         default_factory=list,
         title="Host names"
     )
-    task_types: list[str] = Field(
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    task_names: list[str] = Field(
+    task_names: list[str] = SettingsField(
         default_factory=list,
         title="Task names"
     )
-    product_names: list[str] = Field(
+    product_names: list[str] = SettingsField(
         default_factory=list,
         title="Product names"
     )
-    delete_original: bool = Field(
+    delete_original: bool = SettingsField(
         True,
         title="Delete Original Representation"
     )
-    outputs: list[ExtractOIIOTranscodeOutputModel] = Field(
+    outputs: list[ExtractOIIOTranscodeOutputModel] = SettingsField(
         default_factory=list,
         title="Output Definitions",
     )
@@ -173,27 +279,27 @@ class ExtractOIIOTranscodeProfileModel(BaseSettingsModel):
 
 
 class ExtractOIIOTranscodeModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    profiles: list[ExtractOIIOTranscodeProfileModel] = Field(
+    enabled: bool = SettingsField(True)
+    profiles: list[ExtractOIIOTranscodeProfileModel] = SettingsField(
         default_factory=list, title="Profiles"
     )
 
 
 # --- [START] Extract Review ---
 class ExtractReviewFFmpegModel(BaseSettingsModel):
-    video_filters: list[str] = Field(
+    video_filters: list[str] = SettingsField(
         default_factory=list,
         title="Video filters"
     )
-    audio_filters: list[str] = Field(
+    audio_filters: list[str] = SettingsField(
         default_factory=list,
         title="Audio filters"
     )
-    input: list[str] = Field(
+    input: list[str] = SettingsField(
         default_factory=list,
         title="Input arguments"
     )
-    output: list[str] = Field(
+    output: list[str] = SettingsField(
         default_factory=list,
         title="Output arguments"
     )
@@ -217,11 +323,13 @@ def extract_review_filter_enum():
 
 
 class ExtractReviewFilterModel(BaseSettingsModel):
-    families: list[str] = Field(default_factory=list, title="Families")
-    product_names: list[str] = Field(
+    families: list[str] = SettingsField(default_factory=list, title="Families")
+    product_names: list[str] = SettingsField(
         default_factory=list, title="Product names")
-    custom_tags: list[str] = Field(default_factory=list, title="Custom Tags")
-    single_frame_filter: str = Field(
+    custom_tags: list[str] = SettingsField(
+        default_factory=list, title="Custom Tags"
+    )
+    single_frame_filter: str = SettingsField(
         "everytime",
         description=(
             "Use output <b>always</b> / only if input <b>is 1 frame</b>"
@@ -232,24 +340,24 @@ class ExtractReviewFilterModel(BaseSettingsModel):
 
 
 class ExtractReviewLetterBox(BaseSettingsModel):
-    enabled: bool = Field(True)
-    ratio: float = Field(
+    enabled: bool = SettingsField(True)
+    ratio: float = SettingsField(
         0.0,
         title="Ratio",
         ge=0.0,
         le=10000.0
     )
-    fill_color: ColorRGBA_uint8 = Field(
+    fill_color: ColorRGBA_uint8 = SettingsField(
         (0, 0, 0, 0.0),
         title="Fill Color"
     )
-    line_thickness: int = Field(
+    line_thickness: int = SettingsField(
         0,
         title="Line Thickness",
         ge=0,
         le=1000
     )
-    line_color: ColorRGBA_uint8 = Field(
+    line_color: ColorRGBA_uint8 = SettingsField(
         (0, 0, 0, 0.0),
         title="Line Color"
     )
@@ -257,29 +365,29 @@ class ExtractReviewLetterBox(BaseSettingsModel):
 
 class ExtractReviewOutputDefModel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field("", title="Name")
-    ext: str = Field("", title="Output extension")
+    name: str = SettingsField("", title="Name")
+    ext: str = SettingsField("", title="Output extension")
     # TODO use some different source of tags
-    tags: list[str] = Field(default_factory=list, title="Tags")
-    burnins: list[str] = Field(
+    tags: list[str] = SettingsField(default_factory=list, title="Tags")
+    burnins: list[str] = SettingsField(
         default_factory=list, title="Link to a burnin by name"
     )
-    ffmpeg_args: ExtractReviewFFmpegModel = Field(
+    ffmpeg_args: ExtractReviewFFmpegModel = SettingsField(
         default_factory=ExtractReviewFFmpegModel,
         title="FFmpeg arguments"
     )
-    filter: ExtractReviewFilterModel = Field(
+    filter: ExtractReviewFilterModel = SettingsField(
         default_factory=ExtractReviewFilterModel,
         title="Additional output filtering"
     )
-    overscan_crop: str = Field(
+    overscan_crop: str = SettingsField(
         "",
         title="Overscan crop",
         description=(
             "Crop input overscan. See the documentation for more information."
         )
     )
-    overscan_color: ColorRGBA_uint8 = Field(
+    overscan_color: ColorRGBA_uint8 = SettingsField(
         (0, 0, 0, 0.0),
         title="Overscan color",
         description=(
@@ -287,7 +395,7 @@ class ExtractReviewOutputDefModel(BaseSettingsModel):
             " same as output aspect ratio."
         )
     )
-    width: int = Field(
+    width: int = SettingsField(
         0,
         ge=0,
         le=100000,
@@ -297,13 +405,13 @@ class ExtractReviewOutputDefModel(BaseSettingsModel):
             " value than 0 else source resolution is used."
         )
     )
-    height: int = Field(
+    height: int = SettingsField(
         0,
         title="Output height",
         ge=0,
         le=100000,
     )
-    scale_pixel_aspect: bool = Field(
+    scale_pixel_aspect: bool = SettingsField(
         True,
         title="Scale pixel aspect",
         description=(
@@ -311,7 +419,7 @@ class ExtractReviewOutputDefModel(BaseSettingsModel):
             " Usefull for anamorph reviews."
         )
     )
-    bg_color: ColorRGBA_uint8 = Field(
+    bg_color: ColorRGBA_uint8 = SettingsField(
         (0, 0, 0, 0.0),
         description=(
             "Background color is used only when input have transparency"
@@ -319,7 +427,7 @@ class ExtractReviewOutputDefModel(BaseSettingsModel):
         ),
         title="Background color",
     )
-    letter_box: ExtractReviewLetterBox = Field(
+    letter_box: ExtractReviewLetterBox = SettingsField(
         default_factory=ExtractReviewLetterBox,
         title="Letter Box"
     )
@@ -332,14 +440,14 @@ class ExtractReviewOutputDefModel(BaseSettingsModel):
 
 class ExtractReviewProfileModel(BaseSettingsModel):
     _layout = "expanded"
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list, title="Product types"
     )
     # TODO use hosts enum
-    hosts: list[str] = Field(
+    hosts: list[str] = SettingsField(
         default_factory=list, title="Host names"
     )
-    outputs: list[ExtractReviewOutputDefModel] = Field(
+    outputs: list[ExtractReviewOutputDefModel] = SettingsField(
         default_factory=list, title="Output Definitions"
     )
 
@@ -351,8 +459,8 @@ class ExtractReviewProfileModel(BaseSettingsModel):
 
 class ExtractReviewModel(BaseSettingsModel):
     _isGroup = True
-    enabled: bool = Field(True)
-    profiles: list[ExtractReviewProfileModel] = Field(
+    enabled: bool = SettingsField(True)
+    profiles: list[ExtractReviewProfileModel] = SettingsField(
         default_factory=list,
         title="Profiles"
     )
@@ -361,30 +469,30 @@ class ExtractReviewModel(BaseSettingsModel):
 
 # --- [Start] Extract Burnin ---
 class ExtractBurninOptionsModel(BaseSettingsModel):
-    font_size: int = Field(0, ge=0, title="Font size")
-    font_color: ColorRGBA_uint8 = Field(
+    font_size: int = SettingsField(0, ge=0, title="Font size")
+    font_color: ColorRGBA_uint8 = SettingsField(
         (255, 255, 255, 1.0),
         title="Font color"
     )
-    bg_color: ColorRGBA_uint8 = Field(
+    bg_color: ColorRGBA_uint8 = SettingsField(
         (0, 0, 0, 1.0),
         title="Background color"
     )
-    x_offset: int = Field(0, title="X Offset")
-    y_offset: int = Field(0, title="Y Offset")
-    bg_padding: int = Field(0, title="Padding around text")
-    font_filepath: MultiplatformPathModel = Field(
+    x_offset: int = SettingsField(0, title="X Offset")
+    y_offset: int = SettingsField(0, title="Y Offset")
+    bg_padding: int = SettingsField(0, title="Padding around text")
+    font_filepath: MultiplatformPathModel = SettingsField(
         default_factory=MultiplatformPathModel,
         title="Font file path"
     )
 
 
 class ExtractBurninDefFilter(BaseSettingsModel):
-    families: list[str] = Field(
+    families: list[str] = SettingsField(
         default_factory=list,
         title="Families"
     )
-    tags: list[str] = Field(
+    tags: list[str] = SettingsField(
         default_factory=list,
         title="Tags"
     )
@@ -393,14 +501,14 @@ class ExtractBurninDefFilter(BaseSettingsModel):
 class ExtractBurninDef(BaseSettingsModel):
     _isGroup = True
     _layout = "expanded"
-    name: str = Field("")
-    TOP_LEFT: str = Field("", topic="Top Left")
-    TOP_CENTERED: str = Field("", topic="Top Centered")
-    TOP_RIGHT: str = Field("", topic="Top Right")
-    BOTTOM_LEFT: str = Field("", topic="Bottom Left")
-    BOTTOM_CENTERED: str = Field("", topic="Bottom Centered")
-    BOTTOM_RIGHT: str = Field("", topic="Bottom Right")
-    filter: ExtractBurninDefFilter = Field(
+    name: str = SettingsField("")
+    TOP_LEFT: str = SettingsField("", topic="Top Left")
+    TOP_CENTERED: str = SettingsField("", topic="Top Centered")
+    TOP_RIGHT: str = SettingsField("", topic="Top Right")
+    BOTTOM_LEFT: str = SettingsField("", topic="Bottom Left")
+    BOTTOM_CENTERED: str = SettingsField("", topic="Bottom Centered")
+    BOTTOM_RIGHT: str = SettingsField("", topic="Bottom Right")
+    filter: ExtractBurninDefFilter = SettingsField(
         default_factory=ExtractBurninDefFilter,
         title="Additional filtering"
     )
@@ -413,28 +521,28 @@ class ExtractBurninDef(BaseSettingsModel):
 
 class ExtractBurninProfile(BaseSettingsModel):
     _layout = "expanded"
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Produt types"
     )
-    hosts: list[str] = Field(
+    hosts: list[str] = SettingsField(
         default_factory=list,
         title="Host names"
     )
-    task_types: list[str] = Field(
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    task_names: list[str] = Field(
+    task_names: list[str] = SettingsField(
         default_factory=list,
         title="Task names"
     )
-    product_names: list[str] = Field(
+    product_names: list[str] = SettingsField(
         default_factory=list,
         title="Product names"
     )
-    burnins: list[ExtractBurninDef] = Field(
+    burnins: list[ExtractBurninDef] = SettingsField(
         default_factory=list,
         title="Burnins"
     )
@@ -448,12 +556,12 @@ class ExtractBurninProfile(BaseSettingsModel):
 
 class ExtractBurninModel(BaseSettingsModel):
     _isGroup = True
-    enabled: bool = Field(True)
-    options: ExtractBurninOptionsModel = Field(
+    enabled: bool = SettingsField(True)
+    options: ExtractBurninOptionsModel = SettingsField(
         default_factory=ExtractBurninOptionsModel,
         title="Burnin formatting options"
     )
-    profiles: list[ExtractBurninProfile] = Field(
+    profiles: list[ExtractBurninProfile] = SettingsField(
         default_factory=list,
         title="Profiles"
     )
@@ -462,24 +570,24 @@ class ExtractBurninModel(BaseSettingsModel):
 
 class PreIntegrateThumbnailsProfile(BaseSettingsModel):
     _isGroup = True
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types",
     )
-    hosts: list[str] = Field(
+    hosts: list[str] = SettingsField(
         default_factory=list,
         title="Hosts",
     )
-    task_types: list[str] = Field(
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    product_names: list[str] = Field(
+    product_names: list[str] = SettingsField(
         default_factory=list,
         title="Product names",
     )
-    integrate_thumbnail: bool = Field(True)
+    integrate_thumbnail: bool = SettingsField(True)
 
 
 class PreIntegrateThumbnailsModel(BaseSettingsModel):
@@ -490,26 +598,26 @@ class PreIntegrateThumbnailsModel(BaseSettingsModel):
     """
 
     _isGroup = True
-    enabled: bool = Field(True)
-    integrate_profiles: list[PreIntegrateThumbnailsProfile] = Field(
+    enabled: bool = SettingsField(True)
+    integrate_profiles: list[PreIntegrateThumbnailsProfile] = SettingsField(
         default_factory=list,
         title="Integrate profiles"
     )
 
 
 class IntegrateProductGroupProfile(BaseSettingsModel):
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types"
     )
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    tasks: list[str] = Field(default_factory=list, title="Task names")
-    template: str = Field("", title="Template")
+    tasks: list[str] = SettingsField(default_factory=list, title="Task names")
+    template: str = SettingsField("", title="Template")
 
 
 class IntegrateProductGroupModel(BaseSettingsModel):
@@ -523,170 +631,169 @@ class IntegrateProductGroupModel(BaseSettingsModel):
     """
 
     _isGroup = True
-    product_grouping_profiles: list[IntegrateProductGroupProfile] = Field(
-        default_factory=list,
-        title="Product group profiles"
-    )
-
-
-class IntegrateANProductGroupProfileModel(BaseSettingsModel):
-    product_types: list[str] = Field(
-        default_factory=list,
-        title="Product types"
-    )
-    hosts: list[str] = Field(
-        default_factory=list,
-        title="Hosts"
-    )
-    task_types: list[str] = Field(
-        default_factory=list,
-        title="Task types",
-        enum_resolver=task_types_enum
-    )
-    tasks: list[str] = Field(
-        default_factory=list,
-        title="Task names"
-    )
-    template: str = Field("", title="Template")
-
-
-class IntegrateANTemplateNameProfileModel(BaseSettingsModel):
-    product_types: list[str] = Field(
-        default_factory=list,
-        title="Product types"
-    )
-    hosts: list[str] = Field(
-        default_factory=list,
-        title="Hosts"
-    )
-    task_types: list[str] = Field(
-        default_factory=list,
-        title="Task types",
-        enum_resolver=task_types_enum
-    )
-    tasks: list[str] = Field(
-        default_factory=list,
-        title="Task names"
-    )
-    template_name: str = Field("", title="Template name")
-
-
-class IntegrateHeroTemplateNameProfileModel(BaseSettingsModel):
-    product_types: list[str] = Field(
-        default_factory=list,
-        title="Product types"
-    )
-    hosts: list[str] = Field(
-        default_factory=list,
-        title="Hosts"
-    )
-    task_types: list[str] = Field(
-        default_factory=list,
-        title="Task types",
-        enum_resolver=task_types_enum
-    )
-    task_names: list[str] = Field(
-        default_factory=list,
-        title="Task names"
-    )
-    template_name: str = Field("", title="Template name")
-
-
-class IntegrateHeroVersionModel(BaseSettingsModel):
-    _isGroup = True
-    enabled: bool = Field(True)
-    optional: bool = Field(False, title="Optional")
-    active: bool = Field(True, title="Active")
-    families: list[str] = Field(default_factory=list, title="Families")
-    # TODO remove when removed from client code
-    template_name_profiles: list[IntegrateHeroTemplateNameProfileModel] = (
-        Field(
+    product_grouping_profiles: list[IntegrateProductGroupProfile] = (
+        SettingsField(
             default_factory=list,
-            title="Template name profiles"
+            title="Product group profiles"
         )
     )
 
 
+class IntegrateANProductGroupProfileModel(BaseSettingsModel):
+    product_types: list[str] = SettingsField(
+        default_factory=list,
+        title="Product types"
+    )
+    hosts: list[str] = SettingsField(
+        default_factory=list,
+        title="Hosts"
+    )
+    task_types: list[str] = SettingsField(
+        default_factory=list,
+        title="Task types",
+        enum_resolver=task_types_enum
+    )
+    tasks: list[str] = SettingsField(
+        default_factory=list,
+        title="Task names"
+    )
+    template: str = SettingsField("", title="Template")
+
+
+class IntegrateANTemplateNameProfileModel(BaseSettingsModel):
+    product_types: list[str] = SettingsField(
+        default_factory=list,
+        title="Product types"
+    )
+    hosts: list[str] = SettingsField(
+        default_factory=list,
+        title="Hosts"
+    )
+    task_types: list[str] = SettingsField(
+        default_factory=list,
+        title="Task types",
+        enum_resolver=task_types_enum
+    )
+    tasks: list[str] = SettingsField(
+        default_factory=list,
+        title="Task names"
+    )
+    template_name: str = SettingsField("", title="Template name")
+
+
+class IntegrateHeroTemplateNameProfileModel(BaseSettingsModel):
+    product_types: list[str] = SettingsField(
+        default_factory=list,
+        title="Product types"
+    )
+    hosts: list[str] = SettingsField(
+        default_factory=list,
+        title="Hosts"
+    )
+    task_types: list[str] = SettingsField(
+        default_factory=list,
+        title="Task types",
+        enum_resolver=task_types_enum
+    )
+    task_names: list[str] = SettingsField(
+        default_factory=list,
+        title="Task names"
+    )
+    template_name: str = SettingsField("", title="Template name")
+
+
+class IntegrateHeroVersionModel(BaseSettingsModel):
+    _isGroup = True
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
+    families: list[str] = SettingsField(default_factory=list, title="Families")
+
+
 class CleanUpModel(BaseSettingsModel):
     _isGroup = True
-    paterns: list[str] = Field(
+    paterns: list[str] = SettingsField(
         default_factory=list,
         title="Patterns (regex)"
     )
-    remove_temp_renders: bool = Field(False, title="Remove Temp renders")
+    remove_temp_renders: bool = SettingsField(
+        False, title="Remove Temp renders"
+    )
 
 
 class CleanUpFarmModel(BaseSettingsModel):
     _isGroup = True
-    enabled: bool = Field(True)
+    enabled: bool = SettingsField(True)
 
 
 class PublishPuginsModel(BaseSettingsModel):
-    CollectAnatomyInstanceData: CollectAnatomyInstanceDataModel = Field(
-        default_factory=CollectAnatomyInstanceDataModel,
-        title="Collect Anatomy Instance Data"
+    CollectAnatomyInstanceData: CollectAnatomyInstanceDataModel = (
+        SettingsField(
+            default_factory=CollectAnatomyInstanceDataModel,
+            title="Collect Anatomy Instance Data"
+        )
     )
-    CollectAudio: CollectAudioModel = Field(
+    CollectAudio: CollectAudioModel = SettingsField(
         default_factory=CollectAudioModel,
         title="Collect Audio"
     )
-    CollectSceneVersion: CollectSceneVersionModel = Field(
+    CollectSceneVersion: CollectSceneVersionModel = SettingsField(
         default_factory=CollectSceneVersionModel,
         title="Collect Version from Workfile"
     )
-    collect_comment_per_instance: CollectCommentPIModel = Field(
+    collect_comment_per_instance: CollectCommentPIModel = SettingsField(
         default_factory=CollectCommentPIModel,
         title="Collect comment per instance",
     )
-    CollectFramesFixDef: CollectFramesFixDefModel = Field(
+    CollectFramesFixDef: CollectFramesFixDefModel = SettingsField(
         default_factory=CollectFramesFixDefModel,
         title="Collect Frames to Fix",
     )
-    ValidateEditorialAssetName: ValidateBaseModel = Field(
+    ValidateEditorialAssetName: ValidateBaseModel = SettingsField(
         default_factory=ValidateBaseModel,
         title="Validate Editorial Asset Name"
     )
-    ValidateVersion: ValidateBaseModel = Field(
+    ValidateVersion: ValidateBaseModel = SettingsField(
         default_factory=ValidateBaseModel,
         title="Validate Version"
     )
-    ValidateIntent: ValidateIntentModel = Field(
+    ValidateIntent: ValidateIntentModel = SettingsField(
         default_factory=ValidateIntentModel,
         title="Validate Intent"
     )
-    ExtractThumbnail: ExtractThumbnailModel = Field(
+    ExtractThumbnail: ExtractThumbnailModel = SettingsField(
         default_factory=ExtractThumbnailModel,
         title="Extract Thumbnail"
     )
-    ExtractOIIOTranscode: ExtractOIIOTranscodeModel = Field(
+    ExtractOIIOTranscode: ExtractOIIOTranscodeModel = SettingsField(
         default_factory=ExtractOIIOTranscodeModel,
         title="Extract OIIO Transcode"
     )
-    ExtractReview: ExtractReviewModel = Field(
+    ExtractReview: ExtractReviewModel = SettingsField(
         default_factory=ExtractReviewModel,
         title="Extract Review"
     )
-    ExtractBurnin: ExtractBurninModel = Field(
+    ExtractBurnin: ExtractBurninModel = SettingsField(
         default_factory=ExtractBurninModel,
         title="Extract Burnin"
     )
-    PreIntegrateThumbnails: PreIntegrateThumbnailsModel = Field(
+    PreIntegrateThumbnails: PreIntegrateThumbnailsModel = SettingsField(
         default_factory=PreIntegrateThumbnailsModel,
         title="Override Integrate Thumbnail Representations"
     )
-    IntegrateProductGroup: IntegrateProductGroupModel = Field(
+    IntegrateProductGroup: IntegrateProductGroupModel = SettingsField(
         default_factory=IntegrateProductGroupModel,
         title="Integrate Product Group"
     )
-    IntegrateHeroVersion: IntegrateHeroVersionModel = Field(
+    IntegrateHeroVersion: IntegrateHeroVersionModel = SettingsField(
         default_factory=IntegrateHeroVersionModel,
         title="Integrate Hero Version"
     )
-    CleanUp: CleanUpModel = Field(
+    CleanUp: CleanUpModel = SettingsField(
         default_factory=CleanUpModel,
         title="Clean Up"
     )
-    CleanUpFarm: CleanUpFarmModel = Field(
+    CleanUpFarm: CleanUpFarmModel = SettingsField(
         default_factory=CleanUpFarmModel,
         title="Clean Up Farm"
     )
@@ -741,6 +848,16 @@ DEFAULT_PUBLISH_VALUES = {
     },
     "ExtractThumbnail": {
         "enabled": True,
+        "product_names": [],
+        "integrate_thumbnail": True,
+        "target_size": {
+            "type": "source"
+        },
+        "duration_split": 0.5,
+        "oiiotool_defaults": {
+            "type": "colorspace",
+            "colorspace": "color_picking"
+        },
         "ffmpeg_args": {
             "input": [
                 "-apply_trc gamma22"
@@ -941,19 +1058,6 @@ DEFAULT_PUBLISH_VALUES = {
             "layout",
             "mayaScene",
             "simpleUnrealTexture"
-        ],
-        "template_name_profiles": [
-            {
-                "product_types": [
-                    "simpleUnrealTexture"
-                ],
-                "hosts": [
-                    "standalonepublisher"
-                ],
-                "task_types": [],
-                "task_names": [],
-                "template_name": "simpleUnrealTextureHero"
-            }
         ]
     },
     "CleanUp": {

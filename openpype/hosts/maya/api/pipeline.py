@@ -95,6 +95,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         self.log.info("Installing callbacks ... ")
         register_event_callback("init", on_init)
 
+        _set_project()
+
         if lib.IS_HEADLESS:
             self.log.info((
                 "Running in headless mode, skipping Maya save/open/new"
@@ -103,7 +105,6 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
             return
 
-        _set_project()
         self._register_callbacks()
 
         menu.install(project_settings)
@@ -579,19 +580,10 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
-def _update_render_layer_observers():
-    # Helper to trigger update for all renderlayer observer logic
-    lib.remove_render_layer_observer()
-    lib.add_render_layer_observer()
-    lib.add_render_layer_change_observer()
-
-
 def on_open():
     """On scene open let's assume the containers have changed."""
 
     from openpype.widgets import popup
-
-    utils.executeDeferred(_update_render_layer_observers)
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
@@ -629,7 +621,6 @@ def on_new():
     with lib.suspended_refresh():
         lib.set_context_settings()
 
-    utils.executeDeferred(_update_render_layer_observers)
     _remove_workfile_lock()
 
 

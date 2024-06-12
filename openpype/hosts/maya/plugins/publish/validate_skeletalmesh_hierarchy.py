@@ -4,20 +4,25 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishXmlValidationError,
+    OptionalPyblishPluginMixin
 )
 
 from maya import cmds
 
 
-class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin):
+class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Validates that nodes has common root."""
 
     order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["skeletalMesh"]
     label = "Skeletal Mesh Top Node"
+    optional = False
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         geo = instance.data.get("geometry")
         joints = instance.data.get("joints")
 

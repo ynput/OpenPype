@@ -127,8 +127,9 @@ def isolate_objects(window, objects):
 
     context = create_blender_context(selected=objects, window=window)
 
-    bpy.ops.view3d.view_axis(context, type="FRONT")
-    bpy.ops.view3d.localview(context)
+    with bpy.context.temp_override(**context):
+        bpy.ops.view3d.view_axis(type="FRONT")
+        bpy.ops.view3d.localview()
 
     deselect_all()
 
@@ -148,13 +149,14 @@ def applied_view(window, camera, isolate=None, options=None):
 
     area.ui_type = "VIEW_3D"
 
-    meshes = [obj for obj in window.scene.objects if obj.type == "MESH"]
+    types = {"MESH", "GPENCIL"}
+    objects = [obj for obj in window.scene.objects if obj.type in types]
 
     if camera == "AUTO":
         space.region_3d.view_perspective = "ORTHO"
-        isolate_objects(window, isolate or meshes)
+        isolate_objects(window, isolate or objects)
     else:
-        isolate_objects(window, isolate or meshes)
+        isolate_objects(window, isolate or objects)
         space.camera = window.scene.objects.get(camera)
         space.region_3d.view_perspective = "CAMERA"
 
@@ -269,10 +271,12 @@ def _independent_window():
     """Create capture-window context."""
     context = create_blender_context()
     current_windows = set(bpy.context.window_manager.windows)
-    bpy.ops.wm.window_new(context)
-    window = list(set(bpy.context.window_manager.windows) - current_windows)[0]
-    context["window"] = window
-    try:
-        yield window
-    finally:
-        bpy.ops.wm.window_close(context)
+    with bpy.context.temp_override(**context):
+        bpy.ops.wm.window_new()
+        window = list(
+            set(bpy.context.window_manager.windows) - current_windows)[0]
+        context["window"] = window
+        try:
+            yield window
+        finally:
+            bpy.ops.wm.window_close()

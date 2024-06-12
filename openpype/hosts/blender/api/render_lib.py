@@ -1,7 +1,8 @@
-import os
+from pathlib import Path
 
 import bpy
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings import get_project_settings
 from openpype.pipeline import get_current_project_name
 
@@ -47,6 +48,22 @@ def get_multilayer(settings):
                     ["multilayer_exr"])
 
 
+def get_renderer(settings):
+    """Get renderer from blender settings."""
+
+    return (settings["blender"]
+                    ["RenderSettings"]
+                    ["renderer"])
+
+
+def get_compositing(settings):
+    """Get compositing from blender settings."""
+
+    return (settings["blender"]
+                    ["RenderSettings"]
+                    ["compositing"])
+
+
 def get_render_product(output_path, name, aov_sep):
     """
     Generate the path to the render product. Blender interprets the `#`
@@ -59,7 +76,7 @@ def get_render_product(output_path, name, aov_sep):
         instance (pyblish.api.Instance): The instance to publish.
         ext (str): The image format to render.
     """
-    filepath = os.path.join(output_path, name)
+    filepath = output_path / name.lstrip("/")
     render_product = f"{filepath}{aov_sep}beauty.####"
     render_product = render_product.replace("\\", "/")
 
@@ -91,66 +108,121 @@ def set_render_format(ext, multilayer):
         image_settings.file_format = "TIFF"
 
 
-def set_render_passes(settings):
-    aov_list = (settings["blender"]
-                        ["RenderSettings"]
-                        ["aov_list"])
+def set_render_passes(settings, renderer):
+    aov_list = set(settings["blender"]["RenderSettings"]["aov_list"])
+    custom_passes = settings["blender"]["RenderSettings"]["custom_passes"]
 
-    custom_passes = (settings["blender"]
-                             ["RenderSettings"]
-                             ["custom_passes"])
-
+    # Common passes for both renderers
     vl = bpy.context.view_layer
 
+    # Data Passes
     vl.use_pass_combined = "combined" in aov_list
     vl.use_pass_z = "z" in aov_list
     vl.use_pass_mist = "mist" in aov_list
     vl.use_pass_normal = "normal" in aov_list
+
+    # Light Passes
     vl.use_pass_diffuse_direct = "diffuse_light" in aov_list
     vl.use_pass_diffuse_color = "diffuse_color" in aov_list
     vl.use_pass_glossy_direct = "specular_light" in aov_list
     vl.use_pass_glossy_color = "specular_color" in aov_list
-    vl.eevee.use_pass_volume_direct = "volume_light" in aov_list
     vl.use_pass_emit = "emission" in aov_list
     vl.use_pass_environment = "environment" in aov_list
-    vl.use_pass_shadow = "shadow" in aov_list
     vl.use_pass_ambient_occlusion = "ao" in aov_list
 
-    cycles = vl.cycles
+    # Cryptomatte Passes
+    vl.use_pass_cryptomatte_object = "cryptomatte_object" in aov_list
+    vl.use_pass_cryptomatte_material = "cryptomatte_material" in aov_list
+    vl.use_pass_cryptomatte_asset = "cryptomatte_asset" in aov_list
 
-    cycles.denoising_store_passes = "denoising" in aov_list
-    cycles.use_pass_volume_direct = "volume_direct" in aov_list
-    cycles.use_pass_volume_indirect = "volume_indirect" in aov_list
+    if renderer == "BLENDER_EEVEE":
+        # Eevee exclusive passes
+        eevee = vl.eevee
+
+        # Light Passes
+        vl.use_pass_shadow = "shadow" in aov_list
+        eevee.use_pass_volume_direct = "volume_light" in aov_list
+
+        # Effects Passes
+        eevee.use_pass_bloom = "bloom" in aov_list
+        eevee.use_pass_transparent = "transparent" in aov_list
+
+        # Cryptomatte Passes
+        vl.use_pass_cryptomatte_accurate = "cryptomatte_accurate" in aov_list
+    elif renderer == "CYCLES":
+        # Cycles exclusive passes
+        cycles = vl.cycles
+
+        # Data Passes
+        vl.use_pass_position = "position" in aov_list
+        vl.use_pass_vector = "vector" in aov_list
+        vl.use_pass_uv = "uv" in aov_list
+        cycles.denoising_store_passes = "denoising" in aov_list
+        vl.use_pass_object_index = "object_index" in aov_list
+        vl.use_pass_material_index = "material_index" in aov_list
+        cycles.pass_debug_sample_count = "sample_count" in aov_list
+
+        # Light Passes
+        vl.use_pass_diffuse_indirect = "diffuse_indirect" in aov_list
+        vl.use_pass_glossy_indirect = "specular_indirect" in aov_list
+        vl.use_pass_transmission_direct = "transmission_direct" in aov_list
+        vl.use_pass_transmission_indirect = "transmission_indirect" in aov_list
+        vl.use_pass_transmission_color = "transmission_color" in aov_list
+        cycles.use_pass_volume_direct = "volume_light" in aov_list
+        cycles.use_pass_volume_indirect = "volume_indirect" in aov_list
+        cycles.use_pass_shadow_catcher = "shadow" in aov_list
 
     aovs_names = [aov.name for aov in vl.aovs]
     for cp in custom_passes:
-        cp_name = cp[0]
+        cp_name = cp["attribute"] if AYON_SERVER_ENABLED else cp[0]
         if cp_name not in aovs_names:
             aov = vl.aovs.add()
             aov.name = cp_name
         else:
             aov = vl.aovs[cp_name]
-        aov.type = cp[1].get("type", "VALUE")
+        aov.type = (cp["value"]
+                    if AYON_SERVER_ENABLED else cp[1].get("type", "VALUE"))
 
-    return aov_list, custom_passes
+    return list(aov_list), custom_passes
 
 
-def set_node_tree(output_path, name, aov_sep, ext, multilayer):
+def _create_aov_slot(name, aov_sep, slots, rpass_name, multi_exr, output_path):
+    filename = f"{name}{aov_sep}{rpass_name}.####"
+    slot = slots.new(rpass_name if multi_exr else filename)
+    filepath = str(output_path / filename.lstrip("/"))
+
+    return slot, filepath
+
+
+def set_node_tree(
+    output_path, render_product, name, aov_sep, ext, multilayer, compositing
+):
     # Set the scene to use the compositor node tree to render
     bpy.context.scene.use_nodes = True
 
     tree = bpy.context.scene.node_tree
 
-    # Get the Render Layers node
-    rl_node = None
+    comp_layer_type = "CompositorNodeRLayers"
+    output_type = "CompositorNodeOutputFile"
+    compositor_type = "CompositorNodeComposite"
+
+    # Get the Render Layer, Composite and the previous output nodes
+    render_layer_node = None
+    composite_node = None
+    old_output_node = None
     for node in tree.nodes:
-        if node.bl_idname == "CompositorNodeRLayers":
-            rl_node = node
+        if node.bl_idname == comp_layer_type:
+            render_layer_node = node
+        elif node.bl_idname == compositor_type:
+            composite_node = node
+        elif node.bl_idname == output_type and "AYON" in node.name:
+            old_output_node = node
+        if render_layer_node and composite_node and old_output_node:
             break
 
     # If there's not a Render Layers node, we create it
-    if not rl_node:
-        rl_node = tree.nodes.new("CompositorNodeRLayers")
+    if not render_layer_node:
+        render_layer_node = tree.nodes.new(comp_layer_type)
 
     # Get the enabled output sockets, that are the active passes for the
     # render.
@@ -158,47 +230,81 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
     exclude_sockets = ["Image", "Alpha", "Noisy Image"]
     passes = [
         socket
-        for socket in rl_node.outputs
+        for socket in render_layer_node.outputs
         if socket.enabled and socket.name not in exclude_sockets
     ]
 
-    # Remove all output nodes
-    for node in tree.nodes:
-        if node.bl_idname == "CompositorNodeOutputFile":
-            tree.nodes.remove(node)
-
     # Create a new output node
-    output = tree.nodes.new("CompositorNodeOutputFile")
+    output = tree.nodes.new(output_type)
 
     image_settings = bpy.context.scene.render.image_settings
     output.format.file_format = image_settings.file_format
 
+    slots = None
+
     # In case of a multilayer exr, we don't need to use the output node,
     # because the blender render already outputs a multilayer exr.
-    if ext == "exr" and multilayer:
-        output.layer_slots.clear()
-        return []
+    multi_exr = ext == "exr" and multilayer
+    slots = output.layer_slots if multi_exr else output.file_slots
+    output.base_path = render_product if multi_exr else str(output_path)
 
-    output.file_slots.clear()
-    output.base_path = output_path
+    slots.clear()
 
     aov_file_products = []
 
+    old_links = {
+        link.from_socket.name: link for link in tree.links
+        if link.to_node == old_output_node}
+
+    # Create a new socket for the beauty output
+    pass_name = "rgba" if multi_exr else "beauty"
+    slot, _ = _create_aov_slot(
+        name, aov_sep, slots, pass_name, multi_exr, output_path)
+    tree.links.new(render_layer_node.outputs["Image"], slot)
+
+    if compositing:
+        # Create a new socket for the composite output
+        pass_name = "composite"
+        comp_socket, filepath = _create_aov_slot(
+            name, aov_sep, slots, pass_name, multi_exr, output_path)
+        aov_file_products.append(("Composite", filepath))
+
     # For each active render pass, we add a new socket to the output node
     # and link it
-    for render_pass in passes:
-        filepath = f"{name}{aov_sep}{render_pass.name}.####"
+    for rpass in passes:
+        slot, filepath = _create_aov_slot(
+            name, aov_sep, slots, rpass.name, multi_exr, output_path)
+        aov_file_products.append((rpass.name, filepath))
 
-        output.file_slots.new(filepath)
+        # If the rpass was not connected with the old output node, we connect
+        # it with the new one.
+        if not old_links.get(rpass.name):
+            tree.links.new(rpass, slot)
 
-        aov_file_products.append(
-            (render_pass.name, os.path.join(output_path, filepath)))
+    for link in list(old_links.values()):
+        # Check if the socket is still available in the new output node.
+        socket = output.inputs.get(link.to_socket.name)
+        # If it is, we connect it with the new output node.
+        if socket:
+            tree.links.new(link.from_socket, socket)
+        # Then, we remove the old link.
+        tree.links.remove(link)
 
-        node_input = output.inputs[-1]
+    # If there's a composite node, we connect its input with the new output
+    if compositing and composite_node:
+        for link in tree.links:
+            if link.to_node == composite_node:
+                tree.links.new(link.from_socket, comp_socket)
+                break
 
-        tree.links.new(render_pass, node_input)
+    if old_output_node:
+        output.location = old_output_node.location
+        tree.nodes.remove(old_output_node)
 
-    return aov_file_products
+    output.name = "AYON File Output"
+    output.label = "AYON File Output"
+
+    return [] if multi_exr else aov_file_products
 
 
 def imprint_render_settings(node, data):
@@ -214,12 +320,11 @@ def imprint_render_settings(node, data):
 def prepare_rendering(asset_group):
     name = asset_group.name
 
-    filepath = bpy.data.filepath
+    filepath = Path(bpy.data.filepath)
     assert filepath, "Workfile not saved. Please save the file first."
 
-    file_path = os.path.dirname(filepath)
-    file_name = os.path.basename(filepath)
-    file_name, _ = os.path.splitext(file_name)
+    dirpath = filepath.parent
+    file_name = Path(filepath.name).stem
 
     project = get_current_project_name()
     settings = get_project_settings(project)
@@ -228,17 +333,23 @@ def prepare_rendering(asset_group):
     aov_sep = get_aov_separator(settings)
     ext = get_image_format(settings)
     multilayer = get_multilayer(settings)
+    renderer = get_renderer(settings)
+    compositing = get_compositing(settings)
 
     set_render_format(ext, multilayer)
-    aov_list, custom_passes = set_render_passes(settings)
+    bpy.context.scene.render.engine = renderer
+    aov_list, custom_passes = set_render_passes(settings, renderer)
 
-    output_path = os.path.join(file_path, render_folder, file_name)
+    output_path = Path.joinpath(dirpath, render_folder, file_name)
 
     render_product = get_render_product(output_path, name, aov_sep)
     aov_file_product = set_node_tree(
-        output_path, name, aov_sep, ext, multilayer)
+        output_path, render_product, name, aov_sep,
+        ext, multilayer, compositing)
 
-    bpy.context.scene.render.filepath = render_product
+    # Clear the render filepath, so that the output is handled only by the
+    # output node in the compositor.
+    bpy.context.scene.render.filepath = ""
 
     render_settings = {
         "render_folder": render_folder,

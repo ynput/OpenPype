@@ -8,7 +8,7 @@ from ayon_api import slugify_string
 from ayon_api.entity_hub import EntityHub
 
 from openpype import AYON_SERVER_ENABLED
-from openpype.client import get_assets
+from openpype.client import get_assets, get_asset_name_identifier
 from openpype.pipeline.template_data import (
     get_asset_template_data,
     get_task_template_data,
@@ -30,8 +30,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         if not AYON_SERVER_ENABLED:
             return
 
-        hierarchy_context = context.data.get("hierarchyContext")
-        if not hierarchy_context:
+        if not context.data.get("hierarchyContext"):
             self.log.debug("Skipping ExtractHierarchyToAYON")
             return
 
@@ -58,7 +57,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
             project_name, asset_names=instances_by_asset_name.keys()
         )
         asset_docs_by_name = {
-            asset_doc["name"]: asset_doc
+            get_asset_name_identifier(asset_doc): asset_doc
             for asset_doc in asset_docs
         }
         for asset_name, instances in instances_by_asset_name.items():
@@ -191,20 +190,21 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         """
 
         # filter only the active publishing instances
-        active_folder_names = set()
+        active_folder_paths = set()
         for instance in context:
             if instance.data.get("publish") is not False:
-                active_folder_names.add(instance.data.get("asset"))
+                active_folder_paths.add(instance.data.get("asset"))
 
-        active_folder_names.discard(None)
+        active_folder_paths.discard(None)
 
-        self.log.debug("Active folder names: {}".format(active_folder_names))
-        if not active_folder_names:
+        self.log.debug("Active folder paths: {}".format(active_folder_paths))
+        if not active_folder_paths:
             return None
 
         project_item = None
         project_children_context = None
-        for key, value in context.data["hierarchyContext"].items():
+        hierarchy_context = copy.deepcopy(context.data["hierarchyContext"])
+        for key, value in hierarchy_context.items():
             project_item = copy.deepcopy(value)
             project_children_context = project_item.pop("childs", None)
             project_item["name"] = key
@@ -223,22 +223,24 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         valid_ids = set()
 
         hierarchy_queue = collections.deque()
-        hierarchy_queue.append((project_id, project_children_context))
+        hierarchy_queue.append((project_id, "", project_children_context))
         while hierarchy_queue:
             queue_item = hierarchy_queue.popleft()
-            parent_id, children_context = queue_item
+            parent_id, parent_path, children_context = queue_item
             if not children_context:
                 continue
 
-            for asset_name, asset_info in children_context.items():
+            for folder_name, folder_info in children_context.items():
+                folder_path = "{}/{}".format(parent_path, folder_name)
                 if (
-                    asset_name not in active_folder_names
-                    and not asset_info.get("childs")
+                    folder_path not in active_folder_paths
+                    and not folder_info.get("childs")
                 ):
                     continue
+
                 item_id = uuid.uuid4().hex
-                new_item = copy.deepcopy(asset_info)
-                new_item["name"] = asset_name
+                new_item = copy.deepcopy(folder_info)
+                new_item["name"] = folder_name
                 new_item["children"] = []
                 new_children_context = new_item.pop("childs", None)
                 tasks = new_item.pop("tasks", {})
@@ -252,9 +254,11 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
                 items_by_id[item_id] = new_item
                 parent_id_by_item_id[item_id] = parent_id
 
-                if asset_name in active_folder_names:
+                if folder_path in active_folder_paths:
                     valid_ids.add(item_id)
-                hierarchy_queue.append((item_id, new_children_context))
+                hierarchy_queue.append(
+                    (item_id, folder_path, new_children_context)
+                )
 
         if not valid_ids:
             return None

@@ -62,8 +62,6 @@ def auto_reconnect(func):
 
 
 SESSION_CONTEXT_KEYS = (
-    # Root directory of projects on disk
-    "AVALON_PROJECTS",
     # Name of current Project
     "AVALON_PROJECT",
     # Name of current Asset

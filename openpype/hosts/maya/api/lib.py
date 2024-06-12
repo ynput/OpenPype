@@ -1,6 +1,7 @@
 """Standalone helper functions"""
 
 import os
+import copy
 from pprint import pformat
 import sys
 import uuid
@@ -9,6 +10,8 @@ import re
 import json
 import logging
 import contextlib
+import capture
+from .exitstack import ExitStack
 from collections import OrderedDict, defaultdict
 from math import ceil
 from six import string_types
@@ -62,60 +65,14 @@ SHAPE_ATTRS = {"castsShadows",
                "doubleSided",
                "opposite"}
 
-RENDER_ATTRS = {"vray": {
-    "node": "vraySettings",
-    "prefix": "fileNamePrefix",
-    "padding": "fileNamePadding",
-    "ext": "imageFormatStr"
-},
-    "default": {
-    "node": "defaultRenderGlobals",
-    "prefix": "imageFilePrefix",
-    "padding": "extensionPadding"
-}
-}
-
 
 DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
                   0.0, 1.0, 0.0, 0.0,
                   0.0, 0.0, 1.0, 0.0,
                   0.0, 0.0, 0.0, 1.0]
 
-# The maya alembic export types
-_alembic_options = {
-    "startFrame": float,
-    "endFrame": float,
-    "frameRange": str,  # "start end"; overrides startFrame & endFrame
-    "eulerFilter": bool,
-    "frameRelativeSample": float,
-    "noNormals": bool,
-    "renderableOnly": bool,
-    "step": float,
-    "stripNamespaces": bool,
-    "uvWrite": bool,
-    "wholeFrameGeo": bool,
-    "worldSpace": bool,
-    "writeVisibility": bool,
-    "writeColorSets": bool,
-    "writeFaceSets": bool,
-    "writeCreases": bool,  # Maya 2015 Ext1+
-    "writeUVSets": bool,   # Maya 2017+
-    "dataFormat": str,
-    "root": (list, tuple),
-    "attr": (list, tuple),
-    "attrPrefix": (list, tuple),
-    "userAttr": (list, tuple),
-    "melPerFrameCallback": str,
-    "melPostJobCallback": str,
-    "pythonPerFrameCallback": str,
-    "pythonPostJobCallback": str,
-    "selection": bool
-}
-
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
-
-RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
 
 DISPLAY_LIGHTS_ENUM = [
@@ -146,6 +103,10 @@ def suspended_refresh(suspend=True):
 
     cmds.ogs(pause=True) is a toggle so we cant pass False.
     """
+    if IS_HEADLESS:
+        yield
+        return
+
     original_state = cmds.ogs(query=True, pause=True)
     try:
         if suspend and not original_state:
@@ -181,6 +142,216 @@ def maintained_selection():
                         noExpand=True)
         else:
             cmds.select(clear=True)
+
+
+def reload_all_udim_tile_previews():
+    """Regenerate all UDIM tile preview in texture file"""
+    for texture_file in cmds.ls(type="file"):
+        if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
+            cmds.ogs(regenerateUVTilePreview=texture_file)
+
+
+@contextlib.contextmanager
+def panel_camera(panel, camera):
+    """Set modelPanel's camera during the context.
+
+    Arguments:
+        panel (str): modelPanel name.
+        camera (str): camera name.
+
+    """
+    original_camera = cmds.modelPanel(panel, query=True, camera=True)
+    try:
+        cmds.modelPanel(panel, edit=True, camera=camera)
+        yield
+    finally:
+        cmds.modelPanel(panel, edit=True, camera=original_camera)
+
+
+def render_capture_preset(preset):
+    """Capture playblast with a preset.
+
+    To generate the preset use `generate_capture_preset`.
+
+    Args:
+        preset (dict): preset options
+
+    Returns:
+        str: Output path of `capture.capture`
+    """
+
+    # Force a refresh at the start of the timeline
+    # TODO (Question): Why do we need to do this? What bug does it solve?
+    #   Is this for simulations?
+    cmds.refresh(force=True)
+    refresh_frame_int = int(cmds.playbackOptions(query=True, minTime=True))
+    cmds.currentTime(refresh_frame_int - 1, edit=True)
+    cmds.currentTime(refresh_frame_int, edit=True)
+    log.debug(
+        "Using preset: {}".format(
+            json.dumps(preset, indent=4, sort_keys=True)
+        )
+    )
+    preset = copy.deepcopy(preset)
+    # not supported by `capture` so we pop it off of the preset
+    reload_textures = preset["viewport_options"].pop("loadTextures", False)
+    panel = preset.pop("panel")
+    with ExitStack() as stack:
+        stack.enter_context(maintained_time())
+        stack.enter_context(panel_camera(panel, preset["camera"]))
+        stack.enter_context(viewport_default_options(panel, preset))
+        if reload_textures:
+            # Force immediate texture loading when to ensure
+            # all textures have loaded before the playblast starts
+            stack.enter_context(material_loading_mode(mode="immediate"))
+            # Regenerate all UDIM tiles previews
+            reload_all_udim_tile_previews()
+        path = capture.capture(log=self.log, **preset)
+
+    return path
+
+
+def generate_capture_preset(instance, camera, path,
+                            start=None, end=None, capture_preset=None):
+    """Function for getting all the data of preset options for
+    playblast capturing
+
+    Args:
+        instance (pyblish.api.Instance): instance
+        camera (str): review camera
+        path (str): filepath
+        start (int): frameStart
+        end (int): frameEnd
+        capture_preset (dict): capture preset
+
+    Returns:
+        dict: Resulting preset
+    """
+    preset = load_capture_preset(data=capture_preset)
+
+    preset["camera"] = camera
+    preset["start_frame"] = start
+    preset["end_frame"] = end
+    preset["filename"] = path
+    preset["overwrite"] = True
+    preset["panel"] = instance.data["panel"]
+
+    # Disable viewer since we use the rendering logic for publishing
+    # We don't want to open the generated playblast in a viewer directly.
+    preset["viewer"] = False
+
+    # "isolate_view" will already have been applied at creation, so we'll
+    # ignore it here.
+    preset.pop("isolate_view")
+
+    # Set resolution variables from capture presets
+    width_preset = capture_preset["Resolution"]["width"]
+    height_preset = capture_preset["Resolution"]["height"]
+
+    # Set resolution variables from asset values
+    asset_data = instance.data["assetEntity"]["data"]
+    asset_width = asset_data.get("resolutionWidth")
+    asset_height = asset_data.get("resolutionHeight")
+    review_instance_width = instance.data.get("review_width")
+    review_instance_height = instance.data.get("review_height")
+
+    # Use resolution from instance if review width/height is set
+    # Otherwise use the resolution from preset if it has non-zero values
+    # Otherwise fall back to asset width x height
+    # Else define no width, then `capture.capture` will use render resolution
+    if review_instance_width and review_instance_height:
+        preset["width"] = review_instance_width
+        preset["height"] = review_instance_height
+    elif width_preset and height_preset:
+        preset["width"] = width_preset
+        preset["height"] = height_preset
+    elif asset_width and asset_height:
+        preset["width"] = asset_width
+        preset["height"] = asset_height
+
+    # Isolate view is requested by having objects in the set besides a
+    # camera. If there is only 1 member it'll be the camera because we
+    # validate to have 1 camera only.
+    if instance.data["isolate"] and len(instance.data["setMembers"]) > 1:
+        preset["isolate"] = instance.data["setMembers"]
+
+    # Override camera options
+    # Enforce persisting camera depth of field
+    camera_options = preset.setdefault("camera_options", {})
+    camera_options["depthOfField"] = cmds.getAttr(
+        "{0}.depthOfField".format(camera)
+    )
+
+    # Use Pan/Zoom from instance data instead of from preset
+    preset.pop("pan_zoom", None)
+    camera_options["panZoomEnabled"] = instance.data["panZoom"]
+
+    # Override viewport options by instance data
+    viewport_options = preset.setdefault("viewport_options", {})
+    viewport_options["displayLights"] = instance.data["displayLights"]
+    viewport_options["imagePlane"] = instance.data.get("imagePlane", True)
+
+    # Override transparency if requested.
+    transparency = instance.data.get("transparency", 0)
+    if transparency != 0:
+        preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+
+    # Update preset with current panel setting
+    # if override_viewport_options is turned off
+    if not capture_preset["Viewport Options"]["override_viewport_options"]:
+        panel_preset = capture.parse_view(preset["panel"])
+        panel_preset.pop("camera")
+        preset.update(panel_preset)
+
+    return preset
+
+
+@contextlib.contextmanager
+def viewport_default_options(panel, preset):
+    """Context manager used by `render_capture_preset`.
+
+    We need to explicitly enable some viewport changes so the viewport is
+    refreshed ahead of playblasting.
+
+    """
+    # TODO: Clarify in the docstring WHY we need to set it ahead of
+    #  playblasting. What issues does it solve?
+    viewport_defaults = {}
+    try:
+        keys = [
+            "useDefaultMaterial",
+            "wireframeOnShaded",
+            "xray",
+            "jointXray",
+            "backfaceCulling",
+            "textures"
+        ]
+        for key in keys:
+            viewport_defaults[key] = cmds.modelEditor(
+                panel, query=True, **{key: True}
+            )
+            if preset["viewport_options"].get(key):
+                cmds.modelEditor(
+                    panel, edit=True, **{key: True}
+                )
+        yield
+    finally:
+        # Restoring viewport options.
+        if viewport_defaults:
+            cmds.modelEditor(
+                panel, edit=True, **viewport_defaults
+            )
+
+
+@contextlib.contextmanager
+def material_loading_mode(mode="immediate"):
+    """Set material loading mode during context"""
+    original = cmds.displayPref(query=True, materialLoadingMode=True)
+    cmds.displayPref(materialLoadingMode=mode)
+    try:
+        yield
+    finally:
+        cmds.displayPref(materialLoadingMode=original)
 
 
 def get_namespace(node):
@@ -1129,7 +1300,7 @@ def is_visible(node,
             override_enabled = cmds.getAttr('{}.overrideEnabled'.format(node))
             override_visibility = cmds.getAttr('{}.overrideVisibility'.format(
                 node))
-            if override_enabled and override_visibility:
+            if override_enabled and not override_visibility:
                 return False
 
     if parentHidden:
@@ -1144,178 +1315,6 @@ def is_visible(node,
                 return False
 
     return True
-
-
-def extract_alembic(file,
-                    startFrame=None,
-                    endFrame=None,
-                    selection=True,
-                    uvWrite=True,
-                    eulerFilter=True,
-                    dataFormat="ogawa",
-                    verbose=False,
-                    **kwargs):
-    """Extract a single Alembic Cache.
-
-    This extracts an Alembic cache using the `-selection` flag to minimize
-    the extracted content to solely what was Collected into the instance.
-
-    Arguments:
-
-        startFrame (float): Start frame of output. Ignored if `frameRange`
-            provided.
-
-        endFrame (float): End frame of output. Ignored if `frameRange`
-            provided.
-
-        frameRange (tuple or str): Two-tuple with start and end frame or a
-            string formatted as: "startFrame endFrame". This argument
-            overrides `startFrame` and `endFrame` arguments.
-
-        dataFormat (str): The data format to use for the cache,
-                          defaults to "ogawa"
-
-        verbose (bool): When on, outputs frame number information to the
-            Script Editor or output window during extraction.
-
-        noNormals (bool): When on, normal data from the original polygon
-            objects is not included in the exported Alembic cache file.
-
-        renderableOnly (bool): When on, any non-renderable nodes or hierarchy,
-            such as hidden objects, are not included in the Alembic file.
-            Defaults to False.
-
-        stripNamespaces (bool): When on, any namespaces associated with the
-            exported objects are removed from the Alembic file. For example, an
-            object with the namespace taco:foo:bar appears as bar in the
-            Alembic file.
-
-        uvWrite (bool): When on, UV data from polygon meshes and subdivision
-            objects are written to the Alembic file. Only the current UV map is
-            included.
-
-        worldSpace (bool): When on, the top node in the node hierarchy is
-            stored as world space. By default, these nodes are stored as local
-            space. Defaults to False.
-
-        eulerFilter (bool): When on, X, Y, and Z rotation data is filtered with
-            an Euler filter. Euler filtering helps resolve irregularities in
-            rotations especially if X, Y, and Z rotations exceed 360 degrees.
-            Defaults to True.
-
-    """
-
-    # Ensure alembic exporter is loaded
-    cmds.loadPlugin('AbcExport', quiet=True)
-
-    # Alembic Exporter requires forward slashes
-    file = file.replace('\\', '/')
-
-    # Pass the start and end frame on as `frameRange` so that it
-    # never conflicts with that argument
-    if "frameRange" not in kwargs:
-        # Fallback to maya timeline if no start or end frame provided.
-        if startFrame is None:
-            startFrame = cmds.playbackOptions(query=True,
-                                              animationStartTime=True)
-        if endFrame is None:
-            endFrame = cmds.playbackOptions(query=True,
-                                            animationEndTime=True)
-
-        # Ensure valid types are converted to frame range
-        assert isinstance(startFrame, _alembic_options["startFrame"])
-        assert isinstance(endFrame, _alembic_options["endFrame"])
-        kwargs["frameRange"] = "{0} {1}".format(startFrame, endFrame)
-    else:
-        # Allow conversion from tuple for `frameRange`
-        frame_range = kwargs["frameRange"]
-        if isinstance(frame_range, (list, tuple)):
-            assert len(frame_range) == 2
-            kwargs["frameRange"] = "{0} {1}".format(frame_range[0],
-                                                    frame_range[1])
-
-    # Assemble options
-    options = {
-        "selection": selection,
-        "uvWrite": uvWrite,
-        "eulerFilter": eulerFilter,
-        "dataFormat": dataFormat
-    }
-    options.update(kwargs)
-
-    # Validate options
-    for key, value in options.copy().items():
-
-        # Discard unknown options
-        if key not in _alembic_options:
-            log.warning("extract_alembic() does not support option '%s'. "
-                        "Flag will be ignored..", key)
-            options.pop(key)
-            continue
-
-        # Validate value type
-        valid_types = _alembic_options[key]
-        if not isinstance(value, valid_types):
-            raise TypeError("Alembic option unsupported type: "
-                            "{0} (expected {1})".format(value, valid_types))
-
-        # Ignore empty values, like an empty string, since they mess up how
-        # job arguments are built
-        if isinstance(value, (list, tuple)):
-            value = [x for x in value if x.strip()]
-
-            # Ignore option completely if no values remaining
-            if not value:
-                options.pop(key)
-                continue
-
-            options[key] = value
-
-    # The `writeCreases` argument was changed to `autoSubd` in Maya 2018+
-    maya_version = int(cmds.about(version=True))
-    if maya_version >= 2018:
-        options['autoSubd'] = options.pop('writeCreases', False)
-
-    # Format the job string from options
-    job_args = list()
-    for key, value in options.items():
-        if isinstance(value, (list, tuple)):
-            for entry in value:
-                job_args.append("-{} {}".format(key, entry))
-        elif isinstance(value, bool):
-            # Add only when state is set to True
-            if value:
-                job_args.append("-{0}".format(key))
-        else:
-            job_args.append("-{0} {1}".format(key, value))
-
-    job_str = " ".join(job_args)
-    job_str += ' -file "%s"' % file
-
-    # Ensure output directory exists
-    parent_dir = os.path.dirname(file)
-    if not os.path.exists(parent_dir):
-        os.makedirs(parent_dir)
-
-    if verbose:
-        log.debug("Preparing Alembic export with options: %s",
-                  json.dumps(options, indent=4))
-        log.debug("Extracting Alembic with job arguments: %s", job_str)
-
-    # Perform extraction
-    print("Alembic Job Arguments : {}".format(job_str))
-
-    # Disable the parallel evaluation temporarily to ensure no buggy
-    # exports are made. (PLN-31)
-    # TODO: Make sure this actually fixes the issues
-    with evaluation("off"):
-        cmds.AbcExport(j=job_str, verbose=verbose)
-
-    if verbose:
-        log.debug("Extracted Alembic to: %s", file)
-
-    return file
-
 
 # region ID
 def get_id_required_nodes(referenced_nodes=False, nodes=None):
@@ -2576,9 +2575,37 @@ def bake_to_world_space(nodes,
          list: The newly created and baked node names.
 
     """
+    @contextlib.contextmanager
+    def _unlock_attr(attr):
+        """Unlock attribute during context if it is locked"""
+        if not cmds.getAttr(attr, lock=True):
+            # If not locked, do nothing
+            yield
+            return
+        try:
+            cmds.setAttr(attr, lock=False)
+            yield
+        finally:
+            cmds.setAttr(attr, lock=True)
 
     def _get_attrs(node):
-        """Workaround for buggy shape attribute listing with listAttr"""
+        """Workaround for buggy shape attribute listing with listAttr
+
+        This will only return keyable settable attributes that have an
+        incoming connections (those that have a reason to be baked).
+
+        Technically this *may* fail to return attributes driven by complex
+        expressions for which maya makes no connections, e.g. doing actual
+        `setAttr` calls in expressions.
+
+        Arguments:
+            node (str): The node to list attributes for.
+
+        Returns:
+            list: Keyable attributes with incoming connections.
+                The attribute may be locked.
+
+        """
         attrs = cmds.listAttr(node,
                               write=True,
                               scalar=True,
@@ -2603,14 +2630,14 @@ def bake_to_world_space(nodes,
 
         return valid_attrs
 
-    transform_attrs = set(["t", "r", "s",
-                           "tx", "ty", "tz",
-                           "rx", "ry", "rz",
-                           "sx", "sy", "sz"])
+    transform_attrs = {"t", "r", "s",
+                       "tx", "ty", "tz",
+                       "rx", "ry", "rz",
+                       "sx", "sy", "sz"}
 
     world_space_nodes = []
-    with delete_after() as delete_bin:
-
+    with ExitStack() as stack:
+        delete_bin = stack.enter_context(delete_after())
         # Create the duplicate nodes that are in world-space connected to
         # the originals
         for node in nodes:
@@ -2622,23 +2649,26 @@ def bake_to_world_space(nodes,
                                       name=new_name,
                                       renameChildren=True)[0]  # noqa
 
-            # Connect all attributes on the node except for transform
-            # attributes
-            attrs = _get_attrs(node)
-            attrs = set(attrs) - transform_attrs if attrs else []
+            # Parent new node to world
+            if cmds.listRelatives(new_node, parent=True):
+                new_node = cmds.parent(new_node, world=True)[0]
 
+            # Temporarily unlock and passthrough connect all attributes
+            # so we can bake them over time
+            # Skip transform attributes because we will constrain them later
+            attrs = set(_get_attrs(node)) - transform_attrs
             for attr in attrs:
-                orig_node_attr = '{0}.{1}'.format(node, attr)
-                new_node_attr = '{0}.{1}'.format(new_node, attr)
+                orig_node_attr = "{}.{}".format(node, attr)
+                new_node_attr = "{}.{}".format(new_node, attr)
 
-                # unlock to avoid connection errors
-                cmds.setAttr(new_node_attr, lock=False)
-
+                # unlock during context to avoid connection errors
+                stack.enter_context(_unlock_attr(new_node_attr))
                 cmds.connectAttr(orig_node_attr,
                                  new_node_attr,
                                  force=True)
 
-            # If shapes are also baked then connect those keyable attributes
+            # If shapes are also baked then also temporarily unlock and
+            # passthrough connect all shape attributes for baking
             if shape:
                 children_shapes = cmds.listRelatives(new_node,
                                                      children=True,
@@ -2653,25 +2683,19 @@ def bake_to_world_space(nodes,
                                                      children_shapes):
                         attrs = _get_attrs(orig_shape)
                         for attr in attrs:
-                            orig_node_attr = '{0}.{1}'.format(orig_shape, attr)
-                            new_node_attr = '{0}.{1}'.format(new_shape, attr)
+                            orig_node_attr = "{}.{}".format(orig_shape, attr)
+                            new_node_attr = "{}.{}".format(new_shape, attr)
 
-                            # unlock to avoid connection errors
-                            cmds.setAttr(new_node_attr, lock=False)
-
+                            # unlock during context to avoid connection errors
+                            stack.enter_context(_unlock_attr(new_node_attr))
                             cmds.connectAttr(orig_node_attr,
                                              new_node_attr,
                                              force=True)
 
-            # Parent to world
-            if cmds.listRelatives(new_node, parent=True):
-                new_node = cmds.parent(new_node, world=True)[0]
-
-            # Unlock transform attributes so constraint can be created
+            # Constraint transforms
             for attr in transform_attrs:
-                cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
-
-            # Constraints
+                transform_attr = "{}.{}".format(new_node, attr)
+                stack.enter_context(_unlock_attr(transform_attr))
             delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
             delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
 
@@ -2688,7 +2712,7 @@ def bake_to_world_space(nodes,
     return world_space_nodes
 
 
-def load_capture_preset(data=None):
+def load_capture_preset(data):
     """Convert OpenPype Extract Playblast settings to `capture` arguments
 
     Input data is the settings from:
@@ -2701,8 +2725,6 @@ def load_capture_preset(data=None):
         dict: `capture.capture` compatible keyword arguments
 
     """
-
-    import capture
 
     options = dict()
     viewport_options = dict()
@@ -2915,307 +2937,6 @@ def fix_incompatible_containers():
             )
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
-
-
-def _null(*args):
-    pass
-
-
-class shelf():
-    '''A simple class to build shelves in maya. Since the build method is empty,
-    it should be extended by the derived class to build the necessary shelf
-    elements. By default it creates an empty shelf called "customShelf".'''
-
-    ###########################################################################
-    '''This is an example shelf.'''
-    # class customShelf(_shelf):
-    #     def build(self):
-    #         self.addButon(label="button1")
-    #         self.addButon("button2")
-    #         self.addButon("popup")
-    #         p = cmds.popupMenu(b=1)
-    #         self.addMenuItem(p, "popupMenuItem1")
-    #         self.addMenuItem(p, "popupMenuItem2")
-    #         sub = self.addSubMenu(p, "subMenuLevel1")
-    #         self.addMenuItem(sub, "subMenuLevel1Item1")
-    #         sub2 = self.addSubMenu(sub, "subMenuLevel2")
-    #         self.addMenuItem(sub2, "subMenuLevel2Item1")
-    #         self.addMenuItem(sub2, "subMenuLevel2Item2")
-    #         self.addMenuItem(sub, "subMenuLevel1Item2")
-    #         self.addMenuItem(p, "popupMenuItem3")
-    #         self.addButon("button3")
-    # customShelf()
-    ###########################################################################
-
-    def __init__(self, name="customShelf", iconPath="", preset={}):
-        self.name = name
-
-        self.iconPath = iconPath
-
-        self.labelBackground = (0, 0, 0, 0)
-        self.labelColour = (.9, .9, .9)
-
-        self.preset = preset
-
-        self._cleanOldShelf()
-        cmds.setParent(self.name)
-        self.build()
-
-    def build(self):
-        '''This method should be overwritten in derived classes to actually
-        build the shelf elements. Otherwise, nothing is added to the shelf.'''
-        for item in self.preset['items']:
-            if not item.get('command'):
-                item['command'] = self._null
-            if item['type'] == 'button':
-                self.addButon(item['name'],
-                              command=item['command'],
-                              icon=item['icon'])
-            if item['type'] == 'menuItem':
-                self.addMenuItem(item['parent'],
-                                 item['name'],
-                                 command=item['command'],
-                                 icon=item['icon'])
-            if item['type'] == 'subMenu':
-                self.addMenuItem(item['parent'],
-                                 item['name'],
-                                 command=item['command'],
-                                 icon=item['icon'])
-
-    def addButon(self, label, icon="commandButton.png",
-                 command=_null, doubleCommand=_null):
-        '''
-            Adds a shelf button with the specified label, command,
-            double click command and image.
-        '''
-        cmds.setParent(self.name)
-        if icon:
-            icon = os.path.join(self.iconPath, icon)
-            print(icon)
-        cmds.shelfButton(width=37, height=37, image=icon, label=label,
-                         command=command, dcc=doubleCommand,
-                         imageOverlayLabel=label, olb=self.labelBackground,
-                         olc=self.labelColour)
-
-    def addMenuItem(self, parent, label, command=_null, icon=""):
-        '''
-            Adds a shelf button with the specified label, command,
-            double click command and image.
-        '''
-        if icon:
-            icon = os.path.join(self.iconPath, icon)
-            print(icon)
-        return cmds.menuItem(p=parent, label=label, c=command, i="")
-
-    def addSubMenu(self, parent, label, icon=None):
-        '''
-            Adds a sub menu item with the specified label and icon to
-            the specified parent popup menu.
-        '''
-        if icon:
-            icon = os.path.join(self.iconPath, icon)
-            print(icon)
-        return cmds.menuItem(p=parent, label=label, i=icon, subMenu=1)
-
-    def _cleanOldShelf(self):
-        '''
-            Checks if the shelf exists and empties it if it does
-            or creates it if it does not.
-        '''
-        if cmds.shelfLayout(self.name, ex=1):
-            if cmds.shelfLayout(self.name, q=1, ca=1):
-                for each in cmds.shelfLayout(self.name, q=1, ca=1):
-                    cmds.deleteUI(each)
-        else:
-            cmds.shelfLayout(self.name, p="ShelfLayout")
-
-
-def _get_render_instances():
-    """Return all 'render-like' instances.
-
-    This returns list of instance sets that needs to receive information
-    about render layer changes.
-
-    Returns:
-        list: list of instances
-
-    """
-    objectset = cmds.ls("*.id", long=True, exactType="objectSet",
-                        recursive=True, objectsOnly=True)
-
-    instances = []
-    for objset in objectset:
-        if not cmds.attributeQuery("id", node=objset, exists=True):
-            continue
-
-        id_attr = "{}.id".format(objset)
-        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-            continue
-
-        has_family = cmds.attributeQuery("family",
-                                         node=objset,
-                                         exists=True)
-        if not has_family:
-            continue
-
-        if cmds.getAttr(
-                "{}.family".format(objset)) in RENDERLIKE_INSTANCE_FAMILIES:
-            instances.append(objset)
-
-    return instances
-
-
-renderItemObserverList = []
-
-
-class RenderSetupListObserver:
-    """Observer to catch changes in render setup layers."""
-
-    def listItemAdded(self, item):
-        print("--- adding ...")
-        self._add_render_layer(item)
-
-    def listItemRemoved(self, item):
-        print("--- removing ...")
-        self._remove_render_layer(item.name())
-
-    def _add_render_layer(self, item):
-        render_sets = _get_render_instances()
-        layer_name = item.name()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True) or []
-
-            namespace_name = "_{}".format(render_set)
-            if not cmds.namespace(exists=namespace_name):
-                index = 1
-                namespace_name = "_{}".format(render_set)
-                try:
-                    cmds.namespace(rm=namespace_name)
-                except RuntimeError:
-                    # namespace is not empty, so we leave it untouched
-                    pass
-                orignal_namespace_name = namespace_name
-                while(cmds.namespace(exists=namespace_name)):
-                    namespace_name = "{}{}".format(
-                        orignal_namespace_name, index)
-                    index += 1
-
-                namespace = cmds.namespace(add=namespace_name)
-
-            if members:
-                # if set already have namespaced members, use the same
-                # namespace as others.
-                namespace = members[0].rpartition(":")[0]
-            else:
-                namespace = namespace_name
-
-            render_layer_set_name = "{}:{}".format(namespace, layer_name)
-            if render_layer_set_name in members:
-                continue
-            print("  - creating set for {}".format(layer_name))
-            maya_set = cmds.sets(n=render_layer_set_name, empty=True)
-            cmds.sets(maya_set, forceElement=render_set)
-            rio = RenderSetupItemObserver(item)
-            print("-   adding observer for {}".format(item.name()))
-            item.addItemObserver(rio.itemChanged)
-            renderItemObserverList.append(rio)
-
-    def _remove_render_layer(self, layer_name):
-        render_sets = _get_render_instances()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True)
-            if not members:
-                continue
-
-            # all sets under set should have the same namespace
-            namespace = members[0].rpartition(":")[0]
-            render_layer_set_name = "{}:{}".format(namespace, layer_name)
-
-            if render_layer_set_name in members:
-                print("  - removing set for {}".format(layer_name))
-                cmds.delete(render_layer_set_name)
-
-
-class RenderSetupItemObserver:
-    """Handle changes in render setup items."""
-
-    def __init__(self, item):
-        self.item = item
-        self.original_name = item.name()
-
-    def itemChanged(self, *args, **kwargs):
-        """Item changed callback."""
-        if self.item.name() == self.original_name:
-            return
-
-        render_sets = _get_render_instances()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True)
-            if not members:
-                continue
-
-            # all sets under set should have the same namespace
-            namespace = members[0].rpartition(":")[0]
-            render_layer_set_name = "{}:{}".format(
-                namespace, self.original_name)
-
-            if render_layer_set_name in members:
-                print(" <> renaming {} to {}".format(self.original_name,
-                                                     self.item.name()))
-                cmds.rename(render_layer_set_name,
-                            "{}:{}".format(
-                                namespace, self.item.name()))
-            self.original_name = self.item.name()
-
-
-renderListObserver = RenderSetupListObserver()
-
-
-def add_render_layer_change_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    rs = renderSetup.instance()
-    render_sets = _get_render_instances()
-
-    layers = rs.getRenderLayers()
-    for render_set in render_sets:
-        members = cmds.sets(render_set, query=True)
-        if not members:
-            continue
-        # all sets under set should have the same namespace
-        namespace = members[0].rpartition(":")[0]
-        for layer in layers:
-            render_layer_set_name = "{}:{}".format(namespace, layer.name())
-            if render_layer_set_name not in members:
-                continue
-            rio = RenderSetupItemObserver(layer)
-            print("-   adding observer for {}".format(layer.name()))
-            layer.addItemObserver(rio.itemChanged)
-            renderItemObserverList.append(rio)
-
-
-def add_render_layer_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    print(">   adding renderSetup observer ...")
-    rs = renderSetup.instance()
-    rs.addListObserver(renderListObserver)
-    pass
-
-
-def remove_render_layer_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    print("<   removing renderSetup observer ...")
-    rs = renderSetup.instance()
-    try:
-        rs.removeListObserver(renderListObserver)
-    except ValueError:
-        # no observer set yet
-        pass
 
 
 def update_content_on_context_change():

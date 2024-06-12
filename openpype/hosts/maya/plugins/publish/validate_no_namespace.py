@@ -4,7 +4,8 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 import openpype.hosts.maya.api.action
@@ -24,7 +25,8 @@ def get_namespace(node_name):
     return node_name.rpartition(":")[0]
 
 
-class ValidateNoNamespace(pyblish.api.InstancePlugin):
+class ValidateNoNamespace(pyblish.api.InstancePlugin,
+                          OptionalPyblishPluginMixin):
     """Ensure the nodes don't have a namespace"""
 
     order = ValidateContentsOrder
@@ -33,6 +35,7 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
     label = 'No Namespaces'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]
+    optional = False
 
     @staticmethod
     def get_invalid(instance):
@@ -41,6 +44,8 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the nodes in the instance"""
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid(instance)
 
         if invalid:

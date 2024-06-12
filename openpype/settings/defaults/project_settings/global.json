@@ -70,6 +70,26 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "subsets": [],
+            "integrate_thumbnail": false,
+            "background_color": [
+                0,
+                0,
+                0,
+                255
+            ],
+            "duration_split": 0.5,
+            "target_size": {
+                "type": "resize",
+                "width": 1920,
+                "height": 1080
+            },
+            "oiiotool_defaults": {
+                "type": "colorspace",
+                "colorspace": "color_picking",
+                "view": "sRGB",
+                "display": "default"
+            },
             "ffmpeg_args": {
                 "input": [
                     "-apply_trc gamma22"
@@ -316,22 +336,9 @@
                 "animation",
                 "setdress",
                 "layout",
-                "mayaScene",
-                "simpleUnrealTexture"
+                "mayaScene"
             ],
-            "template_name_profiles": [
-                {
-                    "families": [
-                        "simpleUnrealTexture"
-                    ],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "task_types": [],
-                    "task_names": [],
-                    "template_name": "simpleUnrealTextureHero"
-                }
-            ]
+            "template_name_profiles": []
         },
         "CleanUp": {
             "paterns": [],
@@ -515,17 +522,6 @@
                 },
                 {
                     "families": [
-                        "simpleUnrealTexture"
-                    ],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "task_types": [],
-                    "task_names": [],
-                    "template_name": "simpleUnrealTexture"
-                },
-                {
-                    "families": [
                         "staticMesh",
                         "skeletalMesh"
                     ],
@@ -546,21 +542,20 @@
                     "task_types": [],
                     "task_names": [],
                     "template_name": "online"
-                }
-            ],
-            "hero_template_name_profiles": [
+                },
                 {
                     "families": [
-                        "simpleUnrealTexture"
+                        "tycache"
                     ],
                     "hosts": [
-                        "standalonepublisher"
+                        "max"
                     ],
                     "task_types": [],
                     "task_names": [],
-                    "template_name": "simpleUnrealTextureHero"
+                    "template_name": "tycache"
                 }
             ],
+            "hero_template_name_profiles": [],
             "custom_staging_dir_profiles": []
         }
     },

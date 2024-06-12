@@ -1,7 +1,7 @@
 import json
-from pydantic import Field, validator
+from pydantic import validator
 from ayon_server.exceptions import BadRequestException
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 def validate_json_dict(value):
@@ -21,36 +21,36 @@ def validate_json_dict(value):
 
 
 class ValidatePluginModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
 
 
 class ValidateFileSavedModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateFileSaved")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    exclude_families: list[str] = Field(
+    enabled: bool = SettingsField(title="ValidateFileSaved")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    exclude_families: list[str] = SettingsField(
         default_factory=list,
         title="Exclude product types"
     )
 
 
 class ExtractBlendModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    families: list[str] = Field(
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    families: list[str] = SettingsField(
         default_factory=list,
         title="Families"
     )
 
 
 class ExtractPlayblastModel(BaseSettingsModel):
-    enabled: bool = Field(True)
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    presets: str = Field("", title="Presets", widget="textarea")
+    enabled: bool = SettingsField(True)
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    presets: str = SettingsField("", title="Presets", widget="textarea")
 
     @validator("presets")
     def validate_json(cls, value):
@@ -58,80 +58,83 @@ class ExtractPlayblastModel(BaseSettingsModel):
 
 
 class PublishPuginsModel(BaseSettingsModel):
-    ValidateCameraZeroKeyframe: ValidatePluginModel = Field(
+    ValidateCameraZeroKeyframe: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate Camera Zero Keyframe",
-        section="Validators"
+        section="General Validators"
     )
-    ValidateFileSaved: ValidateFileSavedModel = Field(
+    ValidateFileSaved: ValidateFileSavedModel = SettingsField(
         default_factory=ValidateFileSavedModel,
         title="Validate File Saved",
-        section="Validators"
     )
-    ValidateRenderCameraIsSet: ValidatePluginModel = Field(
+    ValidateInstanceEmpty: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
-        title="Validate Render Camera Is Set",
-        section="Validators"
+        title="Validate Instance is not Empty"
     )
-    ValidateDeadlinePublish: ValidatePluginModel = Field(
+    ValidateMeshHasUvs: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
-        title="Validate Render Output for Deadline",
-        section="Validators"
+        title="Validate Mesh Has Uvs",
+        section="Model Validators"
     )
-    ValidateMeshHasUvs: ValidatePluginModel = Field(
-        default_factory=ValidatePluginModel,
-        title="Validate Mesh Has Uvs"
-    )
-    ValidateMeshNoNegativeScale: ValidatePluginModel = Field(
+    ValidateMeshNoNegativeScale: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate Mesh No Negative Scale"
     )
-    ValidateTransformZero: ValidatePluginModel = Field(
+    ValidateTransformZero: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate Transform Zero"
     )
-    ValidateNoColonsInName: ValidatePluginModel = Field(
+    ValidateNoColonsInName: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Validate No Colons In Name"
     )
-    ExtractBlend: ExtractBlendModel = Field(
+    ValidateRenderCameraIsSet: ValidatePluginModel = SettingsField(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Camera Is Set",
+        section="Render Validators"
+    )
+    ValidateDeadlinePublish: ValidatePluginModel = SettingsField(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Output for Deadline",
+    )
+    ExtractBlend: ExtractBlendModel = SettingsField(
         default_factory=ExtractBlendModel,
         title="Extract Blend",
         section="Extractors"
     )
-    ExtractFBX: ValidatePluginModel = Field(
+    ExtractFBX: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Extract FBX"
     )
-    ExtractABC: ValidatePluginModel = Field(
+    ExtractModelABC: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Extract ABC"
     )
-    ExtractBlendAnimation: ValidatePluginModel = Field(
+    ExtractBlendAnimation: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Extract Blend Animation"
     )
-    ExtractAnimationFBX: ValidatePluginModel = Field(
+    ExtractAnimationFBX: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Extract Animation FBX"
     )
-    ExtractCamera: ValidatePluginModel = Field(
+    ExtractCamera: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Extract Camera"
     )
-    ExtractCameraABC: ValidatePluginModel = Field(
+    ExtractCameraABC: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
         title="Extract Camera as ABC"
     )
-    ExtractLayout: ValidatePluginModel = Field(
+    ExtractLayout: ValidatePluginModel = SettingsField(
         default_factory=ValidatePluginModel,
-        title="Extract Layout"
+        title="Extract Layout (JSON)"
     )
-    ExtractThumbnail: ExtractPlayblastModel = Field(
+    ExtractThumbnail: ExtractPlayblastModel = SettingsField(
         default_factory=ExtractPlayblastModel,
         title="Extract Thumbnail"
     )
-    ExtractPlayblast: ExtractPlayblastModel = Field(
+    ExtractPlayblast: ExtractPlayblastModel = SettingsField(
         default_factory=ExtractPlayblastModel,
         title="Extract Playblast"
     )
@@ -139,7 +142,7 @@ class PublishPuginsModel(BaseSettingsModel):
 
 DEFAULT_BLENDER_PUBLISH_SETTINGS = {
     "ValidateCameraZeroKeyframe": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
         "active": True
     },
@@ -170,11 +173,16 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateTransformZero": {
-        "enabled": True,
-        "optional": False,
+        "enabled": False,
+        "optional": True,
         "active": True
     },
     "ValidateNoColonsInName": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ValidateInstanceEmpty": {
         "enabled": True,
         "optional": False,
         "active": True
@@ -193,14 +201,14 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         ]
     },
     "ExtractFBX": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
-        "active": False
+        "active": True
     },
-    "ExtractABC": {
+    "ExtractModelABC": {
         "enabled": True,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractBlendAnimation": {
         "enabled": True,
@@ -208,9 +216,9 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": True
     },
     "ExtractAnimationFBX": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractCamera": {
         "enabled": True,

@@ -59,10 +59,11 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         rt.callbacks.addScript(rt.Name('filePostOpen'),
                                lib.check_colorspace)
+        rt.callbacks.addScript(rt.Name('postWorkspaceChange'),
+                               self._deferred_menu_creation)
 
-    def has_unsaved_changes(self):
-        # TODO: how to get it from 3dsmax?
-        return True
+    def workfile_has_unsaved_changes(self):
+        return rt.getSaveRequired()
 
     def get_workfile_extensions(self):
         return [".max"]
@@ -175,7 +176,7 @@ def containerise(name: str, nodes: list, context,
 
 
 def load_custom_attribute_data():
-    """Re-loading the Openpype/AYON custom parameter built by the creator
+    """Re-loading the AYON custom parameter built by the creator
 
     Returns:
         attribute: re-loading the custom OP attributes set in Maxscript
@@ -213,7 +214,7 @@ def import_custom_attribute_data(container: str, selections: list):
 
 
 def update_custom_attribute_data(container: str, selections: list):
-    """Updating the Openpype/AYON custom parameter built by the creator
+    """Updating the AYON custom parameter built by the creator
 
     Args:
         container (str): target container which adds custom attributes

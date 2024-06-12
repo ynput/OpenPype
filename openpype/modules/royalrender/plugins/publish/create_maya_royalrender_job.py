@@ -2,7 +2,7 @@
 """Submitting render job to RoyalRender."""
 import os
 
-from maya.OpenMaya import MGlobal
+from maya.OpenMaya import MGlobal  # noqa: F401
 
 from openpype.modules.royalrender import lib
 from openpype.pipeline.farm.tools import iter_expected_files

@@ -1,23 +1,29 @@
 # -*- coding: utf-8 -*-
 """Submitting render job to RoyalRender."""
 import os
-import re
+import json
 import platform
+import re
+import tempfile
+import uuid
 from datetime import datetime
 
 import pyblish.api
-from openpype.tests.lib import is_in_tests
-from openpype.pipeline.publish.lib import get_published_workfile_instance
-from openpype.pipeline.publish import KnownPublishError
+
+from openpype.lib import BoolDef, NumberDef, is_running_from_build
+from openpype.lib.execute import run_openpype_process
 from openpype.modules.royalrender.api import Api as rrApi
 from openpype.modules.royalrender.rr_job import (
-    RRJob, CustomAttribute, get_rr_platform)
-from openpype.lib import (
-    is_running_from_build,
-    BoolDef,
-    NumberDef,
+    CustomAttribute,
+    RRJob,
+    RREnvList,
+    get_rr_platform,
+    SubmitterParameter
 )
 from openpype.pipeline import OpenPypePyblishPluginMixin
+from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish.lib import get_published_workfile_instance
+from openpype.tests.lib import is_in_tests
 
 
 class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
@@ -105,7 +111,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         if not self._rr_root:
             raise KnownPublishError(
                 ("Missing RoyalRender root. "
-                 "You need to configure RoyalRender module."))
+                 "Admin needs to configure RoyalRender module in Settings ."))
 
         self.rr_api = rrApi(self._rr_root)
 
@@ -170,6 +176,19 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             instance, render_path, start_frame, end_frame)
         instance.data["expectedFiles"].extend(expected_files)
 
+        submitter_parameters = []
+
+        anatomy_data = instance.context.data["anatomyData"]
+        environment = RREnvList({
+            "AVALON_PROJECT": anatomy_data["project"]["name"],
+            "AVALON_ASSET": instance.context.data["asset"],
+            "AVALON_TASK": anatomy_data["task"]["name"],
+            "AVALON_APP_NAME": instance.context.data.get("appName"),
+            "AYON_RENDER_JOB": "1",
+            "AYON_BUNDLE_NAME": os.environ["AYON_BUNDLE_NAME"]
+        })
+
+        render_dir = render_dir.replace("\\", "/")
         job = RRJob(
             Software="",
             Renderer="",
@@ -180,7 +199,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             Version=0,
             SceneName=script_path,
             IsActive=True,
-            ImageDir=render_dir.replace("\\", "/"),
+            ImageDir=render_dir,
             ImageFilename=file_name,
             ImageExtension=file_ext,
             ImagePreNumberLetter="",
@@ -192,7 +211,10 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             CompanyProjectName=instance.context.data["projectName"],
             ImageWidth=instance.data["resolutionWidth"],
             ImageHeight=instance.data["resolutionHeight"],
-            CustomAttributes=custom_attributes
+            CustomAttributes=custom_attributes,
+            SubmitterParameters=submitter_parameters,
+            rrEnvList=environment.serialize(),
+            rrEnvFile=os.path.join(render_dir, "rrEnv.rrEenv"),
         )
 
         return job

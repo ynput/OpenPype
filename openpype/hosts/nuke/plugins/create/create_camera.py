@@ -4,6 +4,9 @@ from openpype.hosts.nuke.api import (
     NukeCreatorError,
     maintained_selection
 )
+from openpype.hosts.nuke.api.lib import (
+    create_camera_node_by_version
+)
 
 
 class CreateCamera(NukeCreator):
@@ -32,7 +35,7 @@ class CreateCamera(NukeCreator):
                         "Creator error: Select only camera node type")
                 created_node = self.selected_nodes[0]
             else:
-                created_node = nuke.createNode("Camera2")
+                created_node = create_camera_node_by_version()
 
             created_node["tile_color"].setValue(
                 int(self.node_color, 16))

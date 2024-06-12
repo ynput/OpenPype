@@ -3,6 +3,7 @@ import sys
 import re
 import json
 import shutil
+import argparse
 import zipfile
 import platform
 import collections
@@ -30,6 +31,20 @@ IGNORE_FILE_PATTERNS: List[Pattern] = [
         # Skip '.pyc' files
         r"\.pyc$"
     }
+]
+
+IGNORED_HOSTS = [
+    "flame",
+    "harmony",
+]
+
+IGNORED_MODULES = [
+    "ftrack",
+    "shotgrid",
+    "sync_server",
+    "example_addons",
+    "slack",
+    "kitsu",
 ]
 
 
@@ -184,9 +199,12 @@ def create_openpype_package(
 
     addon_output_dir = output_dir / "openpype" / addon_version
     private_dir = addon_output_dir / "private"
+    if addon_output_dir.exists():
+        shutil.rmtree(str(addon_output_dir))
+
     # Make sure dir exists
-    addon_output_dir.mkdir(parents=True)
-    private_dir.mkdir(parents=True)
+    addon_output_dir.mkdir(parents=True, exist_ok=True)
+    private_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy version
     shutil.copy(str(version_path), str(addon_output_dir))
@@ -198,15 +216,6 @@ def create_openpype_package(
         str(pyproject_path),
         (private_dir / pyproject_path.name)
     )
-
-    ignored_hosts = []
-    ignored_modules = [
-        "ftrack",
-        "shotgrid",
-        "sync_server",
-        "example_addons",
-        "slack"
-    ]
     # Subdirs that won't be added to output zip file
     ignored_subpaths = [
         ["addons"],
@@ -214,11 +223,11 @@ def create_openpype_package(
     ]
     ignored_subpaths.extend(
         ["hosts", host_name]
-        for host_name in ignored_hosts
+        for host_name in IGNORED_HOSTS
     )
     ignored_subpaths.extend(
         ["modules", module_name]
-        for module_name in ignored_modules
+        for module_name in IGNORED_MODULES
     )
 
     # Zip client
@@ -268,20 +277,39 @@ def create_addon_package(
         )
 
 
-def main(create_zip=True, keep_source=False):
+def main(
+    output_dir=None,
+    skip_zip=True,
+    keep_source=False,
+    clear_output_dir=False,
+    addons=None,
+):
     current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     root_dir = current_dir.parent
-    output_dir = current_dir / "packages"
-    print("Package creation started...")
+    create_zip = not skip_zip
 
-    # Make sure package dir is empty
-    if output_dir.exists():
+    if output_dir:
+        output_dir = Path(output_dir)
+    else:
+        output_dir = current_dir / "packages"
+
+    if output_dir.exists() and clear_output_dir:
         shutil.rmtree(str(output_dir))
-    # Make sure output dir is created
-    output_dir.mkdir(parents=True)
 
+    print("Package creation started...")
+    print(f"Output directory: {output_dir}")
+
+    # Make sure output dir is created
+    output_dir.mkdir(parents=True, exist_ok=True)
+    ignored_addons = set(IGNORED_HOSTS) | set(IGNORED_MODULES)
     for addon_dir in current_dir.iterdir():
         if not addon_dir.is_dir():
+            continue
+
+        if addons and addon_dir.name not in addons:
+            continue
+
+        if addon_dir.name in ignored_addons:
             continue
 
         server_dir = addon_dir / "server"
@@ -303,6 +331,54 @@ def main(create_zip=True, keep_source=False):
 
 
 if __name__ == "__main__":
-    create_zip = "--skip-zip" not in sys.argv
-    keep_sources = "--keep-sources" in sys.argv
-    main(create_zip, keep_sources)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--skip-zip",
+        dest="skip_zip",
+        action="store_true",
+        help=(
+            "Skip zipping server package and create only"
+            " server folder structure."
+        )
+    )
+    parser.add_argument(
+        "--keep-sources",
+        dest="keep_sources",
+        action="store_true",
+        help=(
+            "Keep folder structure when server package is created."
+        )
+    )
+    parser.add_argument(
+        "-o", "--output",
+        dest="output_dir",
+        default=None,
+        help=(
+            "Directory path where package will be created"
+            " (Will be purged if already exists!)"
+        )
+    )
+    parser.add_argument(
+        "-c", "--clear-output-dir",
+        dest="clear_output_dir",
+        action="store_true",
+        help=(
+            "Clear output directory before package creation."
+        )
+    )
+    parser.add_argument(
+        "-a",
+        "--addon",
+        dest="addons",
+        action="append",
+        help="Limit addon creation to given addon name",
+    )
+
+    args = parser.parse_args(sys.argv[1:])
+    main(
+        args.output_dir,
+        args.skip_zip,
+        args.keep_sources,
+        args.clear_output_dir,
+        args.addons,
+    )

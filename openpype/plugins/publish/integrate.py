@@ -95,6 +95,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "setdress",
                 "layout",
                 "ass",
+                "assProxy",
                 "vdbcache",
                 "scene",
                 "vrayproxy",
@@ -107,6 +108,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
+                "ociolook",
                 "audio",
                 "yetiRig",
                 "yeticache",
@@ -136,11 +138,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsd",
                 "mvUsdComposition",
                 "mvUsdOverride",
-                "simpleUnrealTexture",
                 "online",
                 "uasset",
                 "blendScene",
-                "yeticacheUE"
+                "yeticacheUE",
+                "tycache",
+                "lensDistortion",
                 ]
 
     default_template_name = "publish"

@@ -73,7 +73,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER",
-        "OPENPYPE_MONGO"
+        "AYON_BUNDLE_NAME"
     ]
     priority = 50
 
@@ -189,7 +189,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
 
         environment = RREnvList({
             "AVALON_PROJECT": anatomy_data["project"]["name"],
-            "AVALON_ASSET": anatomy_data["asset"],
+            "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": anatomy_data["task"]["name"],
             "OPENPYPE_USERNAME": anatomy_data["user"]
         })
@@ -205,6 +205,9 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
         jobs_pre_ids = []
         for job in instance.data["rrJobs"]:  # type: RRJob
             if job.rrEnvList:
+                if len(job.rrEnvList) > 2000:
+                    self.log.warning(("Job environment is too long "
+                                      f"{len(job.rrEnvList)} > 2000"))
                 job_environ.update(
                     dict(RREnvList.parse(job.rrEnvList))
                 )
@@ -228,13 +231,13 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
         ]
 
         job = RRJob(
-            Software="OpenPype",
+            Software="AYON",
             Renderer="Once",
             SeqStart=1,
             SeqEnd=1,
             SeqStep=1,
             SeqFileOffset=0,
-            Version=self._sanitize_version(os.environ.get("OPENPYPE_VERSION")),
+            Version=os.environ["AYON_BUNDLE_NAME"],
             SceneName=abs_metadata_path,
             # command line arguments
             CustomAddCmdFlags=" ".join(args),
@@ -261,26 +264,3 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
             job.WaitForPreIDs += jobs_pre_ids
 
         return job
-
-    def _sanitize_version(self, version):
-        """Returns version in format MAJOR.MINORPATCH
-
-        3.15.7-nightly.2 >> 3.157
-        """
-        VERSION_REGEX = re.compile(
-            r"(?P<major>0|[1-9]\d*)"
-            r"\.(?P<minor>0|[1-9]\d*)"
-            r"\.(?P<patch>0|[1-9]\d*)"
-            r"(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?"
-            r"(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?"
-        )
-
-        valid_parts = VERSION_REGEX.findall(version)
-        if len(valid_parts) != 1:
-            # Return invalid version with filled 'origin' attribute
-            return version
-
-        # Unpack found version
-        major, minor, patch, pre, post = valid_parts[0]
-
-        return "{}.{}{}".format(major, minor, patch)

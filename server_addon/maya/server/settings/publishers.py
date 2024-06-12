@@ -1,7 +1,8 @@
 import json
-from pydantic import Field, validator
+from pydantic import validator
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     MultiplatformPathModel,
     ensure_unique_names,
 )
@@ -35,9 +36,9 @@ def angular_unit_enum():
 
 
 class BasicValidateModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
 
 
 class ValidateMeshUVSetMap1Model(BasicValidateModel):
@@ -51,22 +52,24 @@ class ValidateNoAnimationModel(BasicValidateModel):
 
 
 class ValidateRigOutSetNodeIdsModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateSkinclusterDeformerSet")
-    optional: bool = Field(title="Optional")
-    allow_history_only: bool = Field(title="Allow history only")
+    enabled: bool = SettingsField(title="ValidateSkinclusterDeformerSet")
+    optional: bool = SettingsField(title="Optional")
+    allow_history_only: bool = SettingsField(title="Allow history only")
 
 
 class ValidateModelNameModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    database: bool = Field(title="Use database shader name definitions")
-    material_file: MultiplatformPathModel = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    database: bool = SettingsField(
+        title="Use database shader name definitions"
+    )
+    material_file: MultiplatformPathModel = SettingsField(
         default_factory=MultiplatformPathModel,
         title="Material File",
         description=(
             "Path to material file defining list of material names to check."
         )
     )
-    regex: str = Field(
+    regex: str = SettingsField(
         "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
         title="Validation regex",
         description=(
@@ -74,7 +77,7 @@ class ValidateModelNameModel(BaseSettingsModel):
             " named capturing groups:(?P<asset>.*) for Asset name"
         )
     )
-    top_level_regex: str = Field(
+    top_level_regex: str = SettingsField(
         ".*_GRP",
         title="Top level group name regex",
         description=(
@@ -85,15 +88,15 @@ class ValidateModelNameModel(BaseSettingsModel):
 
 
 class ValidateModelContentModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    validate_top_group: bool = Field(title="Validate one top group")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    validate_top_group: bool = SettingsField(title="Validate one top group")
 
 
 class ValidateTransformNamingSuffixModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    SUFFIX_NAMING_TABLE: str = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    SUFFIX_NAMING_TABLE: str = SettingsField(
         "{}",
         title="Suffix Naming Tables",
         widget="textarea",
@@ -118,34 +121,34 @@ class ValidateTransformNamingSuffixModel(BaseSettingsModel):
                 "The text can't be parsed as json object"
             )
         return value
-    ALLOW_IF_NOT_IN_SUFFIX_TABLE: bool = Field(
+    ALLOW_IF_NOT_IN_SUFFIX_TABLE: bool = SettingsField(
         title="Allow if suffix not in table"
     )
 
 
 class CollectMayaRenderModel(BaseSettingsModel):
-    sync_workfile_version: bool = Field(
+    sync_workfile_version: bool = SettingsField(
         title="Sync render version with workfile"
     )
 
 
 class CollectFbxAnimationModel(BaseSettingsModel):
-    enabled: bool = Field(title="Collect Fbx Animation")
+    enabled: bool = SettingsField(title="Collect Fbx Animation")
 
 
 class CollectFbxCameraModel(BaseSettingsModel):
-    enabled: bool = Field(title="CollectFbxCamera")
+    enabled: bool = SettingsField(title="CollectFbxCamera")
 
 
 class CollectGLTFModel(BaseSettingsModel):
-    enabled: bool = Field(title="CollectGLTF")
+    enabled: bool = SettingsField(title="CollectGLTF")
 
 
 class ValidateFrameRangeModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateFrameRange")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    exclude_product_types: list[str] = Field(
+    enabled: bool = SettingsField(title="ValidateFrameRange")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    exclude_product_types: list[str] = SettingsField(
         default_factory=list,
         title="Exclude product types"
     )
@@ -155,15 +158,18 @@ class ValidateShaderNameModel(BaseSettingsModel):
     """
     Shader name regex can use named capture group asset to validate against current asset name.
     """
-    enabled: bool = Field(title="ValidateShaderName")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    regex: str = Field("(?P<asset>.*)_(.*)_SHD", title="Validation regex")
+    enabled: bool = SettingsField(title="ValidateShaderName")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    regex: str = SettingsField(
+        "(?P<asset>.*)_(.*)_SHD",
+        title="Validation regex"
+    )
 
 
 class ValidateAttributesModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateAttributes")
-    attributes: str = Field(
+    enabled: bool = SettingsField(title="ValidateAttributes")
+    attributes: str = SettingsField(
         "{}", title="Attributes", widget="textarea")
 
     @validator("attributes")
@@ -184,46 +190,50 @@ class ValidateAttributesModel(BaseSettingsModel):
 
 
 class ValidateLoadedPluginModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateLoadedPlugin")
-    optional: bool = Field(title="Optional")
-    whitelist_native_plugins: bool = Field(
+    enabled: bool = SettingsField(title="ValidateLoadedPlugin")
+    optional: bool = SettingsField(title="Optional")
+    whitelist_native_plugins: bool = SettingsField(
         title="Whitelist Maya Native Plugins"
     )
-    authorized_plugins: list[str] = Field(
+    authorized_plugins: list[str] = SettingsField(
         default_factory=list, title="Authorized plugins"
     )
 
 
 class ValidateMayaUnitsModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateMayaUnits")
-    optional: bool = Field(title="Optional")
-    validate_linear_units: bool = Field(title="Validate linear units")
-    linear_units: str = Field(
+    enabled: bool = SettingsField(title="ValidateMayaUnits")
+    optional: bool = SettingsField(title="Optional")
+    validate_linear_units: bool = SettingsField(title="Validate linear units")
+    linear_units: str = SettingsField(
         enum_resolver=linear_unit_enum, title="Linear Units"
     )
-    validate_angular_units: bool = Field(title="Validate angular units")
-    angular_units: str = Field(
+    validate_angular_units: bool = SettingsField(
+        title="Validate angular units"
+    )
+    angular_units: str = SettingsField(
         enum_resolver=angular_unit_enum, title="Angular units"
     )
-    validate_fps: bool = Field(title="Validate fps")
+    validate_fps: bool = SettingsField(title="Validate fps")
 
 
 class ValidateUnrealStaticMeshNameModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateUnrealStaticMeshName")
-    optional: bool = Field(title="Optional")
-    validate_mesh: bool = Field(title="Validate mesh names")
-    validate_collision: bool = Field(title="Validate collison names")
+    enabled: bool = SettingsField(title="ValidateUnrealStaticMeshName")
+    optional: bool = SettingsField(title="Optional")
+    validate_mesh: bool = SettingsField(title="Validate mesh names")
+    validate_collision: bool = SettingsField(title="Validate collison names")
 
 
 class ValidateCycleErrorModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateCycleError")
-    optional: bool = Field(title="Optional")
-    families: list[str] = Field(default_factory=list, title="Families")
+    enabled: bool = SettingsField(title="ValidateCycleError")
+    optional: bool = SettingsField(title="Optional")
+    families: list[str] = SettingsField(
+        default_factory=list, title="Families"
+    )
 
 
 class ValidatePluginPathAttributesAttrModel(BaseSettingsModel):
-    name: str = Field(title="Node type")
-    value: str = Field(title="Attribute")
+    name: str = SettingsField(title="Node type")
+    value: str = SettingsField(title="Attribute")
 
 
 class ValidatePluginPathAttributesModel(BaseSettingsModel):
@@ -234,9 +244,9 @@ class ValidatePluginPathAttributesModel(BaseSettingsModel):
     """
 
     enabled: bool = True
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    attribute: list[ValidatePluginPathAttributesAttrModel] = Field(
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    attribute: list[ValidatePluginPathAttributesAttrModel] = SettingsField(
         default_factory=list,
         title="File Attribute"
     )
@@ -250,66 +260,68 @@ class ValidatePluginPathAttributesModel(BaseSettingsModel):
 # Validate Render Setting
 class RendererAttributesModel(BaseSettingsModel):
     _layout = "compact"
-    type: str = Field(title="Type")
-    value: str = Field(title="Value")
+    type: str = SettingsField(title="Type")
+    value: str = SettingsField(title="Value")
 
 
 class ValidateRenderSettingsModel(BaseSettingsModel):
-    arnold_render_attributes: list[RendererAttributesModel] = Field(
+    arnold_render_attributes: list[RendererAttributesModel] = SettingsField(
         default_factory=list, title="Arnold Render Attributes")
-    vray_render_attributes: list[RendererAttributesModel] = Field(
+    vray_render_attributes: list[RendererAttributesModel] = SettingsField(
         default_factory=list, title="VRay Render Attributes")
-    redshift_render_attributes: list[RendererAttributesModel] = Field(
+    redshift_render_attributes: list[RendererAttributesModel] = SettingsField(
         default_factory=list, title="Redshift Render Attributes")
-    renderman_render_attributes: list[RendererAttributesModel] = Field(
+    renderman_render_attributes: list[RendererAttributesModel] = SettingsField(
         default_factory=list, title="Renderman Render Attributes")
 
 
 class BasicValidateModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
 
 
 class ValidateCameraContentsModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
-    validate_shapes: bool = Field(title="Validate presence of shapes")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    validate_shapes: bool = SettingsField(title="Validate presence of shapes")
 
 
 class ExtractProxyAlembicModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    families: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    families: list[str] = SettingsField(
         default_factory=list,
         title="Families")
 
 
 class ExtractAlembicModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    families: list[str] = Field(
+    enabled: bool = SettingsField(title="Enabled")
+    families: list[str] = SettingsField(
         default_factory=list,
         title="Families")
 
 
 class ExtractObjModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    optional: bool = Field(title="Optional")
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
 
 
 class ExtractMayaSceneRawModel(BaseSettingsModel):
     """Add loaded instances to those published families:"""
-    enabled: bool = Field(title="ExtractMayaSceneRaw")
-    add_for_families: list[str] = Field(default_factory=list, title="Families")
+    enabled: bool = SettingsField(title="ExtractMayaSceneRaw")
+    add_for_families: list[str] = SettingsField(
+        default_factory=list, title="Families"
+    )
 
 
 class ExtractCameraAlembicModel(BaseSettingsModel):
     """
     List of attributes that will be added to the baked alembic camera. Needs to be written in python list syntax.
     """
-    enabled: bool = Field(title="ExtractCameraAlembic")
-    optional: bool = Field(title="Optional")
-    active: bool = Field(title="Active")
-    bake_attributes: str = Field(
+    enabled: bool = SettingsField(title="ExtractCameraAlembic")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    bake_attributes: str = SettingsField(
         "[]", title="Base Attributes", widget="textarea"
     )
 
@@ -332,17 +344,19 @@ class ExtractCameraAlembicModel(BaseSettingsModel):
 
 class ExtractGLBModel(BaseSettingsModel):
     enabled: bool = True
-    active: bool = Field(title="Active")
-    ogsfx_path: str = Field(title="GLSL Shader Directory")
+    active: bool = SettingsField(title="Active")
+    ogsfx_path: str = SettingsField(title="GLSL Shader Directory")
 
 
 class ExtractLookArgsModel(BaseSettingsModel):
-    argument: str = Field(title="Argument")
-    parameters: list[str] = Field(default_factory=list, title="Parameters")
+    argument: str = SettingsField(title="Argument")
+    parameters: list[str] = SettingsField(
+        default_factory=list, title="Parameters"
+    )
 
 
 class ExtractLookModel(BaseSettingsModel):
-    maketx_arguments: list[ExtractLookArgsModel] = Field(
+    maketx_arguments: list[ExtractLookArgsModel] = SettingsField(
         default_factory=list,
         title="Extra arguments for maketx command line"
     )
@@ -350,423 +364,437 @@ class ExtractLookModel(BaseSettingsModel):
 
 class ExtractGPUCacheModel(BaseSettingsModel):
     enabled: bool = True
-    families: list[str] = Field(default_factory=list, title="Families")
-    step: float = Field(1.0, ge=1.0, title="Step")
-    stepSave: int = Field(1, ge=1, title="Step Save")
-    optimize: bool = Field(title="Optimize Hierarchy")
-    optimizationThreshold: int = Field(1, ge=1, title="Optimization Threshold")
-    optimizeAnimationsForMotionBlur: bool = Field(
+    families: list[str] = SettingsField(default_factory=list, title="Families")
+    step: float = SettingsField(1.0, ge=1.0, title="Step")
+    stepSave: int = SettingsField(1, ge=1, title="Step Save")
+    optimize: bool = SettingsField(title="Optimize Hierarchy")
+    optimizationThreshold: int = SettingsField(
+        1, ge=1, title="Optimization Threshold"
+    )
+    optimizeAnimationsForMotionBlur: bool = SettingsField(
         title="Optimize Animations For Motion Blur"
     )
-    writeMaterials: bool = Field(title="Write Materials")
-    useBaseTessellation: bool = Field(title="User Base Tesselation")
+    writeMaterials: bool = SettingsField(title="Write Materials")
+    useBaseTessellation: bool = SettingsField(title="User Base Tesselation")
 
 
 class PublishersModel(BaseSettingsModel):
-    CollectMayaRender: CollectMayaRenderModel = Field(
+    CollectMayaRender: CollectMayaRenderModel = SettingsField(
         default_factory=CollectMayaRenderModel,
         title="Collect Render Layers",
         section="Collectors"
     )
-    CollectFbxAnimation: CollectFbxAnimationModel = Field(
+    CollectFbxAnimation: CollectFbxAnimationModel = SettingsField(
         default_factory=CollectFbxAnimationModel,
         title="Collect FBX Animation",
     )
-    CollectFbxCamera: CollectFbxCameraModel = Field(
+    CollectFbxCamera: CollectFbxCameraModel = SettingsField(
         default_factory=CollectFbxCameraModel,
         title="Collect Camera for FBX export",
     )
-    CollectGLTF: CollectGLTFModel = Field(
+    CollectGLTF: CollectGLTFModel = SettingsField(
         default_factory=CollectGLTFModel,
         title="Collect Assets for GLB/GLTF export"
     )
-    ValidateInstanceInContext: BasicValidateModel = Field(
+    ValidateInstanceInContext: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Instance In Context",
         section="Validators"
     )
-    ValidateContainers: BasicValidateModel = Field(
+    ValidateContainers: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Containers"
     )
-    ValidateFrameRange: ValidateFrameRangeModel = Field(
+    ValidateFrameRange: ValidateFrameRangeModel = SettingsField(
         default_factory=ValidateFrameRangeModel,
         title="Validate Frame Range"
     )
-    ValidateShaderName: ValidateShaderNameModel = Field(
+    ValidateShaderName: ValidateShaderNameModel = SettingsField(
         default_factory=ValidateShaderNameModel,
         title="Validate Shader Name"
     )
-    ValidateShadingEngine: BasicValidateModel = Field(
+    ValidateShadingEngine: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Look Shading Engine Naming"
     )
-    ValidateMayaColorSpace: BasicValidateModel = Field(
+    ValidateMayaColorSpace: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Colorspace"
     )
-    ValidateAttributes: ValidateAttributesModel = Field(
+    ValidateAttributes: ValidateAttributesModel = SettingsField(
         default_factory=ValidateAttributesModel,
         title="Validate Attributes"
     )
-    ValidateLoadedPlugin: ValidateLoadedPluginModel = Field(
+    ValidateLoadedPlugin: ValidateLoadedPluginModel = SettingsField(
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
     )
-    ValidateMayaUnits: ValidateMayaUnitsModel = Field(
+    ValidateMayaUnits: ValidateMayaUnitsModel = SettingsField(
         default_factory=ValidateMayaUnitsModel,
         title="Validate Maya Units"
     )
-    ValidateUnrealStaticMeshName: ValidateUnrealStaticMeshNameModel = Field(
-        default_factory=ValidateUnrealStaticMeshNameModel,
-        title="Validate Unreal Static Mesh Name"
+    ValidateUnrealStaticMeshName: ValidateUnrealStaticMeshNameModel = (
+        SettingsField(
+            default_factory=ValidateUnrealStaticMeshNameModel,
+            title="Validate Unreal Static Mesh Name"
+        )
     )
-    ValidateCycleError: ValidateCycleErrorModel = Field(
+    ValidateCycleError: ValidateCycleErrorModel = SettingsField(
         default_factory=ValidateCycleErrorModel,
         title="Validate Cycle Error"
     )
-    ValidatePluginPathAttributes: ValidatePluginPathAttributesModel = Field(
-        default_factory=ValidatePluginPathAttributesModel,
-        title="Plug-in Path Attributes"
+    ValidatePluginPathAttributes: ValidatePluginPathAttributesModel = (
+        SettingsField(
+            default_factory=ValidatePluginPathAttributesModel,
+            title="Plug-in Path Attributes"
+        )
     )
-    ValidateRenderSettings: ValidateRenderSettingsModel = Field(
+    ValidateRenderSettings: ValidateRenderSettingsModel = SettingsField(
         default_factory=ValidateRenderSettingsModel,
         title="Validate Render Settings"
     )
-    ValidateResolution: BasicValidateModel = Field(
+    ValidateResolution: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Resolution Setting"
     )
-    ValidateCurrentRenderLayerIsRenderable: BasicValidateModel = Field(
-        default_factory=BasicValidateModel,
-        title="Validate Current Render Layer Has Renderable Camera"
+    ValidateCurrentRenderLayerIsRenderable: BasicValidateModel = (
+        SettingsField(
+            default_factory=BasicValidateModel,
+            title="Validate Current Render Layer Has Renderable Camera"
+        )
     )
-    ValidateGLSLMaterial: BasicValidateModel = Field(
+    ValidateGLSLMaterial: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate GLSL Material"
     )
-    ValidateGLSLPlugin: BasicValidateModel = Field(
+    ValidateGLSLPlugin: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate GLSL Plugin"
     )
-    ValidateRenderImageRule: BasicValidateModel = Field(
+    ValidateRenderImageRule: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Render Image Rule (Workspace)"
     )
-    ValidateRenderNoDefaultCameras: BasicValidateModel = Field(
+    ValidateRenderNoDefaultCameras: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate No Default Cameras Renderable"
     )
-    ValidateRenderSingleCamera: BasicValidateModel = Field(
+    ValidateRenderSingleCamera: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Render Single Camera "
     )
-    ValidateRenderLayerAOVs: BasicValidateModel = Field(
+    ValidateRenderLayerAOVs: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Render Passes/AOVs Are Registered"
     )
-    ValidateStepSize: BasicValidateModel = Field(
+    ValidateStepSize: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Step Size"
     )
-    ValidateVRayDistributedRendering: BasicValidateModel = Field(
+    ValidateVRayDistributedRendering: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="VRay Distributed Rendering"
     )
-    ValidateVrayReferencedAOVs: BasicValidateModel = Field(
+    ValidateVrayReferencedAOVs: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="VRay Referenced AOVs"
     )
-    ValidateVRayTranslatorEnabled: BasicValidateModel = Field(
+    ValidateVRayTranslatorEnabled: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="VRay Translator Settings"
     )
-    ValidateVrayProxy: BasicValidateModel = Field(
+    ValidateVrayProxy: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="VRay Proxy Settings"
     )
-    ValidateVrayProxyMembers: BasicValidateModel = Field(
+    ValidateVrayProxyMembers: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="VRay Proxy Members"
     )
-    ValidateYetiRenderScriptCallbacks: BasicValidateModel = Field(
+    ValidateYetiRenderScriptCallbacks: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Yeti Render Script Callbacks"
     )
-    ValidateYetiRigCacheState: BasicValidateModel = Field(
+    ValidateYetiRigCacheState: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Yeti Rig Cache State"
     )
-    ValidateYetiRigInputShapesInInstance: BasicValidateModel = Field(
+    ValidateYetiRigInputShapesInInstance: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Yeti Rig Input Shapes In Instance"
     )
-    ValidateYetiRigSettings: BasicValidateModel = Field(
+    ValidateYetiRigSettings: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Yeti Rig Settings"
     )
     # Model - START
-    ValidateModelName: ValidateModelNameModel = Field(
+    ValidateModelName: ValidateModelNameModel = SettingsField(
         default_factory=ValidateModelNameModel,
         title="Validate Model Name",
         section="Model",
     )
-    ValidateModelContent: ValidateModelContentModel = Field(
+    ValidateModelContent: ValidateModelContentModel = SettingsField(
         default_factory=ValidateModelContentModel,
         title="Validate Model Content",
     )
-    ValidateTransformNamingSuffix: ValidateTransformNamingSuffixModel = Field(
-        default_factory=ValidateTransformNamingSuffixModel,
-        title="Validate Transform Naming Suffix",
+    ValidateTransformNamingSuffix: ValidateTransformNamingSuffixModel = (
+        SettingsField(
+            default_factory=ValidateTransformNamingSuffixModel,
+            title="Validate Transform Naming Suffix",
+        )
     )
-    ValidateColorSets: BasicValidateModel = Field(
+    ValidateColorSets: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Color Sets",
     )
-    ValidateMeshHasOverlappingUVs: BasicValidateModel = Field(
+    ValidateMeshHasOverlappingUVs: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Has Overlapping UVs",
     )
-    ValidateMeshArnoldAttributes: BasicValidateModel = Field(
+    ValidateMeshArnoldAttributes: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Arnold Attributes",
     )
-    ValidateMeshShaderConnections: BasicValidateModel = Field(
+    ValidateMeshShaderConnections: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Shader Connections",
     )
-    ValidateMeshSingleUVSet: BasicValidateModel = Field(
+    ValidateMeshSingleUVSet: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Single UV Set",
     )
-    ValidateMeshHasUVs: BasicValidateModel = Field(
+    ValidateMeshHasUVs: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Has UVs",
     )
-    ValidateMeshLaminaFaces: BasicValidateModel = Field(
+    ValidateMeshLaminaFaces: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Lamina Faces",
     )
-    ValidateMeshNgons: BasicValidateModel = Field(
+    ValidateMeshNgons: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Ngons",
     )
-    ValidateMeshNonManifold: BasicValidateModel = Field(
+    ValidateMeshNonManifold: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Non-Manifold",
     )
-    ValidateMeshNoNegativeScale: BasicValidateModel = Field(
+    ValidateMeshNoNegativeScale: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh No Negative Scale",
     )
-    ValidateMeshNonZeroEdgeLength: BasicValidateModel = Field(
+    ValidateMeshNonZeroEdgeLength: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Edge Length Non Zero",
     )
-    ValidateMeshNormalsUnlocked: BasicValidateModel = Field(
+    ValidateMeshNormalsUnlocked: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Normals Unlocked",
     )
-    ValidateMeshUVSetMap1: ValidateMeshUVSetMap1Model = Field(
+    ValidateMeshUVSetMap1: ValidateMeshUVSetMap1Model = SettingsField(
         default_factory=ValidateMeshUVSetMap1Model,
         title="Validate Mesh UV Set Map 1",
     )
-    ValidateMeshVerticesHaveEdges: BasicValidateModel = Field(
+    ValidateMeshVerticesHaveEdges: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Mesh Vertices Have Edges",
     )
-    ValidateNoAnimation: ValidateNoAnimationModel = Field(
+    ValidateNoAnimation: ValidateNoAnimationModel = SettingsField(
         default_factory=ValidateNoAnimationModel,
         title="Validate No Animation",
     )
-    ValidateNoNamespace: BasicValidateModel = Field(
+    ValidateNoNamespace: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate No Namespace",
     )
-    ValidateNoNullTransforms: BasicValidateModel = Field(
+    ValidateNoNullTransforms: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate No Null Transforms",
     )
-    ValidateNoUnknownNodes: BasicValidateModel = Field(
+    ValidateNoUnknownNodes: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate No Unknown Nodes",
     )
-    ValidateNodeNoGhosting: BasicValidateModel = Field(
+    ValidateNodeNoGhosting: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Node No Ghosting",
     )
-    ValidateShapeDefaultNames: BasicValidateModel = Field(
+    ValidateShapeDefaultNames: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Shape Default Names",
     )
-    ValidateShapeRenderStats: BasicValidateModel = Field(
+    ValidateShapeRenderStats: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Shape Render Stats",
     )
-    ValidateShapeZero: BasicValidateModel = Field(
+    ValidateShapeZero: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Shape Zero",
     )
-    ValidateTransformZero: BasicValidateModel = Field(
+    ValidateTransformZero: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Transform Zero",
     )
-    ValidateUniqueNames: BasicValidateModel = Field(
+    ValidateUniqueNames: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Unique Names",
     )
-    ValidateNoVRayMesh: BasicValidateModel = Field(
+    ValidateNoVRayMesh: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate No V-Ray Proxies (VRayMesh)",
     )
-    ValidateUnrealMeshTriangulated: BasicValidateModel = Field(
+    ValidateUnrealMeshTriangulated: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate if Mesh is Triangulated",
     )
-    ValidateAlembicVisibleOnly: BasicValidateModel = Field(
+    ValidateAlembicVisibleOnly: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Alembic Visible Node",
     )
-    ExtractProxyAlembic: ExtractProxyAlembicModel = Field(
+    ExtractProxyAlembic: ExtractProxyAlembicModel = SettingsField(
         default_factory=ExtractProxyAlembicModel,
         title="Extract Proxy Alembic",
         section="Model Extractors",
     )
-    ExtractAlembic: ExtractAlembicModel = Field(
+    ExtractAlembic: ExtractAlembicModel = SettingsField(
         default_factory=ExtractAlembicModel,
         title="Extract Alembic",
     )
-    ExtractObj: ExtractObjModel = Field(
+    ExtractObj: ExtractObjModel = SettingsField(
         default_factory=ExtractObjModel,
         title="Extract OBJ"
     )
     # Model - END
 
     # Rig - START
-    ValidateRigContents: BasicValidateModel = Field(
+    ValidateRigContents: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Rig Contents",
         section="Rig",
     )
-    ValidateRigJointsHidden: BasicValidateModel = Field(
+    ValidateRigJointsHidden: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Rig Joints Hidden",
     )
-    ValidateRigControllers: BasicValidateModel = Field(
+    ValidateRigControllers: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Rig Controllers",
     )
-    ValidateAnimatedReferenceRig: BasicValidateModel = Field(
+    ValidateAnimatedReferenceRig: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Animated Reference Rig",
     )
-    ValidateAnimationContent: BasicValidateModel = Field(
+    ValidateAnimationContent: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Animation Content",
     )
-    ValidateOutRelatedNodeIds: BasicValidateModel = Field(
+    ValidateOutRelatedNodeIds: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Animation Out Set Related Node Ids",
     )
-    ValidateRigControllersArnoldAttributes: BasicValidateModel = Field(
-        default_factory=BasicValidateModel,
-        title="Validate Rig Controllers (Arnold Attributes)",
+    ValidateRigControllersArnoldAttributes: BasicValidateModel = (
+        SettingsField(
+            default_factory=BasicValidateModel,
+            title="Validate Rig Controllers (Arnold Attributes)",
+        )
     )
-    ValidateSkeletalMeshHierarchy: BasicValidateModel = Field(
+    ValidateSkeletalMeshHierarchy: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Skeletal Mesh Top Node",
     )
-    ValidateSkeletonRigContents: BasicValidateModel = Field(
+    ValidateSkeletonRigContents: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Skeleton Rig Contents"
     )
-    ValidateSkeletonRigControllers: BasicValidateModel = Field(
+    ValidateSkeletonRigControllers: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Skeleton Rig Controllers"
     )
-    ValidateSkinclusterDeformerSet: BasicValidateModel = Field(
+    ValidateSkinclusterDeformerSet: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Skincluster Deformer Relationships",
     )
-    ValidateSkeletonRigOutputIds: BasicValidateModel = Field(
+    ValidateSkeletonRigOutputIds: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Skeleton Rig Output Ids"
     )
-    ValidateSkeletonTopGroupHierarchy: BasicValidateModel = Field(
+    ValidateSkeletonTopGroupHierarchy: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Skeleton Top Group Hierarchy",
     )
-    ValidateRigOutSetNodeIds: ValidateRigOutSetNodeIdsModel = Field(
+    ValidateRigOutSetNodeIds: ValidateRigOutSetNodeIdsModel = SettingsField(
         default_factory=ValidateRigOutSetNodeIdsModel,
         title="Validate Rig Out Set Node Ids",
     )
-    ValidateSkeletonRigOutSetNodeIds: ValidateRigOutSetNodeIdsModel = Field(
-        default_factory=ValidateRigOutSetNodeIdsModel,
-        title="Validate Skeleton Rig Out Set Node Ids",
+    ValidateSkeletonRigOutSetNodeIds: ValidateRigOutSetNodeIdsModel = (
+        SettingsField(
+            default_factory=ValidateRigOutSetNodeIdsModel,
+            title="Validate Skeleton Rig Out Set Node Ids",
+        )
     )
     # Rig - END
-    ValidateCameraAttributes: BasicValidateModel = Field(
+    ValidateCameraAttributes: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Camera Attributes"
     )
-    ValidateAssemblyName: BasicValidateModel = Field(
+    ValidateAssemblyName: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Assembly Name"
     )
-    ValidateAssemblyNamespaces: BasicValidateModel = Field(
+    ValidateAssemblyNamespaces: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Assembly Namespaces"
     )
-    ValidateAssemblyModelTransforms: BasicValidateModel = Field(
+    ValidateAssemblyModelTransforms: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Assembly Model Transforms"
     )
-    ValidateAssRelativePaths: BasicValidateModel = Field(
+    ValidateAssRelativePaths: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Ass Relative Paths"
     )
-    ValidateInstancerContent: BasicValidateModel = Field(
+    ValidateInstancerContent: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Instancer Content"
     )
-    ValidateInstancerFrameRanges: BasicValidateModel = Field(
+    ValidateInstancerFrameRanges: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Instancer Cache Frame Ranges"
     )
-    ValidateNoDefaultCameras: BasicValidateModel = Field(
+    ValidateNoDefaultCameras: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate No Default Cameras"
     )
-    ValidateUnrealUpAxis: BasicValidateModel = Field(
+    ValidateUnrealUpAxis: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Unreal Up-Axis Check"
     )
-    ValidateCameraContents: ValidateCameraContentsModel = Field(
+    ValidateCameraContents: ValidateCameraContentsModel = SettingsField(
         default_factory=ValidateCameraContentsModel,
         title="Validate Camera Content"
     )
-    ExtractPlayblast: ExtractPlayblastSetting = Field(
+    ExtractPlayblast: ExtractPlayblastSetting = SettingsField(
         default_factory=ExtractPlayblastSetting,
         title="Extract Playblast Settings",
         section="Extractors"
     )
-    ExtractMayaSceneRaw: ExtractMayaSceneRawModel = Field(
+    ExtractMayaSceneRaw: ExtractMayaSceneRawModel = SettingsField(
         default_factory=ExtractMayaSceneRawModel,
         title="Maya Scene(Raw)"
     )
-    ExtractCameraAlembic: ExtractCameraAlembicModel = Field(
+    ExtractCameraAlembic: ExtractCameraAlembicModel = SettingsField(
         default_factory=ExtractCameraAlembicModel,
         title="Extract Camera Alembic"
     )
-    ExtractGLB: ExtractGLBModel = Field(
+    ExtractGLB: ExtractGLBModel = SettingsField(
         default_factory=ExtractGLBModel,
         title="Extract GLB"
     )
-    ExtractLook: ExtractLookModel = Field(
+    ExtractLook: ExtractLookModel = SettingsField(
         default_factory=ExtractLookModel,
         title="Extract Look"
     )
-    ExtractGPUCache: ExtractGPUCacheModel = Field(
+    ExtractGPUCache: ExtractGPUCacheModel = SettingsField(
         default_factory=ExtractGPUCacheModel,
         title="Extract GPU Cache",
     )
@@ -785,7 +813,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "sync_workfile_version": False
     },
     "CollectFbxAnimation": {
-        "enabled": True
+        "enabled": False
     },
     "CollectFbxCamera": {
         "enabled": False
@@ -862,7 +890,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         ]
     },
     "ValidatePluginPathAttributes": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True,
         "attribute": [
@@ -917,12 +945,12 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateGLSLMaterial": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True
     },
     "ValidateGLSLPlugin": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True
     },
@@ -1154,7 +1182,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True
     },
     "ExtractProxyAlembic": {
-        "enabled": True,
+        "enabled": False,
         "families": [
             "proxyAbc"
         ]
@@ -1311,7 +1339,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "bake_attributes": "[]"
     },
     "ExtractGLB": {
-        "enabled": True,
+        "enabled": False,
         "active": True,
         "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
     },

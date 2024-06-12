@@ -1,5 +1,6 @@
 import os
 import shutil
+import filecmp
 
 from openpype.client.entities import get_representations
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
@@ -194,3 +195,69 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         self.data["last_workfile_path"] = local_workfile_path
         # Keep source filepath for further path conformation
         self.data["source_filepath"] = last_published_workfile_path
+
+        # Get resources directory
+        resources_dir = os.path.join(
+            os.path.dirname(local_workfile_path), 'resources'
+        )
+        # Make resource directory if it doesn't exist
+        if not os.path.exists(resources_dir):
+            os.mkdir(resources_dir)
+
+        # Copy resources to the local resources directory
+        for file in workfile_representation['files']:
+            # Get resource main path
+            resource_main_path = anatomy.fill_root(file["path"])
+
+            # Get resource file basename
+            resource_basename = os.path.basename(resource_main_path)
+
+            # Only copy if the resource file exists, and it's not the workfile
+            if (
+                not os.path.exists(resource_main_path)
+                or resource_basename == os.path.basename(
+                    last_published_workfile_path
+                )
+            ):
+                continue
+
+            # Get resource path in workfile folder
+            resource_work_path = os.path.join(
+                resources_dir, resource_basename
+            )
+
+            # Check if the resource file already exists in the resources folder
+            if os.path.exists(resource_work_path):
+                # Check if both files are the same
+                if filecmp.cmp(resource_main_path, resource_work_path):
+                    self.log.warning(
+                        'Resource "{}" already exists.'
+                        .format(resource_basename)
+                    )
+                    continue
+                else:
+                    # Add `.old` to existing resource path
+                    resource_path_old = resource_work_path + '.old'
+                    if os.path.exists(resource_work_path + '.old'):
+                        for i in range(1, 100):
+                            p = resource_path_old + '%02d' % i
+                            if not os.path.exists(p):
+                                # Rename existing resource file to
+                                # `resource_name.old` + 2 digits
+                                shutil.move(resource_work_path, p)
+                                break
+                        else:
+                            self.log.warning(
+                                'There are a hundred old files for '
+                                'resource "{}". '
+                                'Perhaps is it time to clean up your '
+                                'resources folder'
+                                .format(resource_basename)
+                            )
+                            continue
+                    else:
+                        # Rename existing resource file to `resource_name.old`
+                        shutil.move(resource_work_path, resource_path_old)
+
+            # Copy resource file to workfile resources folder
+            shutil.copy(resource_main_path, resources_dir)

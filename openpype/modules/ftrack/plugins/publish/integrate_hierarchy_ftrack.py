@@ -21,7 +21,7 @@ def get_pype_attr(session, split_hierarchical=True):
         "select id, entity_type, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
         # Kept `pype` for Backwards Compatibility
-        " where group.name in (\"pype\", \"{}\")"
+        " where group.name in (\"pype\", \"ayon\", \"{}\")"
     ).format(CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:

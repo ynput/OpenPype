@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from . import click_wrap
 from .interfaces import (
     ILaunchHookPaths,
     IPluginPaths,
@@ -10,6 +11,7 @@ from .interfaces import (
 )
 
 from .base import (
+    AYONAddon,
     OpenPypeModule,
     OpenPypeAddOn,
 
@@ -27,6 +29,8 @@ from .base import (
 
 
 __all__ = (
+    "click_wrap",
+
     "ILaunchHookPaths",
     "IPluginPaths",
     "ITrayModule",
@@ -35,6 +39,7 @@ __all__ = (
     "ISettingsChangeListener",
     "IHostAddon",
 
+    "AYONAddon",
     "OpenPypeModule",
     "OpenPypeAddOn",
 

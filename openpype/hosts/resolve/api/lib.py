@@ -6,7 +6,10 @@ import contextlib
 from opentimelineio import opentime
 
 from openpype.lib import Logger
-from openpype.pipeline.editorial import is_overlapping_otio_ranges
+from openpype.pipeline.editorial import (
+    is_overlapping_otio_ranges,
+    frames_to_timecode
+)
 
 from ..otio import davinci_export as otio_export
 
@@ -125,15 +128,19 @@ def get_any_timeline():
         return project.GetTimelineByIndex(1)
 
 
-def get_new_timeline():
+def get_new_timeline(timeline_name: str = None):
     """Get new timeline object.
+
+    Arguments:
+        timeline_name (str): New timeline name.
 
     Returns:
         object: resolve.Timeline
     """
     project = get_current_project()
     media_pool = project.GetMediaPool()
-    new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
+    new_timeline = media_pool.CreateEmptyTimeline(
+        timeline_name or self.pype_timeline_name)
     project.SetCurrentTimeline(new_timeline)
     return new_timeline
 
@@ -179,53 +186,52 @@ def create_bin(name: str, root: object = None) -> object:
         return media_pool.GetCurrentFolder()
 
 
-def create_media_pool_item(fpath: str,
-                           root: object = None) -> object:
+def remove_media_pool_item(media_pool_item: object) -> bool:
+    media_pool = get_current_project().GetMediaPool()
+    return media_pool.DeleteClips([media_pool_item])
+
+
+def create_media_pool_item(
+        files: list,
+        root: object = None,
+) -> object:
     """
     Create media pool item.
 
     Args:
-        fpath (str): absolute path to a file
+        files (list[str]): list of absolute paths to files
         root (resolve.Folder)[optional]: root folder / bin object
 
     Returns:
         object: resolve.MediaPoolItem
     """
     # get all variables
-    media_storage = get_media_storage()
     media_pool = get_current_project().GetMediaPool()
     root_bin = root or media_pool.GetRootFolder()
 
+    # make sure files list is not empty and first available file exists
+    filepath = next((f for f in files if os.path.isfile(f)), None)
+    if not filepath:
+        raise FileNotFoundError("No file found in input files list")
+
     # try to search in bin if the clip does not exist
-    existing_mpi = get_media_pool_item(fpath, root_bin)
+    existing_mpi = get_media_pool_item(filepath, root_bin)
 
     if existing_mpi:
         return existing_mpi
 
-    dirname, file = os.path.split(fpath)
-    _name, ext = os.path.splitext(file)
+    # add all data in folder to media pool
+    media_pool_items = media_pool.ImportMedia(files)
 
-    # add all data in folder to mediapool
-    media_pool_items = media_storage.AddItemListToMediaPool(
-        os.path.normpath(dirname))
-
-    if not media_pool_items:
-        return False
-
-    # if any are added then look into them for the right extension
-    media_pool_item = [mpi for mpi in media_pool_items
-                       if ext in mpi.GetClipProperty("File Path")]
-
-    # return only first found
-    return media_pool_item.pop()
+    return media_pool_items.pop() if media_pool_items else False
 
 
-def get_media_pool_item(fpath, root: object = None) -> object:
+def get_media_pool_item(filepath, root: object = None) -> object:
     """
     Return clip if found in folder with use of input file path.
 
     Args:
-        fpath (str): absolute path to a file
+        filepath (str): absolute path to a file
         root (resolve.Folder)[optional]: root folder / bin object
 
     Returns:
@@ -233,7 +239,7 @@ def get_media_pool_item(fpath, root: object = None) -> object:
     """
     media_pool = get_current_project().GetMediaPool()
     root = root or media_pool.GetRootFolder()
-    fname = os.path.basename(fpath)
+    fname = os.path.basename(filepath)
 
     for _mpi in root.GetClipList():
         _mpi_name = _mpi.GetClipProperty("File Name")
@@ -243,18 +249,22 @@ def get_media_pool_item(fpath, root: object = None) -> object:
     return None
 
 
-def create_timeline_item(media_pool_item: object,
-                         timeline: object = None,
-                         source_start: int = None,
-                         source_end: int = None) -> object:
+def create_timeline_item(
+        media_pool_item: object,
+        timeline: object = None,
+        timeline_in: int = None,
+        source_start: int = None,
+        source_end: int = None,
+) -> object:
     """
     Add media pool item to current or defined timeline.
 
     Args:
         media_pool_item (resolve.MediaPoolItem): resolve's object
-        timeline (resolve.Timeline)[optional]: resolve's object
-        source_start (int)[optional]: media source input frame (sequence frame)
-        source_end (int)[optional]: media source output frame (sequence frame)
+        timeline (Optional[resolve.Timeline]): resolve's object
+        timeline_in (Optional[int]): timeline input frame (sequence frame)
+        source_start (Optional[int]): media source input frame (sequence frame)
+        source_end (Optional[int]): media source output frame (sequence frame)
 
     Returns:
         object: resolve.TimelineItem
@@ -266,28 +276,45 @@ def create_timeline_item(media_pool_item: object,
     clip_name = _clip_property("File Name")
     timeline = timeline or get_current_timeline()
 
+    # timing variables
+    if all([timeline_in, source_start, source_end]):
+        fps = timeline.GetSetting("timelineFrameRate")
+        duration = source_end - source_start
+        timecode_in = frames_to_timecode(timeline_in, fps)
+        timecode_out = frames_to_timecode(timeline_in + duration, fps)
+    else:
+        timecode_in = None
+        timecode_out = None
+
     # if timeline was used then switch it to current timeline
     with maintain_current_timeline(timeline):
         # Add input mediaPoolItem to clip data
-        clip_data = {"mediaPoolItem": media_pool_item}
+        clip_data = {
+            "mediaPoolItem": media_pool_item,
+        }
 
-        # add source time range if input was given
-        if source_start is not None:
-            clip_data.update({"startFrame": source_start})
-        if source_end is not None:
-            clip_data.update({"endFrame": source_end})
+        if source_start:
+            clip_data["startFrame"] = source_start
+        if source_end:
+            clip_data["endFrame"] = source_end
+        if timecode_in:
+            clip_data["recordFrame"] = timeline_in
 
-        print(clip_data)
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
 
         output_timeline_item = get_timeline_item(
             media_pool_item, timeline)
 
-    assert output_timeline_item, AssertionError(
-        "Track Item with name `{}` doesn't exist on the timeline: `{}`".format(
-            clip_name, timeline.GetName()
-        ))
+    assert output_timeline_item, AssertionError((
+        "Clip name '{}' was't created on the timeline: '{}' \n\n"
+        "Please check if correct track position is activated, \n"
+        "or if a clip is not already at the timeline in \n"
+        "position: '{}' out: '{}'. \n\n"
+        "Clip data: {}"
+    ).format(
+        clip_name, timeline.GetName(), timecode_in, timecode_out, clip_data
+    ))
     return output_timeline_item
 
 
@@ -394,14 +421,22 @@ def get_current_timeline_items(
 
 
 def get_pype_timeline_item_by_name(name: str) -> object:
-    track_itmes = get_current_timeline_items()
-    for _ti in track_itmes:
-        tag_data = get_timeline_item_pype_tag(_ti["clip"]["item"])
-        tag_name = tag_data.get("name")
+    """Get timeline item by name.
+
+    Args:
+        name (str): name of timeline item
+
+    Returns:
+        object: resolve.TimelineItem
+    """
+    for _ti_data in get_current_timeline_items():
+        _ti_clip = _ti_data["clip"]["item"]
+        tag_data = get_timeline_item_pype_tag(_ti_clip)
+        tag_name = tag_data.get("namespace")
         if not tag_name:
             continue
-        if tag_data.get("name") in name:
-            return _ti
+        if tag_name in name:
+            return _ti_clip
     return None
 
 
@@ -480,7 +515,7 @@ def imprint(timeline_item, data=None):
 
     Arguments:
         timeline_item (hiero.core.TrackItem): hiero track item object
-        data (dict): Any data which needst to be imprinted
+        data (dict): Any data which needs to be imprinted
 
     Examples:
         data = {
@@ -544,12 +579,11 @@ def set_pype_marker(timeline_item, tag_data):
 
 def get_pype_marker(timeline_item):
     timeline_item_markers = timeline_item.GetMarkers()
-    for marker_frame in timeline_item_markers:
-        note = timeline_item_markers[marker_frame]["note"]
-        color = timeline_item_markers[marker_frame]["color"]
-        name = timeline_item_markers[marker_frame]["name"]
-        print(f"_ marker data: {marker_frame} | {name} | {color} | {note}")
+    for marker_frame, marker in timeline_item_markers.items():
+        color = marker["color"]
+        name = marker["name"]
         if name == self.pype_marker_name and color == self.pype_marker_color:
+            note = marker["note"]
             self.temp_marker_frame = marker_frame
             return json.loads(note)
 
@@ -618,7 +652,7 @@ def create_compound_clip(clip_data, name, folder):
                 if c.GetName() in name), None)
 
     if cct:
-        print(f"_ cct exists: {cct}")
+        print(f"Compound clip exists: {cct}")
     else:
         # Create empty timeline in current folder and give name:
         cct = mp.CreateEmptyTimeline(name)
@@ -627,7 +661,7 @@ def create_compound_clip(clip_data, name, folder):
         clips = folder.GetClipList()
         cct = next((c for c in clips
                     if c.GetName() in name), None)
-        print(f"_ cct created: {cct}")
+        print(f"Compound clip created: {cct}")
 
         with maintain_current_timeline(cct, tl_origin):
             # Add input clip to the current timeline:
@@ -679,6 +713,11 @@ def swap_clips(from_clip, to_clip, to_in_frame, to_out_frame):
         bool: True if successfully replaced
 
     """
+    # copy ACES input transform from timeline clip to new media item
+    mediapool_item_from_timeline = from_clip.GetMediaPoolItem()
+    _idt = mediapool_item_from_timeline.GetClipProperty('IDT')
+    to_clip.SetClipProperty('IDT', _idt)
+
     _clip_prop = to_clip.GetClipProperty
     to_clip_name = _clip_prop("File Name")
     # add clip item as take to timeline

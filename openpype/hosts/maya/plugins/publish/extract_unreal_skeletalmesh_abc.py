@@ -6,21 +6,11 @@ from contextlib import contextmanager
 from maya import cmds  # noqa
 
 from openpype.pipeline import publish
+from openpype.hosts.maya.api.alembic import extract_alembic
 from openpype.hosts.maya.api.lib import (
-    extract_alembic,
     suspended_refresh,
     maintained_selection
 )
-
-
-@contextmanager
-def renamed(original_name, renamed_name):
-    # type: (str, str) -> None
-    try:
-        cmds.rename(original_name, renamed_name)
-        yield
-    finally:
-        cmds.rename(renamed_name, original_name)
 
 
 class ExtractUnrealSkeletalMeshAbc(publish.Extractor):

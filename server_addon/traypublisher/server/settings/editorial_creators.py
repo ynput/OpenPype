@@ -1,28 +1,28 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel, task_types_enum
+from ayon_server.settings import (
+    BaseSettingsModel,
+    SettingsField,
+    task_types_enum,
+)
 
 
 class ClipNameTokenizerItem(BaseSettingsModel):
     _layout = "expanded"
-    # TODO was 'dict-modifiable', is list of dicts now, must be fixed in code
-    name: str = Field("#TODO", title="Tokenizer name")
-    regex: str = Field("", title="Tokenizer regex")
+    name: str = SettingsField("", title="Tokenizer name")
+    regex: str = SettingsField("", title="Tokenizer regex")
 
 
 class ShotAddTasksItem(BaseSettingsModel):
     _layout = "expanded"
-    # TODO was 'dict-modifiable', is list of dicts now, must be fixed in code
-    name: str = Field('', title="Key")
-    task_type: list[str] = Field(
+    name: str = SettingsField('', title="Key")
+    task_type: str = SettingsField(
         title="Task type",
-        default_factory=list,
-        enum_resolver=task_types_enum)
+        enum_resolver=task_types_enum
+    )
 
 
 class ShotRenameSubmodel(BaseSettingsModel):
     enabled: bool = True
-    shot_rename_template: str = Field(
+    shot_rename_template: str = SettingsField(
         "",
         title="Shot rename template"
     )
@@ -38,30 +38,30 @@ parent_type_enum = [
 
 class TokenToParentConvertorItem(BaseSettingsModel):
     # TODO - was 'type' must be renamed in code to `parent_type`
-    parent_type: str = Field(
+    parent_type: str = SettingsField(
         "Project",
         enum_resolver=lambda: parent_type_enum
     )
-    name: str = Field(
+    name: str = SettingsField(
         "",
         title="Parent token name",
         description="Unique name used in `Parent path template`"
     )
-    value: str = Field(
+    value: str = SettingsField(
         "",
         title="Parent token value",
         description="Template where any text, Anatomy keys and Tokens could be used"  # noqa
     )
 
 
-class ShotHierchySubmodel(BaseSettingsModel):
+class ShotHierarchySubmodel(BaseSettingsModel):
     enabled: bool = True
-    parents_path: str = Field(
+    parents_path: str = SettingsField(
         "",
         title="Parents path template",
         description="Using keys from \"Token to parent convertor\" or tokens directly"  # noqa
     )
-    parents: list[TokenToParentConvertorItem] = Field(
+    parents: list[TokenToParentConvertorItem] = SettingsField(
         default_factory=TokenToParentConvertorItem,
         title="Token to parent convertor"
     )
@@ -75,22 +75,22 @@ output_file_type = [
 
 
 class ProductTypePresetItem(BaseSettingsModel):
-    product_type: str = Field("", title="Product type")
+    product_type: str = SettingsField("", title="Product type")
     # TODO add placeholder '< Inherited >'
-    variant: str = Field("", title="Variant")
-    review: bool = Field(True, title="Review")
-    output_file_type: str = Field(
+    variant: str = SettingsField("", title="Variant")
+    review: bool = SettingsField(True, title="Review")
+    output_file_type: str = SettingsField(
         ".mp4",
         enum_resolver=lambda: output_file_type
     )
 
 
 class EditorialSimpleCreatorPlugin(BaseSettingsModel):
-    default_variants: list[str] = Field(
+    default_variants: list[str] = SettingsField(
         default_factory=list,
         title="Default Variants"
     )
-    clip_name_tokenizer: list[ClipNameTokenizerItem] = Field(
+    clip_name_tokenizer: list[ClipNameTokenizerItem] = SettingsField(
         default_factory=ClipNameTokenizerItem,
         description=(
             "Using Regex expression to create tokens. \nThose can be used"
@@ -98,25 +98,25 @@ class EditorialSimpleCreatorPlugin(BaseSettingsModel):
             "\n\nTokens should be decorated with \"_\" on each side"
         )
     )
-    shot_rename: ShotRenameSubmodel = Field(
+    shot_rename: ShotRenameSubmodel = SettingsField(
         title="Shot Rename",
         default_factory=ShotRenameSubmodel
     )
-    shot_hierarchy: ShotHierchySubmodel = Field(
+    shot_hierarchy: ShotHierarchySubmodel = SettingsField(
         title="Shot Hierarchy",
-        default_factory=ShotHierchySubmodel
+        default_factory=ShotHierarchySubmodel
     )
-    shot_add_tasks: list[ShotAddTasksItem] = Field(
+    shot_add_tasks: list[ShotAddTasksItem] = SettingsField(
         title="Add tasks to shot",
         default_factory=ShotAddTasksItem
     )
-    product_type_presets: list[ProductTypePresetItem] = Field(
+    product_type_presets: list[ProductTypePresetItem] = SettingsField(
         default_factory=list
     )
 
 
 class TraypublisherEditorialCreatorPlugins(BaseSettingsModel):
-    editorial_simple: EditorialSimpleCreatorPlugin = Field(
+    editorial_simple: EditorialSimpleCreatorPlugin = SettingsField(
         title="Editorial simple creator",
         default_factory=EditorialSimpleCreatorPlugin,
     )

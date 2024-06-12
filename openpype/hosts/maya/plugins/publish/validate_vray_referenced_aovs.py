@@ -4,10 +4,14 @@ import pyblish.api
 import types
 from maya import cmds
 
-from openpype.pipeline.publish import RepairContextAction
+from openpype.pipeline.publish import (
+    RepairContextAction,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
+class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Validate whether the V-Ray Render Elements (AOVs) include references.
 
     This will check if there are AOVs pulled from references. If
@@ -21,9 +25,12 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['renderlayer']
     actions = [RepairContextAction]
+    optional = False
 
     def process(self, instance):
         """Plugin main entry point."""
+        if not self.is_active(instance.data):
+            return
         if instance.data.get("renderer") != "vray":
             # If not V-Ray ignore..
             return

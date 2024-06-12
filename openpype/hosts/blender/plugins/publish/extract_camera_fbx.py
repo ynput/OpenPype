@@ -6,7 +6,7 @@ from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 
 
-class ExtractCamera(publish.Extractor):
+class ExtractCamera(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract as the camera as FBX."""
 
     label = "Extract Camera (FBX)"
@@ -15,13 +15,19 @@ class ExtractCamera(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.fbx"
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        filename = f"{instance_name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         plugin.deselect_all()
 
@@ -44,19 +50,19 @@ class ExtractCamera(publish.Extractor):
         scale_length = bpy.context.scene.unit_settings.scale_length
         bpy.context.scene.unit_settings.scale_length = 0.01
 
-        # We export the fbx
-        bpy.ops.export_scene.fbx(
-            context,
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            bake_anim_use_nla_strips=False,
-            bake_anim_use_all_actions=False,
-            add_leaf_bones=False,
-            armature_nodetype='ROOT',
-            object_types={'CAMERA'},
-            bake_anim_simplify_factor=0.0
-        )
+        with bpy.context.temp_override(**context):
+            # We export the fbx
+            bpy.ops.export_scene.fbx(
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                bake_anim_use_nla_strips=False,
+                bake_anim_use_all_actions=False,
+                add_leaf_bones=False,
+                armature_nodetype='ROOT',
+                object_types={'CAMERA'},
+                bake_anim_simplify_factor=0.0
+            )
 
         bpy.context.scene.unit_settings.scale_length = scale_length
 
@@ -73,5 +79,5 @@ class ExtractCamera(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)

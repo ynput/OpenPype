@@ -80,6 +80,7 @@ class ValidateOutputMaps(pyblish.api.InstancePlugin):
                 self.log.warning(f"Disabling texture instance: "
                                  f"{image_instance}")
                 image_instance.data["active"] = False
+                image_instance.data["publish"] = False
                 image_instance.data["integrate"] = False
                 representation.setdefault("tags", []).append("delete")
                 continue

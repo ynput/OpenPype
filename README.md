@@ -7,6 +7,15 @@ OpenPype
 
 [![documentation](https://github.com/pypeclub/pype/actions/workflows/documentation.yml/badge.svg)](https://github.com/pypeclub/pype/actions/workflows/documentation.yml) ![GitHub VFX Platform](https://img.shields.io/badge/vfx%20platform-2022-lightgrey?labelColor=303846)
 
+## Important Notice!
+
+OpenPype as a standalone product has reach end of it's life and this repository is now being phased out in favour of [ayon-core](https://github.com/ynput/ayon-core). You can read more details about the end of life process here https://community.ynput.io/t/openpype-end-of-life-timeline/877
+
+As such, we no longer accept Pull Requests that are not ported to AYON at the same time!
+
+```
+Please refer to https://github.com/ynput/OpenPype/blob/develop/CONTRIBUTING.md for more information about the current PR process. 
+```
 
 Introduction
 ------------
@@ -279,7 +288,7 @@ arguments and it will create zip file that OpenPype can use.
 Building documentation
 ----------------------
 
-Top build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
+To build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
 from current sources in `.\docs\build`.
 
 **Note that it needs existing virtual environment.**

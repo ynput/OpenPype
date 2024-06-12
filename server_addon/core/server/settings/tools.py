@@ -1,6 +1,7 @@
-from pydantic import Field, validator
+from pydantic import validator
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     normalize_name,
     ensure_unique_names,
     task_types_enum,
@@ -9,8 +10,10 @@ from ayon_server.settings import (
 
 class ProductTypeSmartSelectModel(BaseSettingsModel):
     _layout = "expanded"
-    name: str = Field("", title="Product type")
-    task_names: list[str] = Field(default_factory=list, title="Task names")
+    name: str = SettingsField("", title="Product type")
+    task_names: list[str] = SettingsField(
+        default_factory=list, title="Task names"
+    )
 
     @validator("name")
     def normalize_value(cls, value):
@@ -19,26 +22,28 @@ class ProductTypeSmartSelectModel(BaseSettingsModel):
 
 class ProductNameProfile(BaseSettingsModel):
     _layout = "expanded"
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list, title="Product types"
     )
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    tasks: list[str] = Field(default_factory=list, title="Task names")
-    template: str = Field("", title="Template")
+    tasks: list[str] = SettingsField(default_factory=list, title="Task names")
+    template: str = SettingsField("", title="Template")
 
 
 class CreatorToolModel(BaseSettingsModel):
     # TODO this was dynamic dictionary '{name: task_names}'
-    product_types_smart_select: list[ProductTypeSmartSelectModel] = Field(
-        default_factory=list,
-        title="Create Smart Select"
+    product_types_smart_select: list[ProductTypeSmartSelectModel] = (
+        SettingsField(
+            default_factory=list,
+            title="Create Smart Select"
+        )
     )
-    product_name_profiles: list[ProductNameProfile] = Field(
+    product_name_profiles: list[ProductNameProfile] = SettingsField(
         default_factory=list,
         title="Product name profiles"
     )
@@ -51,29 +56,29 @@ class CreatorToolModel(BaseSettingsModel):
 
 class WorkfileTemplateProfile(BaseSettingsModel):
     _layout = "expanded"
-    task_types: list[str] = Field(
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
     # TODO this should use hosts enum
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
     # TODO this was using project anatomy template name
-    workfile_template: str = Field("", title="Workfile template")
+    workfile_template: str = SettingsField("", title="Workfile template")
 
 
 class LastWorkfileOnStartupProfile(BaseSettingsModel):
     _layout = "expanded"
     # TODO this should use hosts enum
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    tasks: list[str] = Field(default_factory=list, title="Task names")
-    enabled: bool = Field(True, title="Enabled")
-    use_last_published_workfile: bool = Field(
+    tasks: list[str] = SettingsField(default_factory=list, title="Task names")
+    enabled: bool = SettingsField(True, title="Enabled")
+    use_last_published_workfile: bool = SettingsField(
         True, title="Use last published workfile"
     )
 
@@ -81,54 +86,60 @@ class LastWorkfileOnStartupProfile(BaseSettingsModel):
 class WorkfilesToolOnStartupProfile(BaseSettingsModel):
     _layout = "expanded"
     # TODO this should use hosts enum
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    tasks: list[str] = Field(default_factory=list, title="Task names")
-    enabled: bool = Field(True, title="Enabled")
+    tasks: list[str] = SettingsField(default_factory=list, title="Task names")
+    enabled: bool = SettingsField(True, title="Enabled")
 
 
 class ExtraWorkFoldersProfile(BaseSettingsModel):
     _layout = "expanded"
     # TODO this should use hosts enum
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    task_names: list[str] = Field(default_factory=list, title="Task names")
-    folders: list[str] = Field(default_factory=list, title="Folders")
+    task_names: list[str] = SettingsField(
+        default_factory=list, title="Task names"
+    )
+    folders: list[str] = SettingsField(default_factory=list, title="Folders")
 
 
 class WorkfilesLockProfile(BaseSettingsModel):
     _layout = "expanded"
     # TODO this should use hosts enum
-    host_names: list[str] = Field(default_factory=list, title="Hosts")
-    enabled: bool = Field(True, title="Enabled")
+    host_names: list[str] = SettingsField(default_factory=list, title="Hosts")
+    enabled: bool = SettingsField(True, title="Enabled")
 
 
 class WorkfilesToolModel(BaseSettingsModel):
-    workfile_template_profiles: list[WorkfileTemplateProfile] = Field(
+    workfile_template_profiles: list[WorkfileTemplateProfile] = SettingsField(
         default_factory=list,
         title="Workfile template profiles"
     )
-    last_workfile_on_startup: list[LastWorkfileOnStartupProfile] = Field(
-        default_factory=list,
-        title="Open last workfile on launch"
+    last_workfile_on_startup: list[LastWorkfileOnStartupProfile] = (
+        SettingsField(
+            default_factory=list,
+            title="Open last workfile on launch"
+        )
     )
-    open_workfile_tool_on_startup: list[WorkfilesToolOnStartupProfile] = Field(
-        default_factory=list,
-        title="Open workfile tool on launch"
+    open_workfile_tool_on_startup: list[WorkfilesToolOnStartupProfile] = (
+        SettingsField(
+            default_factory=list,
+            title="Open workfile tool on launch"
+        )
     )
-    extra_folders: list[ExtraWorkFoldersProfile] = Field(
+    extra_folders: list[ExtraWorkFoldersProfile] = SettingsField(
         default_factory=list,
         title="Extra work folders"
     )
-    workfile_lock_profiles: list[WorkfilesLockProfile] = Field(
+    workfile_lock_profiles: list[WorkfilesLockProfile] = SettingsField(
         default_factory=list,
         title="Workfile lock profiles"
     )
@@ -175,95 +186,100 @@ def _product_types_enum():
 class LoaderProductTypeFilterProfile(BaseSettingsModel):
     _layout = "expanded"
     # TODO this should use hosts enum
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    is_include: bool = Field(True, title="Exclude / Include")
-    filter_product_types: list[str] = Field(
+    is_include: bool = SettingsField(True, title="Exclude / Include")
+    filter_product_types: list[str] = SettingsField(
         default_factory=list,
         enum_resolver=_product_types_enum
     )
 
 
 class LoaderToolModel(BaseSettingsModel):
-    product_type_filter_profiles: list[LoaderProductTypeFilterProfile] = Field(
-        default_factory=list,
-        title="Product type filtering"
+    product_type_filter_profiles: list[LoaderProductTypeFilterProfile] = (
+        SettingsField(default_factory=list, title="Product type filtering")
     )
 
 
 class PublishTemplateNameProfile(BaseSettingsModel):
     _layout = "expanded"
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list,
         title="Product types"
     )
     # TODO this should use hosts enum
-    hosts: list[str] = Field(default_factory=list, title="Hosts")
-    task_types: list[str] = Field(
+    hosts: list[str] = SettingsField(default_factory=list, title="Hosts")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    task_names: list[str] = Field(default_factory=list, title="Task names")
-    template_name: str = Field("", title="Template name")
+    task_names: list[str] = SettingsField(
+        default_factory=list, title="Task names"
+    )
+    template_name: str = SettingsField("", title="Template name")
 
 
 class CustomStagingDirProfileModel(BaseSettingsModel):
-    active: bool = Field(True, title="Is active")
-    hosts: list[str] = Field(default_factory=list, title="Host names")
-    task_types: list[str] = Field(
+    active: bool = SettingsField(True, title="Is active")
+    hosts: list[str] = SettingsField(default_factory=list, title="Host names")
+    task_types: list[str] = SettingsField(
         default_factory=list,
         title="Task types",
         enum_resolver=task_types_enum
     )
-    task_names: list[str] = Field(
+    task_names: list[str] = SettingsField(
         default_factory=list, title="Task names"
     )
-    product_types: list[str] = Field(
+    product_types: list[str] = SettingsField(
         default_factory=list, title="Product types"
     )
-    product_names: list[str] = Field(
+    product_names: list[str] = SettingsField(
         default_factory=list, title="Product names"
     )
-    custom_staging_dir_persistent: bool = Field(
+    custom_staging_dir_persistent: bool = SettingsField(
         False, title="Custom Staging Folder Persistent"
     )
-    template_name: str = Field("", title="Template Name")
+    template_name: str = SettingsField("", title="Template Name")
 
 
 class PublishToolModel(BaseSettingsModel):
-    template_name_profiles: list[PublishTemplateNameProfile] = Field(
+    template_name_profiles: list[PublishTemplateNameProfile] = SettingsField(
         default_factory=list,
         title="Template name profiles"
     )
-    hero_template_name_profiles: list[PublishTemplateNameProfile] = Field(
-        default_factory=list,
-        title="Hero template name profiles"
+    hero_template_name_profiles: list[PublishTemplateNameProfile] = (
+        SettingsField(
+            default_factory=list,
+            title="Hero template name profiles"
+        )
     )
-    custom_staging_dir_profiles: list[CustomStagingDirProfileModel] = Field(
-        default_factory=list,
-        title="Custom Staging Dir Profiles"
+    custom_staging_dir_profiles: list[CustomStagingDirProfileModel] = (
+        SettingsField(
+            default_factory=list,
+            title="Custom Staging Dir Profiles"
+        )
     )
 
 
 class GlobalToolsModel(BaseSettingsModel):
-    creator: CreatorToolModel = Field(
+    creator: CreatorToolModel = SettingsField(
         default_factory=CreatorToolModel,
         title="Creator"
     )
-    Workfiles: WorkfilesToolModel = Field(
+    Workfiles: WorkfilesToolModel = SettingsField(
         default_factory=WorkfilesToolModel,
         title="Workfiles"
     )
-    loader: LoaderToolModel = Field(
+    loader: LoaderToolModel = SettingsField(
         default_factory=LoaderToolModel,
         title="Loader"
     )
-    publish: PublishToolModel = Field(
+    publish: PublishToolModel = SettingsField(
         default_factory=PublishToolModel,
         title="Publish"
     )
@@ -487,6 +503,17 @@ DEFAULT_TOOLS_VALUES = {
                 "task_types": [],
                 "task_names": [],
                 "template_name": "publish_online"
+            },
+            {
+                "product_types": [
+                    "tycache"
+                ],
+                "hosts": [
+                    "max"
+                ],
+                "task_types": [],
+                "task_names": [],
+                "template_name": "publish_tycache"
             }
         ],
         "hero_template_name_profiles": [

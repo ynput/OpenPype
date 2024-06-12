@@ -1,6 +1,4 @@
-from pydantic import Field
-
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, SettingsField
 
 
 create_flatten_image_enum = [
@@ -22,30 +20,30 @@ color_code_enum = [
 
 
 class ColorCodeMappings(BaseSettingsModel):
-    color_code: list[str] = Field(
+    color_code: list[str] = SettingsField(
         title="Color codes for layers",
         default_factory=list,
         enum_resolver=lambda: color_code_enum,
     )
 
-    layer_name_regex: list[str] = Field(
-        "",
+    layer_name_regex: list[str] = SettingsField(
+        default_factory=list,
         title="Layer name regex"
     )
 
-    product_type: str = Field(
+    product_type: str = SettingsField(
         "",
         title="Resulting product type"
     )
 
-    product_name_template: str = Field(
+    product_name_template: str = SettingsField(
         "",
         title="Product name template"
     )
 
 
 class ExtractedOptions(BaseSettingsModel):
-    tags: list[str] = Field(
+    tags: list[str] = SettingsField(
         title="Tags",
         default_factory=list
     )
@@ -57,19 +55,19 @@ class CollectColorCodedInstancesPlugin(BaseSettingsModel):
     instances.
     (Applicable only for remote publishing!)"""
 
-    enabled: bool = Field(True, title="Enabled")
-    create_flatten_image: str = Field(
+    enabled: bool = SettingsField(True, title="Enabled")
+    create_flatten_image: str = SettingsField(
         "",
         title="Create flatten image",
         enum_resolver=lambda: create_flatten_image_enum,
     )
 
-    flatten_product_type_template: str = Field(
+    flatten_product_type_template: str = SettingsField(
         "",
         title="Subset template for flatten image"
     )
 
-    color_code_mapping: list[ColorCodeMappings] = Field(
+    color_code_mapping: list[ColorCodeMappings] = SettingsField(
         title="Color code mappings",
         default_factory=ColorCodeMappings,
     )
@@ -77,30 +75,30 @@ class CollectColorCodedInstancesPlugin(BaseSettingsModel):
 
 class CollectReviewPlugin(BaseSettingsModel):
     """Should review product be created"""
-    enabled: bool = Field(True, title="Enabled")
+    enabled: bool = SettingsField(True, title="Enabled")
 
 
 class CollectVersionPlugin(BaseSettingsModel):
     """Synchronize version for image and review instances by workfile version"""  # noqa
-    enabled: bool = Field(True, title="Enabled")
+    enabled: bool = SettingsField(True, title="Enabled")
 
 
 class ValidateContainersPlugin(BaseSettingsModel):
     """Check that workfile contains latest version of loaded items"""  # noqa
     _isGroup = True
     enabled: bool = True
-    optional: bool = Field(False, title="Optional")
-    active: bool = Field(True, title="Active")
+    optional: bool = SettingsField(False, title="Optional")
+    active: bool = SettingsField(True, title="Active")
 
 
 class ValidateNamingPlugin(BaseSettingsModel):
     """Validate naming of products and layers"""  # noqa
-    invalid_chars: str = Field(
+    invalid_chars: str = SettingsField(
         '',
         title="Regex pattern of invalid characters"
     )
 
-    replace_char: str = Field(
+    replace_char: str = SettingsField(
         '',
         title="Replacement character"
     )
@@ -108,19 +106,19 @@ class ValidateNamingPlugin(BaseSettingsModel):
 
 class ExtractImagePlugin(BaseSettingsModel):
     """Currently only jpg and png are supported"""
-    formats: list[str] = Field(
+    formats: list[str] = SettingsField(
         title="Extract Formats",
         default_factory=list,
     )
 
 
 class ExtractReviewPlugin(BaseSettingsModel):
-    make_image_sequence: bool = Field(
+    make_image_sequence: bool = SettingsField(
         False,
         title="Make an image sequence instead of flatten image"
     )
 
-    max_downscale_size: int = Field(
+    max_downscale_size: int = SettingsField(
         8192,
         title="Maximum size of sources for review",
         description="FFMpeg can only handle limited resolution for creation of review and/or thumbnail",  # noqa
@@ -128,48 +126,50 @@ class ExtractReviewPlugin(BaseSettingsModel):
         le=16384,  # less or equal
     )
 
-    jpg_options: ExtractedOptions = Field(
+    jpg_options: ExtractedOptions = SettingsField(
         title="Extracted jpg Options",
         default_factory=ExtractedOptions
     )
 
-    mov_options: ExtractedOptions = Field(
+    mov_options: ExtractedOptions = SettingsField(
         title="Extracted mov Options",
         default_factory=ExtractedOptions
     )
 
 
 class PhotoshopPublishPlugins(BaseSettingsModel):
-    CollectColorCodedInstances: CollectColorCodedInstancesPlugin = Field(
-        title="Collect Color Coded Instances",
-        default_factory=CollectColorCodedInstancesPlugin,
+    CollectColorCodedInstances: CollectColorCodedInstancesPlugin = (
+        SettingsField(
+            title="Collect Color Coded Instances",
+            default_factory=CollectColorCodedInstancesPlugin,
+        )
     )
-    CollectReview: CollectReviewPlugin = Field(
+    CollectReview: CollectReviewPlugin = SettingsField(
         title="Collect Review",
         default_factory=CollectReviewPlugin,
     )
 
-    CollectVersion: CollectVersionPlugin = Field(
-        title="Create Image",
+    CollectVersion: CollectVersionPlugin = SettingsField(
+        title="Collect Version",
         default_factory=CollectVersionPlugin,
     )
 
-    ValidateContainers: ValidateContainersPlugin = Field(
+    ValidateContainers: ValidateContainersPlugin = SettingsField(
         title="Validate Containers",
         default_factory=ValidateContainersPlugin,
     )
 
-    ValidateNaming: ValidateNamingPlugin = Field(
+    ValidateNaming: ValidateNamingPlugin = SettingsField(
         title="Validate naming of products and layers",
         default_factory=ValidateNamingPlugin,
     )
 
-    ExtractImage: ExtractImagePlugin = Field(
+    ExtractImage: ExtractImagePlugin = SettingsField(
         title="Extract Image",
         default_factory=ExtractImagePlugin,
     )
 
-    ExtractReview: ExtractReviewPlugin = Field(
+    ExtractReview: ExtractReviewPlugin = SettingsField(
         title="Extract Review",
         default_factory=ExtractReviewPlugin,
     )

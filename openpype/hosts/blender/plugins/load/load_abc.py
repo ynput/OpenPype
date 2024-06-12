@@ -60,18 +60,29 @@ class CacheModelLoader(plugin.AssetLoader):
 
         imported = lib.get_selection()
 
-        # Children must be linked before parents,
-        # otherwise the hierarchy will break
+        # Use first EMPTY without parent as container
+        container = next(
+            (obj for obj in imported
+             if obj.type == "EMPTY" and not obj.parent),
+            None
+        )
+
         objects = []
+        if container:
+            nodes = list(container.children)
 
-        for obj in imported:
-            obj.parent = asset_group
+            for obj in nodes:
+                obj.parent = asset_group
 
-        for obj in imported:
-            objects.append(obj)
-            imported.extend(list(obj.children))
+            bpy.data.objects.remove(container)
 
-        objects.reverse()
+            objects.extend(nodes)
+            for obj in nodes:
+                objects.extend(obj.children_recursive)
+        else:
+            for obj in imported:
+                obj.parent = asset_group
+            objects = imported
 
         for obj in objects:
             # Unlink the object from all collections
@@ -126,9 +137,9 @@ class CacheModelLoader(plugin.AssetLoader):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        asset_name = plugin.asset_name(asset, subset)
+        asset_name = plugin.prepare_scene_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
+        group_name = plugin.prepare_scene_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
         containers = bpy.data.collections.get(AVALON_CONTAINERS)
@@ -137,6 +148,7 @@ class CacheModelLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.link(containers)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
+        asset_group.empty_display_type = 'SINGLE_ARROW'
         containers.objects.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)

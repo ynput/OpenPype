@@ -164,23 +164,6 @@
             "default": "http://127.0.0.1:8082"
         }
     },
-    "muster": {
-        "enabled": false,
-        "MUSTER_REST_URL": "http://127.0.0.1:9890",
-        "templates_mapping": {
-            "file_layers": 7,
-            "mentalray": 2,
-            "mentalray_sf": 6,
-            "redshift": 55,
-            "renderman": 29,
-            "software": 1,
-            "software_sf": 5,
-            "turtle": 10,
-            "vector": 4,
-            "vray": 37,
-            "ffmpeg": 48
-        }
-    },
     "royalrender": {
         "enabled": false,
         "rr_paths": {
@@ -210,5 +193,8 @@
             "darwin": "",
             "linux": ""
         }
+    },
+    "asset_reporter": {
+        "enabled": false
     }
 }

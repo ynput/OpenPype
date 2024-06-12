@@ -7,8 +7,6 @@ from datetime import datetime
 import requests
 import pyblish.api
 
-import nuke
-
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
@@ -48,6 +46,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
+    workfile_dependency = True
+    use_published_workfile = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -83,6 +83,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "suspend_publish",
                 default=False,
                 label="Suspend publish"
+            ),
+            BoolDef(
+                "workfile_dependency",
+                default=cls.workfile_dependency,
+                label="Workfile Dependency"
+            ),
+            BoolDef(
+                "use_published_workfile",
+                default=cls.use_published_workfile,
+                label="Use Published Workfile"
             )
         ]
 
@@ -121,20 +131,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         render_path = instance.data['path']
         script_path = context.data["currentFile"]
 
-        for item_ in context:
-            if "workfile" in item_.data["family"]:
-                template_data = item_.data.get("anatomyData")
-                rep = item_.data.get("representations")[0].get("name")
-                template_data["representation"] = rep
-                template_data["ext"] = rep
-                template_data["comment"] = None
-                anatomy_filled = context.data["anatomy"].format(template_data)
-                template_filled = anatomy_filled["publish"]["path"]
-                script_path = os.path.normpath(template_filled)
-
-                self.log.info(
-                    "Using published scene for render {}".format(script_path)
-                )
+        use_published_workfile = instance.data["attributeValues"].get(
+            "use_published_workfile", self.use_published_workfile
+        )
+        if use_published_workfile:
+            script_path = self._get_published_workfile_path(context)
 
         # only add main rendering job if target is not frames_farm
         r_job_response_json = None
@@ -192,6 +193,44 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             instance.data['family'] = 'write'
             families.insert(0, "prerender")
         instance.data["families"] = families
+
+    def _get_published_workfile_path(self, context):
+        """This method is temporary while the class is not inherited from
+        AbstractSubmitDeadline"""
+        for instance in context:
+            if (
+                instance.data["family"] != "workfile"
+                # Disabled instances won't be integrated
+                or instance.data("publish") is False
+            ):
+                continue
+            template_data = instance.data["anatomyData"]
+            # Expect workfile instance has only one representation
+            representation = instance.data["representations"][0]
+            # Get workfile extension
+            repre_file = representation["files"]
+            self.log.info(repre_file)
+            ext = os.path.splitext(repre_file)[1].lstrip(".")
+
+            # Fill template data
+            template_data["representation"] = representation["name"]
+            template_data["ext"] = ext
+            template_data["comment"] = None
+
+            anatomy = context.data["anatomy"]
+            # WARNING Hardcoded template name 'publish' > may not be used
+            template_obj = anatomy.templates_obj["publish"]["path"]
+
+            template_filled = template_obj.format(template_data)
+            script_path = os.path.normpath(template_filled)
+            self.log.info(
+                "Using published scene for render {}".format(
+                    script_path
+                )
+            )
+            return script_path
+
+        return None
 
     def payload_submit(
         self,
@@ -313,6 +352,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             "AuxFiles": []
         }
 
+        # Add workfile dependency.
+        workfile_dependency = instance.data["attributeValues"].get(
+            "workfile_dependency", self.workfile_dependency
+        )
+        if workfile_dependency:
+            payload["JobInfo"].update({"AssetDependency0": script_path})
+
         # TODO: rewrite for baking with sequences
         if baking_submission:
             payload["JobInfo"].update({
@@ -330,6 +376,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         keys = [
             "PYTHONPATH",
             "PATH",
+            "AVALON_DB",
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
@@ -359,10 +406,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-        for _path in os.environ:
-            if _path.lower().startswith('openpype_'):
-                environment[_path] = os.environ[_path]
-
         # to recognize render jobs
         if AYON_SERVER_ENABLED:
             environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
@@ -391,7 +434,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         self.log.debug("Submitting..")
         self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
-        # adding expectied files to instance.data
+        # adding expected files to instance.data
         self.expected_files(
             instance,
             render_path,
@@ -447,7 +490,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     def expected_files(
         self,
         instance,
-        path,
+        filepath,
         start_frame,
         end_frame
     ):
@@ -456,21 +499,44 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         if not instance.data.get("expectedFiles"):
             instance.data["expectedFiles"] = []
 
-        dirname = os.path.dirname(path)
-        file = os.path.basename(path)
+        dirname = os.path.dirname(filepath)
+        file = os.path.basename(filepath)
 
+        # since some files might be already tagged as publish_on_farm
+        # we need to avoid adding them to expected files since those would be
+        # duplicated into metadata.json file
+        representations = instance.data.get("representations", [])
+        # check if file is not in representations with publish_on_farm tag
+        for repre in representations:
+            # Skip if 'publish_on_farm' not available
+            if "publish_on_farm" not in repre.get("tags", []):
+                continue
+
+            # in case where single file (video, image) is already in
+            # representation file. Will be added to expected files via
+            # submit_publish_job.py
+            if file in repre.get("files", []):
+                self.log.debug(
+                    "Skipping expected file: {}".format(filepath))
+                return
+
+        # in case path is hashed sequence expression
+        # (e.g. /path/to/file.####.png)
         if "#" in file:
             pparts = file.split("#")
             padding = "%0{}d".format(len(pparts) - 1)
             file = pparts[0] + padding + pparts[-1]
 
+        # in case input path was single file (video or image)
         if "%" not in file:
-            instance.data["expectedFiles"].append(path)
+            instance.data["expectedFiles"].append(filepath)
             return
 
+        # shift start frame by 1 if slate is present
         if instance.data.get("slate"):
             start_frame -= 1
 
+        # add sequence files to expected files
         for i in range(start_frame, (end_frame + 1)):
             instance.data["expectedFiles"].append(
                 os.path.join(dirname, (file % i)).replace("\\", "/"))
@@ -485,6 +551,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         Returning:
             list: captured groups list
         """
+        # Not all hosts can import this module.
+        import nuke
+
         captured_groups = []
         for lg_name, list_node_class in self.limit_groups.items():
             for node_class in list_node_class:

@@ -2,6 +2,8 @@ from pprint import pformat
 import pyblish.api
 import opentimelineio as otio
 
+from openpype import AYON_SERVER_ENABLED
+
 
 class CollectShotInstance(pyblish.api.InstancePlugin):
     """ Collect shot instances
@@ -77,6 +79,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             clip for clip in otio_timeline.each_child(
                 descended_from_type=otio.schema.Clip)
             if clip.name == otio_clip.name
+            if clip.parent().kind == "Video"
         ]
 
         otio_clip = clips.pop()
@@ -119,8 +122,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         frame_end = _cr_attrs["frameEnd"]
         frame_dur = frame_end - frame_start
 
-        return {
-            "asset": _cr_attrs["asset_name"],
+        data = {
             "fps": float(_cr_attrs["fps"]),
             "handleStart": _cr_attrs["handle_start"],
             "handleEnd": _cr_attrs["handle_end"],
@@ -133,6 +135,12 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             "sourceOut": _cr_attrs["sourceOut"],
             "workfileFrameStart": workfile_start_frame
         }
+        if AYON_SERVER_ENABLED:
+            data["asset"] = _cr_attrs["folderPath"]
+        else:
+            data["asset"] = _cr_attrs["shotName"]
+
+        return data
 
     def _solve_hierarchy_context(self, instance):
         """ Adding hierarchy data to context shared data.
@@ -147,8 +155,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             if context.data.get("hierarchyContext")
             else {}
         )
-
-        name = instance.data["asset"]
 
         # get handles
         handle_start = int(instance.data["handleStart"])
@@ -170,7 +176,9 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
 
         parents = instance.data.get('parents', [])
 
-        actual = {name: in_info}
+        # Split by '/' for AYON where asset is a path
+        asset_name = instance.data["asset"].split("/")[-1]
+        actual = {asset_name: in_info}
 
         for parent in reversed(parents):
             parent_name = parent["entity_name"]

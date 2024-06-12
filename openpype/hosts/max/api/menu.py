@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""3dsmax menu definition of OpenPype."""
+"""3dsmax menu definition of AYON."""
+import os
 from qtpy import QtWidgets, QtCore
 from pymxs import runtime as rt
 
@@ -8,7 +9,7 @@ from openpype.hosts.max.api import lib
 
 
 class OpenPypeMenu(object):
-    """Object representing OpenPype menu.
+    """Object representing OpenPype/AYON menu.
 
     This is using "hack" to inject itself before "Help" menu of 3dsmax.
     For some reason `postLoadingMenus` event doesn't fire, and main menu
@@ -50,17 +51,17 @@ class OpenPypeMenu(object):
         return list(self.main_widget.findChildren(QtWidgets.QMenuBar))[0]
 
     def get_or_create_openpype_menu(
-            self, name: str = "&OpenPype",
+            self, name: str = "&Openpype",
             before: str = "&Help") -> QtWidgets.QAction:
-        """Create OpenPype menu.
+        """Create AYON menu.
 
         Args:
-            name (str, Optional): OpenPypep menu name.
+            name (str, Optional): AYON menu name.
             before (str, Optional): Name of the 3dsmax main menu item to
-                add OpenPype menu before.
+                add AYON menu before.
 
         Returns:
-            QtWidgets.QAction: OpenPype menu action.
+            QtWidgets.QAction: AYON menu action.
 
         """
         if self.menu is not None:
@@ -77,15 +78,15 @@ class OpenPypeMenu(object):
 
             if before in item.title():
                 help_action = item.menuAction()
-
-        op_menu = QtWidgets.QMenu("&OpenPype")
+        tab_menu_label = os.environ.get("AVALON_LABEL") or "AYON"
+        op_menu = QtWidgets.QMenu("&{}".format(tab_menu_label))
         menu_bar.insertMenu(help_action, op_menu)
 
         self.menu = op_menu
         return op_menu
 
     def build_openpype_menu(self) -> QtWidgets.QAction:
-        """Build items in OpenPype menu."""
+        """Build items in AYON menu."""
         openpype_menu = self.get_or_create_openpype_menu()
         load_action = QtWidgets.QAction("Load...", openpype_menu)
         load_action.triggered.connect(self.load_callback)
@@ -123,6 +124,10 @@ class OpenPypeMenu(object):
         colorspace_action.triggered.connect(self.colorspace_callback)
         openpype_menu.addAction(colorspace_action)
 
+        unit_scale_action = QtWidgets.QAction("Set Unit Scale", openpype_menu)
+        unit_scale_action.triggered.connect(self.unit_scale_callback)
+        openpype_menu.addAction(unit_scale_action)
+
         return openpype_menu
 
     def load_callback(self):
@@ -156,3 +161,7 @@ class OpenPypeMenu(object):
     def colorspace_callback(self):
         """Callback to reset colorspace"""
         return lib.reset_colorspace()
+
+    def unit_scale_callback(self):
+        """Callback to reset unit scale"""
+        return lib.reset_unit_scale()

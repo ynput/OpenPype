@@ -9,12 +9,14 @@ from openpype import (
     resources,
     style
 )
+from openpype import AYON_SERVER_ENABLED
 from openpype.tools.utils import (
     ErrorMessageBox,
     PlaceholderLineEdit,
     MessageOverlayObject,
     PixmapLabel,
 )
+from openpype.tools.utils.lib import center_window
 
 from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
@@ -52,7 +54,9 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self.setObjectName("PublishWindow")
 
-        self.setWindowTitle("OpenPype publisher")
+        self.setWindowTitle("{} publisher".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
@@ -60,17 +64,12 @@ class PublisherWindow(QtWidgets.QDialog):
         if reset_on_show is None:
             reset_on_show = True
 
-        if parent is None:
-            on_top_flag = QtCore.Qt.WindowStaysOnTopHint
-        else:
-            on_top_flag = QtCore.Qt.Dialog
-
         self.setWindowFlags(
-            QtCore.Qt.WindowTitleHint
+            QtCore.Qt.Window
+            | QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
-            | on_top_flag
         )
 
         if controller is None:
@@ -185,7 +184,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ReportPageWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, content_stacked_widget)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
@@ -317,12 +316,14 @@ class PublisherWindow(QtWidgets.QDialog):
             "convertors.find.failed", self._on_convertor_error
         )
         controller.event_system.add_callback(
+            "publish.action.failed", self._on_action_error
+        )
+        controller.event_system.add_callback(
             "export_report.request", self._export_report
         )
         controller.event_system.add_callback(
             "copy_report.request", self._copy_report
         )
-
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -388,6 +389,45 @@ class PublisherWindow(QtWidgets.QDialog):
     def controller(self):
         return self._controller
 
+    def show_and_publish(self, comment=None):
+        """Show the window and start publishing.
+
+        The method will reset controller and start the publishing afterwards.
+
+        Todos:
+            Move validations from '_on_publish_clicked' and change of
+                'comment' value in controller to controller so it can be
+                simplified.
+
+        Args:
+            comment (Optional[str]): Comment to be set to publish.
+                If is set to 'None' a comment is not changed at all.
+        """
+
+        self._reset_on_show = False
+        self._reset_on_first_show = False
+
+        if comment is not None:
+            self.set_comment(comment)
+        self.make_sure_is_visible()
+        # Reset controller
+        self._controller.reset()
+        # Fake publish click to trigger save validation and propagate
+        #   comment to controller
+        self._on_publish_clicked()
+
+    def set_comment(self, comment):
+        """Change comment text.
+
+        Todos:
+            Be able to set the comment via controller.
+
+        Args:
+            comment (str): Comment text.
+        """
+
+        self._comment_input.setText(comment)
+
     def make_sure_is_visible(self):
         if self._window_is_visible:
             self.setWindowState(QtCore.Qt.WindowActive)
@@ -447,8 +487,14 @@ class PublisherWindow(QtWidgets.QDialog):
         app.removeEventFilter(self)
 
     def keyPressEvent(self, event):
-        # Ignore escape button to close window
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() in {
+            # Ignore escape button to close window
+            QtCore.Qt.Key_Escape,
+            # Ignore enter keyboard event which by default triggers
+            #   first available button in QDialog
+            QtCore.Qt.Key_Enter,
+            QtCore.Qt.Key_Return,
+        }:
             event.accept()
             return
 
@@ -490,6 +536,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
+        center_window(self)
         self._reset_on_show = self._reset_on_first_show
 
     def _on_show_timer(self):
@@ -946,6 +993,18 @@ class PublisherWindow(QtWidgets.QDialog):
             new_failed_info.append(new_item)
         self.add_error_message_dialog(
             event["title"], new_failed_info, "Convertor:"
+        )
+
+    def _on_action_error(self, event):
+        self.add_error_message_dialog(
+            event["title"],
+            [{
+                "message": event["message"],
+                "traceback": event["traceback"],
+                "label": event["label"],
+                "identifier": event["identifier"]
+            }],
+            "Action:"
         )
 
     def _update_create_overlay_size(self):

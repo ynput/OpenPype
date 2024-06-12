@@ -26,7 +26,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
 
     families = ["camera"]
     representations = ["*"]
-    extension = {"abc"}
+    extensions = {"abc"}
 
     label = "Load Alembic Camera"
     icon = "camera"
@@ -48,10 +48,11 @@ class AlembicCameraLoader(load.LoaderPlugin):
         # add additional metadata from the version to imprint to Avalon knob
         add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "objectName": object_name}
+        data_imprint = {
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname,
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -111,8 +112,6 @@ class AlembicCameraLoader(load.LoaderPlugin):
         project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
-        object_name = container['objectName']
-
         # get main variables
         version_data = version_doc.get("data", {})
         vname = version_doc.get("name", None)
@@ -124,11 +123,12 @@ class AlembicCameraLoader(load.LoaderPlugin):
         # add additional metadata from the version to imprint to Avalon knob
         add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"representation": str(representation["_id"]),
-                        "frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "objectName": object_name}
+        data_imprint = {
+            "representation": str(representation["_id"]),
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -137,7 +137,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
         file = get_representation_path(representation).replace("\\", "/")
 
         with maintained_selection():
-            camera_node = nuke.toNode(object_name)
+            camera_node = container["node"]
             camera_node['selected'].setValue(True)
 
             # collect input output dependencies
@@ -152,9 +152,10 @@ class AlembicCameraLoader(load.LoaderPlugin):
             xpos = camera_node.xpos()
             ypos = camera_node.ypos()
             nuke.nodeCopy("%clipboard%")
+            camera_name = camera_node.name()
             nuke.delete(camera_node)
             nuke.nodePaste("%clipboard%")
-            camera_node = nuke.toNode(object_name)
+            camera_node = nuke.toNode(camera_name)
             camera_node.setXYpos(xpos, ypos)
 
             # link to original input nodes
@@ -194,6 +195,6 @@ class AlembicCameraLoader(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)

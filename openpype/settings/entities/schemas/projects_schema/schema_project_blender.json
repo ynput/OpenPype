@@ -104,29 +104,60 @@
                     "label": "Note: Multilayer EXR is only used when output format type set to EXR."
                 },
                 {
+                    "key": "renderer",
+                    "label": "Renderer",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "CYCLES",
+                    "enum_items": [
+                        {"CYCLES": "Cycles"},
+                        {"BLENDER_EEVEE": "Eevee"}
+                    ]
+                },
+                {
+                    "key": "compositing",
+                    "type": "boolean",
+                    "label": "Enable Compositing"
+                },
+                {
                     "key": "aov_list",
                     "label": "AOVs to create",
                     "type": "enum",
                     "multiselection": true,
                     "defaults": "empty",
                     "enum_items": [
-                        {"empty": "< empty >"},
                         {"combined": "Combined"},
                         {"z": "Z"},
                         {"mist": "Mist"},
                         {"normal": "Normal"},
-                        {"diffuse_light": "Diffuse Light"},
+                        {"position": "Position (Cycles Only)"},
+                        {"vector": "Vector (Cycles Only)"},
+                        {"uv": "UV (Cycles Only)"},
+                        {"denoising": "Denoising Data (Cycles Only)"},
+                        {"object_index": "Object Index (Cycles Only)"},
+                        {"material_index": "Material Index (Cycles Only)"},
+                        {"sample_count": "Sample Count (Cycles Only)"},
+                        {"diffuse_light": "Diffuse Light/Direct"},
+                        {"diffuse_indirect": "Diffuse Indirect (Cycles Only)"},
                         {"diffuse_color": "Diffuse Color"},
-                        {"specular_light": "Specular Light"},
-                        {"specular_color": "Specular Color"},
-                        {"volume_light": "Volume Light"},
+                        {"specular_light": "Specular (Glossy) Light/Direct"},
+                        {"specular_indirect": "Specular (Glossy) Indirect (Cycles Only)"},
+                        {"specular_color": "Specular (Glossy) Color"},
+                        {"transmission_light": "Transmission Light/Direct (Cycles Only)"},
+                        {"transmission_indirect": "Transmission Indirect (Cycles Only)"},
+                        {"transmission_color": "Transmission Color (Cycles Only)"},
+                        {"volume_light": "Volume Light/Direct"},
+                        {"volume_indirect": "Volume Indirect (Cycles Only)"},
                         {"emission": "Emission"},
                         {"environment": "Environment"},
-                        {"shadow": "Shadow"},
+                        {"shadow": "Shadow/Shadow Catcher"},
                         {"ao": "Ambient Occlusion"},
-                        {"denoising": "Denoising"},
-                        {"volume_direct": "Direct Volumetric Scattering"},
-                        {"volume_indirect": "Indirect Volumetric Scattering"}
+                        {"bloom": "Bloom (Eevee Only)"},
+                        {"transparent": "Transparent (Eevee Only)"},
+                        {"cryptomatte_object": "Cryptomatte Object"},
+                        {"cryptomatte_material": "Cryptomatte Material"},
+                        {"cryptomatte_asset": "Cryptomatte Asset"},
+                        {"cryptomatte_accurate": "Cryptomatte Accurate Mode (Eevee Only)"}
                     ]
                 },
                 {

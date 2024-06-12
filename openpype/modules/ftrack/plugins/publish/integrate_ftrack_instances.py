@@ -61,6 +61,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     additional_metadata_keys = []
 
     def process(self, instance):
+        # QUESTION: should this be operating even for `farm` target?
         self.log.debug("instance {}".format(instance))
 
         instance_repres = instance.data.get("representations")
@@ -126,87 +127,119 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         other_representations = []
         has_movie_review = False
         for repre in instance_repres:
-            self.log.debug("Representation {}".format(repre))
             repre_tags = repre.get("tags") or []
+            # exclude representations with are going to be published on farm
+            if "publish_on_farm" in repre_tags:
+                continue
+
+            self.log.debug("Representation {}".format(repre))
+
+            # include only thumbnail representations
             if repre.get("thumbnail") or "thumbnail" in repre_tags:
                 thumbnail_representations.append(repre)
 
+            # include only review representations
             elif "ftrackreview" in repre_tags:
                 review_representations.append(repre)
                 if self._is_repre_video(repre):
                     has_movie_review = True
 
             else:
+                # include all other representations
                 other_representations.append(repre)
 
         # Prepare ftrack locations
         unmanaged_location_name = "ftrack.unmanaged"
         ftrack_server_location_name = "ftrack.server"
 
+        # check if any outputName keys are in review_representations
+        # also check if any outputName keys are in thumbnail_representations
+        synced_multiple_output_names = []
+        for review_repre in review_representations:
+            review_output_name = review_repre.get("outputName")
+            if not review_output_name:
+                continue
+            for thumb_repre in thumbnail_representations:
+                thumb_output_name = thumb_repre.get("outputName")
+                if not thumb_output_name:
+                    continue
+                if (
+                    thumb_output_name == review_output_name
+                    # output name can be added also as tags during intermediate
+                    # files creation
+                    or thumb_output_name in review_repre.get("tags", [])
+                ):
+                    synced_multiple_output_names.append(
+                        thumb_repre["outputName"])
+        self.log.debug("Multiple output names: {}".format(
+            synced_multiple_output_names
+        ))
+        multiple_synced_thumbnails = len(synced_multiple_output_names) > 1
+
         # Components data
         component_list = []
-        # Components that will be duplicated to unmanaged location
-        src_components_to_add = []
+        thumbnail_data_items = []
 
         # Create thumbnail components
-        # TODO what if there is multiple thumbnails?
-        first_thumbnail_component = None
-        first_thumbnail_component_repre = None
-
-        if not review_representations or has_movie_review:
-            for repre in thumbnail_representations:
-                repre_path = get_publish_repre_path(instance, repre, False)
-                if not repre_path:
-                    self.log.warning(
-                        "Published path is not set and source was removed."
-                    )
-                    continue
-
-                # Create copy of base comp item and append it
-                thumbnail_item = copy.deepcopy(base_component_item)
-                thumbnail_item["component_path"] = repre_path
-                thumbnail_item["component_data"] = {
-                    "name": "thumbnail"
-                }
-                thumbnail_item["thumbnail"] = True
-
-                # Create copy of item before setting location
-                if "delete" not in repre.get("tags", []):
-                    src_components_to_add.append(copy.deepcopy(thumbnail_item))
-                # Create copy of first thumbnail
-                if first_thumbnail_component is None:
-                    first_thumbnail_component_repre = repre
-                    first_thumbnail_component = thumbnail_item
-                # Set location
-                thumbnail_item["component_location_name"] = (
-                    ftrack_server_location_name
-                )
-
-                # Add item to component list
-                component_list.append(thumbnail_item)
-
-        if first_thumbnail_component is not None:
-            metadata = self._prepare_image_component_metadata(
-                first_thumbnail_component_repre,
-                first_thumbnail_component["component_path"]
+        for repre in thumbnail_representations:
+            # get repre path from representation
+            # and return published_path if available
+            # the path is validated and if it does not exists it returns None
+            repre_path = get_publish_repre_path(
+                instance,
+                repre,
+                only_published=False
             )
+            if not repre_path:
+                self.log.warning(
+                    "Published path is not set or source was removed."
+                )
+                continue
 
-            if metadata:
-                component_data = first_thumbnail_component["component_data"]
-                component_data["metadata"] = metadata
+            # Create copy of base comp item and append it
+            thumbnail_item = copy.deepcopy(base_component_item)
+            thumbnail_item.update({
+                "component_path": repre_path,
+                "component_data": {
+                    "name": (
+                        "thumbnail" if review_representations
+                        else "ftrackreview-image"
+                    ),
+                    "metadata": self._prepare_image_component_metadata(
+                        repre,
+                        repre_path
+                    )
+                },
+                "thumbnail": True,
+                "component_location_name": ftrack_server_location_name
+            })
 
-                if review_representations:
-                    component_data["name"] = "thumbnail"
-                else:
-                    component_data["name"] = "ftrackreview-image"
+            # add thumbnail data to items for future synchronization
+            current_item_data = {
+                "sync_key": repre.get("outputName"),
+                "representation": repre,
+                "item": thumbnail_item
+            }
+            # Create copy of item before setting location
+            if "delete" not in repre.get("tags", []):
+                src_comp = self._create_src_component(
+                    instance,
+                    repre,
+                    copy.deepcopy(thumbnail_item),
+                    unmanaged_location_name
+                )
+                component_list.append(src_comp)
+
+                current_item_data["src_component"] = src_comp
+
+            # Add item to component list
+            thumbnail_data_items.append(current_item_data)
 
         # Create review components
         # Change asset name of each new component for review
-        is_first_review_repre = True
-        not_first_components = []
-        extended_asset_name = ""
         multiple_reviewable = len(review_representations) > 1
-        for repre in review_representations:
+        extended_asset_name = None
+        for index, repre in enumerate(review_representations):
             if not self._is_repre_video(repre) and has_movie_review:
                 self.log.debug("Movie repre has priority "
                                "from {}".format(repre))
@@ -222,45 +255,50 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Create copy of base comp item and append it
             review_item = copy.deepcopy(base_component_item)
 
-            # get asset name and define extended name variant
-            asset_name = review_item["asset_data"]["name"]
-            extended_asset_name = "_".join(
-                (asset_name, repre["name"])
+            # get first or synchronize thumbnail item
+            sync_thumbnail_item = None
+            sync_thumbnail_item_src = None
+            sync_thumbnail_data = self._get_matching_thumbnail_item(
+                repre,
+                thumbnail_data_items,
+                multiple_synced_thumbnails
             )
+            if sync_thumbnail_data:
+                sync_thumbnail_item = sync_thumbnail_data.get("item")
+                sync_thumbnail_item_src = sync_thumbnail_data.get(
+                    "src_component")
 
-            # reset extended if no need for extended asset name
-            if (
-                self.keep_first_subset_name_for_review
-                and is_first_review_repre
-            ):
-                extended_asset_name = ""
-            else:
-                # only rename if multiple reviewable
-                if multiple_reviewable:
-                    review_item["asset_data"]["name"] = extended_asset_name
-                else:
-                    extended_asset_name = ""
+            """
+            Renaming asset name only to those components which are explicitly
+            allowed in settings. Usually clients wanted to keep first component
+            as untouched product name with version and any other assetVersion
+            to be named with extended form. The renaming will only happen if
+            there is more than one reviewable component and extended name is
+            not empty.
+            """
+            extended_asset_name = self._make_extended_component_name(
+                base_component_item, repre, index)
 
-            # rename all already created components
-            # only if first repre and extended name available
-            if is_first_review_repre and extended_asset_name:
-                # and rename all already created components
-                for _ci in component_list:
-                    _ci["asset_data"]["name"] = extended_asset_name
+            if multiple_reviewable and extended_asset_name:
+                review_item["asset_data"]["name"] = extended_asset_name
+                # rename also thumbnail
+                if sync_thumbnail_item:
+                    sync_thumbnail_item["asset_data"]["name"] = (
+                        extended_asset_name
+                    )
+                # rename also src_thumbnail
+                if sync_thumbnail_item_src:
+                    sync_thumbnail_item_src["asset_data"]["name"] = (
+                        extended_asset_name
+                    )
 
-                # and rename all already created src components
-                for _sci in src_components_to_add:
-                    _sci["asset_data"]["name"] = extended_asset_name
+            # adding thumbnail component to component list
+            if sync_thumbnail_item:
+                component_list.append(copy.deepcopy(sync_thumbnail_item))
+            if sync_thumbnail_item_src:
+                component_list.append(copy.deepcopy(sync_thumbnail_item_src))
 
-                # rename also first thumbnail component if any
-                if first_thumbnail_component is not None:
-                    first_thumbnail_component[
-                        "asset_data"]["name"] = extended_asset_name
-
-            # Change location
-            review_item["component_path"] = repre_path
-            # Change component data
-
+            # add metadata to review component
             if self._is_repre_video(repre):
                 component_name = "ftrackreview-mp4"
                 metadata = self._prepare_video_component_metadata(
@@ -273,28 +311,29 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 )
                 review_item["thumbnail"] = True
 
-            review_item["component_data"] = {
-                # Default component name is "main".
-                "name": component_name,
-                "metadata": metadata
-            }
-
-            if is_first_review_repre:
-                is_first_review_repre = False
-            else:
-                # later detection for thumbnail duplication
-                not_first_components.append(review_item)
+            review_item.update({
+                "component_path": repre_path,
+                "component_data": {
+                    "name": component_name,
+                    "metadata": metadata
+                },
+                "component_location_name": ftrack_server_location_name
+            })
 
             # Create copy of item before setting location
             if "delete" not in repre.get("tags", []):
-                src_components_to_add.append(copy.deepcopy(review_item))
+                src_comp = self._create_src_component(
+                    instance,
+                    repre,
+                    copy.deepcopy(review_item),
+                    unmanaged_location_name
+                )
+                component_list.append(src_comp)
 
-            # Set location
-            review_item["component_location_name"] = (
-                ftrack_server_location_name
-            )
             # Add item to component list
             component_list.append(review_item)
+
+
             if self.upload_reviewable_with_origin_name:
                 origin_name_component = copy.deepcopy(review_item)
                 filename = os.path.basename(repre_path)
@@ -302,34 +341,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     os.path.splitext(filename)[0]
                 )
                 component_list.append(origin_name_component)
-
-        # Duplicate thumbnail component for all not first reviews
-        if first_thumbnail_component is not None:
-            for component_item in not_first_components:
-                asset_name = component_item["asset_data"]["name"]
-                new_thumbnail_component = copy.deepcopy(
-                    first_thumbnail_component
-                )
-                new_thumbnail_component["asset_data"]["name"] = asset_name
-                new_thumbnail_component["component_location_name"] = (
-                    ftrack_server_location_name
-                )
-                component_list.append(new_thumbnail_component)
-
-        # Add source components for review and thubmnail components
-        for copy_src_item in src_components_to_add:
-            # Make sure thumbnail is disabled
-            copy_src_item["thumbnail"] = False
-            # Set location
-            copy_src_item["component_location_name"] = unmanaged_location_name
-            # Modify name of component to have suffix "_src"
-            component_data = copy_src_item["component_data"]
-            component_name = component_data["name"]
-            component_data["name"] = component_name + "_src"
-            component_data["metadata"] = self._prepare_component_metadata(
-                instance, repre, copy_src_item["component_path"], False
-            )
-            component_list.append(copy_src_item)
 
         # Add others representations as component
         for repre in other_representations:
@@ -341,20 +352,23 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             # add extended name if any
             if (
-                not self.keep_first_subset_name_for_review
+                multiple_reviewable
+                and not self.keep_first_subset_name_for_review
                 and extended_asset_name
             ):
                 other_item["asset_data"]["name"] = extended_asset_name
 
-            component_data = {
-                "name": repre["name"],
-                "metadata": self._prepare_component_metadata(
-                    instance, repre, published_path, False
-                )
-            }
-            other_item["component_data"] = component_data
-            other_item["component_location_name"] = unmanaged_location_name
-            other_item["component_path"] = published_path
+            other_item.update({
+                "component_path": published_path,
+                "component_data": {
+                    "name": repre["name"],
+                    "metadata": self._prepare_component_metadata(
+                        instance, repre, published_path, False
+                    )
+                },
+                "component_location_name": unmanaged_location_name,
+            })
+
             component_list.append(other_item)
 
         def json_obj_parser(obj):
@@ -369,6 +383,124 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             )
         ))
         instance.data["ftrackComponentsList"] = component_list
+
+    def _get_matching_thumbnail_item(
+        self,
+        review_representation,
+        thumbnail_data_items,
+        are_multiple_synced_thumbnails
+    ):
+        """Return matching thumbnail item from list of thumbnail items.
+
+        If a thumbnail item already exists, this should return it.
+        The benefit is that if an `outputName` key is found in
+        representation and is also used as a `sync_key`  in a thumbnail
+        data item, it can sync with that item.
+
+        Args:
+            review_representation (dict): Review representation
+            thumbnail_data_items (list): List of thumbnail data items
+            are_multiple_synced_thumbnails (bool): If there are multiple synced
+                thumbnails
+
+        Returns:
+            dict: Thumbnail data item or empty dict
+        """
+        output_name = review_representation.get("outputName")
+        tags = review_representation.get("tags", [])
+        matching_thumbnail_item = {}
+        for thumb_item in thumbnail_data_items:
+            if (
+                are_multiple_synced_thumbnails
+                and (
+                    thumb_item["sync_key"] == output_name
+                    # intermediate files can have preset name in tags
+                    # this is usually aligned with `outputName` distributed
+                    # during thumbnail creation in `need_thumbnail` tagging
+                    # workflow
+                    or thumb_item["sync_key"] in tags
+                )
+            ):
+                # return only synchronized thumbnail if multiple
+                matching_thumbnail_item = thumb_item
+                break
+            elif not are_multiple_synced_thumbnails:
+                # return any first found thumbnail since we need thumbnail
+                # but dont care which one
+                matching_thumbnail_item = thumb_item
+                break
+
+        if not matching_thumbnail_item:
+            # WARNING: this can only happen if multiple thumbnails
+            # workflow is broken, since it found multiple matching outputName
+            # in representation but they do not align with any thumbnail item
+            self.log.warning(
+                "No matching thumbnail item found for output name "
+                "'{}'".format(output_name)
+            )
+            if not thumbnail_data_items:
+                self.log.warning(
+                    "No thumbnail data items found"
+                )
+                return {}
+            # as fallback return first thumbnail item
+            return thumbnail_data_items[0]
+
+        return matching_thumbnail_item
+
+    def _make_extended_component_name(
+            self, component_item, repre, iteration_index):
+        """ Returns the extended component name
+
+        Name is based on the asset name and representation name.
+
+        Args:
+            component_item (dict): The component item dictionary.
+            repre (dict): The representation dictionary.
+            iteration_index (int): The index of the iteration.
+
+        Returns:
+            str: The extended component name.
+
+        """
+        # reset extended if no need for extended asset name
+        if self.keep_first_subset_name_for_review and iteration_index == 0:
+            return
+
+        # get asset name and define extended name variant
+        asset_name = component_item["asset_data"]["name"]
+        return "_".join(
+            (asset_name, repre["name"])
+        )
+
+    def _create_src_component(
+            self, instance, repre, component_item, location):
+        """Create src component for thumbnail.
+
+        This will replicate the input component and change its name to
+        have suffix "_src".
+
+        Args:
+            instance (pyblish.api.Instance): Instance
+            repre (dict): Representation
+            component_item (dict): Component item
+            location (str): Location name
+
+        Returns:
+            dict: Component item
+        """
+        # Make sure thumbnail is disabled
+        component_item["thumbnail"] = False
+        # Set location
+        component_item["component_location_name"] = location
+        # Modify name of component to have suffix "_src"
+        component_data = component_item["component_data"]
+        component_name = component_data["name"]
+        component_data["name"] = component_name + "_src"
+        component_data["metadata"] = self._prepare_component_metadata(
+            instance, repre, component_item["component_path"], False
+        )
+        return component_item
 
     def _collect_additional_metadata(self, streams):
         pass
@@ -472,9 +604,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             stream_width = tmp_width
             stream_height = tmp_height
 
-            self.log.debug("FPS from stream is {} and duration is {}".format(
-                input_framerate, stream_duration
-            ))
             frame_out = float(stream_duration) * stream_fps
             break
 

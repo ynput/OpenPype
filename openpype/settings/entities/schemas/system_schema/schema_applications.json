@@ -11,6 +11,10 @@
     },
     {
       "type": "schema",
+      "name": "schema_mayapy"
+    },
+    {
+      "type": "schema",
       "name": "schema_3dsmax"
     },
     {
@@ -104,6 +108,10 @@
     {
       "type": "schema",
       "name": "schema_djv"
+    },
+    {
+      "type": "schema",
+      "name": "schema_3dequalizer"
     },
     {
       "type": "dict-modifiable",

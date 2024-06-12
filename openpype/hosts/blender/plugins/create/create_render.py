@@ -1,42 +1,33 @@
 """Create render."""
 import bpy
 
-from openpype.pipeline import get_current_task_name
-from openpype.hosts.blender.api import plugin, lib
+from openpype.lib import version_up
+from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.render_lib import prepare_rendering
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.api.workio import save_file
 
 
-class CreateRenderlayer(plugin.Creator):
-    """Single baked camera"""
+class CreateRenderlayer(plugin.BaseCreator):
+    """Single baked camera."""
 
-    name = "renderingMain"
+    identifier = "io.openpype.creators.blender.render"
     label = "Render"
     family = "render"
     icon = "eye"
 
-    def process(self):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
-        # Create instance object
-        asset = self.data["asset"]
-        subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
-        asset_group = bpy.data.collections.new(name=name)
-
+    def create(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
         try:
-            instances.children.link(asset_group)
-            self.data['task'] = get_current_task_name()
-            lib.imprint(asset_group, self.data)
+            # Run parent create method
+            collection = super().create(
+                subset_name, instance_data, pre_create_data
+            )
 
-            prepare_rendering(asset_group)
+            prepare_rendering(collection)
         except Exception:
             # Remove the instance if there was an error
-            bpy.data.collections.remove(asset_group)
+            bpy.data.collections.remove(collection)
             raise
 
         # TODO: this is undesiderable, but it's the only way to be sure that
@@ -48,6 +39,7 @@ class CreateRenderlayer(plugin.Creator):
         # settings. Even the validator to check that the file is saved will
         # detect the file as saved, even if it isn't. The only solution for
         # now it is to force the file to be saved.
-        bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
+        filepath = version_up(bpy.data.filepath)
+        save_file(filepath, copy=False)
 
-        return asset_group
+        return collection

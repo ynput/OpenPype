@@ -5,9 +5,8 @@ from openpype.style import (
     get_default_entity_icon_color,
     get_disabled_entity_icon_color,
 )
+from openpype.tools.utils import TreeView
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-
-from .utils import TreeView
 
 FILENAME_ROLE = QtCore.Qt.UserRole + 1
 FILEPATH_ROLE = QtCore.Qt.UserRole + 2
@@ -29,6 +28,10 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         self.setHeaderData(0, QtCore.Qt.Horizontal, "Name")
         self.setHeaderData(1, QtCore.Qt.Horizontal, "Date Modified")
 
+        controller.register_event_callback(
+            "selection.folder.changed",
+            self._on_folder_changed
+        )
         controller.register_event_callback(
             "selection.task.changed",
             self._on_task_changed
@@ -63,6 +66,10 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         if item is None:
             return QtCore.QModelIndex()
         return self.indexFromItem(item)
+
+    def refresh(self):
+        if not self._published_mode:
+            self._fill_items()
 
     def _get_missing_context_item(self):
         if self._missing_context_item is None:
@@ -129,6 +136,11 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         root_item = self.invisibleRootItem()
         root_item.takeRow(self._empty_root_item.row())
         self._empty_item_used = False
+
+    def _on_folder_changed(self, event):
+        self._selected_folder_id = event["folder_id"]
+        if not self._published_mode:
+            self._fill_items()
 
     def _on_task_changed(self, event):
         self._selected_folder_id = event["folder_id"]
@@ -271,7 +283,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
 
         selection_model = view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
-        view.double_clicked_left.connect(self._on_left_double_click)
+        view.double_clicked.connect(self._on_mouse_double_click)
         view.customContextMenuRequested.connect(self._on_context_menu)
 
         controller.register_event_callback(
@@ -333,8 +345,9 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         filepath = self.get_selected_path()
         self._controller.set_selected_workfile_path(filepath)
 
-    def _on_left_double_click(self):
-        self.open_current_requested.emit()
+    def _on_mouse_double_click(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.open_current_requested.emit()
 
     def _on_context_menu(self, point):
         index = self._view.indexAt(point)
@@ -362,10 +375,13 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         self.duplicate_requested.emit()
 
     def _on_expected_selection_change(self, event):
-        if event["workfile_name_selected"]:
+        workfile_info = event["workfile"]
+        if not workfile_info["current"]:
             return
 
-        workfile_name = event["workfile_name"]
+        self._model.refresh()
+
+        workfile_name = workfile_info["name"]
         if (
             workfile_name is not None
             and workfile_name != self._get_selected_info()["filename"]
@@ -376,5 +392,5 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
                 self._view.setCurrentIndex(proxy_index)
 
         self._controller.expected_workfile_selected(
-            event["folder_id"], event["task_name"], workfile_name
+            event["folder"]["id"], event["task"]["name"], workfile_name
         )

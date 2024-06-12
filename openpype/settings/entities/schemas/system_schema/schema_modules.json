@@ -209,37 +209,6 @@
         },
         {
             "type": "dict",
-            "key": "muster",
-            "label": "Muster",
-            "require_restart": true,
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "text",
-                    "key": "MUSTER_REST_URL",
-                    "label": "Muster Rest URL"
-                },
-                {
-                    "type": "dict-modifiable",
-                    "object_type": {
-                        "type": "number",
-                        "minimum": 0,
-                        "maximum": 300
-                    },
-                    "is_group": true,
-                    "key": "templates_mapping",
-                    "label": "Templates mapping"
-                }
-            ]
-        },
-        {
-            "type": "dict",
             "key": "royalrender",
             "label": "Royal Render",
             "require_restart": true,
@@ -355,6 +324,20 @@
         {
             "type": "dynamic_schema",
             "name": "system_settings/modules"
+        },
+        {
+            "type": "dict",
+            "key": "asset_reporter",
+            "label": "Asset Usage Reporter",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
         }
     ]
 }

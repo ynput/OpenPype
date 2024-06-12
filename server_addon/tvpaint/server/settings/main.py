@@ -1,6 +1,6 @@
-from pydantic import Field, validator
 from ayon_server.settings import (
     BaseSettingsModel,
+    SettingsField,
     ensure_unique_names,
 )
 
@@ -14,52 +14,27 @@ from .publish_plugins import (
 )
 
 
-class PublishGUIFilterItemModel(BaseSettingsModel):
-    _layout = "compact"
-    name: str = Field(title="Name")
-    value: bool = Field(True, title="Active")
-
-
-class PublishGUIFiltersModel(BaseSettingsModel):
-    _layout = "compact"
-    name: str = Field(title="Name")
-    value: list[PublishGUIFilterItemModel] = Field(default_factory=list)
-
-    @validator("value")
-    def validate_unique_outputs(cls, value):
-        ensure_unique_names(value)
-        return value
-
-
 class TvpaintSettings(BaseSettingsModel):
-    imageio: TVPaintImageIOModel = Field(
+    imageio: TVPaintImageIOModel = SettingsField(
         default_factory=TVPaintImageIOModel,
         title="Color Management (ImageIO)"
     )
-    stop_timer_on_application_exit: bool = Field(
+    stop_timer_on_application_exit: bool = SettingsField(
         title="Stop timer on application exit")
-    create: CreatePluginsModel = Field(
+    create: CreatePluginsModel = SettingsField(
         default_factory=CreatePluginsModel,
         title="Create plugins"
     )
-    publish: PublishPluginsModel = Field(
+    publish: PublishPluginsModel = SettingsField(
         default_factory=PublishPluginsModel,
         title="Publish plugins")
-    load: LoadPluginsModel = Field(
+    load: LoadPluginsModel = SettingsField(
         default_factory=LoadPluginsModel,
         title="Load plugins")
-    workfile_builder: WorkfileBuilderPlugin = Field(
+    workfile_builder: WorkfileBuilderPlugin = SettingsField(
         default_factory=WorkfileBuilderPlugin,
         title="Workfile Builder"
     )
-    filters: list[PublishGUIFiltersModel] = Field(
-        default_factory=list,
-        title="Publish GUI Filters")
-
-    @validator("filters")
-    def validate_unique_outputs(cls, value):
-        ensure_unique_names(value)
-        return value
 
 
 DEFAULT_VALUES = {

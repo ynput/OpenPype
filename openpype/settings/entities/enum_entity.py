@@ -172,7 +172,8 @@ class HostsEnumEntity(BaseEnumEntity):
         "standalonepublisher",
         "substancepainter",
         "traypublisher",
-        "webpublisher"
+        "webpublisher",
+        "equalizer",
     ]
 
     def _item_initialization(self):

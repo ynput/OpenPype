@@ -22,7 +22,9 @@
         "aov_separator": "underscore",
         "image_format": "exr",
         "multilayer_exr": true,
-        "aov_list": [],
+        "renderer": "CYCLES",
+        "compositing": true,
+        "aov_list": ["combined"],
         "custom_passes": []
     },
     "workfile_builder": {
@@ -71,6 +73,11 @@
             "optional": false,
             "active": true
         },
+        "ValidateInstanceEmpty": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ExtractBlend": {
             "enabled": true,
             "optional": true,
@@ -89,10 +96,10 @@
             "optional": true,
             "active": false
         },
-        "ExtractABC": {
+        "ExtractModelABC": {
             "enabled": true,
             "optional": true,
-            "active": false
+            "active": true
         },
         "ExtractBlendAnimation": {
             "enabled": true,
