@@ -1114,7 +1114,8 @@
             "flags": [
                 "stripNamespaces",
                 "writeNormals",
-                "worldSpace"
+                "worldSpace",
+                "uvWrite"
             ],
             "attr": "",
             "attrPrefix": "",
