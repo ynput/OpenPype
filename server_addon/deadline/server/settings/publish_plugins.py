@@ -211,6 +211,32 @@ class HarmonySubmitDeadlineModel(BaseSettingsModel):
     department: str = SettingsField(title="Department")
 
 
+class HoudiniSubmitDeadlineModel(BaseSettingsModel):
+    """Houdini deadline render submitter settings."""
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+
+    priority: int = SettingsField(title="Priority")
+    chunk_size: int = SettingsField(title="Chunk Size")
+    group: str = SettingsField(title="Group")
+
+    export_priority: int = SettingsField(title="Export Priority")
+    export_chunk_size: int = SettingsField(title="Export Chunk Size")
+    export_group: str = SettingsField(title="Export Group")
+
+
+class HoudiniCacheSubmitDeadlineModel(BaseSettingsModel):
+    """Houdini deadline cache submitter settings."""
+    enabled: bool = SettingsField(title="Enabled")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+
+    priority: int = SettingsField(title="Priority")
+    chunk_size: int = SettingsField(title="Chunk Size")
+    group: str = SettingsField(title="Group")
+
+
 class AfterEffectsSubmitDeadlineModel(BaseSettingsModel):
     """After Effects deadline submitter settings."""
 
@@ -309,6 +335,12 @@ class PublishPluginsModel(BaseSettingsModel):
     MayaSubmitDeadline: MayaSubmitDeadlineModel = SettingsField(
         default_factory=MayaSubmitDeadlineModel,
         title="Maya Submit to deadline")
+    HoudiniCacheSubmitDeadline: HoudiniCacheSubmitDeadlineModel = SettingsField(  # noqa
+        default_factory=HoudiniCacheSubmitDeadlineModel,
+        title="Houdini Submit cache to deadline")
+    HoudiniSubmitDeadline: HoudiniSubmitDeadlineModel = SettingsField(
+        default_factory=HoudiniSubmitDeadlineModel,
+        title="Houdini Submit render to deadline")
     MaxSubmitDeadline: MaxSubmitDeadlineModel = SettingsField(
         default_factory=MaxSubmitDeadlineModel,
         title="Max Submit to deadline")
@@ -375,6 +407,25 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         # this used to be empty dict
         "pluginInfo": "",
         "scene_patches": []
+    },
+    "HoudiniCacheSubmitDeadline": {
+        "enabled": True,
+        "optional": False,
+        "active": True,
+        "priority": 50,
+        "chunk_size": 999999,
+        "group": ""
+    },
+    "HoudiniSubmitDeadline": {
+        "enabled": True,
+        "optional": False,
+        "active": True,
+        "priority": 50,
+        "chunk_size": 1,
+        "group": "",
+        "export_priority": 50,
+        "export_chunk_size": 10,
+        "export_group": ""
     },
     "MaxSubmitDeadline": {
         "enabled": True,
