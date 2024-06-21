@@ -195,8 +195,20 @@ def _import_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
 
     sys.modules[full_module_name] = module
 
-    # Execute module import
-    loader.exec_module(module)
+    try:
+        # Execute module import
+        loader.exec_module(module)
+
+    except:
+        # In specific cases, module_name needs to be explicitely defined
+        # as it is not automatically retrieved by the module import.
+        # Therefore, we manually add origin and submodule search locations if previous
+        # loader has not loaded, by reusing given dirpath with added informations.
+        spec.origin=f'{dirpath}{module_name}\\__init__.py'
+        spec.submodule_search_locations=[f'{dirpath}\\{module_name}']
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[full_module_name] = module
+        loader.exec_module(module)
 
     return module
 
