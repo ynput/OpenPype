@@ -207,6 +207,8 @@ def _import_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
         spec.origin=f'{dirpath}{module_name}\\__init__.py'
         spec.submodule_search_locations=[f'{dirpath}\\{module_name}']
         module = importlib.util.module_from_spec(spec)
+        if dst_module is not None:
+            setattr(dst_module, module_name, module)
         sys.modules[full_module_name] = module
         loader.exec_module(module)
 
