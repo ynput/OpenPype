@@ -61,7 +61,7 @@ class CreateRender(UnrealAssetCreator):
         # Create the level sequence
         asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
         seq = asset_tools.create_asset(
-            asset_name=subset_name,
+            asset_name=instance_data["asset"],
             package_path=sequence_dir,
             asset_class=unreal.LevelSequence,
             factory=unreal.LevelSequenceFactoryNew())
