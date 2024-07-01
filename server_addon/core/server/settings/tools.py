@@ -506,7 +506,8 @@ DEFAULT_TOOLS_VALUES = {
             },
             {
                 "product_types": [
-                    "tycache"
+                    "tycache",
+                    "tyspline"
                 ],
                 "hosts": [
                     "max"

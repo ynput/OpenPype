@@ -143,6 +143,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "blendScene",
                 "yeticacheUE",
                 "tycache",
+                "tyspline",
                 "lensDistortion",
                 ]
 
