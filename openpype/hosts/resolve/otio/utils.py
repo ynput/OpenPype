@@ -3,7 +3,7 @@ import opentimelineio as otio
 
 
 def timecode_to_frames(timecode, framerate):
-    rt = otio.opentime.from_timecode(timecode, 24)
+    rt = otio.opentime.from_timecode(timecode, framerate)
     return int(otio.opentime.to_frames(rt))
 
 
