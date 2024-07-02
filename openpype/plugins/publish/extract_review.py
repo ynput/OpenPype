@@ -78,6 +78,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     profiles = None
 
     def process(self, instance):
+
         self.log.debug(str(instance.data["representations"]))
         # Skip review when requested.
         if not instance.data.get("review", True):
@@ -713,6 +714,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ffmpeg_output_args.extend(audio_out_args)
 
         res_filters = self.rescaling_filters(temp_data, output_def, new_repre)
+
+        # Override Scaling filters if source resolution is set as tag
+        if "source_resolution" in output_def['tags']:
+            res_filters = [f for f in res_filters if "scale" not in f]
+            
         ffmpeg_video_filters.extend(res_filters)
 
         ffmpeg_input_args = self.split_ffmpeg_args(ffmpeg_input_args)
@@ -1226,6 +1232,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
+        # Skip rescaling filters if "source_resolution" tag is present
+        if "source_resolution" in output_def['tags']:
+            self.log.debug("Source resolution tag present, skipping rescaling filters")
+            return filters
+
         # if reformat input video file is already reforamted from upstream
         reformat_in_baking = bool("reformated" in new_repre["tags"])
         self.log.debug("reformat_in_baking: `{}`".format(reformat_in_baking))
@@ -1401,9 +1412,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "Output resolution is same as input's"
                 " and \"letter_box\" key is not set. Skipping reformat part."
             )
-            new_repre["resolutionWidth"] = input_width
-            new_repre["resolutionHeight"] = input_height
-            return filters
 
         # scaling none square pixels and 1920 width
         if input_height != output_height or input_width != output_width:
@@ -1429,6 +1437,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     output_height
                 )
             )
+
+        self.log.debug(f"Input resolution is: {input_width}x{input_height}")
+        self.log.debug(f"Output resolution is: {output_width}x{output_height}")
 
         new_repre["resolutionWidth"] = output_width
         new_repre["resolutionHeight"] = output_height
