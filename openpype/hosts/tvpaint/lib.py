@@ -179,6 +179,9 @@ def _calculate_in_range_frames(
     # Calculate in range frames
     in_range_frames = []
     for frame_idx in exposure_frames:
+        # if the range_start is in between 2 exposure frame
+        if range_start > frame_idx:
+            output_idx_by_frame_idx[range_start] = frame_idx
         if range_start <= frame_idx <= range_end:
             output_idx_by_frame_idx[frame_idx] = frame_idx
             in_range_frames.append(frame_idx)
@@ -257,7 +260,10 @@ def _cleanup_frame_references(output_idx_by_frame_idx):
         real_reference_idx = reference_idx
         _tmp_reference_idx = reference_idx
         while True:
-            _temp = output_idx_by_frame_idx[_tmp_reference_idx]
+            _temp = output_idx_by_frame_idx.get(_tmp_reference_idx)
+            if not _temp:
+                # Key outside the range, skip
+                break
             if _temp == _tmp_reference_idx:
                 real_reference_idx = _tmp_reference_idx
                 break
