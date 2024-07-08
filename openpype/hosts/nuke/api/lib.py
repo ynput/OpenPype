@@ -2543,6 +2543,8 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             "name": project_name
         }
 
+        log.info(format_data)
+
         if any(x_ for x_ in format_data.values() if x_ is None):
             msg = ("Missing set shot attributes in DB."
                    "\nContact your supervisor!."
@@ -2603,6 +2605,80 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         # add colorspace menu item
         self.set_colorspace()
         del os.environ["OP_NUKE_SKIP_SAVE_EVENT"]
+
+    def set_custom_resolution(self):
+        custom_settings = self.get_custom_settings()
+        if not custom_settings:
+            log.warning("Can't access to quad custom settings. Custom settings will not be applied.")
+            return
+
+        self.set_workfile_overrides(
+            custom_settings=custom_settings
+        )
+
+    def get_custom_settings(self):
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+
+        return project_settings.get('quad_custom_settings')
+
+    def set_workfile_overrides(self, custom_settings):
+        project_name = get_current_project_name()
+        resolution_overrides = custom_settings.get("general", {}).get("working_resolution_overrides", None)
+        if not resolution_overrides:
+            log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
+            return
+
+        host_name = get_current_host_name()
+        overrides_group = self._get_override_group(resolution_overrides, host_name)
+
+        if not overrides_group:
+            log.warning("Can't find overrides group that fit application. Abort.")
+
+        asset_data = self._asset_entity["data"]
+        format_data = {
+            "width": int(overrides_group.get('working_resolution_width')),
+            "height": int(overrides_group.get('working_resolution_height')),
+            "pixel_aspect": asset_data.get(
+                'pixelAspect',
+                asset_data.get('pixel_aspect', 1)),
+            "name": f"{project_name}_{host_name}"
+        }
+
+        if any(x_ for x_ in format_data.values() if x_ is None):
+            msg = ("Missing override from custom settings."
+                   "\nContact your supervisor!."
+                   "\n\nWidth: `{width}`"
+                   "\nHeight: `{height}`"
+                   "\nPixel Aspect: `{pixel_aspect}`").format(**format_data)
+            log.error(msg)
+            nuke.message(msg)
+
+        existing_format = None
+        for format in nuke.formats():
+            if format_data["name"] == format.name():
+                existing_format = format
+                break
+
+        if existing_format:
+            # Enforce existing format to be correct.
+            existing_format.setWidth(format_data["width"])
+            existing_format.setHeight(format_data["height"])
+            existing_format.setPixelAspect(format_data["pixel_aspect"])
+        else:
+            format_string = self.make_format_string(**format_data)
+            log.info("Creating new format: {}".format(format_string))
+            nuke.addFormat(format_string)
+
+        nuke.root()["format"].setValue(format_data["name"])
+        log.info(f"Format is set with values : {format_data}")
+
+    def _get_override_group(self, resolution_overrides, host_name):
+        for resolution_overrides_set in resolution_overrides:
+            if host_name in resolution_overrides_set.get('hosts', []):
+                return resolution_overrides_set
+
+        return None
 
     def set_favorites(self):
         from .utils import set_context_favorites
