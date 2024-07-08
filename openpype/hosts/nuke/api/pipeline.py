@@ -193,8 +193,6 @@ def add_nuke_callbacks():
 
     log.info("Added Nuke callbacks ...")
 
-def test():
-    nuke.message('test')
 
 def reload_config():
     """Attempt to reload pipeline at run-time.

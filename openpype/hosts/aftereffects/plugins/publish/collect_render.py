@@ -26,7 +26,6 @@ class AERenderInstance(RenderInstance):
 
 
 class CollectAERender(publish.AbstractCollectRender):
-
     order = pyblish.api.CollectorOrder + 0.405
     label = "Collect After Effects Render Layers"
     hosts = ["aftereffects"]
@@ -53,9 +52,9 @@ class CollectAERender(publish.AbstractCollectRender):
         version = context.data["version"]
 
         project_entity = context.data["projectEntity"]
-        project_settings = get_project_settings(project_entity['name'])
+        project_settings = get_project_settings(project_entity["name"])
         try:
-            format_conversion_table = project_settings['fix_custom_settings']['aftereffects']['publish']['CollectAERender']['format_conversion']
+            format_conversion_table = project_settings["fix_custom_settings"]["hosts"]["aftereffects"]["publish"]["CollectAERender"]["format_conversion"]
         except KeyError:
             self.log.warning("Can't retrieve format conversion table from after effects custom plugins.")
             format_conversion_table = None
@@ -167,7 +166,8 @@ class CollectAERender(publish.AbstractCollectRender):
             return retrieved_format
 
         return {
-            single_format['format'].lower(): single_format['converted_label'] for single_format in format_conversion_table
+            single_format['format'].lower(): single_format['converted_label'] for single_format in
+            format_conversion_table
         }.get(retrieved_format.lower(), retrieved_format.lower())
 
     def get_expected_files(self, render_instance):

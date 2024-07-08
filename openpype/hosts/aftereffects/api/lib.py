@@ -124,13 +124,13 @@ def get_custom_settings(project_name):
 
     return custom_settings
 
+
 def get_workfile_overrides(custom_settings):
-    resolution_overrides = custom_settings.get("general", []).get("working_resolution_overrides", None)
+    resolution_overrides = custom_settings.get("general", {}).get("working_resolution_overrides", None)
     if not resolution_overrides:
         log.warning("Can't retrieve resolution overrides for workfiles. Will not be applied.")
         return
-    print('@@ OVERRIDE')
-    print(resolution_overrides)
+
     current_host_name = get_current_host_name()
     overrides_group = _get_override_group(resolution_overrides, current_host_name)
     if not overrides_group:
