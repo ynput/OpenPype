@@ -203,6 +203,20 @@ or updating already created. Publishing will create OTIO file.
         if self._creator_settings.get("default_variants"):
             self.default_variants = self._creator_settings["default_variants"]
 
+        # set the workfile_start_frame in the settings
+        workfile_start_frame = self._creator_settings["workfile_start_frame"]
+        workfile_start_frame_attr = self._get_attribute_by_name("workfile_start_frame")
+
+        if workfile_start_frame_attr:
+            workfile_start_frame_attr.default = int(workfile_start_frame)
+
+        # switch to auto assign the newly created instance to the corresponding shot
+        # and not the selected one in the publisher window
+        self.auto_asset_assign = self._creator_settings["auto_assign_to_asset"]
+
+        # a switch to add the info that we'll delete or not the clip after review creation
+        self.keep_clip = self._creator_settings["keep_clip"]
+
     def create(self, subset_name, instance_data, pre_create_data):
         allowed_family_presets = self._get_allowed_family_presets(
             pre_create_data)
@@ -569,7 +583,8 @@ or updating already created. Publishing will create OTIO file.
                 "parent_instance_id": parenting_data["instance_id"],
                 "creator_attributes": {
                     "parent_instance": parenting_data["instance_label"],
-                    "add_review_family": preset.get("review")
+                    "add_review_family": preset.get("review"),
+                    "keep_clip": self.keep_clip
                 }
             })
 
@@ -645,8 +660,8 @@ or updating already created. Publishing will create OTIO file.
         fps = instance_data["fps"]
         variant_name = instance_data["variant"]
 
-        # basic unique asset name
-        clip_name = os.path.splitext(otio_clip.name)[0].lower()
+        # Unique asset name (without converting to lowercase)
+        clip_name = os.path.splitext(otio_clip.name)[0]
         project_doc = get_project(self.project_name)
 
         shot_name, shot_metadata = self._shot_metadata_solver.generate_data(
@@ -665,6 +680,11 @@ or updating already created. Publishing will create OTIO file.
                 "project_doc": project_doc
             }
         )
+
+        # get the task for asset type
+        task =""
+        if shot_metadata.get('tasks'):
+            task = self._get_task_by_asset_type(parent_asset_name, shot_metadata["tasks"])
 
         self._validate_name_uniqueness(shot_name)
 
@@ -693,8 +713,8 @@ or updating already created. Publishing will create OTIO file.
 
             # HACK: just for temporal bug workaround
             # TODO: should loockup shot name for update
-            "asset": parent_asset_name,
-            "task": "",
+            "asset": shot_name if self.auto_asset_assign else parent_asset_name,
+            "task": task,
 
             "newAssetPublishing": True,
 
@@ -708,6 +728,18 @@ or updating already created. Publishing will create OTIO file.
         base_instance_data.update(shot_metadata)
 
         return base_instance_data
+
+    def _get_task_by_asset_type(self, asset, task_dict):
+        """Return the task assign to the asset type (Shots) to publish the review in
+
+        Args:
+            asset (str): Name of the asset type of the instance.
+            task_dict (dict): dict from the settings to match a task to an asset type.
+
+        Returns:
+            str: task to review
+        """
+        return task_dict[asset]["type"] if asset in task_dict.keys() else ""
 
     def _get_timing_data(
         self,
@@ -872,3 +904,19 @@ or updating already created. Publishing will create OTIO file.
 
         attr_defs.extend(CLIP_ATTR_DEFS)
         return attr_defs
+
+    def _get_attribute_by_name(self, attr_key):
+        """
+        Return the correct attr from CLIP_ATTR_DEFS depending on the given attr_key
+
+        Args:
+            attr_key (str): name of the key attr
+
+        Returns:
+            EnumDef or NumberDef: If one of their key match the attr_key
+        """
+        for attr in CLIP_ATTR_DEFS:
+            if attr.key == attr_key:
+                return(attr)
+
+        return None

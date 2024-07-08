@@ -63,6 +63,10 @@ class ExtractImage(pyblish.api.ContextPlugin):
                     file_basename = os.path.splitext(
                         stub.get_active_document_name()
                     )[0]
+
+                    creator_attributes = instance.data["creator_attributes"]
+                    if creator_attributes.get("export_psd"):
+                        self.formats.append("psd")
                     for extension in self.formats:
                         _filename = "{}.{}".format(file_basename,
                                                    extension)

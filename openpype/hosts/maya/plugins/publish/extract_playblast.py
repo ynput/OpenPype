@@ -9,6 +9,7 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 from maya import cmds
+from maya.plugin.evaluator.cache_preferences import CachePreferenceEnabled
 
 
 @contextlib.contextmanager
@@ -124,7 +125,22 @@ class ExtractPlayblast(publish.Extractor):
         preset["filename"] = path
         preset["overwrite"] = True
 
+        # Bugfix: to avoid playblast generation issues with sequence image plane,
+        # cached playblack need to be enabled
+        # Firstly, save and switch the anim evaluation mode to parallel
+        # (needed for the cached playback option)
+        prev_evaluation_mode_info = cmds.evaluationManager(query=True, mode=True)
+        # Switch to parallel
+        cmds.evaluationManager(mode="parallel")
+        # Then, save the current cachedPlayback value to be able to apply it again after playblast capture
+        prev_cached_playblast_status = cmds.optionVar(query="cachedPlaybackEnable")
+        # Force the value cachedPlayback value to ON
+        cmds.optionVar(intValue=("cachedPlaybackEnable", 1))
+
         cmds.refresh(force=True)
+
+        # Update the engine with the set value
+        CachePreferenceEnabled().set_state_from_preference()
 
         refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
         cmds.currentTime(refreshFrameInt - 1, edit=True)
@@ -210,6 +226,16 @@ class ExtractPlayblast(publish.Extractor):
                 )
 
                 self._capture(preset)
+
+        # Restoring the cached playback option value
+        cmds.optionVar(intValue=("cachedPlaybackEnable", int(prev_cached_playblast_status)))
+
+        # Restore anim evaluation mode
+        # (directly access index 0 sice it should be a list with a least one value)
+        cmds.evaluationManager(mode=prev_evaluation_mode_info[0])
+
+        # Update the engine internal value for the cached playback option
+        CachePreferenceEnabled().set_state_from_preference()
 
         # Restoring viewport options.
         if viewport_defaults:
