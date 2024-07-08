@@ -260,9 +260,9 @@ def _cleanup_frame_references(output_idx_by_frame_idx):
         real_reference_idx = reference_idx
         _tmp_reference_idx = reference_idx
         while True:
-            #to avoid not finding key (outside the range) we make a get
             _temp = output_idx_by_frame_idx.get(_tmp_reference_idx)
             if not _temp:
+                # Key outside the range, skip
                 break
             if _temp == _tmp_reference_idx:
                 real_reference_idx = _tmp_reference_idx
