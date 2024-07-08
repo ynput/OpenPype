@@ -54,7 +54,7 @@ class CollectAERender(publish.AbstractCollectRender):
         project_entity = context.data["projectEntity"]
         project_settings = get_project_settings(project_entity["name"])
         try:
-            format_conversion_table = project_settings["fix_custom_settings"]["hosts"]["aftereffects"]["publish"]["CollectAERender"]["format_conversion"]
+            format_conversion_table = project_settings["quad_custom_settings"]["hosts"]["aftereffects"]["publish"]["CollectAERender"]["format_conversion"]
         except KeyError:
             self.log.warning("Can't retrieve format conversion table from after effects custom plugins.")
             format_conversion_table = None

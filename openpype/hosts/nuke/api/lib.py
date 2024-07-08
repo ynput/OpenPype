@@ -2620,7 +2620,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
 
-        return project_settings.get('fix_custom_settings')
+        return project_settings.get('quad_custom_settings')
 
     def set_workfile_overrides(self, custom_settings):
         project_name = get_current_project_name()

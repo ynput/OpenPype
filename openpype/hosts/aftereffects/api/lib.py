@@ -117,7 +117,7 @@ def get_asset_settings(asset_doc):
 
 def get_custom_settings(project_name):
     project_settings = get_project_settings(project_name)
-    custom_settings = project_settings.get('fix_custom_settings')
+    custom_settings = project_settings.get('quad_custom_settings')
     if not custom_settings:
         log.warning("Can't access to quad custom settings. Custom settings will not be applied.")
         return
