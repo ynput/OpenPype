@@ -475,7 +475,8 @@ class MayaPlaceholderCreatePlugin(PlaceholderPlugin, PlaceholderCreateMixin):
         """
         node = placeholder.scene_identifier
 
-        cmds.sets(node, addElement=PLACEHOLDER_SET)
+        if cmds.objExists(PLACEHOLDER_SET):
+            cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
         update_instances_frame_range()
