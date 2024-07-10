@@ -566,6 +566,9 @@ class DeadlineLimitsPluginEnumEntity(BaseEnumEntity):
 
         modules_system_settings = get_system_settings()["modules"]
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
+        if not deadline_enabled:
+            return [], set()
+
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default", "")  # noqa
 
         try:
@@ -654,7 +657,7 @@ class DeadlinePoolsEnumEntity(DynamicEnumEntity):
         modules_system_settings = get_system_settings()["modules"]
         deadline_enabled = modules_system_settings["deadline"]["enabled"]
         if not deadline_enabled:
-            return
+            return [], set()
 
         deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default", "")  # noqa
         manager = _get_modules_manager()

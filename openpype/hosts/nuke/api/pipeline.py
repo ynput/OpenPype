@@ -175,10 +175,12 @@ def add_nuke_callbacks():
 
     # set checker for last versions on loaded containers
     nuke.addOnScriptLoad(check_inventory_versions)
-    nuke.addOnScriptSave(check_inventory_versions)
 
     # set apply all workfile settings on script load and save
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
+
+    # set apply all custom settings on script load and save
+    nuke.addOnScriptLoad(workfile_settings.set_custom_resolution)
 
     # Emit events
     nuke.addOnCreate(_on_scene_open, nodeClass="Root")
@@ -301,6 +303,10 @@ def _install_menu():
     menu.addCommand(
         "Set Resolution",
         lambda: WorkfileSettings().reset_resolution()
+    )
+    menu.addCommand(
+        "Set Custom Resolution",
+        lambda: WorkfileSettings().set_custom_resolution()
     )
     menu.addCommand(
         "Set Frame Range",
