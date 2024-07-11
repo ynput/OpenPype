@@ -9,7 +9,8 @@ from pathlib import Path
 
 def execute():
     blender_addons_folder_path = get_addons_folder_path()
-    install_deadline_addon(blender_addons_folder_path)
+    #--- desactivate the deadline addOn since we don't have it anymore ---#
+    #install_deadline_addon(blender_addons_folder_path)
     enable_user_addons(blender_addons_folder_path)
     bpy.ops.wm.save_userpref()
 
