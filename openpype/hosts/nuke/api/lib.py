@@ -2599,12 +2599,17 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
     def set_context_settings(self):
         os.environ["OP_NUKE_SKIP_SAVE_EVENT"] = "True"
         # replace reset resolution from avalon core to pype's
-        self.reset_resolution()
+        if self._get_set_resolution_startup():
+            self.reset_resolution()
         # replace reset resolution from avalon core to pype's
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
         del os.environ["OP_NUKE_SKIP_SAVE_EVENT"]
+
+    def _get_set_resolution_startup(self):
+        custom_settings = self.get_custom_settings()
+        return custom_settings.get("hosts", {}).get("nuke", None).get("set_resolution_startup", True)
 
     def set_custom_resolution(self):
         custom_settings = self.get_custom_settings()
@@ -2670,8 +2675,11 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             log.info("Creating new format: {}".format(format_string))
             nuke.addFormat(format_string)
 
-        nuke.root()["format"].setValue(format_data["name"])
-        log.info(f"Format is set with values : {format_data}")
+        if self._get_set_resolution_startup():
+            nuke.root()["format"].setValue(format_data["name"])
+            log.info(f"Format is set with values : {format_data}")
+        else:
+            log.info(f"Format has not been set, see OP settings to activate it")
 
     def _get_override_group(self, resolution_overrides, host_name):
         for resolution_overrides_set in resolution_overrides:
