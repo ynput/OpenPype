@@ -2609,17 +2609,16 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
 
     def _get_set_resolution_startup(self):
         custom_settings = self.get_custom_settings()
-        return custom_settings.get("hosts", {}).get("nuke", {}).get("set_resolution_startup", True)
+        return custom_settings.get("hosts", {}).get("nuke", None).get("set_resolution_startup", True)
 
-    def set_custom_resolution(self, emitted_from_menu=False):
+    def set_custom_resolution(self):
         custom_settings = self.get_custom_settings()
         if not custom_settings:
             log.warning("Can't access to quad custom settings. Custom settings will not be applied.")
             return
 
         self.set_workfile_overrides(
-            custom_settings=custom_settings,
-            emitted_from_menu = emitted_from_menu
+            custom_settings=custom_settings
         )
 
     def get_custom_settings(self):
@@ -2628,7 +2627,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
 
         return project_settings.get('quad_custom_settings')
 
-    def set_workfile_overrides(self, custom_settings, emitted_from_menu=False):
+    def set_workfile_overrides(self, custom_settings):
         project_name = get_current_project_name()
         resolution_overrides = custom_settings.get("general", {}).get("working_resolution_overrides", None)
         if not resolution_overrides:
@@ -2676,7 +2675,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             log.info("Creating new format: {}".format(format_string))
             nuke.addFormat(format_string)
 
-        if self._get_set_resolution_startup() or emitted_from_menu:
+        if self._get_set_resolution_startup():
             nuke.root()["format"].setValue(format_data["name"])
             log.info(f"Format is set with values : {format_data}")
         else:
