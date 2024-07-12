@@ -102,8 +102,7 @@ class OBJECT_OT_open_render_folder(bpy.types.Operator):
             self.report({'ERROR'}, "File '{}' not found".format(latest_render_folderpath))
             return {'CANCELLED'}
 
-        subprocess.Popen(['start', str(latest_render_folderpath.resolve())], shell=True)
-
+        subprocess.Popen('explorer "' + str(latest_render_folderpath.resolve()) + '"', shell=True)
         return {'FINISHED'}
 
 
