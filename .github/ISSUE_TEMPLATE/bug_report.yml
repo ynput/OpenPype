@@ -35,6 +35,29 @@ body:
       label: Version
       description: What version are you running? Look to OpenPype Tray
       options:
+        - 3.18.12-nightly.10
+        - 3.18.12-nightly.9
+        - 3.18.12-nightly.8
+        - 3.18.12-nightly.7
+        - 3.18.12-nightly.6
+        - 3.18.12-nightly.5
+        - 3.18.12-nightly.4
+        - 3.18.12-nightly.3
+        - 3.18.12-nightly.2
+        - 3.18.12-nightly.1
+        - 3.18.11
+        - 3.18.11-nightly.10
+        - 3.18.11-nightly.9
+        - 3.18.11-nightly.8
+        - 3.18.11-nightly.7
+        - 3.18.11-nightly.6
+        - 3.18.11-nightly.5
+        - 3.18.11-nightly.4
+        - 3.18.11-nightly.3
+        - 3.18.11-nightly.2
+        - 3.18.11-nightly.1
+        - 3.18.10
+        - 3.18.10-nightly.2
         - 3.18.10-nightly.1
         - 3.18.9
         - 3.18.9-nightly.11
@@ -112,29 +135,6 @@ body:
         - 3.17.1-nightly.1
         - 3.17.0
         - 3.16.7
-        - 3.16.7-nightly.2
-        - 3.16.7-nightly.1
-        - 3.16.6
-        - 3.16.6-nightly.1
-        - 3.16.5
-        - 3.16.5-nightly.5
-        - 3.16.5-nightly.4
-        - 3.16.5-nightly.3
-        - 3.16.5-nightly.2
-        - 3.16.5-nightly.1
-        - 3.16.4
-        - 3.16.4-nightly.3
-        - 3.16.4-nightly.2
-        - 3.16.4-nightly.1
-        - 3.16.3
-        - 3.16.3-nightly.5
-        - 3.16.3-nightly.4
-        - 3.16.3-nightly.3
-        - 3.16.3-nightly.2
-        - 3.16.3-nightly.1
-        - 3.16.2
-        - 3.16.2-nightly.2
-        - 3.16.2-nightly.1
     validations:
       required: true
   - type: dropdown
