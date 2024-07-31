@@ -1,4 +1,5 @@
 import os
+import json
 
 from maya import cmds
 
@@ -37,10 +38,26 @@ class ExtractCameraAlembic(publish.Extractor):
         assert isinstance(step, float), "Step must be a float value"
         camera = cameras[0]
 
+        # create focal value dict throught time for blender
+        focal_values_dict = {}
+
+        for frame in range (start, (end+1)):
+            focal_values_dict[frame] = cmds.getAttr('{0}.focalLength'.format(camera), time=frame)
+
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         filename = "{0}.abc".format(instance.name)
+        jsonname = "{0}.json".format(instance.name)
         path = os.path.join(dir_path, filename)
+        json_path = os.path.join(dir_path, jsonname)
+
+        # Performe json extraction
+        # Serializing json
+        json_object = json.dumps(focal_values_dict, indent=4)
+
+        # Writing to sample.json
+        with open(json_path, "w") as outfile:
+            outfile.write(json_object)
 
         # Perform alembic extraction
         member_shapes = cmds.ls(
@@ -113,5 +130,13 @@ class ExtractCameraAlembic(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.debug("Extracted instance '{0}' to: {1}".format(
-            instance.name, path))
+        json_representation = {
+            'name': 'jsonCam',
+            'ext': 'json',
+            'files': jsonname,
+            "stagingDir": dir_path,
+        }
+        instance.data["representations"].append(json_representation)
+
+        self.log.debug("Extracted instance '{0}' to: {1}\nExtracted instance '{2}' to: {3}".format(
+            instance.name, path, jsonname, json_path))

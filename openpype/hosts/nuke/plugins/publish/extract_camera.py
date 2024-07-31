@@ -1,5 +1,6 @@
 import os
 import math
+import json
 from pprint import pformat
 
 import nuke
@@ -54,13 +55,29 @@ class ExtractCamera(publish.Extractor):
 
         # create file name and path
         filename = subset + ".{}".format(extension)
+        jsonname = "{0}.json".format(instance.name)
         file_path = os.path.join(staging_dir, filename).replace("\\", "/")
+        json_path = os.path.join(staging_dir, jsonname).replace("\\", "/")
 
         with maintained_selection():
             # bake camera with axeses onto word coordinate XYZ
             rm_n = bakeCameraWithAxeses(
                 camera_node, output_range)
             rm_nodes.append(rm_n)
+
+            # Create focal value dict throught time for blender
+            focal_values_dict = {}
+
+            for frame in range (first_frame, (last_frame+1)):
+                focal_values_dict[frame] = camera_node.knob('focal').getValue(time=frame)
+
+            # Performe json extraction
+            # Serializing json
+            json_object = json.dumps(focal_values_dict, indent=4)
+
+            # Writing to sample.json
+            with open(json_path, "w") as outfile:
+                outfile.write(json_object)
 
             # create scene node
             rm_n = nuke.createNode("Scene")
@@ -100,6 +117,14 @@ class ExtractCamera(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
+        json_representation = {
+            'name': 'jsonCam',
+            'ext': 'json',
+            'files': jsonname,
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(json_representation)
+
         instance.data.update({
             "path": file_path,
             "outputDir": staging_dir,
@@ -112,8 +137,8 @@ class ExtractCamera(publish.Extractor):
             "frameEndHandle": last_frame,
         })
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
-            instance.name, file_path))
+        self.log.info("Extracted instance '{0}' to: {1}\nExtracted instance '{2}' to: {3}".format(
+            instance.name, file_path, jsonname, json_path))
 
 
 def bakeCameraWithAxeses(camera_node, output_range):
