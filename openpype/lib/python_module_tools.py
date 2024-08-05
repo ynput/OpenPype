@@ -175,42 +175,26 @@ def _import_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
         return sys.modules[full_module_name]
 
     import importlib.util
-    from importlib._bootstrap_external import PathFinder
+    from importlib.machinery import PathFinder
 
-    # Find loader for passed path and name
-    loader = PathFinder.find_module(full_module_name, [dirpath])
+    # Find Spec for passed path and name
+    spec = PathFinder.find_spec(full_module_name, [dirpath])
 
-    # Load specs of module
-    spec = importlib.util.spec_from_loader(
-        full_module_name, loader, origin=dirpath
-    )
+    # Safety Check
+    if spec is None:
+        return
 
-    # Create module based on specs
+    # Create Module Based on spec
     module = importlib.util.module_from_spec(spec)
 
-    # Store module to destination module and `sys.modules`
-    # WARNING this mus be done before module execution
     if dst_module is not None:
         setattr(dst_module, module_name, module)
 
+    # Add our custom module to sys.modules
     sys.modules[full_module_name] = module
 
-    try:
-        # Execute module import
-        loader.exec_module(module)
-
-    except:
-        # In specific cases, module_name needs to be explicitely defined
-        # as it is not automatically retrieved by the module import.
-        # Therefore, we manually add origin and submodule search locations if previous
-        # loader has not loaded, by reusing given dirpath with added informations.
-        spec.origin=f'{dirpath}{module_name}\\__init__.py'
-        spec.submodule_search_locations=[f'{dirpath}\\{module_name}']
-        module = importlib.util.module_from_spec(spec)
-        if dst_module is not None:
-            setattr(dst_module, module_name, module)
-        sys.modules[full_module_name] = module
-        loader.exec_module(module)
+    # Load the module
+    spec.loader.exec_module(module)
 
     return module
 
