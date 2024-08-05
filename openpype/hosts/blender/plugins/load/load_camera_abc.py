@@ -3,7 +3,6 @@
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
-import json
 
 import bpy
 
@@ -82,14 +81,9 @@ class AbcCameraLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        from pprint import pprint
-        print("888888888888888888888888888888888888888888888888888888888888888888888888")
-        pprint(context)
-        print("888888888888888888888888888888888888888888888888888888888888888888888888")
+
         libpath = self.filepath_from_context(context)
-        print ('*************************************************')
-        print (libpath)
-        print ('*************************************************')
+
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
@@ -107,21 +101,11 @@ class AbcCameraLoader(plugin.AssetLoader):
         avalon_container.objects.link(asset_group)
 
         self._process(libpath, asset_group, group_name)
-        jsonpath = (Path(str(libpath)).with_suffix('.json'))
-        focaldata = {}
-        if Path(jsonpath).exists:
-            jsonfile = open(jsonpath)
-            focaldata = json.load(jsonfile)
 
         objects = []
         nodes = list(asset_group.children)
 
         for obj in nodes:
-            if obj.type == 'CAMERA' and focaldata:
-                camera = obj.data
-                for frame in focaldata.keys():
-                    camera.lens = focaldata[frame]
-                    camera.keyframe_insert(data_path="lens", frame=int(frame))
             objects.append(obj)
             nodes.extend(list(obj.children))
 
