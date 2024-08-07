@@ -42,7 +42,8 @@ class InstallPySideToBlender(PreLaunchHook):
         if os.path.basename(executable).lower() != expected_executable:
             self.log.info((
                 f"Executable does not lead to {expected_executable} file."
-                "Can't determine blender's python to check/install PySide2."
+                "Can't determine blender's python to check/install"
+                " Qt binding."
             ))
             return
 
@@ -73,6 +74,15 @@ class InstallPySideToBlender(PreLaunchHook):
             return
 
         version_subfolder = version_subfolders[0]
+        before_blender_4 = False
+        if int(version_regex.match(version_subfolder).group(1)) < 4:
+            before_blender_4 = True
+        # Blender 4 has Python 3.11 which does not support 'PySide2'
+        # QUESTION could we always install PySide6?
+        qt_binding = "PySide2" if before_blender_4 else "PySide6"
+        # Use PySide6 6.6.3 because 6.7.0 had a bug
+        #   - 'QTextEdit' can't be added to 'QBoxLayout'
+        qt_binding_version = None if before_blender_4 else "6.6.3"
 
         python_dir = os.path.join(versions_dir, version_subfolder, "python")
         python_lib = os.path.join(python_dir, "lib")
@@ -87,12 +97,7 @@ class InstallPySideToBlender(PreLaunchHook):
 
         # Change PYTHONPATH to contain blender's packages as first
         python_paths = [
-            # Python lib has been removed from PYTHONPATH because it was
-            # causing Blender to use the wrong Python version in specific
-            # cases (e.g. with Deadline add-on) instead of the embedded one.
-            # See https://github.com/quadproduction/issues/issues/214#issuecomment-1833613833
-            # for more informations.
-            #python_lib,
+            python_lib,
             os.path.join(python_lib, "site-packages"),
         ]
         python_path = self.launch_context.env.get("PYTHONPATH") or ""
@@ -121,22 +126,41 @@ class InstallPySideToBlender(PreLaunchHook):
             return
 
         # Check if PySide2 is installed and skip if yes
-        if self.is_package_installed(python_executable, ['pyside2', 'pyside6']):
-            self.log.debug("Blender has already installed PySide2 or PySide6.")
+        if self.is_pyside_installed(python_executable, qt_binding):
+            self.log.debug("Blender has already installed PySide2.")
             return
 
         # Install PySide2 in blender's python
         if platform == "windows":
-            result = self.install_pyside_windows(python_executable)
+            result = self.install_pyside_windows(
+                python_executable,
+                qt_binding,
+                qt_binding_version,
+                before_blender_4,
+            )
         else:
-            result = self.install_pyside(python_executable)
+            result = self.install_pyside(
+                python_executable,
+                qt_binding,
+                qt_binding_version,
+            )
 
         if result:
-            self.log.info("Successfully installed PySide2 module to blender.")
+            self.log.info(
+                f"Successfully installed {qt_binding} module to blender."
+            )
         else:
-            self.log.warning("Failed to install PySide2 module to blender.")
+            self.log.warning(
+                f"Failed to install {qt_binding} module to blender."
+            )
 
-    def install_pyside_windows(self, python_executable):
+    def install_pyside_windows(
+        self,
+        python_executable,
+        qt_binding,
+        qt_binding_version,
+        before_blender_4,
+    ):
         """Install PySide2 python module to blender's python.
 
         Installation requires administration rights that's why it is required
@@ -144,7 +168,6 @@ class InstallPySideToBlender(PreLaunchHook):
         administration rights.
         """
         try:
-            import win32api
             import win32con
             import win32process
             import win32event
@@ -155,12 +178,37 @@ class InstallPySideToBlender(PreLaunchHook):
             self.log.warning("Couldn't import \"pywin32\" modules")
             return
 
+        if qt_binding_version:
+            qt_binding = f"{qt_binding}=={qt_binding_version}"
+
         try:
             # Parameters
             # - use "-m pip" as module pip to install PySide2 and argument
             #   "--ignore-installed" is to force install module to blender's
             #   site-packages and make sure it is binary compatible
-            parameters = "-m pip install --ignore-installed PySide2"
+            fake_exe = "fake.exe"
+            site_packages_prefix = os.path.dirname(
+                os.path.dirname(python_executable)
+            )
+            args = [
+                fake_exe,
+                "-m",
+                "pip",
+                "install",
+                "--ignore-installed",
+                qt_binding,
+            ]
+            if not before_blender_4:
+                # Define prefix for site package
+                # Python in blender 4.x is installing packages in AppData and
+                #   not in blender's directory.
+                args.extend(["--prefix", site_packages_prefix])
+
+            parameters = (
+                subprocess.list2cmdline(args)
+                .lstrip(fake_exe)
+                .lstrip(" ")
+            )
 
             # Execute command and ask for administrator's rights
             process_info = ShellExecuteEx(
@@ -178,20 +226,29 @@ class InstallPySideToBlender(PreLaunchHook):
         except pywintypes.error:
             pass
 
-    def install_pyside(self, python_executable):
-        """Install PySide2 python module to blender's python."""
+    def install_pyside(
+        self,
+        python_executable,
+        qt_binding,
+        qt_binding_version,
+    ):
+        """Install Qt binding python module to blender's python."""
+        if qt_binding_version:
+            qt_binding = f"{qt_binding}=={qt_binding_version}"
         try:
             # Parameters
-            # - use "-m pip" as module pip to install PySide2 and argument
+            # - use "-m pip" as module pip to install qt binding and argument
             #   "--ignore-installed" is to force install module to blender's
             #   site-packages and make sure it is binary compatible
+            # TODO find out if blender 4.x on linux/darwin does install
+            #   qt binding to correct place.
             args = [
                 python_executable,
                 "-m",
                 "pip",
                 "install",
                 "--ignore-installed",
-                "PySide2",
+                qt_binding,
             ]
             process = subprocess.Popen(
                 args, stdout=subprocess.PIPE, universal_newlines=True
@@ -208,13 +265,15 @@ class InstallPySideToBlender(PreLaunchHook):
         except subprocess.SubprocessError:
             pass
 
-    def is_package_installed(self, python_executable, packages_names=['pyside2', 'pyside6']):
-        """Check if one of given module is in blender's pip list.
+    def is_pyside_installed(self, python_executable, qt_binding):
+        """Check if PySide2 module is in blender's pip list.
 
-        Check that PySide2 or Pyside6 is installed directly in blender's site-packages.
+        Check that PySide2 is installed directly in blender's site-packages.
         It is possible that it is installed in user's site-packages but that
         may be incompatible with blender's python.
         """
+
+        qt_binding_low = qt_binding.lower()
         # Get pip list from blender's python executable
         args = [python_executable, "-m", "pip", "list"]
         process = subprocess.Popen(args, stdout=subprocess.PIPE)
@@ -231,6 +290,6 @@ class InstallPySideToBlender(PreLaunchHook):
             if not line:
                 continue
             package_name = line[0:package_len].strip()
-            if package_name.lower() in packages_names:
+            if package_name.lower() == qt_binding_low:
                 return True
         return False
