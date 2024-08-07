@@ -1,76 +1,74 @@
 import pyblish.api
+import re
+import copy
+from openpype.lib import BoolDef
+from openpype.pipeline.publish import AYONPyblishPluginMixin
+from pymxs import runtime as rt
 
-from openpype.lib import EnumDef, TextDef
-from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
-
-class CollectTyCacheData(pyblish.api.InstancePlugin,
-                         OpenPypePyblishPluginMixin):
+class CollectTyFlowData(pyblish.api.InstancePlugin,
+                        AYONPyblishPluginMixin):
     """Collect Channel Attributes for TyCache Export"""
 
-    order = pyblish.api.CollectorOrder + 0.02
+    order = pyblish.api.CollectorOrder + 0.005
     label = "Collect tyCache attribute Data"
     hosts = ['max']
-    families = ["tycache"]
+    families = ["tyflow"]
+    validate_tycache_frame_range = True
+
+    @classmethod
+    def apply_settings(cls, project_settings):
+
+        settings = (
+            project_settings["max"]["publish"]["ValidateTyCacheFrameRange"]
+        )
+        cls.validate_tycache_frame_range = settings["active"]
 
     def process(self, instance):
+        context = instance.context
+        container_name = instance.data["instance_node"]
+        container = rt.GetNodeByName(instance.data["instance_node"])
+        tyc_product_names = [
+            name for name
+            in container.modifiers[0].AYONTyCacheData.tyc_exports
+        ]
         attr_values = self.get_attr_values_from_data(instance.data)
-        attributes = {}
-        for attr_key in attr_values.get("tycacheAttributes", []):
-            attributes[attr_key] = True
-
-        for key in ["tycacheLayer", "tycacheObjectName"]:
-            attributes[key] = attr_values.get(key, "")
-
-        # Collect the selected channel data before exporting
-        instance.data["tyc_attrs"] = attributes
-        self.log.debug(
-            f"Found tycache attributes: {attributes}"
-        )
+        for tyc_product_name in tyc_product_names:
+            self.log.debug(
+                f"Creating instance for operator:{tyc_product_name}")
+            tyc_instance = context.create_instance(tyc_product_name)
+            tyc_instance[:] = instance[:]
+            tyc_instance.data.update(copy.deepcopy(dict(instance.data)))
+            # Replace all runs of whitespace with underscore
+            prod_name = re.sub(r"\s+", "_", tyc_product_name)
+            export_mode = instance.data["tyc_exportMode"]
+            tyc_instance.data.update({
+                "name": f"{container_name}_{prod_name}",
+                "label": f"{container_name}_{prod_name}",
+                "family": export_mode,
+                "families": [export_mode],
+                "subset": f"{container_name}_{prod_name}",
+                "operatorName": tyc_product_name,
+                "exportMode": (
+                    2 if instance.data["tyc_exportMode"] == "tycache" else 6),
+                "material_cache": attr_values.get("material"),
+                "productType": export_mode,
+                "creator_identifier": (
+                    f"io.openpype.creators.max.{export_mode}"),
+                "publish_attributes": {
+                    "ValidateTyCacheFrameRange": {
+                        "active": attr_values.get("has_frame_range_validator")}
+                }
+            })
+            instance.append(tyc_instance)
 
     @classmethod
     def get_attribute_defs(cls):
-        # TODO: Support the attributes with maxObject array
-        tyc_attr_enum = ["tycacheChanAge", "tycacheChanGroups",
-                         "tycacheChanPos", "tycacheChanRot",
-                         "tycacheChanScale", "tycacheChanVel",
-                         "tycacheChanSpin", "tycacheChanShape",
-                         "tycacheChanMatID", "tycacheChanMapping",
-                         "tycacheChanMaterials", "tycacheChanCustomFloat"
-                         "tycacheChanCustomVector", "tycacheChanCustomTM",
-                         "tycacheChanPhysX", "tycacheMeshBackup",
-                         "tycacheCreateObject",
-                         "tycacheCreateObjectIfNotCreated",
-                         "tycacheAdditionalCloth",
-                         "tycacheAdditionalSkin",
-                         "tycacheAdditionalSkinID",
-                         "tycacheAdditionalSkinIDValue",
-                         "tycacheAdditionalTerrain",
-                         "tycacheAdditionalVDB",
-                         "tycacheAdditionalSplinePaths",
-                         "tycacheAdditionalGeo",
-                         "tycacheAdditionalGeoActivateModifiers",
-                         "tycacheSplines",
-                         "tycacheSplinesAdditionalSplines"
-                         ]
-        tyc_default_attrs = ["tycacheChanGroups", "tycacheChanPos",
-                             "tycacheChanRot", "tycacheChanScale",
-                             "tycacheChanVel", "tycacheChanShape",
-                             "tycacheChanMatID", "tycacheChanMapping",
-                             "tycacheChanMaterials",
-                             "tycacheCreateObjectIfNotCreated"]
         return [
-            EnumDef("tycacheAttributes",
-                    tyc_attr_enum,
-                    default=tyc_default_attrs,
-                    multiselection=True,
-                    label="TyCache Attributes"),
-            TextDef("tycacheLayer",
-                    label="TyCache Layer",
-                    tooltip="Name of tycache layer",
-                    default="$(tyFlowLayer)"),
-            TextDef("tycacheObjectName",
-                    label="TyCache Object Name",
-                    tooltip="TyCache Object Name",
-                    default="$(tyFlowName)_tyCache")
+            BoolDef("has_frame_range_validator",
+                    label="Validate TyCache Frame Range",
+                    default=cls.validate_tycache_frame_range),
+            BoolDef("material",
+                    label="Publish along with Material",
+                    default=True)
         ]

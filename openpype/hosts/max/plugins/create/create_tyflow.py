@@ -3,9 +3,9 @@
 from openpype.hosts.max.api import plugin
 
 
-class CreateTyCache(plugin.MaxCreator):
+class CreateTyFlow(plugin.MaxCacheCreator):
     """Creator plugin for TyCache."""
-    identifier = "io.openpype.creators.max.tycache"
-    label = "TyCache"
-    family = "tycache"
+    identifier = "io.openpype.creators.max.tyflow"
+    label = "TyFlow"
+    product_type = "tyflow"
     icon = "gear"

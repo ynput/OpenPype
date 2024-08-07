@@ -545,6 +545,30 @@ def render_resolution(width, height):
         rt.renderHeight = current_renderHeight
 
 
+def get_tyflow_export_operators():
+    """Get Tyflow Export Particles Operators.
+
+    Returns:
+        list: Particle operators
+
+    """
+    operators = []
+    members = [obj for obj in rt.Objects if rt.ClassOf(obj) == rt.tyFlow]
+    for member in members:
+        obj = member.baseobject
+        anim_names = rt.GetSubAnimNames(obj)
+        for anim_name in anim_names:
+            sub_anim = rt.GetSubAnim(obj, anim_name)
+            if not rt.isKindOf(sub_anim, rt.tyEvent):
+                continue
+            node_names = rt.GetSubAnimNames(sub_anim)
+            for node_name in node_names:
+                node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
+                if rt.hasProperty(node_sub_anim, "exportMode"):
+                    operators.append(node_sub_anim)
+    return operators
+
+
 @contextlib.contextmanager
 def suspended_refresh():
     """Suspended refresh for scene and modify panel redraw.

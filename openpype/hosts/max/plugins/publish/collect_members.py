@@ -2,6 +2,7 @@
 """Collect instance members."""
 import pyblish.api
 from pymxs import runtime as rt
+from openpype.hosts.max.api.lib import get_tyflow_export_operators
 
 
 class CollectMembers(pyblish.api.InstancePlugin):
@@ -12,14 +13,20 @@ class CollectMembers(pyblish.api.InstancePlugin):
     hosts = ['max']
 
     def process(self, instance):
-        if instance.data["family"] == "workfile":
-            self.log.debug("Skipping Actions for workfile family.")
-            self.log.debug("{}".format(instance.data["subset"]))
+        if instance.data["family"] in {"workfile", "tyflow"}:
+            self.log.debug(
+                "Skipping Collecting Members for workfile "
+                "and tyflow product type."
+            )
             return
-        if instance.data.get("instance_node"):
+        if instance.data["family"] in {"tycache", "tyspline"}:
+            instance.data["operator"] = next(
+                (node for node in get_tyflow_export_operators()
+                 if node.name == instance.data["operatorName"]), None)   # noqa
+            self.log.debug("operator: {}".format(instance.data["operator"]))
+        elif instance.data.get("instance_node"):
             container = rt.GetNodeByName(instance.data["instance_node"])
             instance.data["members"] = [
                 member.node for member
                 in container.modifiers[0].openPypeData.all_handles
             ]
-            self.log.debug("{}".format(instance.data["members"]))

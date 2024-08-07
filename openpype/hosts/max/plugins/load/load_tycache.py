@@ -62,3 +62,30 @@ class TyCacheLoader(load.LoaderPlugin):
 
         node = rt.GetNodeByName(container["instance_node"])
         rt.Delete(node)
+
+
+class TySplineCacheLoader(TyCacheLoader):
+    """TyCache(Spline) Loader."""
+
+    families = ["tyspline"]
+    representations = ["tyc"]
+    order = -8
+    icon = "code-fork"
+    color = "green"
+
+    def load(self, context, name=None, namespace=None, data=None):
+        from pymxs import runtime as rt
+        filepath = os.path.normpath(self.filepath_from_context(context))
+        obj = rt.tyCache()
+        obj.filename = filepath
+        tySplineCache_modifier = rt.tySplineCache()
+        rt.addModifier(obj, tySplineCache_modifier)
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        obj.name = f"{namespace}:{obj.name}"
+
+        return containerise(
+            name, [obj], context,
+            namespace, loader=self.__class__.__name__)
