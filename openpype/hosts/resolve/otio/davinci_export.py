@@ -3,21 +3,33 @@
 
 import os
 import re
-import sys
 import json
 import opentimelineio as otio
 from . import utils
 import clique
 
-self = sys.modules[__name__]
-self.track_types = {
+TRACK_TYPES = {
     "video": otio.schema.TrackKind.Video,
     "audio": otio.schema.TrackKind.Audio
 }
-self.project_fps = None
 
 
 def create_otio_rational_time(frame, fps):
+    """
+    Creates an OpenTimelineIO (OTIO) RationalTime object based on a frame
+
+    Args:
+        frame (int): The frame to create the OTIO RationalTime from.
+        fps (float): The frames per second (FPS) of the timeline.
+
+    Returns:
+        otio.opentime.RationalTime: The created OpenTimelineIO RationalTime
+            object.
+
+    Examples:
+        # Create an OTIO RationalTime from a frame
+        otio_rational_time = create_otio_rational_time(frame, fps)
+    """
     return otio.opentime.RationalTime(
         float(frame),
         float(fps)
@@ -25,6 +37,23 @@ def create_otio_rational_time(frame, fps):
 
 
 def create_otio_time_range(start_frame, frame_duration, fps):
+    """
+    Creates an OpenTimelineIO (OTIO) TimeRange object based on a start frame
+    and a frame duration.
+
+    Args:
+        start_frame (int): The start frame of the time range.
+        frame_duration (int): The duration of the time range.
+        fps (float): The frames per second (FPS) of the timeline.
+
+    Returns:
+        otio.opentime.TimeRange: The created OpenTimelineIO TimeRange object.
+
+    Examples:
+        # Create an OTIO TimeRange from a start frame and a frame duration
+        otio_time_range = create_otio_time_range(
+            start_frame, frame_duration, fps)
+    """
     return otio.opentime.TimeRange(
         start_time=create_otio_rational_time(start_frame, fps),
         duration=create_otio_rational_time(frame_duration, fps)
@@ -32,6 +61,22 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 
 def create_otio_reference(media_pool_item):
+    """
+    Creates an OpenTimelineIO (OTIO) Reference object based on a Resolve
+    media pool item.
+
+    Args:
+        media_pool_item (resolve.MediaPoolItem): The Resolve media pool item
+            to create the OTIO Reference from.
+
+    Returns:
+        otio.schema.ExternalReference: The created OpenTimelineIO Reference
+            object.
+
+    Examples:
+        # Create an OTIO Reference from a Resolve media pool item
+        otio_reference = create_otio_reference(media_pool_item)
+    """
     metadata = _get_metadata_media_pool_item(media_pool_item)
     print("media pool item: {}".format(media_pool_item.GetName()))
 
@@ -101,6 +146,23 @@ def create_otio_reference(media_pool_item):
 
 
 def create_otio_markers(track_item, fps):
+    """
+    Creates a list of OpenTimelineIO (OTIO) Marker objects based
+    on Resolve track item markers.
+
+    Args:
+        track_item (resolve.TimelineItem): The Resolve track item
+            containing the markers.
+        fps (float): The frames per second (FPS) of the timeline.
+
+    Returns:
+        list: A list of OTIO Marker objects representing
+            the markers of the track item.
+
+    Examples:
+        # Create OTIO markers from Resolve track item markers
+        otio_markers = create_otio_markers(track_item, fps)
+    """
     track_item_markers = track_item.GetMarkers()
     markers = []
     for marker_frame in track_item_markers:
@@ -124,34 +186,50 @@ def create_otio_markers(track_item, fps):
     return markers
 
 
-def create_otio_clip(track_item):
+def create_otio_clip(track_item, main_fps):
+    """
+    Creates an OpenTimelineIO (OTIO) Clip object based on a Resolve track item.
+
+    Args:
+        track_item (resolve.TimelineItem): The Resolve track item
+            to create the OTIO Clip from.
+        main_fps (float): The main frames per second (FPS) of the timeline.
+
+    Returns:
+        Any[otio.Clip, list]:
+            - If the track item is of type "Audio", a list of OTIO Clip
+                objects is returned, each representing an audio channel.
+            - If the track item is not of type "Audio", a single OTIO Clip
+                object is returned.
+
+    Examples:
+        # Create an OTIO Clip from a Resolve track item
+        otio_clip = create_otio_clip(track_item, main_fps)
+    """
+
     media_pool_item = track_item.GetMediaPoolItem()
     _mp_clip_property = media_pool_item.GetClipProperty
 
-    if not self.project_fps:
-        fps = float(_mp_clip_property("FPS"))
-    else:
-        fps = self.project_fps
-
+    # timeline fps should be used as default for timeline items
     name = track_item.GetName()
 
     media_reference = create_otio_reference(media_pool_item)
     source_range = create_otio_time_range(
         int(track_item.GetLeftOffset()),
         int(track_item.GetDuration()),
-        fps
+        main_fps
     )
 
     if _mp_clip_property("Type") == "Audio":
-        return_clips = list()
-        audio_chanels = _mp_clip_property("Audio Ch")
-        for channel in range(0, int(audio_chanels)):
+        return_clips = []
+        audio_channels = _mp_clip_property("Audio Ch")
+        for channel in range(int(audio_channels)):
             clip = otio.schema.Clip(
                 name=f"{name}_{channel}",
                 source_range=source_range,
                 media_reference=media_reference
             )
-            for marker in create_otio_markers(track_item, fps):
+            for marker in create_otio_markers(track_item, main_fps):
                 clip.markers.append(marker)
             return_clips.append(clip)
         return return_clips
@@ -161,13 +239,26 @@ def create_otio_clip(track_item):
             source_range=source_range,
             media_reference=media_reference
         )
-        for marker in create_otio_markers(track_item, fps):
+        for marker in create_otio_markers(track_item, main_fps):
             clip.markers.append(marker)
 
         return clip
 
 
 def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
+    """
+    Creates an OpenTimelineIO gap object.
+
+    Args:
+        gap_start (int): The start time of the gap.
+        clip_start(int): The start time of the clip.
+        tl_start_frame (int): The start frame of the timeline.
+        fps (float): The frame rate of the timeline.
+
+    Returns:
+        otio.schema.Gap: The created OpenTimelineIO gap object.
+
+    """
     return otio.schema.Gap(
         source_range=create_otio_time_range(
             gap_start,
@@ -177,10 +268,24 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
     )
 
 
-def _create_otio_timeline(project, timeline, fps):
-    metadata = _get_timeline_metadata(project, timeline)
+def _create_otio_timeline(timeline, main_fps):
+    """
+    Creates an OpenTimelineIO timeline object based on the given timeline.
+
+    Args:
+        timeline (resolve.Timeline): The timeline object to create
+            the OTIO timeline from.
+        main_fps (float): The main frame rate of the timeline.
+
+    Returns:
+        otio.schema.Timeline: The created OpenTimelineIO timeline object.
+
+    """
+    metadata = _get_timeline_metadata(timeline, main_fps)
+
     start_time = create_otio_rational_time(
-        timeline.GetStartFrame(), fps)
+        timeline.GetStartFrame(), main_fps)
+
     otio_timeline = otio.schema.Timeline(
         name=timeline.GetName(),
         global_start_time=start_time,
@@ -189,49 +294,112 @@ def _create_otio_timeline(project, timeline, fps):
     return otio_timeline
 
 
-def _get_timeline_metadata(project, timeline):
-    media_pool = project.GetMediaPool()
-    root_folder = media_pool.GetRootFolder()
-    ls_folder = root_folder.GetClipList()
-    timeline = project.GetCurrentTimeline()
-    timeline_name = timeline.GetName()
-    for tl in ls_folder:
-        if tl.GetName() not in timeline_name:
-            continue
-        return _get_metadata_media_pool_item(tl)
+def _get_timeline_metadata(timeline, main_fps):
+    """
+    Retrieves the metadata of a timeline.
+
+    Args:
+        timeline (resolve.Timeline): The timeline object to
+            retrieve metadata from.
+        main_fps (float): The main frame rate of the timeline.
+
+    Returns:
+        dict: A dictionary containing the metadata of the timeline.
+
+    """
+    metadata = {}
+    metadata.update(dict(timeline.GetSetting().items()))
+
+    metadata.update({
+        "width": int(timeline.GetSetting("timelineResolutionWidth")),
+        "height": int(timeline.GetSetting("timelineResolutionHeight")),
+    })
+
+    # get frame rate from timeline and override main fps if available
+    metadata["frameRate"] = main_fps
+
+    # add pixel aspect ratio to metadata
+    metadata["pixelAspect"] = _get_pixel_aspect_ratio(
+        timeline.GetSetting("timelinePixelAspectRatio")
+    )
+
+    return metadata
 
 
 def _get_metadata_media_pool_item(media_pool_item):
-    data = dict()
-    data.update({k: v for k, v in media_pool_item.GetMetadata().items()})
-    property = media_pool_item.GetClipProperty() or {}
-    for name, value in property.items():
-        if "Resolution" in name and "" != value:
+    """
+    Retrieves the metadata of a media pool item.
+
+    Args:
+        media_pool_item (resolve.MediaPoolItem): The media pool item to
+            retrieve metadata from.
+
+    Returns:
+        dict: A dictionary containing the metadata of the media pool item.
+
+    """
+    data = {}
+    data.update(dict(media_pool_item.GetMetadata().items()))
+    _property = media_pool_item.GetClipProperty() or {}
+    for name, value in _property.items():
+        if "Resolution" in name and value != "":
             width, height = value.split("x")
             data.update({
                 "width": int(width),
                 "height": int(height)
             })
-        if "PAR" in name and "" != value:
-            try:
-                data.update({"pixelAspect": float(value)})
-            except ValueError:
-                if "Square" in value:
-                    data.update({"pixelAspect": float(1)})
-                else:
-                    data.update({"pixelAspect": float(1)})
+        if "PAR" in name and value != "":
+            data["pixelAspect"] = _get_pixel_aspect_ratio(value)
 
     return data
 
 
+def _get_pixel_aspect_ratio(value):
+    """Converts pixel aspect ratio to float value
+
+    Value can be string `square` or `1:1` or `1.0`
+
+    Args:
+        value (str): pixel aspect ratio value
+
+    Returns:
+        float: pixel aspect ratio
+    """
+    try:
+        return float(value)
+    except ValueError:
+        return float(1)
+
+
 def create_otio_track(track_type, track_name):
+    """
+    Creates an OpenTimelineIO track object based on the given track type
+    and track name.
+
+    Args:
+        track_type (str): The type of the track.
+        track_name (str): The name of the track.
+
+    Returns:
+        otio.schema.Track: The created OpenTimelineIO track object.
+
+    """
     return otio.schema.Track(
         name=track_name,
-        kind=self.track_types[track_type]
+        kind=TRACK_TYPES[track_type]
     )
 
 
-def add_otio_gap(clip_start, otio_track, track_item, timeline):
+def add_otio_gap(clip_start, otio_track, track_item, timeline, main_fps):
+    """Add gap to otio track if needed
+
+    Args:
+        clip_start (int): start frame of the clip
+        otio_track (otio.schema.Track): otio track
+        track_item (resolve.TimelineItem): resolve timeline item
+        timeline (resolve.Timeline): resolve timeline
+        main_fps (float): main fps of the timeline
+    """
     # if gap between track start and clip start
     if clip_start > otio_track.available_range().duration.value:
         # create gap and add it to track
@@ -240,12 +408,20 @@ def add_otio_gap(clip_start, otio_track, track_item, timeline):
                 otio_track.available_range().duration.value,
                 track_item.GetStart(),
                 timeline.GetStartFrame(),
-                self.project_fps
+                main_fps
             )
         )
 
 
 def add_otio_metadata(otio_item, media_pool_item, **kwargs):
+    """Add metadata to otio item
+
+    Args:
+        otio_item (otio.schema.Item): otio item
+        media_pool_item (resolve.MediaPoolItem): resolve media pool item
+        **kwargs: additional metadata
+    """
+    # get metadata from media pool item
     mp_metadata = media_pool_item.GetMetadata()
     # add additional metadata from kwargs
     if kwargs:
@@ -257,17 +433,33 @@ def add_otio_metadata(otio_item, media_pool_item, **kwargs):
 
 
 def create_otio_timeline(resolve_project):
+    """
+    Creates an OpenTimelineIO timeline object based
+    on the given Resolve project.
+
+    Args:
+        resolve_project (resolve.Project): The Resolve project to create
+            the OTIO timeline from.
+
+    Returns:
+        otio.schema.Timeline: The created OpenTimelineIO timeline object.
+
+    """
 
     # get current timeline
-    self.project_fps = resolve_project.GetSetting("timelineFrameRate")
+    main_fps = resolve_project.GetSetting("timelineFrameRate")
     timeline = resolve_project.GetCurrentTimeline()
+
+    frame_rate = timeline.GetSetting("timelineFrameRate")
+    if frame_rate:
+        main_fps = float(frame_rate)
 
     # convert timeline to otio
     otio_timeline = _create_otio_timeline(
-        resolve_project, timeline, self.project_fps)
+        timeline, main_fps)
 
     # loop all defined track types
-    for track_type in list(self.track_types.keys()):
+    for track_type in list(TRACK_TYPES.keys()):
         # get total track count
         track_count = timeline.GetTrackCount(track_type)
 
@@ -294,10 +486,10 @@ def create_otio_timeline(resolve_project):
                 clip_start = track_item.GetStart() - timeline.GetStartFrame()
 
                 add_otio_gap(
-                    clip_start, otio_track, track_item, timeline)
+                    clip_start, otio_track, track_item, timeline, main_fps)
 
                 # create otio clip and add it to track
-                otio_clip = create_otio_clip(track_item)
+                otio_clip = create_otio_clip(track_item, main_fps)
 
                 if not isinstance(otio_clip, list):
                     otio_track.append(otio_clip)
@@ -311,9 +503,14 @@ def create_otio_timeline(resolve_project):
                             # convert track to otio
                             otio_track = create_otio_track(
                                 track_type, track_name)
+                            # add gap if needed
                             add_otio_gap(
-                                clip_start, otio_track,
-                                track_item, timeline)
+                                clip_start,
+                                otio_track,
+                                track_item,
+                                timeline,
+                                main_fps
+                            )
                             otio_track.append(clip)
 
             # add track to otio timeline
@@ -323,4 +520,12 @@ def create_otio_timeline(resolve_project):
 
 
 def write_to_file(otio_timeline, path):
+    """
+    Writes the given OpenTimelineIO timeline to a file.
+
+    Args:
+        otio_timeline (otio.schema.Timeline): The OpenTimelineIO timeline
+            to write to a file.
+        path (str): The path to write the timeline to.
+    """
     otio.adapters.write_to_file(otio_timeline, path)
