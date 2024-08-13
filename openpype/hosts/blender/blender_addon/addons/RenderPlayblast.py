@@ -49,13 +49,13 @@ class VIEW3D_PT_render_playblast(bpy.types.Panel):
     bl_category = "Quad"
 
     use_camera_view: bpy.props.BoolProperty(name="Use Camera View")
-    make_bg_transparency: bpy.props.BoolProperty(name="Alpha BG")
+    use_transparent_bg: bpy.props.BoolProperty(name="Alpha BG")
 
     def draw(self, context):
         layout = self.layout
         col = layout.column()
         col.prop(context.scene, 'use_camera_view')
-        col.prop(context.scene, 'make_bg_transparency')
+        col.prop(context.scene, 'use_transparent_bg')
         col.operator('playblast.render', text="Render Playblast")
         col.operator('playblast.open', text="Open Last Playblast Folder")
 
@@ -70,7 +70,7 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
         region = get_view_3D_region()
 
         use_camera_view = context.scene.use_camera_view
-        make_bg_transparency = context.scene.make_bg_transparency
+        use_transparent_bg = context.scene.use_transparent_bg
 
         memorized_render_filepath = scene.render.filepath
         memorized_file_format = scene.render.image_settings.file_format
@@ -83,7 +83,7 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
         render_filepath = get_render_filepath()
         Path(render_filepath).resolve().parent.mkdir(parents=True, exist_ok=True)
 
-        if make_bg_transparency:
+        if use_transparent_bg:
             # save current render parameters
             memorized_engine = bpy.context.scene.render.engine
             memorized_film_transparency = bpy.context.scene.render.film_transparent
@@ -113,7 +113,7 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
         if region and use_camera_view:
             region.view_perspective = memorized_region
 
-        if make_bg_transparency:
+        if use_transparent_bg:
             # reset to memorized parameters for render
             bpy.context.scene.render.engine = memorized_engine
             bpy.context.scene.render.film_transparent = memorized_film_transparency
@@ -145,7 +145,7 @@ def register():
     bpy.utils.register_class(OBJECT_OT_open_playblast_folder)
 
     bpy.types.Scene.use_camera_view = bpy.props.BoolProperty(default=False)
-    bpy.types.Scene.make_bg_transparency = bpy.props.BoolProperty(default=True)
+    bpy.types.Scene.use_transparent_bg = bpy.props.BoolProperty(default=True)
 
 
 def unregister():
@@ -154,4 +154,4 @@ def unregister():
     bpy.utils.unregister_class(OBJECT_OT_open_playblast_folder)
 
     del bpy.types.Scene.use_camera_view
-    del bpy.types.Scene.make_bg_transparency
+    del bpy.types.Scene.use_transparent_bg
