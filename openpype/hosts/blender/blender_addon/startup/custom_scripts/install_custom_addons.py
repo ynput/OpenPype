@@ -5,12 +5,15 @@ import argparse
 import logging
 import subprocess
 from pathlib import Path
+from openpype.settings import get_system_settings
 
 
 def execute():
     blender_addons_folder_path = get_addons_folder_path()
-    #--- desactivate the deadline addOn since we don't have it anymore ---#
-    #install_deadline_addon(blender_addons_folder_path)
+    system_settings = get_system_settings()
+    modules_settings = system_settings["modules"]
+    if modules_settings["deadline"].get("enabled", False):
+        install_deadline_addon(blender_addons_folder_path)
     enable_user_addons(blender_addons_folder_path)
     bpy.ops.wm.save_userpref()
 

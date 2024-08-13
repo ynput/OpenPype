@@ -79,7 +79,7 @@ class VIEW3D_PT_set_render_paths(bpy.types.Panel):
 
 class OBJECT_OT_set_paths(bpy.types.Operator):
     bl_idname = "setpaths.render"
-    bl_label = "Render Playblast"
+    bl_label = "Set Render Path"
 
 
     def execute(self, context):
@@ -91,7 +91,7 @@ class OBJECT_OT_set_paths(bpy.types.Operator):
 
 class OBJECT_OT_open_render_folder(bpy.types.Operator):
     bl_idname = "setpaths.open"
-    bl_label = "Open Last Playblast Folder"
+    bl_label = "Open Last Render Folder"
 
     def execute(self, context):
         latest_render_folderpath = paths.get_version_folder_fullpath(
