@@ -10,9 +10,7 @@ from openpype.hosts.tvpaint.api.pipeline import (
 from openpype.hosts.tvpaint.api.lib import execute_george
 
 class ValidateLayersNameUniquenessTvPaintSelect(pyblish.api.Action):
-    """Repair the asset names.
-
-    Change instance metadata in the workfile.
+    """Select the layers in fault.
     """
 
     label = "Select Layers"
