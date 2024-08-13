@@ -306,7 +306,7 @@ def _install_menu():
     )
     menu.addCommand(
         "Set Custom Resolution",
-        lambda: WorkfileSettings().set_custom_resolution()
+        lambda: WorkfileSettings().set_custom_resolution(emitted_from_menu = True)
     )
     menu.addCommand(
         "Set Frame Range",
