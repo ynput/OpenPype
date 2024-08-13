@@ -364,13 +364,14 @@ class PhotoshopServerStub:
         """Return the width and height in pixel of the active doc
 
         Returns(dict):
-            {"width": int, "height": int}
+            {"width": int, "height": int} or empty dict {} if document size isn't valid
         """
         res = self.websocketserver.call(
             self.client.call('Photoshop.get_activeDocument_format_resolution')
         )
-
-        return json.loads(res)
+        if res:
+            return json.loads(res)
+        return {}
 
     def crop_document_to_coordinate(self, x1, y1, x2, y2):
         """Crop the active document to the given coordinates

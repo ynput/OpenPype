@@ -265,10 +265,10 @@ function getActiveDocumentFullName(){
 
 function getActiveDocumentFormatResolution(){
     /**
-     *   Returns a dict with the resolution dimenssion of the current doc
+     *   Returns a dict with the resolution of the current doc
      * */
     if (documents.length == 0){
-        return null;
+        return {};
     }
 
     try {
@@ -280,7 +280,7 @@ function getActiveDocumentFormatResolution(){
         return(JSON.stringify(resDict));
     }catch(e){
         // No doc is active.
-        return
+        return {}
     };
 }
 
