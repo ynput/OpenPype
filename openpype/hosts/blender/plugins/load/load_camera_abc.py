@@ -101,21 +101,24 @@ class AbcCameraLoader(plugin.AssetLoader):
         avalon_container.objects.link(asset_group)
 
         self._process(libpath, asset_group, group_name)
-        jsonpath = (Path(str(libpath)).with_suffix('.json'))
-        focaldata = {}
-        if Path(jsonpath).exists:
-            jsonfile = open(jsonpath)
-            focaldata = json.load(jsonfile)
 
         objects = []
         nodes = list(asset_group.children)
 
         for obj in nodes:
-            if obj.type == 'CAMERA' and focaldata:
+            if obj.type == 'CAMERA':
                 camera = obj.data
-                for frame in focaldata.keys():
-                    camera.lens = focaldata[frame]
-                    camera.keyframe_insert(data_path="lens", frame=int(frame))
+                jsonpath_camera_data = (Path(str(libpath)).with_suffix('.json'))
+                camera_data = {}
+                if Path(jsonpath_camera_data).exists():
+                    with open(jsonpath_camera_data) as my_file:
+                        camera_data = json.loads(my_file.read())
+
+                if camera_data:
+                    for frame in camera_data["focal_data"].keys():
+                        camera.lens = camera_data["focal_data"][frame]
+                        camera.keyframe_insert(data_path="lens", frame=int(frame))
+
             objects.append(obj)
             nodes.extend(list(obj.children))
 

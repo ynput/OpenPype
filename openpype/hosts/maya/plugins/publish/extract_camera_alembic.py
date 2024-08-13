@@ -39,10 +39,11 @@ class ExtractCameraAlembic(publish.Extractor):
         camera = cameras[0]
 
         # create focal value dict throught time for blender
-        focal_values_dict = {}
+        camera_data_dict = {}
+        camera_data_dict["focal_data"] = {}
 
         for frame in range (start, (end+1)):
-            focal_values_dict[frame] = cmds.getAttr('{0}.focalLength'.format(camera), time=frame)
+            camera_data_dict["focal_data"][frame] = cmds.getAttr('{0}.focalLength'.format(camera), time=frame)
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
@@ -53,9 +54,9 @@ class ExtractCameraAlembic(publish.Extractor):
 
         # Performe json extraction
         # Serializing json
-        json_object = json.dumps(focal_values_dict, indent=4)
+        json_object = json.dumps(camera_data_dict, indent=4)
 
-        # Writing to sample.json
+        # Writing to json
         with open(json_path, "w") as outfile:
             outfile.write(json_object)
 

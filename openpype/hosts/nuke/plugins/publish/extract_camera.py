@@ -66,16 +66,17 @@ class ExtractCamera(publish.Extractor):
             rm_nodes.append(rm_n)
 
             # Create focal value dict throught time for blender
-            focal_values_dict = {}
+            camera_data_dict = {}
+            camera_data_dict["focal_data"] = {}
 
             for frame in range (first_frame, (last_frame+1)):
-                focal_values_dict[frame] = camera_node.knob('focal').getValue(time=frame)
+                camera_data_dict["focal_data"][frame] = camera_node.knob('focal').getValue(time=frame)
 
             # Performe json extraction
             # Serializing json
-            json_object = json.dumps(focal_values_dict, indent=4)
+            json_object = json.dumps(camera_data_dict, indent=4)
 
-            # Writing to sample.json
+            # Writing to json
             with open(json_path, "w") as outfile:
                 outfile.write(json_object)
 

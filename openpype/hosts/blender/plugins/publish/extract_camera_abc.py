@@ -48,23 +48,23 @@ class ExtractCameraABC(publish.Extractor):
 
         # Create focal value dict throught time for blender
         if camera:
-            focal_values_dict = {}
-
+            camera_data_dict = {}
+            camera_data_dict["focal_data"] = {}
             # save current frame to reset it after the dict creation
             currentframe = bpy.context.scene.frame_current
 
             for frame in range (bpy.context.scene.frame_start, (bpy.context.scene.frame_end+1)):
                 bpy.context.scene.frame_set(frame)
-                focal_values_dict[frame] = camera.lens
+                camera_data_dict["focal_data"][frame] = camera.lens
 
             # reset old current frame
             bpy.context.scene.frame_set(currentframe)
 
             # Performe json extraction
             # Serializing json
-            json_object = json.dumps(focal_values_dict, indent=4)
+            json_object = json.dumps(camera_data_dict, indent=4)
 
-            # Writing to sample.json
+            # Writing to json
             with open(json_path, "w") as outfile:
                 outfile.write(json_object)
 
