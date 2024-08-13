@@ -9,10 +9,10 @@ from openpype.hosts.tvpaint.api.pipeline import (
 )
 from openpype.hosts.tvpaint.api.lib import execute_george
 
-class ValidateLayersNameUniquenessTvPaintRepair(pyblish.api.Action):
+class ValidateLayersNameUniquenessTvPaintSelect(pyblish.api.Action):
     """Repair the asset names.
 
-    Change instanace metadata in the workfile.
+    Change instance metadata in the workfile.
     """
 
     label = "Select Layers"
@@ -36,7 +36,7 @@ class ValidateLayersNameUniquenessTvPaint(
     label = "Validate Layers Name Uniqueness"
     order = pyblish.api.ValidatorOrder
     hosts = ["tvpaint"]
-    actions = [ValidateLayersNameUniquenessTvPaintRepair]
+    actions = [ValidateLayersNameUniquenessTvPaintSelect]
     optional = True
     active = True
 
@@ -54,13 +54,12 @@ class ValidateLayersNameUniquenessTvPaint(
             duplicates = set()
 
             for layer in layers:
-                if layer_list.count(layer["name"]) == 1:
+                if layer["name"] in duplicates or layer_list.count(layer["name"]) == 1:
                     continue
 
                 return_list.append(layer)
-                if layer["name"] not in duplicates:
-                    duplicates.add(layer["name"])
-                    msg = "{}\nThe name {} is not unique.".format(msg, layer["name"])
+                duplicates.add(layer["name"])
+                msg = "{}\nThe name {} is not unique.".format(msg, layer["name"])
 
         if return_list:
             if not context.data.get('transientData'):
