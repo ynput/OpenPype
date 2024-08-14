@@ -49,7 +49,7 @@ class VIEW3D_PT_render_playblast(bpy.types.Panel):
     bl_category = "Quad"
 
     use_camera_view: bpy.props.BoolProperty(name="Use Camera View")
-    use_transparent_bg: bpy.props.BoolProperty(name="Alpha BG")
+    use_transparent_bg: bpy.props.BoolProperty(name="Use Transparent Background")
 
     def draw(self, context):
         layout = self.layout
