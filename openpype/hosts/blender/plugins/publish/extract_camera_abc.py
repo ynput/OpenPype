@@ -48,8 +48,7 @@ class ExtractCameraABC(publish.Extractor):
 
         # Create focal value dict throught time for blender
         if camera:
-            camera_data_dict = {}
-            camera_data_dict["focal_data"] = {}
+            camera_data_dict = {"focal_data": {}}
             # save current frame to reset it after the dict creation
             currentframe = bpy.context.scene.frame_current
 

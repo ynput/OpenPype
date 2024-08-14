@@ -39,8 +39,7 @@ class ExtractCameraAlembic(publish.Extractor):
         camera = cameras[0]
 
         # create focal value dict throught time for blender
-        camera_data_dict = {}
-        camera_data_dict["focal_data"] = {}
+        camera_data_dict = {"focal_data": {}}
 
         for frame in range (start, (end+1)):
             camera_data_dict["focal_data"][frame] = cmds.getAttr('{0}.focalLength'.format(camera), time=frame)

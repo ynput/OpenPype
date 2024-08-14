@@ -66,8 +66,7 @@ class ExtractCamera(publish.Extractor):
             rm_nodes.append(rm_n)
 
             # Create focal value dict throught time for blender
-            camera_data_dict = {}
-            camera_data_dict["focal_data"] = {}
+            camera_data_dict = {"focal_data": {}}
 
             for frame in range (first_frame, (last_frame+1)):
                 camera_data_dict["focal_data"][frame] = camera_node.knob('focal').getValue(time=frame)
