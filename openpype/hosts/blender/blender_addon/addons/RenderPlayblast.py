@@ -134,7 +134,7 @@ class OBJECT_OT_open_playblast_folder(bpy.types.Operator):
             self.report({'ERROR'}, "File '{}' not found".format(latest_playblast_filepath))
             return {'CANCELLED'}
 
-        subprocess.Popen(['start', str(latest_playblast_filepath.resolve())], shell=True)
+        subprocess.Popen('explorer "' + str(latest_playblast_filepath.resolve()) + '"', shell=True)
 
         return {'FINISHED'}
 

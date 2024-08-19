@@ -155,6 +155,28 @@
                   });
       });
 
+      RPC.addRoute('Photoshop.get_activeDocument_format_resolution', function (data) {
+        log.warn('Server called client route ' +
+                 '"get_activeDocument_format_resolution":', data);
+        return runEvalScript("getActiveDocumentFormatResolution()")
+            .then(function(result){
+                log.warn("Get document resolution ");
+                return result;
+            });
+        });
+
+    RPC.addRoute('Photoshop.crop_document_to_coordinate', function (data) {
+            log.warn('Server called client route "crop_document_to_coordinate":', data);
+            return runEvalScript("cropDocumentToCoordinate('" + data.x1 +"', " +
+                                                      "'"+ data.y1 +"',"+
+                                                      "'"+ data.x2 +"'," +
+                                                      "'"+ data.y2 +"'," +")")
+                .then(function(result){
+                    log.warn("Crop to given coordinates");
+                    return result;
+                });
+        });
+
       RPC.addRoute('Photoshop.save', function (data) {
               log.warn('Server called client route "save":', data);
 

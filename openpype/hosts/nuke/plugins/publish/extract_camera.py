@@ -62,6 +62,20 @@ class ExtractCamera(publish.Extractor):
                 camera_node, output_range)
             rm_nodes.append(rm_n)
 
+            # Create focal value dict throught time for blender
+            camera_data_dict = {"focal_data": {}}
+
+            for frame in range (first_frame, (last_frame+1)):
+                camera_data_dict["focal_data"][frame] = camera_node.knob('focal').getValue(time=frame)
+
+            # Performe json extraction
+            # Serializing json
+            json_object = json.dumps(camera_data_dict, indent=4)
+
+            # Writing to json
+            with open(json_path, "w") as outfile:
+                outfile.write(json_object)
+
             # create scene node
             rm_n = nuke.createNode("Scene")
             rm_nodes.append(rm_n)

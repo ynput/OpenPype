@@ -180,7 +180,8 @@ def add_nuke_callbacks():
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
     # set apply all custom settings on script load and save
-    nuke.addOnScriptLoad(workfile_settings.set_custom_resolution)
+    if workfile_settings._get_set_resolution_startup():
+        nuke.addOnScriptLoad(workfile_settings.set_custom_resolution)
 
     # Emit events
     nuke.addOnCreate(_on_scene_open, nodeClass="Root")

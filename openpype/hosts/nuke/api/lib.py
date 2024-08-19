@@ -2599,12 +2599,17 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
     def set_context_settings(self):
         os.environ["OP_NUKE_SKIP_SAVE_EVENT"] = "True"
         # replace reset resolution from avalon core to pype's
-        self.reset_resolution()
+        if self._get_set_resolution_startup():
+            self.reset_resolution()
         # replace reset resolution from avalon core to pype's
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
         del os.environ["OP_NUKE_SKIP_SAVE_EVENT"]
+
+    def _get_set_resolution_startup(self):
+        custom_settings = self.get_custom_settings()
+        return custom_settings.get("hosts", {}).get("nuke", {}).get("set_resolution_startup", True)
 
     def set_custom_resolution(self):
         custom_settings = self.get_custom_settings()
