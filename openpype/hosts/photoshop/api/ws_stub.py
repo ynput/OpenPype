@@ -360,6 +360,37 @@ class PhotoshopServerStub:
             )
         )
 
+    def get_activeDocument_format_resolution(self):
+        """Return the width and height in pixel of the active doc
+
+        Returns(dict):
+            {"width": int, "height": int} or empty dict {} if document size isn't valid
+        """
+        res = self.websocketserver.call(
+            self.client.call('Photoshop.get_activeDocument_format_resolution')
+        )
+        if res:
+            return json.loads(res)
+        return {}
+
+    def crop_document_to_coordinate(self, x1, y1, x2, y2):
+        """Crop the active document to the given coordinates
+        x1,y1----------------------
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        ----------------------x2,y2
+        Returns: None
+        """
+        self.websocketserver.call(
+            self.client.call('Photoshop.crop_document_to_coordinate',
+                             x1=x1,
+                             y1=y1,
+                             x2=x2,
+                             y2=y2)
+        )
+
     def get_active_document_full_name(self):
         """Returns full name with path of active document via ws call
 

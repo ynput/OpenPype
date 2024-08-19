@@ -263,6 +263,42 @@ function getActiveDocumentFullName(){
     };
 }
 
+function getActiveDocumentFormatResolution(){
+    /**
+     *   Returns a dict with the resolution of the current doc
+     * */
+    if (documents.length == 0){
+        return {};
+    }
+
+    try {
+        savedUnit = app.preferences.rulerUnits;
+        app.preferences.rulerUnits = Units.PIXELS;
+        resDict = {"width" :app.activeDocument.width.value,
+                    "height": app.activeDocument.height.value}
+        app.preferences.rulerUnits = savedUnit;
+        return(JSON.stringify(resDict));
+    }catch(e){
+        // No doc is active.
+        return {}
+    };
+}
+
+function cropDocumentToCoordinate(x1, y1, x2, y2) {
+    /*
+    * Crop all the document and the layers in to the define coordinate
+    * x1,y1----------------------
+    * |                         |
+    * |                         |
+    * |                         |
+    * |                         |
+    * ----------------------x2,y2
+    */
+    bounds = [UnitValue(x1, "px"), UnitValue(y1, "px"), UnitValue(x2, "px"), UnitValue(y2, "px")];
+    app.activeDocument.crop(bounds);
+}
+
+
 function imprint(payload){
     /**
      *  Sets headline content of current document with metadata. Stores

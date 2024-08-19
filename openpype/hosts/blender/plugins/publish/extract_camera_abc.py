@@ -1,5 +1,5 @@
 import os
-import json
+
 import bpy
 
 from openpype.pipeline import publish
@@ -20,8 +20,6 @@ class ExtractCameraABC(publish.Extractor):
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
-        jsonname = f"{instance.name}.json"
-        json_path = os.path.join(stagingdir, jsonname)
 
         # Perform extraction
         self.log.info("Performing extraction..")
@@ -39,11 +37,7 @@ class ExtractCameraABC(publish.Extractor):
         selected = list(asset_group.children)
         active = selected[0]
 
-        camera = None
-
         for obj in selected:
-            if obj.type == "CAMERA":
-                camera = (obj.data)
             obj.select_set(True)
 
         # Create focal value dict throught time for blender
@@ -91,13 +85,5 @@ class ExtractCameraABC(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        json_representation = {
-            'name': 'jsonCam',
-            'ext': 'json',
-            'files': jsonname,
-            "stagingDir": stagingdir,
-        }
-        instance.data["representations"].append(json_representation)
-
-        self.log.info("Extracted instance '%s' to: %s\nExtracted instance '%s' to: %s",
-                      instance.name, representation, jsonname, json_representation)
+        self.log.info("Extracted instance '%s' to: %s",
+                      instance.name, representation)

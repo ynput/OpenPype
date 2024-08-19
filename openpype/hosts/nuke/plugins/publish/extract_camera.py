@@ -1,6 +1,5 @@
 import os
 import math
-import json
 from pprint import pformat
 
 import nuke
@@ -55,9 +54,7 @@ class ExtractCamera(publish.Extractor):
 
         # create file name and path
         filename = subset + ".{}".format(extension)
-        jsonname = "{0}.json".format(instance.name)
         file_path = os.path.join(staging_dir, filename).replace("\\", "/")
-        json_path = os.path.join(staging_dir, jsonname).replace("\\", "/")
 
         with maintained_selection():
             # bake camera with axeses onto word coordinate XYZ
@@ -117,14 +114,6 @@ class ExtractCamera(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        json_representation = {
-            'name': 'jsonCam',
-            'ext': 'json',
-            'files': jsonname,
-            "stagingDir": staging_dir,
-        }
-        instance.data["representations"].append(json_representation)
-
         instance.data.update({
             "path": file_path,
             "outputDir": staging_dir,
@@ -137,8 +126,8 @@ class ExtractCamera(publish.Extractor):
             "frameEndHandle": last_frame,
         })
 
-        self.log.info("Extracted instance '{0}' to: {1}\nExtracted instance '{2}' to: {3}".format(
-            instance.name, file_path, jsonname, json_path))
+        self.log.info("Extracted instance '{0}' to: {1}".format(
+            instance.name, file_path))
 
 
 def bakeCameraWithAxeses(camera_node, output_range):
