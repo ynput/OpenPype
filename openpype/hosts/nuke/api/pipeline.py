@@ -180,7 +180,8 @@ def add_nuke_callbacks():
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
     # set apply all custom settings on script load and save
-    nuke.addOnScriptLoad(workfile_settings.set_custom_resolution)
+    if workfile_settings.get_custom_settings().get("hosts", {}).get("nuke", {}).get("set_resolution_startup", True):
+        nuke.addOnScriptLoad(workfile_settings.set_custom_resolution)
 
     # Emit events
     nuke.addOnCreate(_on_scene_open, nodeClass="Root")
@@ -306,7 +307,7 @@ def _install_menu():
     )
     menu.addCommand(
         "Set Custom Resolution",
-        lambda: WorkfileSettings().set_custom_resolution(emitted_from_menu = True)
+        lambda: WorkfileSettings().set_custom_resolution()
     )
     menu.addCommand(
         "Set Frame Range",
