@@ -60,7 +60,8 @@ def _browse_render_nodes(nodes_inputs):
             return target_node
 
         target_node = _browse_render_nodes(target_node.inputs)
-        if target_node: return target_node
+        if target_node:
+            return target_node
 
 
 class VIEW3D_PT_set_render_paths(bpy.types.Panel):
