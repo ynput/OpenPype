@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Unique Layer Name Validator</title>
+<description>
+## Multiple element names aren't unique
+
+Layers share the same name, this is not valid.
+
+### How to repair?
+
+You can select the detected layers with the "Select Layers" button on the right, then you need to change the names and make them all unique.
+</description>
+</error>
+</root>
