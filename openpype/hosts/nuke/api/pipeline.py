@@ -180,7 +180,7 @@ def add_nuke_callbacks():
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
     # set apply all custom settings on script load and save
-    if workfile_settings.get_custom_settings().get("hosts", {}).get("nuke", {}).get("set_resolution_startup", True):
+    if workfile_settings._get_set_resolution_startup():
         nuke.addOnScriptLoad(workfile_settings.set_custom_resolution)
 
     # Emit events
