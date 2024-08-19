@@ -1,5 +1,5 @@
 import os
-
+import json
 from maya import cmds
 
 from openpype.pipeline import publish
@@ -35,6 +35,11 @@ class ExtractCameraAlembic(publish.Extractor):
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
+
+        if not cameras:
+            self.log.error("No camera found")
+            return
+
         camera = cameras[0]
 
         # create focal value dict throught time for blender
@@ -46,6 +51,7 @@ class ExtractCameraAlembic(publish.Extractor):
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         filename = "{0}.abc".format(instance.name)
+        jsonname = "{0}.json".format(instance.name)
         path = os.path.join(dir_path, filename)
         json_path = os.path.join(dir_path, jsonname)
 
@@ -128,5 +134,13 @@ class ExtractCameraAlembic(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.debug("Extracted instance '{0}' to: {1}".format(
-            instance.name, path))
+        json_representation = {
+            'name': 'jsonCam',
+            'ext': 'json',
+            'files': jsonname,
+            "stagingDir": dir_path,
+        }
+        instance.data["representations"].append(json_representation)
+
+        self.log.debug("Extracted instance '{0}' to: {1}\nExtracted instance '{2}' to: {3}".format(
+            instance.name, path, jsonname, json_path))

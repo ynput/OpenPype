@@ -3,7 +3,7 @@
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
-
+import json
 import bpy
 
 from openpype.pipeline import (
