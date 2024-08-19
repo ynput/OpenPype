@@ -37,10 +37,25 @@ class ExtractCameraAlembic(publish.Extractor):
         assert isinstance(step, float), "Step must be a float value"
         camera = cameras[0]
 
+        # create focal value dict throught time for blender
+        camera_data_dict = {"focal_data": {}}
+
+        for frame in range (start, (end+1)):
+            camera_data_dict["focal_data"][frame] = cmds.getAttr('{0}.focalLength'.format(camera), time=frame)
+
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         filename = "{0}.abc".format(instance.name)
         path = os.path.join(dir_path, filename)
+        json_path = os.path.join(dir_path, jsonname)
+
+        # Performe json extraction
+        # Serializing json
+        json_object = json.dumps(camera_data_dict, indent=4)
+
+        # Writing to json
+        with open(json_path, "w") as outfile:
+            outfile.write(json_object)
 
         # Perform alembic extraction
         member_shapes = cmds.ls(
