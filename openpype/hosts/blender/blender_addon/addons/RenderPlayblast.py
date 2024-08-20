@@ -64,7 +64,6 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
     bl_idname = "playblast.render"
     bl_label = "Render Playblast"
 
-
     def execute(self, context):
         scene = bpy.context.scene
         region = get_view_3D_region()
@@ -99,7 +98,8 @@ class OBJECT_OT_render_playblast(bpy.types.Operator):
             scene.render.filepath = render_filepath.format(ext=options['extension'])
 
             container = options.get('container')
-            if container : scene.render.ffmpeg.format = container
+            if container:
+                scene.render.ffmpeg.format = container
 
             logging.info(f"{'Camera view' if use_camera_view else 'Viewport'} will be rendered at following path : {scene.render.filepath}")
 

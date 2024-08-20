@@ -22,6 +22,7 @@ bl_info = {
     "location": "View 3D > UI",
 }
 
+
 class NodesNames(Enum):
     RENDER_LAYERS = 'R_LAYERS'
     OUTPUT_FILE = 'OUTPUT_FILE'
@@ -70,7 +71,6 @@ class VIEW3D_PT_set_render_paths(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_category = "Quad"
 
-
     def draw(self, context):
         layout = self.layout
         col = layout.column()
@@ -81,7 +81,6 @@ class VIEW3D_PT_set_render_paths(bpy.types.Panel):
 class OBJECT_OT_set_paths(bpy.types.Operator):
     bl_idname = "setpaths.render"
     bl_label = "Set Render Path"
-
 
     def execute(self, context):
         set_global_output_path(create_directory=True)
