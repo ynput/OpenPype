@@ -3,7 +3,7 @@
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
-
+import json
 import bpy
 
 from openpype.pipeline import (
@@ -106,6 +106,19 @@ class AbcCameraLoader(plugin.AssetLoader):
         nodes = list(asset_group.children)
 
         for obj in nodes:
+            if obj.type == 'CAMERA':
+                camera = obj.data
+                jsonpath_camera_data = (Path(str(libpath)).with_suffix('.json'))
+                camera_data = {}
+                if Path(jsonpath_camera_data).exists():
+                    with open(jsonpath_camera_data) as my_file:
+                        camera_data = json.loads(my_file.read())
+
+                if camera_data:
+                    for frame in camera_data["focal_data"].keys():
+                        camera.lens = camera_data["focal_data"][frame]
+                        camera.keyframe_insert(data_path="lens", frame=int(frame))
+
             objects.append(obj)
             nodes.extend(list(obj.children))
 

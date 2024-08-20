@@ -106,7 +106,11 @@ class NukePlaceholderPlugin(PlaceholderPlugin):
 
     def _parse_placeholder_node_data(self, node):
         placeholder_data = {}
-        for key in self.get_placeholder_keys():
+        # Allow the transition between legacy Creator and New one
+        placeholder_keys = self.get_placeholder_keys()
+        # TODO: Delete this once all the templates will used 'Create' instead of 'Creator' plugins
+        placeholder_keys.add("creator")
+        for key in placeholder_keys:
             knob = node.knob(key)
             value = None
             if knob is not None:
@@ -559,6 +563,11 @@ class NukePlaceholderCreatePlugin(
         if "nb_children" in node_knobs:
             nb_children = int(node_knobs["nb_children"].getValue())
         placeholder_data["nb_children"] = nb_children
+
+        # TODO: Delete this once all the templates will used 'Create' instead of 'Creator' plugins
+        if "creator" in placeholder_data:
+            placeholder_data["create"] = placeholder_data["creator"]
+            del placeholder_data['creator']
 
         siblings = []
         if "siblings" in node_knobs:
