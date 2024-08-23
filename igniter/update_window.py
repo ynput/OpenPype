@@ -105,9 +105,9 @@ class UpdateWindow(QtWidgets.QDialog):
         self._progress_bar.setRange(0, 0)
         update_thread = UpdateThread(self)
         update_thread.set_version(self._openpype_version)
-        update_thread.log.connect(self._print)
-        update_thread.step_text.connect(self.update_step_text)
-        update_thread.progress.connect(self._update_progress)
+        update_thread.log_signal.connect(self._print)
+        update_thread.step_text_signal.connect(self.update_step_text)
+        update_thread.progress_signal.connect(self._update_progress)
         update_thread.finished.connect(self._installation_finished)
 
         self._update_thread = update_thread
