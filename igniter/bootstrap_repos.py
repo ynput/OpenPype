@@ -572,17 +572,17 @@ class BootstrapRepos:
 
     """
 
-    def __init__(self, progress_callback: Callable = None, message=None):
+    def __init__(self, progress_callback: Callable = None, log_signal=None):
         """Constructor.
 
         Args:
             progress_callback (callable): Optional callback method to report
                 progress.
-            message (QtCore.Signal, optional): Signal to report messages back.
+            log_signal (QtCore.Signal, optional): Signal to report messages back.
 
         """
         # vendor and app used to construct user data dir
-        self._message = message
+        self._log_signal = log_signal
         self._log = log.getLogger(str(__class__))
         self.data_dir = None
         self.set_data_dir(None)
@@ -1291,8 +1291,8 @@ class BootstrapRepos:
             exc_info (bool, optional): Exception info object to pass to logger.
 
         """
-        if self._message:
-            self._message.emit(message, level == LOG_ERROR)
+        if self._log_signal:
+            self._log_signal.emit(message, level == LOG_ERROR)
 
         if level == LOG_WARNING:
             self._log.warning(message, exc_info=exc_info)
