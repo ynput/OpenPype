@@ -474,9 +474,6 @@ class TrayManager:
 
         self.modules_manager.initialize(self, self.tray_widget.menu)
 
-        admin_submenu = ITrayAction.admin_submenu(self.tray_widget.menu)
-        self.tray_widget.menu.addMenu(admin_submenu)
-
         # Add services if they are
         services_submenu = ITrayService.services_submenu(self.tray_widget.menu)
         self.tray_widget.menu.addMenu(services_submenu)

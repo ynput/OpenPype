@@ -1201,18 +1201,27 @@ class ModulesManager:
 class TrayModulesManager(ModulesManager):
     # Define order of modules in menu
     modules_menu_order = (
-        "user",
-        "ftrack",
-        "kitsu",
-        "muster",
-        "launcher_tool",
-        "avalon",
-        "clockify",
-        "standalonepublish_tool",
-        "traypublish_tool",
-        "log_viewer",
-        "local_settings",
-        "settings"
+        # Menu ------------------------------------------
+        # "user",                  # {USERNAME} <not a real module>
+        "ftrack",                  # ftrack
+        "kitsu",                   # Kitsu
+        "muster",                  # Muster
+        "launcher_tool",           # Launcher
+        "avalon",                  # Loader
+        "tray_publisher",          # Publisher
+        "standalone_publisher",    # Publisher (legacy)
+        "clockify",                # Clockify
+        "local_settings",          # Local Settings
+        # More Tools Submenu -----------------------------
+        "sync_server",             # Sync Queue
+        "log_viewer",              # Show Logs
+        "update_zxp_extensions",   # Update ZXP Extensions
+        # Admin Submenu ----------------------------------
+        "settings"                 # Studio Settings
+        "project_manager"          # Project Manager (beta)
+        "python_interpreter"       # Console
+        # Services Submenu -------------------------------
+        # |-> This submenu is populated automatically
     )
 
     def __init__(self):

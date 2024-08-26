@@ -15,7 +15,7 @@ from openpype.client import (
     get_representations,
     get_representation_by_id,
 )
-from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
+from openpype.modules import OpenPypeModule, ITrayAction, IPluginPaths
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -44,7 +44,7 @@ from .utils import (
 log = Logger.get_logger("SyncServer")
 
 
-class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
+class SyncServerModule(OpenPypeModule, ITrayAction, IPluginPaths):
     """
        Synchronization server that is syncing published files from local to
        any of implemented providers (like GDrive, S3 etc.)
@@ -111,6 +111,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
     name = "sync_server"
     label = "Sync Queue"
+    submenu = "More Tools"
 
     def initialize(self, module_settings):
         """
@@ -1366,6 +1367,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
     """ End of Public API """
 
+    def on_action_trigger(self):
+        self.show_widget()
+
     def get_local_file_path(self, project_name, site_name, file_path):
         """
             Externalized for app
@@ -1462,19 +1466,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
                 "Error has happened during Killing sync server",
                 exc_info=True
             )
-
-    def tray_menu(self, parent_menu):
-        if not self.enabled:
-            return
-
-        from qtpy import QtWidgets
-        """Add menu or action to Tray(or parent)'s menu"""
-        action = QtWidgets.QAction(self.label, parent_menu)
-        action.triggered.connect(self.show_widget)
-        parent_menu.addAction(action)
-        parent_menu.addSeparator()
-
-        self.action_show_widget = action
 
     @property
     def is_running(self):

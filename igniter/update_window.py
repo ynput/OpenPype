@@ -17,9 +17,10 @@ class UpdateWindow(QtWidgets.QDialog):
     _width = 500
     _height = 100
 
-    def __init__(self, version: OpenPypeVersion, parent=None):
+    def __init__(self, version: OpenPypeVersion, zxp_hosts: [str], parent=None):
         super(UpdateWindow, self).__init__(parent)
         self._openpype_version = version
+        self._zxp_hosts = zxp_hosts
         self._result_version_path = None
         self._log = log.getLogger(str(__class__))
 
@@ -105,6 +106,7 @@ class UpdateWindow(QtWidgets.QDialog):
         self._progress_bar.setRange(0, 0)
         update_thread = UpdateThread(self)
         update_thread.set_version(self._openpype_version)
+        update_thread.set_zxp_hosts(self._zxp_hosts)
         update_thread.log_signal.connect(self._print)
         update_thread.step_text_signal.connect(self.update_step_text)
         update_thread.progress_signal.connect(self._update_progress)

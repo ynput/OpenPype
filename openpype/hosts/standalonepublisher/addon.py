@@ -11,7 +11,7 @@ STANDALONEPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class StandAlonePublishAddon(OpenPypeModule, ITrayAction, IHostAddon):
     label = "Publisher (legacy)"
-    name = "standalonepublisher"
+    name = "standalone_publisher"
     host_name = "standalonepublisher"
 
     def initialize(self, modules_settings):

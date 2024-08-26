@@ -33,10 +33,14 @@ class UpdateThread(QtCore.QThread):
     def __init__(self, parent=None):
         self._result = None
         self._openpype_version = None
+        self._zxp_hosts = []
         super().__init__(parent)
 
     def set_version(self, openpype_version: OpenPypeVersion):
         self._openpype_version = openpype_version
+
+    def set_zxp_hosts(self, zxp_hosts: [str]):
+        self._zxp_hosts = zxp_hosts
 
     def result(self):
         """Result of finished installation."""
@@ -47,73 +51,6 @@ class UpdateThread(QtCore.QThread):
             raise AssertionError("BUG: Result was set more than once!")
         self._result = value
 
-    def _extract_zxp_info_from_manifest(self, version_path, host):
-        path_manifest = version_path.joinpath("openpype", "hosts", host, "api", "extension", "CSXS", "manifest.xml")
-        pattern_regex_extension_id = r"ExtensionBundleId=\"(?P<extension_id>[\w.]+)\""
-        pattern_regex_extension_version = r"ExtensionBundleVersion=\"(?P<extension_version>[\d.]+)\""
-
-        extension_id = ""
-        extension_version = ""
-        try:
-            with open(path_manifest, mode="r") as f:
-                content = f.read()
-                match_extension_id = re.search(pattern_regex_extension_id, content)
-                match_extension_version = re.search(pattern_regex_extension_version, content)
-                if match_extension_id:
-                    extension_id = match_extension_id.group("extension_id")
-                if match_extension_version:
-                    extension_version = match_extension_version.group("extension_version")
-        except IOError as e:
-            self.log_signal.emit("I/O error({}): {}".format(e.errno, e.strerror), True)
-        except Exception as e:  # handle other exceptions such as attribute errors
-            self.log_signal.emit("Unexpected error: {}".format(e), True)
-
-        return extension_id, extension_version
-
-    def _update_zxp_extensions(self, version_path):
-        if not version_path:
-            return
-
-        # Check the current OS
-        low_platform = platform.system().lower()
-        if low_platform == "linux":
-            # Adobe software isn't available on Linux
-            return
-
-        path_prog_folder = Path(os.environ["OPENPYPE_ROOT"]).resolve().joinpath("vendor", "bin", "ex_man_cmd")
-        if low_platform == "windows":
-            path_prog = path_prog_folder.joinpath("windows", "ExManCmd.exe")
-        else:
-            path_prog = path_prog_folder.joinpath("macos", "MacOS", "ExManCmd")
-
-        hosts = ["aftereffects", "photoshop"]
-        for host in hosts:
-            extension_id, extension_version = self._extract_zxp_info_from_manifest(version_path, host)
-
-            if not extension_id or not extension_version:
-                # ZXP extension seems invalid, skipping
-                continue
-
-            # Remove installed ZXP extension
-            self.step_text_signal.emit("Removing installed ZXP extension for <b>{}</b> ...".format(host))
-            subprocess.run([str(path_prog), "/remove", extension_id])
-
-            # Install ZXP shipped in the current version folder
-            fullpath_curr_zxp_extension = version_path.joinpath("openpype", "hosts", host, "api", "extension.zxp")
-            if not fullpath_curr_zxp_extension.exists():
-                self.log_signal.emit("Cannot find ZXP extension for {}, looked at: {}".format(
-                    host, str(fullpath_curr_zxp_extension)), True)
-                continue
-
-            self.step_text_signal.emit("Install ZXP extension for <b>{}</b> ...".format(host))
-            completed_process = subprocess.run([str(path_prog), "/install", str(fullpath_curr_zxp_extension)],
-                                               capture_output=True)
-            if completed_process.returncode != 0 or completed_process.stderr:
-                self.log_signal.emit("Couldn't install the ZXP extension for {} "
-                                     "due to an error: full log: {}\n{}".format(host,
-                                                                                completed_process.stdout,
-                                                                                completed_process.stderr), True)
-
     def run(self):
         """Thread entry point.
 
@@ -121,12 +58,21 @@ class UpdateThread(QtCore.QThread):
         or copy them from location specified by user or retrieved from
         database.
         """
-        bs = BootstrapRepos(
-            progress_callback=self.set_progress, log_signal=self.log_signal)
+        bs = BootstrapRepos(progress_callback=self.set_progress,
+                            log_signal=self.log_signal,
+                            step_text_signal=self.step_text_signal)
 
         bs.set_data_dir(OpenPypeVersion.get_local_openpype_path())
-        version_path = bs.install_version(self._openpype_version)
-        self._update_zxp_extensions(version_path)
+
+        # Adding the conditions to be able to show this window to update the ZXP extensions
+        # without needing to install an OP version
+        if not bs.is_inside_user_data(self._openpype_version.path) and self._openpype_version.path.is_file():
+            version_path = bs.install_version(self._openpype_version)
+        else:
+            version_path = self._openpype_version.path
+
+        bs.update_zxp_extensions(self._openpype_version, self._zxp_hosts)
+
         self._set_result(version_path)
 
     def set_progress(self, progress: int) -> None:

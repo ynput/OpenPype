@@ -58,8 +58,10 @@ def open_dialog():
     return d.result()
 
 
-def open_update_window(openpype_version):
+def open_update_window(openpype_version, zxp_hosts=None):
     """Open update window."""
+    if zxp_hosts is None:
+        zxp_hosts = []
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)
@@ -68,7 +70,7 @@ def open_update_window(openpype_version):
 
     app = _get_qt_app()
 
-    d = UpdateWindow(version=openpype_version)
+    d = UpdateWindow(version=openpype_version, zxp_hosts=zxp_hosts)
     d.open()
 
     app.exec_()
