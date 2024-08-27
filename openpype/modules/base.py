@@ -1214,14 +1214,14 @@ class TrayModulesManager(ModulesManager):
         "local_settings",          # Local Settings
         # More Tools Submenu -----------------------------
         "sync_server",             # Sync Queue
-        "log_viewer",              # Show Logs
         "update_zxp_extensions",   # Update ZXP Extensions
+        "log_viewer",              # Show Logs
+        "python_interpreter",      # Console
         # Admin Submenu ----------------------------------
-        "settings"                 # Studio Settings
-        "project_manager"          # Project Manager (beta)
-        "python_interpreter"       # Console
+        "settings",                # Studio Settings
+        "project_manager",         # Project Manager (beta)
         # Services Submenu -------------------------------
-        # |-> This submenu is populated automatically
+        # Order currently not defined (this could be done)
     )
 
     def __init__(self):

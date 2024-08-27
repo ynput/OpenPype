@@ -4,7 +4,7 @@ from openpype.modules import OpenPypeModule, ITrayAction
 class PythonInterpreterAction(OpenPypeModule, ITrayAction):
     label = "Console"
     name = "python_interpreter"
-    submenu = "Admin"
+    submenu = "More Tools"
 
     def initialize(self, modules_settings):
         self.enabled = True

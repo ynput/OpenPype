@@ -15,6 +15,7 @@ from openpype.lib import (
     get_openpype_execute_args,
     run_detached_process,
 )
+from openpype.lib.local_settings import get_openpype_username
 from openpype.lib.openpype_version import (
     op_version_control_available,
     get_expected_version,
@@ -468,10 +469,39 @@ class TrayManager:
     def initialize_modules(self):
         """Add modules to tray."""
         from openpype.modules import (
-            ITrayAction,
             ITrayService
         )
 
+        # Menu header
+        system_settings = get_system_settings()
+        studio_name = system_settings["general"]["studio_name"]
+
+        header_label = QtWidgets.QLabel("OpenPype {}".format(studio_name))
+        header_label.setStyleSheet(
+            "background: qlineargradient(x1: 0, y1: 0, x2: 0.7, y2: 1, stop: 0 #3bebb9, stop: 1.0 #52abd7);"
+            "font-weight: bold; color: #003740; margin: 0; padding: 8px 6px;")
+
+        header_widget = QtWidgets.QWidgetAction(self.tray_widget.menu)
+        header_widget.setDefaultWidget(header_label)
+
+        self.tray_widget.menu.addAction(header_widget)
+
+        # Username info as a non-clickable item in the menu
+        # Note: Double space before the username for readability
+        username_label = QtWidgets.QLabel("User:  {}".format(str(get_openpype_username())))
+        username_label.setStyleSheet("margin: 0; padding: 8px 6px;")
+
+        username_widget = QtWidgets.QWidgetAction(self.tray_widget.menu)
+        username_widget.setDefaultWidget(username_label)
+
+        self.tray_widget.menu.addAction(username_widget)
+
+        # Add version item (and potentially "Update & Restart" item)
+        self._add_version_item()
+
+        self.tray_widget.menu.addSeparator()
+
+        # Add enabled modules
         self.modules_manager.initialize(self, self.tray_widget.menu)
 
         # Add services if they are
@@ -480,8 +510,6 @@ class TrayManager:
 
         # Add separator
         self.tray_widget.menu.addSeparator()
-
-        self._add_version_item()
 
         # Add Exit action to menu
         exit_action = QtWidgets.QAction("Exit", self.tray_widget)
@@ -598,7 +626,7 @@ class TrayManager:
         subversion = os.environ.get("OPENPYPE_SUBVERSION")
         client_name = os.environ.get("OPENPYPE_CLIENT")
 
-        version_string = openpype.version.__version__
+        version_string = "Ver.:  {}".format(openpype.version.__version__)  # double space for readability
         if subversion:
             version_string += " ({})".format(subversion)
 
@@ -616,7 +644,6 @@ class TrayManager:
 
         self.tray_widget.menu.addAction(version_action)
         self.tray_widget.menu.addAction(restart_action)
-        self.tray_widget.menu.addSeparator()
 
         self._restart_action = restart_action
 
