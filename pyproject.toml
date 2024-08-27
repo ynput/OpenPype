@@ -110,7 +110,7 @@ virtualenv = "^20.24.6"
 [[tool.poetry.source]]
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
-secondary = true
+priority = "supplemental"
 
 [tool.poetry.group.dev.dependencies]
 commitizen = "^3.12.0"
@@ -166,6 +166,14 @@ hash = "3894dec7e4e521463891a869586850e8605f5fd604858b674c87323bf33e273d"
 [openpype.thirdparty.ocioconfig]
 url = "https://distribute.openpype.io/thirdparty/OpenColorIO-Configs-1.0.2.zip"
 hash = "4ac17c1f7de83465e6f51dd352d7117e07e765b66d00443257916c828e35b6ce"
+
+[openpype.thirdparty.ex_man_cmd.windows]
+url = "https://github.com/quadproduction/ex_man_cmd/releases/download/1.0.0/ex_man_cmd-windows.zip"
+hash = "70B289384768178BD52B214DE06CE941B731D29BCD4D9E0AB8613DD694863876"
+
+[openpype.thirdparty.ex_man_cmd.darwin]
+url = "https://github.com/quadproduction/ex_man_cmd/releases/download/1.0.0/ex_man_cmd-macos.zip"
+hash = "2BED608ED4227BA6E755AC20BB951DA11014D31F2ADCCEEE8C747BFFF699169F"
 
 [tool.pyright]
 include = [

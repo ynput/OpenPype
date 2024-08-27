@@ -22,9 +22,11 @@ if "OpenPypeVersion" not in sys.modules:
 def _get_qt_app():
     from qtpy import QtWidgets, QtCore
 
+    is_event_loop_running = True
+
     app = QtWidgets.QApplication.instance()
     if app is not None:
-        return app
+        return app, is_event_loop_running
 
     for attr_name in (
         "AA_EnableHighDpiScaling",
@@ -39,7 +41,10 @@ def _get_qt_app():
             QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
         )
 
-    return QtWidgets.QApplication(sys.argv)
+    # Since it's a new QApplication the event loop isn't running yet
+    is_event_loop_running = False
+
+    return QtWidgets.QApplication(sys.argv), is_event_loop_running
 
 
 def open_dialog():
@@ -49,12 +54,16 @@ def open_dialog():
         sys.exit(1)
     from .install_dialog import InstallDialog
 
-    app = _get_qt_app()
+    app, is_event_loop_running = _get_qt_app()
 
     d = InstallDialog()
     d.open()
 
-    app.exec_()
+    if not is_event_loop_running:
+        app.exec_()
+    else:
+        d.exec_()
+
     return d.result()
 
 
@@ -68,12 +77,16 @@ def open_update_window(openpype_version, zxp_hosts=None):
 
     from .update_window import UpdateWindow
 
-    app = _get_qt_app()
+    app, is_event_loop_running = _get_qt_app()
 
     d = UpdateWindow(version=openpype_version, zxp_hosts=zxp_hosts)
     d.open()
 
-    app.exec_()
+    if not is_event_loop_running:
+        app.exec_()
+    else:
+        d.exec_()
+
     version_path = d.get_version_path()
     return version_path
 
@@ -86,12 +99,15 @@ def show_message_dialog(title, message):
 
     from .message_dialog import MessageDialog
 
-    app = _get_qt_app()
+    app, is_event_loop_running = _get_qt_app()
 
     dialog = MessageDialog(title, message)
     dialog.open()
 
-    app.exec_()
+    if not is_event_loop_running:
+        app.exec_()
+    else:
+        dialog.exec_()
 
 
 __all__ = [

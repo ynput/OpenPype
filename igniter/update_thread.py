@@ -11,7 +11,8 @@ from qtpy import QtCore
 
 from .bootstrap_repos import (
     BootstrapRepos,
-    OpenPypeVersion
+    OpenPypeVersion,
+    ZXPExtensionData
 )
 
 
@@ -39,7 +40,7 @@ class UpdateThread(QtCore.QThread):
     def set_version(self, openpype_version: OpenPypeVersion):
         self._openpype_version = openpype_version
 
-    def set_zxp_hosts(self, zxp_hosts: [str]):
+    def set_zxp_hosts(self, zxp_hosts: [ZXPExtensionData]):
         self._zxp_hosts = zxp_hosts
 
     def result(self):
