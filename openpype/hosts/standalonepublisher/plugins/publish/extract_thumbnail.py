@@ -93,6 +93,14 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
         subprocess_jpeg = " ".join(jpeg_items)
 
+        if os.getenv("SHELL") in ("/bin/bash", "/bin/sh"):
+            # Escape parentheses for bash
+            subprocess_jpeg = (
+                subprocess_jpeg
+                .replace("(", "\\(")
+                .replace(")", "\\)")
+            )
+
         # run subprocess
         self.log.debug("Executing: {}".format(subprocess_jpeg))
         run_subprocess(

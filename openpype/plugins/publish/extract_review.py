@@ -418,6 +418,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 raise NotImplementedError
 
             subprcs_cmd = " ".join(ffmpeg_args)
+            if os.getenv("SHELL") in ("/bin/bash", "/bin/sh"):
+                # Escape parentheses for bash
+                subprcs_cmd = (
+                    subprcs_cmd
+                    .replace("(", "\\(")
+                    .replace(")", "\\)")
+                )
 
             # run subprocess
             self.log.debug("Executing: {}".format(subprcs_cmd))
