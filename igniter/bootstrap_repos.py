@@ -7,6 +7,7 @@ import re
 import shutil
 import sys
 import tempfile
+import subprocess
 from pathlib import Path
 from typing import Union, Callable, List, Tuple
 import hashlib
@@ -28,7 +29,6 @@ from .tools import (
     get_expected_studio_version_str,
     get_local_openpype_path_from_settings
 )
-
 
 LOG_INFO = 0
 LOG_WARNING = 1
@@ -482,8 +482,8 @@ class OpenPypeVersion(semver.VersionInfo):
 
     @staticmethod
     def get_latest_version(
-        local: bool = None,
-        remote: bool = None
+            local: bool = None,
+            remote: bool = None
     ) -> Union[OpenPypeVersion, None]:
         """Get the latest available version.
 
@@ -560,6 +560,15 @@ class OpenPypeVersion(semver.VersionInfo):
         return self.major == version.major and self.minor == version.minor
 
 
+class ZXPExtensionData:
+
+    def __init__(self, host_id: str, ext_id: str, installed_version: semver.VersionInfo, shipped_version: semver.VersionInfo):
+        self.host_id = host_id
+        self.id = ext_id
+        self.installed_version = installed_version
+        self.shipped_version = shipped_version
+
+
 class BootstrapRepos:
     """Class for bootstrapping local OpenPype installation.
 
@@ -572,17 +581,18 @@ class BootstrapRepos:
 
     """
 
-    def __init__(self, progress_callback: Callable = None, message=None):
+    def __init__(self, progress_callback: Callable = None, log_signal=None, step_text_signal=None):
         """Constructor.
 
         Args:
             progress_callback (callable): Optional callback method to report
                 progress.
-            message (QtCore.Signal, optional): Signal to report messages back.
+            log_signal (QtCore.Signal, optional): Signal to report messages back.
 
         """
         # vendor and app used to construct user data dir
-        self._message = message
+        self._log_signal = log_signal
+        self._step_text_signal = step_text_signal
         self._log = log.getLogger(str(__class__))
         self.data_dir = None
         self.set_data_dir(None)
@@ -628,7 +638,7 @@ class BootstrapRepos:
         return None
 
     @staticmethod
-    def get_version(repo_dir: Path) -> Union[str, None]:
+    def get_version(repo_dir: Path) -> Union[OpenPypeVersion, None]:
         """Get version of OpenPype in given directory.
 
         Note: in frozen OpenPype installed in user data dir, this must point
@@ -652,7 +662,7 @@ class BootstrapRepos:
         with version_file.open("r") as fp:
             exec(fp.read(), version)
 
-        return version['__version__']
+        return OpenPypeVersion(version=version['__version__'], path=repo_dir)
 
     def create_version_from_live_code(
             self, repo_dir: Path = None, data_dir: Path = None) -> Union[OpenPypeVersion, None]:
@@ -665,22 +675,24 @@ class BootstrapRepos:
 
         Args:
             repo_dir (Path, optional): Path to OpenPype repository.
+            data_dir (Path, optional): Path to the user data directory.
 
         Returns:
-            Path: path of installed repository file.
+            version (OpenPypeVersion): Info of the version created.
 
         """
-        # if repo dir is not set, we detect local "live" OpenPype repository
+        # If repo dir is not set, we detect local "live" OpenPype repository
         # version and use it as a source. Otherwise, repo_dir is user
         # entered location.
         if repo_dir:
             version = self.get_version(repo_dir)
+            version_str = str(version)
         else:
             installed_version = OpenPypeVersion.get_installed_version()
-            version = str(installed_version)
+            version_str = str(installed_version)
             repo_dir = installed_version.path
 
-        if not version:
+        if not version_str:
             self._print("OpenPype not found.", LOG_ERROR)
             return
 
@@ -692,7 +704,7 @@ class BootstrapRepos:
         # create zip inside temporary directory.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_zip = \
-                Path(temp_dir) / f"openpype-v{version}.zip"
+                Path(temp_dir) / f"openpype-v{version_str}.zip"
             self._print(f"creating zip: {temp_zip}")
 
             self._create_openpype_zip(temp_zip, repo_dir)
@@ -702,7 +714,7 @@ class BootstrapRepos:
 
             destination = self._move_zip_to_data_dir(temp_zip)
 
-        return OpenPypeVersion(version=version, path=Path(destination))
+        return OpenPypeVersion(version=version_str, path=Path(destination))
 
     def _move_zip_to_data_dir(self, zip_file) -> Union[None, Path]:
         """Move zip with OpenPype version to user data directory.
@@ -782,11 +794,12 @@ class BootstrapRepos:
                 openpype_list.append(frozen_root / f)
 
         version = self.get_version(frozen_root)
+        version_str = str(version)
 
         # create zip inside temporary directory.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_zip = \
-                Path(temp_dir) / f"openpype-v{version}.zip"
+                Path(temp_dir) / f"openpype-v{version_str}.zip"
             self._print(f"creating zip: {temp_zip}")
 
             with ZipFile(temp_zip, "w") as zip_file:
@@ -806,7 +819,7 @@ class BootstrapRepos:
 
             destination = self._move_zip_to_data_dir(temp_zip)
 
-        return OpenPypeVersion(version=version, path=destination)
+        return OpenPypeVersion(version=version_str, path=destination)
 
     def _create_openpype_zip(self, zip_path: Path, openpype_path: Path) -> None:
         """Pack repositories and OpenPype into zip.
@@ -1291,8 +1304,8 @@ class BootstrapRepos:
             exc_info (bool, optional): Exception info object to pass to logger.
 
         """
-        if self._message:
-            self._message.emit(message, level == LOG_ERROR)
+        if self._log_signal:
+            self._log_signal.emit(message, level == LOG_ERROR)
 
         if level == LOG_WARNING:
             self._log.warning(message, exc_info=exc_info)
@@ -1457,6 +1470,151 @@ class BootstrapRepos:
 
         return destination
 
+    @staticmethod
+    def _get_zxp_handler_program_path(platform_name_lowercase):
+        if platform_name_lowercase == "linux":
+            # No host in array or user is on Linux, the platform doesn't support Adobe softwares
+            return None
+        path_prog_folder = Path(os.environ["OPENPYPE_ROOT"]).resolve().joinpath(
+            "vendor", "bin", "ex_man_cmd", platform_name_lowercase)
+        if platform_name_lowercase == "windows":
+            return path_prog_folder.joinpath("ExManCmd.exe")
+
+        return path_prog_folder.joinpath("MacOS", "ExManCmd")
+
+    def extract_zxp_info_from_manifest(self, openpype_version: OpenPypeVersion, host_id: str):
+        version_path = openpype_version.path
+        path_manifest = version_path.joinpath("openpype", "hosts", host_id, "api", "extension", "CSXS", "manifest.xml")
+        pattern_regex_extension_id = r"ExtensionBundleId=\"(?P<extension_id>[\w.]+)\""
+        pattern_regex_extension_version = r"ExtensionBundleVersion=\"(?P<extension_version>[\d.]+)\""
+
+        extension_id = ""
+        extension_version = ""
+        try:
+            with open(path_manifest, mode="r") as f:
+                content = f.read()
+                match_extension_id = re.search(pattern_regex_extension_id, content)
+                match_extension_version = re.search(pattern_regex_extension_version, content)
+                if match_extension_id:
+                    extension_id = match_extension_id.group("extension_id")
+                if match_extension_version:
+                    extension_version = semver.VersionInfo.parse(match_extension_version.group("extension_version"))
+        except IOError as e:
+            if self._log_signal:
+                self._log_signal.emit("I/O error({}): {}".format(e.errno, e.strerror), True)
+        except Exception as e:  # handle other exceptions such as attribute errors
+            if self._log_signal:
+                self._log_signal.emit("Unexpected error: {}".format(e), True)
+
+        return extension_id, extension_version
+
+    def update_zxp_extensions(self, openpype_version: OpenPypeVersion, extensions: [ZXPExtensionData]):
+        # Check the current OS
+        low_platform = platform.system().lower()
+        if not extensions or platform.system().lower() == "linux":
+            # No host in array or user is on Linux, the platform doesn't support Adobe softwares
+            return
+
+        version_path = openpype_version.path
+
+        path_prog = self._get_zxp_handler_program_path(low_platform)
+        if low_platform == "windows":
+            cmd_arg_prefix = "/"
+        else:
+            cmd_arg_prefix = "--"
+
+        for extension in extensions:
+            # Remove installed ZXP extension
+            if self._step_text_signal:
+                self._step_text_signal.emit("Removing installed ZXP extension for "
+                                            "<b>{}</b> ...".format(extension.host_id))
+            subprocess.run([str(path_prog), "{}remove".format(cmd_arg_prefix), extension.id],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+            # Install ZXP shipped in the current version folder
+            fullpath_curr_zxp_extension = version_path.joinpath("openpype",
+                                                                "hosts",
+                                                                extension.host_id,
+                                                                "api",
+                                                                "extension.zxp")
+            if not fullpath_curr_zxp_extension.exists():
+                if self._log_signal:
+                    self._log_signal.emit("Cannot find ZXP extension for {}, looked at: {}".format(
+                        extension.host_id, str(fullpath_curr_zxp_extension)), True)
+                continue
+
+            if self._step_text_signal:
+                self._step_text_signal.emit("Install ZXP extension for <b>{}</b> ...".format(extension.host_id))
+            completed_process = subprocess.run([str(path_prog), "{}install".format(cmd_arg_prefix),
+                                                str(fullpath_curr_zxp_extension)], capture_output=True)
+            if completed_process.returncode != 0 or completed_process.stderr:
+                if self._log_signal:
+                    self._log_signal.emit("Couldn't install the ZXP extension for {} "
+                                          "due to an error: full log: {}\n{}".format(extension.host_id,
+                                                                                     completed_process.stdout,
+                                                                                     completed_process.stderr), True)
+
+    def get_zxp_extensions_to_update(self, openpype_version, system_settings, force=False) -> [ZXPExtensionData]:
+        # List of all Adobe software ids (named hosts) handled by OpenPype
+        # TODO: where and how to store the list of Adobe software ids
+        zxp_host_ids = ["photoshop", "aftereffects"]
+
+        zxp_hosts_to_update = []
+
+        # Check the current OS
+        low_platform = platform.system().lower()
+        if low_platform == "linux":
+            # The platform doesn't support Adobe softwares
+            return zxp_hosts_to_update
+
+        path_prog = self._get_zxp_handler_program_path(low_platform)
+        if low_platform == "windows":
+            cmd_arg_prefix = "/"
+        else:
+            cmd_arg_prefix = "--"
+
+        # Get installed extensions
+        completed_process = subprocess.run([str(path_prog), "{}list".format(cmd_arg_prefix), "all"],
+                                           capture_output=True)
+        installed_extensions_info = completed_process.stdout
+
+        zxp_hosts_to_update = []
+        for zxp_host_id in zxp_host_ids:
+            extension_id, extension_new_version = self.extract_zxp_info_from_manifest(openpype_version, zxp_host_id)
+            if not extension_id or not extension_new_version:
+                # ZXP extension seems invalid or doesn't exists for this software, skipping
+                continue
+
+            extension_curr_version = ""
+
+            # Get the installed version
+            escaped_extension_id_str = extension_id.replace(".", "\.")  # noqa
+            pattern_regex_extension_version = fr"{escaped_extension_id_str}\s+(?P<version>[\d.]+)"
+
+            match_extension = re.search(pattern_regex_extension_version, str(installed_extensions_info))
+            if match_extension:
+                extension_curr_version = semver.VersionInfo.parse(match_extension.group("version"))
+
+            if not force:
+                # Is the update required?
+
+                # Check if the software is enabled in the current system settings
+                if system_settings and not system_settings["applications"][zxp_host_id]["enabled"]:
+                    # The update isn't necessary if the soft is disabled for the studio, skipping
+                    continue
+
+                # Compare the installed version with the new version
+                if extension_curr_version and extension_curr_version == extension_new_version:
+                    # The two extensions have the same version number, skipping
+                    continue
+
+            zxp_hosts_to_update.append(ZXPExtensionData(zxp_host_id,
+                                                        extension_id,
+                                                        extension_curr_version,
+                                                        extension_new_version))
+
+        return zxp_hosts_to_update
+
     def _copy_zip(self, source: Path, destination: Path) -> Path:
         try:
             # copy file to destination
@@ -1495,8 +1653,7 @@ class BootstrapRepos:
         try:
             # add one 'openpype' level as inside dir there should
             # be many other repositories.
-            version_str = BootstrapRepos.get_version(dir_item)
-            version_check = OpenPypeVersion(version=version_str)
+            version_check = BootstrapRepos.get_version(dir_item)
         except ValueError:
             self._print(
                 f"cannot determine version from {dir_item}", True)
@@ -1600,12 +1757,12 @@ class BootstrapRepos:
                 detected_version = result
 
                 if item.is_dir() and not self._is_openpype_in_dir(
-                    item, detected_version
+                        item, detected_version
                 ):
                     continue
 
                 if item.is_file() and not self._is_openpype_in_zip(
-                    item, detected_version
+                        item, detected_version
                 ):
                     continue
 

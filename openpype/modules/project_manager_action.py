@@ -5,7 +5,7 @@ from openpype.modules import OpenPypeModule, ITrayAction
 class ProjectManagerAction(OpenPypeModule, ITrayAction):
     label = "Project Manager (beta)"
     name = "project_manager"
-    admin_action = True
+    submenu = "Admin"
 
     def initialize(self, modules_settings):
         enabled = False

@@ -43,7 +43,7 @@ class PythonInterpreterRegistry(JSONSettingRegistry):
     def __init__(self):
         self.vendor = "pypeclub"
         self.product = "openpype"
-        name = "python_interpreter_tool"
+        name = "python_interpreter"
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(PythonInterpreterRegistry, self).__init__(name, path)
 

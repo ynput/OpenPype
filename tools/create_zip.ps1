@@ -92,6 +92,9 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Color -Text "OK" -Color Green
 }
 
+Write-Color -Text ">>> ", "Re-generating ZXP files ... " -Color Green, Gray -NoNewline
+powershell "$PSScriptRoot\zxp\generate_zxp.ps1"
+
 Write-Color -Text ">>> ", "Cleaning cache files ... " -Color Green, Gray -NoNewline
 Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse|  Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force -Recurse
 Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force
@@ -103,3 +106,5 @@ $env:PYTHONPATH="$($openpype_root);$($env:PYTHONPATH)"
 $env:OPENPYPE_ROOT="$($openpype_root)"
 & "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\create_zip.py" $ARGS
 Set-Location -Path $current_dir
+
+Write-Host ""

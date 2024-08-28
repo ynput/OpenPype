@@ -412,6 +412,21 @@ def set_avalon_environments():
     })
 
 
+def update_zxp_extensions(openpype_version):
+    from openpype.settings import get_system_settings
+
+    system_settings = get_system_settings()
+    zxp_hosts_to_update = bootstrap.get_zxp_extensions_to_update(openpype_version, system_settings)
+    if not zxp_hosts_to_update:
+        return
+
+    in_headless_mode = os.getenv("OPENPYPE_HEADLESS_MODE") == "1"
+    if in_headless_mode:
+        bootstrap.update_zxp_extensions(openpype_version, zxp_hosts_to_update)
+    else:
+        igniter.open_update_window(openpype_version, zxp_hosts_to_update)
+
+
 def set_modules_environments():
     """Set global environments for OpenPype modules.
 
@@ -711,7 +726,7 @@ def _install_and_initialize_version(openpype_version: OpenPypeVersion, delete_zi
 
 
 def _find_frozen_openpype(use_version: str = None,
-                          use_staging: bool = False) -> Path:
+                          use_staging: bool = False) -> OpenPypeVersion:
     """Find OpenPype to run from frozen code.
 
     This will process and modify environment variables:
@@ -722,7 +737,7 @@ def _find_frozen_openpype(use_version: str = None,
         use_staging (bool, optional): Prefer *staging* flavor over production.
 
     Returns:
-        Path: Path to version to be used.
+        OpenPypeVersion: Version to be used.
 
     Raises:
         RuntimeError: If no OpenPype version are found.
@@ -774,12 +789,9 @@ def _find_frozen_openpype(use_version: str = None,
     # get local frozen version and add it to detected version so if it is
     # newer it will be used instead.
     if installed_version == openpype_version:
-        version_path = _bootstrap_from_code(use_version)
-        openpype_version = OpenPypeVersion(
-            version=BootstrapRepos.get_version(version_path),
-            path=version_path)
+        openpype_version = _bootstrap_from_code(use_version)
         _initialize_environment(openpype_version)
-        return version_path
+        return openpype_version
 
     in_headless_mode = os.getenv("OPENPYPE_HEADLESS_MODE") == "1"
     if not installed_version.is_compatible(openpype_version):
@@ -809,24 +821,29 @@ def _find_frozen_openpype(use_version: str = None,
         pass
 
     if not is_inside:
+        from openpype.settings import get_system_settings
+
+        system_settings = get_system_settings()
         # install latest version to user data dir
+        zxp_hosts_to_update = bootstrap.get_zxp_extensions_to_update(openpype_version, system_settings, force=True)
         if in_headless_mode:
             version_path = bootstrap.install_version(
                 openpype_version, force=True
             )
+            bootstrap.update_zxp_extensions(openpype_version, zxp_hosts_to_update)
         else:
-            version_path = igniter.open_update_window(openpype_version)
+            version_path = igniter.open_update_window(openpype_version, zxp_hosts_to_update)
 
         openpype_version.path = version_path
         _initialize_environment(openpype_version)
-        return openpype_version.path
+        return openpype_version
 
     _install_and_initialize_version(openpype_version)
 
-    return openpype_version.path
+    return openpype_version
 
 
-def _bootstrap_from_code(use_version):
+def _bootstrap_from_code(use_version) -> OpenPypeVersion:
     """Bootstrap live code (or the one coming with frozen OpenPype).
 
     Args:
@@ -848,17 +865,18 @@ def _bootstrap_from_code(use_version):
 
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(_openpype_root))
-        switch_str = f" - will switch to {use_version}" if use_version and use_version != local_version else ""  # noqa
-        _print(f"  - booting version: {local_version}{switch_str}")
-        if not local_version:
+        local_version_str = str(local_version)
+        switch_str = f" - will switch to {use_version}" if use_version and use_version != local_version_str else ""  # noqa
+        _print(f"  - booting version: {local_version_str}{switch_str}")
+        if not local_version_str:
             raise OpenPypeVersionNotFound(
                 f"Cannot find version at {_openpype_root}")
     else:
-        # get current version of OpenPype
-        local_version = OpenPypeVersion.get_installed_version_str()
+        # Get current version of OpenPype
+        local_version = OpenPypeVersion.get_installed_version()
 
     # All cases when should be used different version than build
-    if use_version and use_version != local_version:
+    if use_version and use_version != str(local_version):
         if use_version:
             # Explicit version should be used
             version_to_use = bootstrap.find_openpype_version(use_version)
@@ -882,8 +900,7 @@ def _bootstrap_from_code(use_version):
         _openpype_root = version_to_use.path.as_posix()
 
     else:
-        os.environ["OPENPYPE_VERSION"] = local_version
-        version_path = Path(_openpype_root)
+        os.environ["OPENPYPE_VERSION"] = str(local_version)
         os.environ["OPENPYPE_REPOS_ROOT"] = _openpype_root
 
     # add self to sys.path of current process
@@ -921,7 +938,7 @@ def _bootstrap_from_code(use_version):
 
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
-    return version_path
+    return local_version
 
 
 def _boot_validate_versions(use_version, local_version):
@@ -1108,31 +1125,33 @@ def boot():
     # ------------------------------------------------------------------------
     # Find OpenPype versions
     # ------------------------------------------------------------------------
+    openpype_version = None
     # WARNING: Environment OPENPYPE_REPOS_ROOT may change if frozen OpenPype
     # is executed
     if getattr(sys, 'frozen', False):
         # find versions of OpenPype to be used with frozen code
         try:
-            version_path = _find_frozen_openpype(use_version, use_staging)
+            openpype_version = _find_frozen_openpype(use_version, use_staging)
         except OpenPypeVersionNotFound as exc:
             _boot_handle_missing_version(local_version, str(exc))
             sys.exit(1)
-
         except RuntimeError as e:
             # no version to run
             _print(f"!!! {e}", True)
             sys.exit(1)
+
         # validate version
-        _print(f">>> Validating version in frozen [ {str(version_path)} ]")
-        result = bootstrap.validate_openpype_version(version_path)
+        _print(f">>> Validating version in frozen [ {str(openpype_version.path)} ]")
+        result = bootstrap.validate_openpype_version(openpype_version.path)
+
         if not result[0]:
             _print(f"!!! Invalid version: {result[1]}", True)
             sys.exit(1)
+
         _print("--- version is valid")
     else:
         try:
-            version_path = _bootstrap_from_code(use_version)
-
+            openpype_version = _bootstrap_from_code(use_version)
         except OpenPypeVersionNotFound as exc:
             _boot_handle_missing_version(local_version, str(exc))
             sys.exit(1)
@@ -1159,7 +1178,8 @@ def boot():
 
     # Do the program display popups to the users regarding updates or incompatibilities
     os.environ["OPENPYPE_VERSION_CHECK_POPUP"] = "False" if "disable_version_popup" in commands else "True"
-
+    _print(">>> update ZXP extensions ...")
+    update_zxp_extensions(openpype_version)
     _print(">>> loading environments ...")
     # Avalon environments must be set before avalon module is imported
     _print("  - for Avalon ...")
@@ -1169,7 +1189,7 @@ def boot():
     _print("  - for modules ...")
     set_modules_environments()
 
-    assert version_path, "Version path not defined."
+    assert openpype_version, "Version path not defined."
 
     # print info when not running scripts defined in 'silent commands'
     if all(arg not in silent_commands for arg in sys.argv):
@@ -1177,7 +1197,7 @@ def boot():
         from openpype.version import __version__
 
         info = get_info(use_staging)
-        info.insert(0, f">>> Using OpenPype from [ {version_path} ]")
+        info.insert(0, f">>> Using OpenPype from [ {str(openpype_version.path.resolve())} ]")
 
         t_width = 20
         try:
