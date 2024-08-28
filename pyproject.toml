@@ -169,11 +169,11 @@ hash = "4ac17c1f7de83465e6f51dd352d7117e07e765b66d00443257916c828e35b6ce"
 
 [openpype.thirdparty.ex_man_cmd.windows]
 url = "https://github.com/quadproduction/ex_man_cmd/releases/download/1.0.0/ex_man_cmd-windows.zip"
-hash = "70b289384768178bd52b214de06ce941b731d29bcd4d9e0ab8613dd694863876"
+hash = "e73d705b4077c24c869136a3ba0b5348f579122de2f8821493e4371b34fd9b90"
 
 [openpype.thirdparty.ex_man_cmd.darwin]
 url = "https://github.com/quadproduction/ex_man_cmd/releases/download/1.0.0/ex_man_cmd-macos.zip"
-hash = "2bed608ed4227ba6e755ac20bb951da11014d31f2adcceee8c747bfff699169f"
+hash = "3f758601b4664ed1b41835236050ee2799fcced5673a7b5b4ce9922a7cb79136"
 
 [tool.pyright]
 include = [
