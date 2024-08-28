@@ -58,8 +58,7 @@ class BlenderAddon(OpenPypeModule, IHostAddon):
         )
 
         # Define Qt binding if not defined
-        if not env.get("QT_PREFERRED_BINDING"):
-            env["QT_PREFERRED_BINDING"] = "PySide2"
+        env.pop("QT_PREFERRED_BINDING", None)
 
     def get_launch_hook_paths(self, app):
         if app.host_name != self.host_name:
