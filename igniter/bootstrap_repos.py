@@ -1559,9 +1559,9 @@ class BootstrapRepos:
 
         path_prog_folder = Path(os.environ["OPENPYPE_ROOT"]).resolve().joinpath("vendor", "bin", "ex_man_cmd")
         if low_platform == "windows":
-            path_prog = path_prog_folder.joinpath("windows", "ExManCmd.exe")
+            path_prog = path_prog_folder.joinpath("windows", "ex_man_cmd", "ExManCmd.exe")
         else:
-            path_prog = path_prog_folder.joinpath("macos", "MacOS", "ExManCmd")
+            path_prog = path_prog_folder.joinpath("macos", "MacOS", "ex_man_cmd", "ExManCmd")
 
         # Get installed extensions
         completed_process = subprocess.run([str(path_prog), "/list", "all"], capture_output=True)
