@@ -1507,10 +1507,10 @@ class BootstrapRepos:
 
         path_prog_folder = Path(os.environ["OPENPYPE_ROOT"]).resolve().joinpath("vendor", "bin", "ex_man_cmd")
         if low_platform == "windows":
-            path_prog = path_prog_folder.joinpath("ExManCmd.exe")
+            path_prog = path_prog_folder.joinpath("windows", "ex_man_cmd", "ExManCmd.exe")
             cmd_arg_prefix = "/"
         else:
-            path_prog = path_prog_folder.joinpath("MacOS", "ExManCmd")
+            path_prog = path_prog_folder.joinpath("MacOS", "ex_man_cmd", "ExManCmd")
             cmd_arg_prefix = "--"
 
         for extension in extensions:
