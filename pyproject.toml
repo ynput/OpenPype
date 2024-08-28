@@ -110,7 +110,7 @@ virtualenv = "^20.24.6"
 [[tool.poetry.source]]
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
-priority = "supplemental"
+secondary = true
 
 [tool.poetry.group.dev.dependencies]
 commitizen = "^3.12.0"
