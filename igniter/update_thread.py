@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
 """Working thread for update."""
-import os
-import re
-import platform
-import subprocess
-
-from pathlib import Path
-
 from qtpy import QtCore
 
 from .bootstrap_repos import (
