@@ -1470,6 +1470,18 @@ class BootstrapRepos:
 
         return destination
 
+    @staticmethod
+    def _get_zxp_handler_program_path(platform_name_lowercase):
+        if platform_name_lowercase == "linux":
+            # No host in array or user is on Linux, the platform doesn't support Adobe softwares
+            return None
+        path_prog_folder = Path(os.environ["OPENPYPE_ROOT"]).resolve().joinpath(
+            "vendor", "bin", "ex_man_cmd", platform_name_lowercase)
+        if platform_name_lowercase == "windows":
+            return path_prog_folder.joinpath("ExManCmd.exe")
+
+        return path_prog_folder.joinpath("MacOS", "ExManCmd")
+
     def extract_zxp_info_from_manifest(self, openpype_version: OpenPypeVersion, host_id: str):
         version_path = openpype_version.path
         path_manifest = version_path.joinpath("openpype", "hosts", host_id, "api", "extension", "CSXS", "manifest.xml")
@@ -1499,19 +1511,16 @@ class BootstrapRepos:
     def update_zxp_extensions(self, openpype_version: OpenPypeVersion, extensions: [ZXPExtensionData]):
         # Check the current OS
         low_platform = platform.system().lower()
-        if not extensions or low_platform == "linux":
+        if not extensions or platform.system().lower() == "linux":
             # No host in array or user is on Linux, the platform doesn't support Adobe softwares
             return
 
         version_path = openpype_version.path
 
-        path_prog_folder = Path(os.environ["OPENPYPE_ROOT"]).resolve().joinpath(
-            "vendor", "bin", "ex_man_cmd", low_platform)
+        path_prog = self._get_zxp_handler_program_path(low_platform)
         if low_platform == "windows":
-            path_prog = path_prog_folder.joinpath("ExManCmd.exe")
             cmd_arg_prefix = "/"
         else:
-            path_prog = path_prog_folder.joinpath("MacOS", "ExManCmd")
             cmd_arg_prefix = "--"
 
         for extension in extensions:
@@ -1547,7 +1556,7 @@ class BootstrapRepos:
 
     def get_zxp_extensions_to_update(self, openpype_version, system_settings, force=False) -> [ZXPExtensionData]:
         # List of all Adobe software ids (named hosts) handled by OpenPype
-        # TODO: where and how to store the list of Adobe softs
+        # TODO: where and how to store the list of Adobe software ids
         zxp_host_ids = ["photoshop", "aftereffects"]
 
         zxp_hosts_to_update = []
@@ -1555,17 +1564,18 @@ class BootstrapRepos:
         # Check the current OS
         low_platform = platform.system().lower()
         if low_platform == "linux":
-            # the platform doesn't support Adobe softwares
+            # The platform doesn't support Adobe softwares
             return zxp_hosts_to_update
 
-        path_prog_folder = Path(os.environ["OPENPYPE_ROOT"]).resolve().joinpath("vendor", "bin", "ex_man_cmd")
+        path_prog = self._get_zxp_handler_program_path(low_platform)
         if low_platform == "windows":
-            path_prog = path_prog_folder.joinpath("windows", "ex_man_cmd", "ExManCmd.exe")
+            cmd_arg_prefix = "/"
         else:
-            path_prog = path_prog_folder.joinpath("macos", "MacOS", "ex_man_cmd", "ExManCmd")
+            cmd_arg_prefix = "--"
 
         # Get installed extensions
-        completed_process = subprocess.run([str(path_prog), "/list", "all"], capture_output=True)
+        completed_process = subprocess.run([str(path_prog), "{}list".format(cmd_arg_prefix), "all"],
+                                           capture_output=True)
         installed_extensions_info = completed_process.stdout
 
         zxp_hosts_to_update = []
