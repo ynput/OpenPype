@@ -274,8 +274,8 @@ class ITrayAction(ITrayModule):
     necessary.
     """
 
-    admin_action = False
-    _admin_submenu = None
+    submenu = None
+    _submenus = {}
     _action_item = None
 
     @property
@@ -292,13 +292,12 @@ class ITrayAction(ITrayModule):
     def tray_menu(self, tray_menu):
         from qtpy import QtWidgets
 
-        if self.admin_action:
-            menu = self.admin_submenu(tray_menu)
+        if self.submenu:
+            menu = self.get_submenu(tray_menu, self.submenu)
             action = QtWidgets.QAction(self.label, menu)
             menu.addAction(action)
             if not menu.menuAction().isVisible():
                 menu.menuAction().setVisible(True)
-
         else:
             action = QtWidgets.QAction(self.label, tray_menu)
             tray_menu.addAction(action)
@@ -313,14 +312,15 @@ class ITrayAction(ITrayModule):
         return
 
     @staticmethod
-    def admin_submenu(tray_menu):
-        if ITrayAction._admin_submenu is None:
+    def get_submenu(tray_menu, submenu_name):
+        if submenu_name not in ITrayAction._submenus:
             from qtpy import QtWidgets
 
-            admin_submenu = QtWidgets.QMenu("Admin", tray_menu)
-            admin_submenu.menuAction().setVisible(False)
-            ITrayAction._admin_submenu = admin_submenu
-        return ITrayAction._admin_submenu
+            submenu = QtWidgets.QMenu(submenu_name, tray_menu)
+            submenu.menuAction().setVisible(False)
+            tray_menu.addMenu(submenu)
+            ITrayAction._submenus[submenu_name] = submenu
+        return ITrayAction._submenus[submenu_name]
 
 
 class ITrayService(ITrayModule):

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """Progress window to show when OpenPype is updating/installing locally."""
 import os
+import logging as log
 
 from qtpy import QtCore, QtGui, QtWidgets
 
 from .update_thread import UpdateThread
-from .bootstrap_repos import OpenPypeVersion
+from .bootstrap_repos import OpenPypeVersion, ZXPExtensionData
 from .nice_progress_bar import NiceProgressBar
 from .tools import load_stylesheet
 
@@ -16,10 +17,12 @@ class UpdateWindow(QtWidgets.QDialog):
     _width = 500
     _height = 100
 
-    def __init__(self, version: OpenPypeVersion, parent=None):
+    def __init__(self, version: OpenPypeVersion, zxp_hosts: [ZXPExtensionData], parent=None):
         super(UpdateWindow, self).__init__(parent)
         self._openpype_version = version
+        self._zxp_hosts = zxp_hosts
         self._result_version_path = None
+        self._log = log.getLogger(str(__class__))
 
         self.setWindowTitle(
             f"OpenPype is updating ..."
@@ -42,7 +45,7 @@ class UpdateWindow(QtWidgets.QDialog):
 
         # Load logo
         pixmap_openpype_logo = QtGui.QPixmap(icon_path)
-        # Set logo as icon of window
+        # Set logo as icon of the window
         self.setWindowIcon(QtGui.QIcon(pixmap_openpype_logo))
 
         self._pixmap_openpype_logo = pixmap_openpype_logo
@@ -78,6 +81,7 @@ class UpdateWindow(QtWidgets.QDialog):
         main.addWidget(progress_bar, 0)
         main.addSpacing(15)
 
+        self._main_label = main_label
         self._progress_bar = progress_bar
 
     def showEvent(self, event):
@@ -96,14 +100,13 @@ class UpdateWindow(QtWidgets.QDialog):
         This will once again validate entered path and mongo if ok, start
         working thread that will do actual job.
         """
-        # Check if install thread is not already running
-        if self._update_thread and self._update_thread.isRunning():
-            return
         self._progress_bar.setRange(0, 0)
         update_thread = UpdateThread(self)
         update_thread.set_version(self._openpype_version)
-        update_thread.message.connect(self.update_console)
-        update_thread.progress.connect(self._update_progress)
+        update_thread.set_zxp_hosts(self._zxp_hosts)
+        update_thread.log_signal.connect(self._print)
+        update_thread.step_text_signal.connect(self.update_step_text)
+        update_thread.progress_signal.connect(self._update_progress)
         update_thread.finished.connect(self._installation_finished)
 
         self._update_thread = update_thread
@@ -119,7 +122,15 @@ class UpdateWindow(QtWidgets.QDialog):
         self._progress_bar.setRange(0, 1)
         self._update_progress(100)
         QtWidgets.QApplication.processEvents()
-        self.done(0)
+        self.done(int(QtWidgets.QDialog.Accepted))
+        if self._update_thread.isRunning():
+            self._update_thread.quit()
+        self.close()
+
+
+
+
+
 
     def _update_progress(self, progress: int):
         # not updating progress as we are not able to determine it
@@ -137,11 +148,22 @@ class UpdateWindow(QtWidgets.QDialog):
         """
         return
 
-    def update_console(self, msg: str, error: bool = False) -> None:
-        """Display message in console.
+    def _print(self, message: str, error: bool = False) -> None:
+        """Print the message in the console.
 
         Args:
-            msg (str): message.
+            message (str): message.
             error (bool): if True, print it red.
         """
-        print(msg)
+        if error:
+            self._log.error(message)
+        else:
+            self._log.info(message)
+
+    def update_step_text(self, text: str) -> None:
+        """Print the message in the console.
+
+        Args:
+            text (str): Text describing the current step.
+        """
+        self._main_label.setText(text)

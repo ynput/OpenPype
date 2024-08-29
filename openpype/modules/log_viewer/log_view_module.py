@@ -1,12 +1,19 @@
 from openpype import AYON_SERVER_ENABLED
-from openpype.modules import OpenPypeModule, ITrayModule
+from openpype.modules import OpenPypeModule, ITrayAction
 
 
-class LogViewModule(OpenPypeModule, ITrayModule):
+class LogViewModule(OpenPypeModule, ITrayAction):
     name = "log_viewer"
+    label = "Show Logs"
+    submenu = "More Tools"
 
-    def initialize(self, modules_settings):
-        logging_settings = modules_settings[self.name]
+    def __init__(self, manager, settings):
+        self.window = None
+
+        super().__init__(manager, settings)
+
+    def initialize(self, _modules_settings):
+        logging_settings = _modules_settings[self.name]
         self.enabled = logging_settings["enabled"]
         if AYON_SERVER_ENABLED:
             self.enabled = False
@@ -23,24 +30,14 @@ class LogViewModule(OpenPypeModule, ITrayModule):
                 "Couldn't set Logging GUI due to error.", exc_info=True
             )
 
-    # Definition of Tray menu
-    def tray_menu(self, tray_menu):
-        from qtpy import QtWidgets
-        # Menu for Tray App
-        menu = QtWidgets.QMenu('Logging', tray_menu)
-
-        show_action = QtWidgets.QAction("Show Logs", menu)
-        show_action.triggered.connect(self._show_logs_gui)
-        menu.addAction(show_action)
-
-        tray_menu.addMenu(menu)
-
     def tray_start(self):
         return
 
     def tray_exit(self):
-        return
+        # Close window UI
+        if self.window:
+            self.window.close()
 
-    def _show_logs_gui(self):
+    def on_action_trigger(self):
         if self.window:
             self.window.show()

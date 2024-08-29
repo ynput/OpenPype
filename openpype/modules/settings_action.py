@@ -9,7 +9,7 @@ class SettingsAction(OpenPypeModule, ITrayAction):
     """Action to show Settings tool."""
     name = "settings"
     label = "Studio Settings"
-    admin_action = True
+    submenu = "Admin"
 
     def __init__(self, manager, settings):
         self.settings_window = None
@@ -86,7 +86,7 @@ class SettingsAction(OpenPypeModule, ITrayAction):
 class LocalSettingsAction(OpenPypeModule, ITrayAction):
     """Action to show Settings tool."""
     name = "local_settings"
-    label = "Settings"
+    label = "Local Settings"
 
     def __init__(self, manager, settings):
         self.settings_window = None

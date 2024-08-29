@@ -114,7 +114,7 @@ class Controller(QtCore.QObject):
     about_to_process = QtCore.Signal(object, object)
 
     # ??? Emitted for each process
-    was_processed = QtCore.Signal(dict)
+    was_processed = QtCore.Signal(object)
 
     # Emitted when reset
     # - all data are reset (plugins, processing, pari yielder, etc.)
@@ -127,7 +127,7 @@ class Controller(QtCore.QObject):
     switch_toggleability = QtCore.Signal(bool)
 
     # On action finished
-    was_acted = QtCore.Signal(dict)
+    was_acted = QtCore.Signal(object)
 
     # Emitted when processing has stopped
     was_stopped = QtCore.Signal()

@@ -51,7 +51,7 @@ Pillow = "^9.0" # used in TVPaint and for slates
 pyblish-base = "^1.8.11"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
-"Qt.py" = "^1.3.3"
+"Qt.py" = "^1.4.1"
 QtPy = "^2.3.0"
 qtawesome = "0.7.3"
 speedcopy = "^2.1"
@@ -166,6 +166,14 @@ hash = "3894dec7e4e521463891a869586850e8605f5fd604858b674c87323bf33e273d"
 [openpype.thirdparty.ocioconfig]
 url = "https://distribute.openpype.io/thirdparty/OpenColorIO-Configs-1.0.2.zip"
 hash = "4ac17c1f7de83465e6f51dd352d7117e07e765b66d00443257916c828e35b6ce"
+
+[openpype.thirdparty.ex_man_cmd.windows]
+url = "https://github.com/quadproduction/ex_man_cmd/releases/download/1.0.0/ex_man_cmd-windows.zip"
+hash = "e73d705b4077c24c869136a3ba0b5348f579122de2f8821493e4371b34fd9b90"
+
+[openpype.thirdparty.ex_man_cmd.darwin]
+url = "https://github.com/quadproduction/ex_man_cmd/releases/download/1.0.0/ex_man_cmd-macos.zip"
+hash = "3f758601b4664ed1b41835236050ee2799fcced5673a7b5b4ce9922a7cb79136"
 
 [tool.pyright]
 include = [

@@ -2964,14 +2964,14 @@ files = [
 
 [[package]]
 name = "qt-py"
-version = "1.3.8"
-description = "Python 2 & 3 compatibility wrapper around all Qt bindings - PySide, PySide2, PyQt4 and PyQt5."
+version = "1.4.1"
+description = "Python 2 & 3 compatibility wrapper around all Qt bindings - PySide, PySide2, PySide6, PyQt4 and PyQt5."
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "Qt.py-1.3.8-py2.py3-none-any.whl", hash = "sha256:665b9d4cfefaff2d697876d5027e145a0e0b1ba62dda9652ea114db134bc9911"},
-    {file = "Qt.py-1.3.8.tar.gz", hash = "sha256:6d330928f7ec8db8e329b19116c52482b6abfaccfa5edef0248e57d012300895"},
+    {file = "Qt.py-1.4.1-py2.py3-none-any.whl ", hash = "sha256:751eabac526da6836df9234797c85b3ea0517b1337a316a313cff71d4e05964c"},
+    {file = "Qt.py-1.4.1.tar.gz", hash = "sha256:c04ac2cedb5aeb710630f5443c032819aab4f6638aaa0105a9aacde66a337cf4"},
 ]
 
 [package.dependencies]

@@ -4,7 +4,8 @@ from qtpy import QtCore
 
 from .bootstrap_repos import (
     BootstrapRepos,
-    OpenPypeVersion
+    OpenPypeVersion,
+    ZXPExtensionData
 )
 
 
@@ -19,16 +20,21 @@ class UpdateThread(QtCore.QThread):
     user data dir.
 
     """
-    progress = QtCore.Signal(int)
-    message = QtCore.Signal((str, bool))
+    progress_signal = QtCore.Signal(int)
+    log_signal = QtCore.Signal((str, bool))
+    step_text_signal = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         self._result = None
         self._openpype_version = None
+        self._zxp_hosts = []
         super().__init__(parent)
 
     def set_version(self, openpype_version: OpenPypeVersion):
         self._openpype_version = openpype_version
+
+    def set_zxp_hosts(self, zxp_hosts: [ZXPExtensionData]):
+        self._zxp_hosts = zxp_hosts
 
     def result(self):
         """Result of finished installation."""
@@ -46,11 +52,21 @@ class UpdateThread(QtCore.QThread):
         or copy them from location specified by user or retrieved from
         database.
         """
-        bs = BootstrapRepos(
-            progress_callback=self.set_progress, message=self.message)
+        bs = BootstrapRepos(progress_callback=self.set_progress,
+                            log_signal=self.log_signal,
+                            step_text_signal=self.step_text_signal)
 
         bs.set_data_dir(OpenPypeVersion.get_local_openpype_path())
-        version_path = bs.install_version(self._openpype_version)
+
+        # Adding the conditions to be able to show this window to update the ZXP extensions
+        # without needing to install an OP version
+        if not bs.is_inside_user_data(self._openpype_version.path) and self._openpype_version.path.is_file():
+            version_path = bs.install_version(self._openpype_version)
+        else:
+            version_path = self._openpype_version.path
+
+        bs.update_zxp_extensions(self._openpype_version, self._zxp_hosts)
+
         self._set_result(version_path)
 
     def set_progress(self, progress: int) -> None:
@@ -60,4 +76,4 @@ class UpdateThread(QtCore.QThread):
             progress (int): Progress in percents.
 
         """
-        self.progress.emit(progress)
+        self.progress_signal.emit(progress)

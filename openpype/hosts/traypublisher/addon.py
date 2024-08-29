@@ -11,7 +11,7 @@ TRAYPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class TrayPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
     label = "Publisher"
-    name = "traypublisher"
+    name = "tray_publisher"
     host_name = "traypublisher"
 
     def initialize(self, modules_settings):
