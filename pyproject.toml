@@ -73,6 +73,8 @@ aiohttp-middlewares = { git = "https://github.com/playpauseandstop/aiohttp-middl
 Unidecode = "1.2.0"
 cryptography = "39.0.0"
 opentimelineio = "^0.15.0"
+fastapi = ">=0.112.0,<0.113.0"
+uvicorn = "^0.30.6"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
