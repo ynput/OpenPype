@@ -123,11 +123,18 @@ class AbstractTemplateBuilder(object):
         self._linked_asset_docs = None
         self._task_type = None
 
+        if isinstance(self._host, HostBase):
+            self._project_name = self._host.get_current_project_name()
+        else:
+            self._project_name = os.getenv("AVALON_PROJECT")
+
     @property
     def project_name(self):
-        if isinstance(self._host, HostBase):
-            return self._host.get_current_project_name()
-        return os.getenv("AVALON_PROJECT")
+        return self._project_name
+
+    @project_name.setter
+    def project_name(self, name):
+        self._project_name = name
 
     @property
     def current_asset_name(self):
@@ -866,6 +873,7 @@ class PlaceholderPlugin(object):
 
     def __init__(self, builder):
         self._builder = builder
+        self._project_name = self.builder.project_name
 
     @property
     def builder(self):
@@ -880,6 +888,10 @@ class PlaceholderPlugin(object):
     @property
     def project_name(self):
         return self._builder.project_name
+
+    @project_name.setter
+    def project_name(self, name):
+        self._project_name = name
 
     @property
     def log(self):
@@ -1599,7 +1611,7 @@ class PlaceholderLoadMixin(object):
         if "folder_path" in placeholder.data:
             return []
 
-        project_name = self.builder.project_name
+        self.project_name = self.builder.project_name
         current_asset_doc = self.builder.current_asset_doc
         linked_asset_docs = self.builder.linked_asset_docs
 
@@ -1630,6 +1642,8 @@ class PlaceholderLoadMixin(object):
             }
 
         else:
+            if builder_type != "all_assets":
+                self.project_name = builder_type
             context_filters = {
                 "asset": [re.compile(placeholder.data["asset"])],
                 "subset": [re.compile(placeholder.data["subset"])],
@@ -1639,7 +1653,7 @@ class PlaceholderLoadMixin(object):
             }
 
         return list(get_representations(
-            project_name,
+            self.project_name,
             context_filters=context_filters
         ))
 
