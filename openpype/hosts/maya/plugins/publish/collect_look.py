@@ -18,6 +18,13 @@ SHAPE_ATTRS = ["castsShadows",
                "doubleSided",
                "opposite"]
 SHAPE_ATTRS = set(SHAPE_ATTRS)
+ARNOLD_SUBDIV_ATTRS = [
+    "aiSubdivType",
+    "aiSubdivIterations",
+    "aiSubdivSmoothDerivs",
+    "aiSubdivPixelError",
+    "aiDispPadding"
+]
 
 
 def get_pxr_multitexture_file_attrs(node):
@@ -112,6 +119,15 @@ def get_look_attrs(node):
             if attr in SHAPE_ATTRS or \
                     attr not in SHAPE_ATTRS and attr.startswith('ai'):
                 result.append(attr)
+
+        # Include Arnold subdivision attributes if present
+        for attr in ARNOLD_SUBDIV_ATTRS:
+            if attr in result:
+                # Already added, skip
+                continue
+            if cmds.attributeQuery(attr, node=node, exists=True):
+                result.append(attr)
+
     return result
 
 
@@ -535,7 +551,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                     self.log.warning("Attribute '{}' is mixed-type and is "
                                      "not supported yet.".format(attribute))
                     continue
-                if cmds.getAttr(attribute, type=True) == "message":
+                if cmds.getAttr(attribute, type=True) in ["message", "TdataCompound"]:
                     continue
                 node_attributes[attr] = cmds.getAttr(attribute, asString=True)
             # Only include if there are any properties we care about
@@ -570,6 +586,9 @@ class CollectLook(pyblish.api.InstancePlugin):
                 node,
                 attribute
             ))
+
+            if not source:
+                continue
 
             self.log.debug("  - file source: {}".format(source))
             color_space_attr = "{}.colorSpace".format(node)
