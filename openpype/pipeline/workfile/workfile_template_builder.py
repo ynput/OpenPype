@@ -887,7 +887,7 @@ class PlaceholderPlugin(object):
 
     @property
     def project_name(self):
-        return self._builder.project_name
+        return self._project_name
 
     @project_name.setter
     def project_name(self, name):
