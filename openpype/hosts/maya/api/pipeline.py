@@ -646,7 +646,8 @@ def on_task_changed():
 
     with lib.suspended_refresh():
         lib.set_context_settings()
-        lib.update_content_on_context_change()
+        lib.update_instances_frame_range()
+        lib.update_instances_asset_name()
 
 
 def before_workfile_open():
