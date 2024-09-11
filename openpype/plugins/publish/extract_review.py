@@ -89,6 +89,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Make sure cleanup happens and pop representations with "delete" tag.
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
+
+            # Remove the "delete" tag if the keep_review option of the Tray Publisher is enabled
+            if instance.data.get('creator_attributes', {}).get('keep_review_clip') and "delete" in tags:
+                tags.remove("delete")
+
             # Representation is not marked to be deleted
             if "delete" not in tags:
                 continue

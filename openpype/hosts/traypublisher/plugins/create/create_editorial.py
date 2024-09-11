@@ -213,6 +213,19 @@ or updating already created. Publishing will create OTIO file.
         if self._creator_settings.get("default_variants"):
             self.default_variants = self._creator_settings["default_variants"]
 
+        # Retrieving the workfile_start_frame from the settings
+        workfile_start_frame = self._creator_settings["workfile_start_frame"]
+        workfile_start_frame_attr = self._get_attribute_by_name("workfile_start_frame")
+
+        if workfile_start_frame_attr:
+            workfile_start_frame_attr.default = int(workfile_start_frame)
+
+        # Bool to auto assign the newly created instance to the corresponding shot
+        # and not the selected one in the publisher window
+        self.auto_asset_assign = self._creator_settings["auto_assign_to_asset"]
+
+        self.keep_review_clip = self._creator_settings["keep_review_clip"]
+
     def create(self, subset_name, instance_data, pre_create_data):
         allowed_family_presets = self._get_allowed_family_presets(
             pre_create_data)
@@ -586,7 +599,8 @@ or updating already created. Publishing will create OTIO file.
                 "parent_instance_id": parenting_data["instance_id"],
                 "creator_attributes": {
                     "parent_instance": parenting_data["instance_label"],
-                    "add_review_family": preset.get("review")
+                    "add_review_family": preset.get("review"),
+                    "keep_review_clip": self.keep_review_clip
                 }
             })
 
@@ -687,6 +701,11 @@ or updating already created. Publishing will create OTIO file.
             }
         )
 
+        # get the task for asset type
+        task_name = ""
+        if shot_metadata.get('tasks'):
+            task_name = self._get_task_by_asset_type(parent_asset_name, shot_metadata["tasks"])
+
         # It should be validated only in openpype since we are supporting
         # publishing to AYON with folder path and uniqueness is not an issue
         if not AYON_SERVER_ENABLED:
@@ -714,7 +733,7 @@ or updating already created. Publishing will create OTIO file.
         base_instance_data = {
             "shotName": shot_name,
             "variant": variant_name,
-            "task": "",
+            "task": task_name,
             "newAssetPublishing": True,
             "trackStartFrame": track_start_frame,
             "timelineOffset": timeline_offset,
@@ -742,6 +761,17 @@ or updating already created. Publishing will create OTIO file.
         base_instance_data.update(shot_metadata)
 
         return base_instance_data
+
+    @staticmethod
+    def _get_task_by_asset_type(asset, task_dict):
+        """Return the task assign to the asset type (Shots) to publish the review in
+        Args:
+            asset (str): Name of the asset type of the instance.
+            task_dict (dict): dict from the settings to match a task to an asset type.
+        Returns:
+            str: task to review
+        """
+        return task_dict[asset]["type"] if asset in task_dict.keys() else ""
 
     def _get_timing_data(
         self,
@@ -906,3 +936,18 @@ or updating already created. Publishing will create OTIO file.
 
         attr_defs.extend(CLIP_ATTR_DEFS)
         return attr_defs
+
+    @staticmethod
+    def _get_attribute_by_name(attr_key):
+        """
+        Return the correct attr from CLIP_ATTR_DEFS depending on the given attr_key
+        Args:
+            attr_key (str): name of the key attr
+        Returns:
+            EnumDef or NumberDef: If one of their key match the attr_key
+        """
+        for attr in CLIP_ATTR_DEFS:
+            if attr.key == attr_key:
+                return attr
+
+        return None
