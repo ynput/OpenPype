@@ -486,11 +486,11 @@ class TableField(BaseItem):
                 line = self.ellide_text
                 break
 
-            for idx, char in enumerate(_word):
+            for char_index, char in enumerate(_word):
                 _line = line + char + self.ellide_text
                 _line_width = font.getsize(_line)[0]
                 if _line_width > max_width:
-                    if idx == 0:
+                    if char_index == 0:
                         line = _line
                     break
                 line = line + char
