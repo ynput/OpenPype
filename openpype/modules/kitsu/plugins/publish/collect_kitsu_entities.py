@@ -27,7 +27,11 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
 
             zou_asset_data = asset_doc["data"].get("zou")
             if not zou_asset_data:
-                raise ValueError("Zou asset data not found in OpenPype!")
+                # Ignore folders to avoid blocking the script.
+                # This is normal that folders aren't sync on OP
+                if asset_doc["data"].get('entityType') == 'Folder':
+                    continue
+                raise ValueError("Kitsu asset data not found in OpenPype!")
 
             task_name = instance.data.get("task", context.data.get("task"))
             if not task_name:
