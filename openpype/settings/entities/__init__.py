@@ -106,6 +106,8 @@ from .enum_entity import (
     ToolsEnumEntity,
     TaskTypeEnumEntity,
     DeadlineUrlEnumEntity,
+    DeadlineLimitsPluginEnumEntity,
+    DeadlinePoolsEnumEntity,
     AnatomyTemplatesEnumEntity,
     ShotgridUrlEnumEntity,
     RoyalRenderRootEnumEntity
@@ -170,6 +172,8 @@ __all__ = (
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
     "DeadlineUrlEnumEntity",
+    "DeadlineLimitsPluginEnumEntity",
+    "DeadlinePoolsEnumEntity",
     "ShotgridUrlEnumEntity",
     "RoyalRenderRootEnumEntity",
     "AnatomyTemplatesEnumEntity",
