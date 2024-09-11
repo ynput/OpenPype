@@ -3865,9 +3865,11 @@ def create_rig_animation_instance(
         log (logging.Logger, optional): Logger to log to if provided
 
     Returns:
-        None
+        instance (Any)
 
     """
+    subset_name = None
+
     if options is None:
         options = {}
     name = context["representation"]["name"]
@@ -3921,8 +3923,11 @@ def create_rig_animation_instance(
     rig_sets = [s for s in rig_sets if s is not None]
     with maintained_selection():
         cmds.select(rig_sets + roots, noExpand=True)
-        create_context.create(
+        new_context = create_context.create(
             creator_identifier=creator_identifier,
             variant=namespace,
             pre_create_data={"use_selection": True}
         )
+        instance = new_context.get("subset", None)
+
+    return instance
