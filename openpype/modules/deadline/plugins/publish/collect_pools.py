@@ -51,13 +51,6 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
     primary_pool = None
     secondary_pool = None
 
-    @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        # deadline.publish.CollectDeadlinePools
-        settings = project_settings["deadline"]["publish"]["CollectDeadlinePools"]  # noqa
-        cls.primary_pool = settings.get("primary_pool", None)
-        cls.secondary_pool = settings.get("secondary_pool", None)
-
     def process(self, instance):
         attr_values = self.get_attr_values_from_data(instance.data)
         if not instance.data.get("primaryPool"):

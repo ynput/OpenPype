@@ -37,8 +37,8 @@ from .lib import (
     get_instance_staging_dir,
     get_publish_repre_path,
 
-    apply_plugin_settings_automatically,
-    get_plugin_settings,
+    apply_plugin_settings,
+    get_publish_plugin_settings,
     get_publish_instance_label,
     get_publish_instance_families,
 )
@@ -85,8 +85,8 @@ __all__ = (
     "get_instance_staging_dir",
     "get_publish_repre_path",
 
-    "apply_plugin_settings_automatically",
-    "get_plugin_settings",
+    "apply_plugin_settings",
+    "get_publish_plugin_settings",
     "get_publish_instance_label",
     "get_publish_instance_families",
 
