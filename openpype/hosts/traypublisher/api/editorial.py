@@ -240,9 +240,13 @@ class ShotMetadataSolver:
             current_doc = visual_parent
 
         # add current selection context hierarchy
+        # Add current selection context hierarchy.
+        # Since the entity dict has changed through OP versions,
+        # an adaptation has to be made for it to work for Project types
         return [
             {
                 "entity_type": entity["data"]["entityType"],
+                "entity_type": entity["data"].get("entityType", entity.get("entityType", "Project")),
                 "entity_name": entity["name"]
             }
             for entity in reversed(visual_hierarchy)
