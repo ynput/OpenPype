@@ -15,7 +15,7 @@ class CollectCelactionCliKwargs(pyblish.api.Collector):
         missing_kwargs = []
         passing_kwargs = {}
         for key in (
-            "chunk",
+            "chunkSize",
             "frameStart",
             "frameEnd",
             "resolutionWidth",
