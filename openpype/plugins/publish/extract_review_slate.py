@@ -11,6 +11,7 @@ from openpype.lib import (
     get_ffmpeg_tool_args,
     get_ffprobe_data,
     get_ffprobe_streams,
+    get_video_metadata,
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
 )
@@ -88,11 +89,11 @@ class ExtractReviewSlate(publish.Extractor):
                 input_timecode,
                 input_frame_rate,
                 input_pixel_aspect
-            ) = self._get_video_metadata(streams)
+            ) = get_video_metadata(streams, self.log)
             if input_pixel_aspect:
                 pixel_aspect = input_pixel_aspect
 
-            # Raise exception of any stream didn't define input resolution
+            # Raise an exception if a stream didn't define input resolution
             if input_width is None:
                 raise KnownPublishError(
                     "FFprobe couldn't read resolution from input file: \"{}\""
@@ -423,60 +424,13 @@ class ExtractReviewSlate(publish.Extractor):
                 slate_height = int(slate_stream["height"])
                 break
 
-        # Raise exception of any stream didn't define input resolution
+        # Raise an exception if a stream didn't define input resolution
         if slate_width is None:
             raise AssertionError((
                 "FFprobe couldn't read resolution from input file: \"{}\""
             ).format(slate_path))
 
-        return (slate_width, slate_height)
-
-    def _get_video_metadata(self, streams):
-        input_timecode = ""
-        input_width = None
-        input_height = None
-        input_frame_rate = None
-        input_pixel_aspect = None
-        for stream in streams:
-            if stream.get("codec_type") != "video":
-                continue
-            self.log.debug("FFprobe Video: {}".format(stream))
-
-            if "width" not in stream or "height" not in stream:
-                continue
-            width = int(stream["width"])
-            height = int(stream["height"])
-            if not width or not height:
-                continue
-
-            # Make sure that width and height are captured even if frame rate
-            #    is not available
-            input_width = width
-            input_height = height
-
-            input_pixel_aspect = stream.get("sample_aspect_ratio")
-            if input_pixel_aspect is not None:
-                try:
-                    input_pixel_aspect = float(
-                        eval(str(input_pixel_aspect).replace(':', '/')))
-                except Exception:
-                    self.log.debug(
-                        "__Converting pixel aspect to float failed: {}".format(
-                            input_pixel_aspect))
-
-            tags = stream.get("tags") or {}
-            input_timecode = tags.get("timecode") or ""
-
-            input_frame_rate = stream.get("r_frame_rate")
-            if input_frame_rate is not None:
-                break
-        return (
-            input_width,
-            input_height,
-            input_timecode,
-            input_frame_rate,
-            input_pixel_aspect
-        )
+        return slate_width, slate_height
 
     def _get_audio_metadata(self, streams):
         # Get audio metadata
