@@ -4,7 +4,7 @@ import sys
 import errno
 import six
 
-from openpype.lib import create_hard_link
+from openpype.lib import create_hardlink, create_symlink
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -53,6 +53,7 @@ class FileTransaction(object):
 
     MODE_COPY = 0
     MODE_HARDLINK = 1
+    MODE_SYMLINK = 2
 
     def __init__(self, log=None, allow_queue_replacements=False):
         if log is None:
@@ -78,7 +79,7 @@ class FileTransaction(object):
         Args:
             src (str): Source path.
             dst (str): Destination path.
-            mode (MODE_COPY, MODE_HARDLINK): Transfer mode.
+            mode (MODE_COPY, MODE_HARDLINK, MODE_SYMLINK): Transfer mode.
         """
 
         opts = {"mode": mode}
@@ -142,7 +143,11 @@ class FileTransaction(object):
             elif opts["mode"] == self.MODE_HARDLINK:
                 self.log.debug("Hardlinking file ... {} -> {}".format(
                     src, dst))
-                create_hard_link(src, dst)
+                create_hardlink(src, dst)
+            elif opts["mode"] == self.MODE_SYMLINK:
+                self.log.debug("Symlinking file ... {} -> {}".format(
+                    src, dst))
+                create_symlink(src, dst)
 
             self._transferred.append(dst)
 

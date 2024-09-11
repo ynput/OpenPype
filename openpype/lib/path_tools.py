@@ -29,7 +29,7 @@ def format_file_size(file_size, suffix=None):
     return "%.1f%s%s" % (file_size, "Yi", suffix)
 
 
-def create_hard_link(src_path, dst_path):
+def create_hardlink(src_path, dst_path):
     """Create hardlink of file.
 
     Args:
@@ -62,6 +62,41 @@ def create_hard_link(src_path, dst_path):
     # Raises not implemented error if gets here
     raise NotImplementedError(
         "Implementation of hardlink for current environment is missing."
+    )
+
+
+def create_symlink(src_path, dst_path):
+    """Create symlink of file.
+    Args:
+        src_path(str): Full path to a file which is used as source for
+            symlink.
+        dst_path(str): Full path to a file where a link of source will be
+            added.
+    """
+    # Use `os.symlink` if is available
+    #   - should be for all platforms with newer python versions
+    if hasattr(os, "symlink"):
+        os.symlink(src_path, dst_path)
+        return
+
+    # Windows implementation of symlinks (
+    #  - for older versions of python
+    if platform.system().lower() == "windows":
+        import ctypes
+        from ctypes.wintypes import BOOL
+        CreateSymLink = ctypes.windll.kernel32.CreateSymbolicLinkW
+        CreateSymLink.argtypes = [
+            ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_void_p
+        ]
+        CreateSymLink.restype = BOOL
+
+        res = CreateSymLink(dst_path, src_path, None)
+        if res == 0:
+            raise ctypes.WinError()
+        return
+    # Raises not implemented error if gets here
+    raise NotImplementedError(
+        "Implementation of symlink for current environment is missing."
     )
 
 
