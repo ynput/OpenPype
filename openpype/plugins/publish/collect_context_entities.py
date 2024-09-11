@@ -84,3 +84,5 @@ class CollectContextEntities(pyblish.api.ContextPlugin):
         context.data["frameEndHandle"] = frame_end_h
 
         context.data["fps"] = data["fps"]
+
+        context.data["tools_env"] = data.get("tools_env", [])
