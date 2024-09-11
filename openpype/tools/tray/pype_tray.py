@@ -719,7 +719,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :type parent: QtWidgets.QMainWindow
     """
 
-    doubleclick_time_ms = 100
+    doubleclick_time_ms = 500
 
     def __init__(self, parent):
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
