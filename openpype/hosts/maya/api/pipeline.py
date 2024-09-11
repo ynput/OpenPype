@@ -31,9 +31,11 @@ from openpype.pipeline import (
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
+    register_builder_action_path,
     deregister_loader_plugin_path,
     deregister_inventory_action_path,
     deregister_creator_plugin_path,
+    deregister_builder_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
@@ -64,6 +66,7 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
+BUILDER_PATH = os.path.join(PLUGINS_DIR, "builder")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
@@ -90,6 +93,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
         register_inventory_action_path(INVENTORY_PATH)
+        register_builder_action_path(BUILDER_PATH)
         self.log.info(PUBLISH_PATH)
 
         self.log.info("Installing callbacks ... ")
@@ -335,6 +339,7 @@ def uninstall():
     deregister_loader_plugin_path(LOAD_PATH)
     deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
+    deregister_builder_action_path(BUILDER_PATH)
 
     menu.uninstall()
 

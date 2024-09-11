@@ -30,5 +30,5 @@ __all__ = (
 
     "create_workdir_extra_folders",
 
-    "BuildWorkfile",
+    "BuildWorkfile"
 )
