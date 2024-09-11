@@ -9,6 +9,8 @@ import platform
 
 import xml.etree.ElementTree
 
+from multiprocessing.pool import ThreadPool
+
 from .execute import run_subprocess
 from .vendor_bin_utils import (
     get_ffmpeg_tool_args,
@@ -1134,50 +1136,78 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    input_info = get_oiio_info_for_input(input_path, logger=logger)
+    def get_chunks(frame_start, frame_end, chunk_size):
+        """Chunk the frame numbers into groups."""
+        frames = list(range(frame_start, frame_end + 1))
+        chunk_list = [frames[i:i + chunk_size] for i in range(0, len(frames), chunk_size)]
+        return chunk_list
 
-    # Collect channels to export
-    input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
+    def process_conversion(in_path, out_path, start_frame=None, end_frame=None):
+        if start_frame is not None:
+            frame_group = f'.{start_frame}-{end_frame}#.'
+            frame_regex = r'\.\d+-\d+#\.'
+            in_path = re.sub(frame_regex, frame_group, in_path)
+            out_path = re.sub(frame_regex, frame_group, out_path)
 
-    # Prepare subprocess arguments
-    oiio_cmd = get_oiio_tool_args(
-        "oiiotool",
-        # Don't add any additional attributes
-        "--nosoftwareattrib",
-        "--colorconfig", config_path
-    )
+        input_info = get_oiio_info_for_input(in_path, logger=logger)
 
-    oiio_cmd.extend([
-        input_arg, input_path,
-        # Tell oiiotool which channels should be put to top stack
-        #   (and output)
-        "--ch", channels_arg,
-        # Use first subimage
-        "--subimage", "0"
-    ])
+        # Collect channels to export
+        input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
 
-    if all([target_colorspace, view, display]):
-        raise ValueError("Colorspace and both screen and display"
-                         " cannot be set together."
-                         "Choose colorspace or screen and display")
-    if not target_colorspace and not all([view, display]):
-        raise ValueError("Both screen and display must be set.")
+        # Prepare subprocess arguments
+        oiio_cmd = get_oiio_tool_args(
+            "oiiotool",
+            # Don't add any additional attributes
+            "--nosoftwareattrib",
+            "--colorconfig", config_path
+        )
 
-    if additional_command_args:
-        oiio_cmd.extend(additional_command_args)
+        oiio_cmd.extend([
+            input_arg, in_path,
+            # Tell oiiotool which channels should be put to top stack
+            #   (and output)
+            "--ch", channels_arg,
+            # Use first subimage
+            "--subimage", "0"
+        ])
 
-    if target_colorspace:
-        oiio_cmd.extend(["--colorconvert",
-                         source_colorspace,
-                         target_colorspace])
-    if view and display:
-        oiio_cmd.extend(["--iscolorspace", source_colorspace])
-        oiio_cmd.extend(["--ociodisplay", display, view])
+        if all([target_colorspace, view, display]):
+            raise ValueError("Colorspace and both screen and display"
+                             " cannot be set together."
+                             "Choose colorspace or screen and display")
+        if not target_colorspace and not all([view, display]):
+            raise ValueError("Both screen and display must be set.")
 
-    oiio_cmd.extend(["-o", output_path])
+        if additional_command_args:
+            oiio_cmd.extend(additional_command_args)
 
-    logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
-    run_subprocess(oiio_cmd, logger=logger)
+        if target_colorspace:
+            oiio_cmd.extend(["--colorconvert",
+                             source_colorspace,
+                             target_colorspace])
+        if view and display:
+            oiio_cmd.extend(["--iscolorspace", source_colorspace])
+            oiio_cmd.extend(["--ociodisplay", display, view])
+
+        oiio_cmd.extend(["-o", out_path])
+
+        logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+        run_subprocess(oiio_cmd, logger=logger)
+
+    frame_data = input_path.split('.')[-2]
+    # If it's a range of frames, we multithread it
+    if '-' in frame_data:
+        start, end = frame_data[:-1].split('-')
+        # chunk_size could be editable
+        chunks = get_chunks(int(start), int(end), chunk_size=10)
+
+        pool = ThreadPool()
+        for chunk in chunks:
+            pool.apply_async(process_conversion, (input_path, output_path, chunk[0], chunk[-1]))
+        pool.close()
+        pool.join()
+    else:
+        process_conversion(input_path, output_path)
 
 
 def split_cmd_args(in_args):
