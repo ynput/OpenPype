@@ -465,7 +465,9 @@ def create_instances_for_aov(instance, skeleton, aov_filter,
     Args:
         instance (pyblish.api.Instance): Original instance.
         skeleton (dict): Skeleton instance data.
+        aov_filter (dict)
         skip_integration_repre_list (list): skip
+        do_not_add_review (bool)
 
     Returns:
         list of pyblish.api.Instance: Instances created from
@@ -767,7 +769,7 @@ def get_resources(project_name, version, extension=None):
 
 
 def create_skeleton_instance_cache(instance):
-    # type: (pyblish.api.Instance, list, dict) -> dict
+    # type: (pyblish.api.Instance) -> dict
     """Create skeleton instance from original instance data.
 
     This will create dictionary containing skeleton
