@@ -25,6 +25,7 @@ from openpype.client import (
     get_linked_assets,
     get_representations,
 )
+from openpype.client.entities import get_projects
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -47,6 +48,13 @@ from openpype.pipeline.load import (
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
     CreateContext,
+)
+
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_name,
+    get_current_task_name,
+    get_current_host_name
 )
 
 
@@ -577,14 +585,14 @@ class AbstractTemplateBuilder(object):
             template_path (str): Fullpath for current task and
                 host's template file.
         """
-        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+        last_workfile_path = get_last_workfile_path()
         self.log.info("__ last_workfile_path: {}".format(last_workfile_path))
-        if os.path.exists(last_workfile_path):
+        if is_last_workfile_exists():
             # ignore in case workfile existence
             self.log.info("Workfile already exists, skipping creation.")
             return False
 
-        # Create first version
+        # Create the first version
         self.log.info("Creating first version of workfile.")
         self.save_workfile(last_workfile_path)
 
@@ -2047,3 +2055,74 @@ class CreatePlaceholderItem(PlaceholderItem):
 
     def create_failed(self, creator_data):
         self._failed_created_publish_instances.append(creator_data)
+
+
+def get_library_project_names():
+    libraries = list()
+
+    for project in get_projects(fields=["name", "data.library_project"]):
+        if project.get("data", {}).get("library_project", False):
+            libraries.append(project["name"])
+
+    return libraries
+
+
+def should_build_first_workfile(
+        project_name=None,
+        project_settings=None,
+        asset_doc=None,
+        asset_name=None,
+        task_name=None,
+        host_name=None
+):
+    """Return whether first workfile should be created for given context"""
+
+    project_name = project_name or get_current_project_name()
+    if project_settings is None:
+        project_settings = get_project_settings(project_name)
+
+    host_name = host_name or get_current_host_name()
+    build_workfile_profiles = project_settings[host_name]["templated_workfile_build"]  # noqa
+
+    if not build_workfile_profiles['profiles']:
+        return False
+
+    asset_name = asset_name or get_current_asset_name()
+    asset_doc = asset_doc or get_asset_by_name(project_name, asset_name)
+    task_name = task_name or get_current_task_name()
+    current_tasks = asset_doc.get("data").get("tasks")
+    task_type = current_tasks.get(task_name).get("type")
+
+    filtering_criteria = {
+        "task_names": task_name,
+        "task_types": task_type
+    }
+
+    profile = filter_profiles(
+        build_workfile_profiles["profiles"],
+        filtering_criteria
+    )
+
+    if not profile or not profile.get("create_first_version"):
+        return False
+
+    is_task_name = task_name in profile["task_names"]
+    is_task_type = task_type in profile["task_types"]
+
+    if not is_task_name and not is_task_type:
+        return False
+
+    return True
+
+
+def get_last_workfile_path():
+    return os.environ.get("AVALON_LAST_WORKFILE")
+
+
+def is_last_workfile_exists():
+    last_workfile_path = get_last_workfile_path()
+
+    if last_workfile_path and os.path.exists(last_workfile_path):
+        return True
+
+    return False

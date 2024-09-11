@@ -37,6 +37,10 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
+from openpype.pipeline.workfile.workfile_template_builder import (
+    is_last_workfile_exists,
+    should_build_first_workfile
+)
 from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
     remove_workfile_lock,
@@ -47,7 +51,10 @@ from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
-from .workfile_template_builder import MayaPlaceholderLoadPlugin
+from .workfile_template_builder import (
+    MayaPlaceholderLoadPlugin,
+    build_workfile_template
+)
 from .workio import (
     open_file,
     save_file,
@@ -580,10 +587,17 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
+def _autobuild_first_workfile():
+    if not is_last_workfile_exists() and should_build_first_workfile():
+        build_workfile_template()
+
+
 def on_open():
     """On scene open let's assume the containers have changed."""
 
     from openpype.widgets import popup
+
+    utils.executeDeferred(_autobuild_first_workfile)
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
@@ -621,6 +635,7 @@ def on_new():
     with lib.suspended_refresh():
         lib.set_context_settings()
 
+    utils.executeDeferred(_autobuild_first_workfile)
     _remove_workfile_lock()
 
 
