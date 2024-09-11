@@ -12,6 +12,9 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
+        if not getattr(self, 'enabled', True):
+            return
+
         # Check comment has been created
         comment_id = instance.data.get("kitsu_comment", {}).get("id")
         if not comment_id:
@@ -30,6 +33,7 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
             self.log.debug("Found review at: {}".format(review_path))
 
             gazu.task.add_preview(
-                task_id, comment_id, review_path, normalize_movie=True
+                task_id, comment_id, review_path,
+                normalize_movie=getattr(self, 'normalize', True)
             )
             self.log.info("Review upload on comment")
