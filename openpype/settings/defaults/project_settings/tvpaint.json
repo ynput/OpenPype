@@ -75,7 +75,8 @@
         "ValidateStartFrame": {
             "enabled": false,
             "optional": true,
-            "active": true
+            "active": true,
+            "start_frame": 0
         },
         "ValidateAssetName": {
             "enabled": true,
