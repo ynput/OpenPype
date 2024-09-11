@@ -269,7 +269,6 @@ class LoadEffects(load.LoaderPlugin):
         Finds read node and selects it
 
         Arguments:
-            asset (str): asset name
             group_node:
             selected_nodes(list):
 
