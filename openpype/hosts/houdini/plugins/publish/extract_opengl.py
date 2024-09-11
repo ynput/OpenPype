@@ -49,3 +49,7 @@ class ExtractOpenGL(publish.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
         instance.data["representations"].append(representation)
+
+        # Use the first image as a thumbnail if it's not already set.
+        if not instance.data.get("thumbnailSource") and output:
+            instance.data["thumbnailSource"] = os.path.join(staging_dir, output[0])
