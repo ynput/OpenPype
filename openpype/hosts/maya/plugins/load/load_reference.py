@@ -240,7 +240,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self._lock_camera_transforms(members)
 
     def _post_process_rig(self, namespace, context, options):
-
         nodes = self[:]
         animation_instance = create_rig_animation_instance(
             nodes, context, namespace, options=options, log=self.log
