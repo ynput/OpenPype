@@ -148,6 +148,7 @@ class CreateRenderlayer(TVPaintCreator):
         self.default_variants = plugin_settings["default_variants"]
         self.default_pass_name = plugin_settings["default_pass_name"]
         self.mark_for_review = plugin_settings["mark_for_review"]
+        self.enabled = plugin_settings.get("enabled", True)
 
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name, instance
@@ -395,6 +396,7 @@ class CreateRenderPass(TVPaintCreator):
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
         self.mark_for_review = plugin_settings["mark_for_review"]
+        self.enabled = plugin_settings.get("enabled", True)
 
     def collect_instances(self):
         instances_by_identifier = self._cache_and_get_instances()
@@ -1060,6 +1062,7 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
         self.mark_for_review = plugin_settings["mark_for_review"]
         self.active_on_create = plugin_settings["active_on_create"]
         self.default_pass_name = plugin_settings["default_pass_name"]
+        self.enabled = plugin_settings.get("enabled", True)
 
     def get_dynamic_data(self, variant, *args, **kwargs):
         dynamic_data = super().get_dynamic_data(variant, *args, **kwargs)
