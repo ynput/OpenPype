@@ -34,7 +34,7 @@ class IPluginPaths(OpenPypeInterface):
     """Module has plugin paths to return.
 
     Expected result is dictionary with keys "publish", "create", "load",
-    "actions" or "inventory" and values as list or string.
+    "actions", "inventory", "builder" and values as a list or string.
     {
         "publish": ["path/to/publish_plugins"]
     }
@@ -116,13 +116,25 @@ class IPluginPaths(OpenPypeInterface):
 
         Notes:
            Default implementation uses 'get_plugin_paths' and always return
-               all publish plugin paths.
+               all inventory plugin paths.
 
         Args:
            host_name (str): For which host are the plugins meant.
         """
 
         return self._get_plugin_paths_by_type("inventory")
+
+    def get_builder_action_paths(self, host_name):
+        """Receive builder action paths.
+        Give addons ability to add builder action plugin paths.
+        Notes:
+           Default implementation uses 'get_plugin_paths' and always return
+               all builder plugin paths.
+        Args:
+           host_name (str): For which host are the plugins meant.
+        """
+
+        return self._get_plugin_paths_by_type("builder")
 
 
 class ILaunchHookPaths(OpenPypeInterface):

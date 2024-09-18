@@ -3,6 +3,7 @@ from qtpy import QtWidgets
 from openpype import style
 from openpype.lib import Logger
 from openpype.pipeline import legacy_io
+from openpype.pipeline.action.utils import get_actions_by_family
 from openpype.tools.attribute_defs import AttributeDefinitionsWidget
 
 
@@ -171,6 +172,7 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         self._content_layout.addStretch(1)
         self._attr_defs_widget = widget
         self._last_selected_plugin = plugin.identifier
+        self.filter_actions_by_families_widget()
 
     def _update_ui_visibility(self):
         create_mode = self._mode == 0
@@ -239,3 +241,47 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
             self.resize(390, 450)
+
+    @staticmethod
+    def update_builder_action(family_widget, builder_widget):
+        """Update builder action widget by family widget value"""
+        builder_widget._input_widget.clear()
+        actions_by_family = get_actions_by_family(family_widget.current_value())
+        action_items = [{"value": "", "label": ""}]
+
+        if actions_by_family:
+            action_items.extend([
+                {"value": action_name, "label": action.label or action_name}
+                for action_name, action in actions_by_family.items()
+            ])
+
+        for item in action_items:
+            builder_widget._input_widget.addItem(item["label"], item["value"])
+
+    def filter_actions_by_families_widget(self):
+        """Filter builder actions by families"""
+        family_widget = None
+        builder_widget = None
+
+        for widget in self._attr_defs_widget.children():
+            if not hasattr(widget, 'attr_def') or \
+                    not hasattr(widget.attr_def, 'label') or \
+                    not widget.attr_def.label:
+                continue
+
+            widget_label = widget.attr_def.label.lower()
+            if 'family' in widget_label:
+                family_widget = widget
+            elif 'builder action' in widget_label:
+                builder_widget = widget
+
+            if family_widget and builder_widget:
+                break
+
+        if not family_widget or not builder_widget:
+            return
+
+        self.update_builder_action(family_widget, builder_widget)
+        family_widget._input_widget.currentIndexChanged.connect(
+            lambda index, family=family_widget, builder=builder_widget: self.update_builder_action(family, builder)
+        )
