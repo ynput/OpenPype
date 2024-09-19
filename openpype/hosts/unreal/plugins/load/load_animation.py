@@ -216,8 +216,8 @@ class AnimationFBXLoader(plugin.Loader):
                         if (s.get_class() ==
                             MovieSceneSkeletalAnimationSection.static_class())]
 
-                    for s in sections:
-                        s.params.set_editor_property('animation', animation)
+                    for section in sections:
+                        section.params.set_editor_property('animation', animation)
 
         # Create Asset Container
         unreal_pipeline.create_container(
