@@ -114,21 +114,6 @@ class ExtractScriptBase(OptionalPyblishPluginMixin):
     units = "mm"
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        settings = project_settings["equalizer"]["publish"][
-            "ExtractMatchmoveScriptMaya"]  # noqa
-
-        cls.hide_reference_frame = settings.get(
-            "hide_reference_frame", cls.hide_reference_frame)
-        cls.export_uv_textures = settings.get(
-            "export_uv_textures", cls.export_uv_textures)
-        cls.overscan_percent_width = settings.get(
-            "overscan_percent_width", cls.overscan_percent_width)
-        cls.overscan_percent_height = settings.get(
-            "overscan_percent_height", cls.overscan_percent_height)
-        cls.units = settings.get("units", cls.units)
-
-    @classmethod
     def get_attribute_defs(cls):
         defs = super(ExtractScriptBase, cls).get_attribute_defs()
 

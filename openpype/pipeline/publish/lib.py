@@ -315,7 +315,7 @@ def publish_plugins_discover(paths=None):
     return result
 
 
-def get_plugin_settings(plugin, project_settings, log, category=None):
+def get_publish_plugin_settings(plugin, project_settings, category=None, logger=None):
     """Get plugin settings based on host name and plugin name.
 
     Note:
@@ -325,13 +325,15 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
     Args:
         plugin (pyblish.Plugin): Plugin where settings are applied.
         project_settings (dict[str, Any]): Project settings.
-        log (logging.Logger): Logger to log messages.
         category (Optional[str]): Settings category key where to look
             for plugin settings.
+        logger (Optional[logging.Logger]): Logger to log messages.
 
     Returns:
         dict[str, Any]: Plugin settings {'attribute': 'value'}.
     """
+    if not logger:
+        logger = Logger.get_logger("get_publish_plugin_settings")
 
     # Plugin can define settings category by class attribute
     # - it's impossible to set `settings_category` via settings because
@@ -347,7 +349,7 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
                 [plugin.__name__]
             )
         except KeyError:
-            log.warning((
+            logger.warning((
                 "Couldn't find plugin '{}' settings"
                 " under settings category '{}'"
             ).format(plugin.__name__, settings_category))
@@ -366,13 +368,13 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
             pass
 
     # Settings category determined from path
-    # - usually path is './<category>/plugins/publish/<plugin file>'
+    # - usually the path is './<category>/plugins/publish/<plugin file>'
     # - category can be host name of addon name ('maya', 'deadline', ...)
     filepath = os.path.normpath(inspect.getsourcefile(plugin))
 
     split_path = filepath.rsplit(os.path.sep, 5)
     if len(split_path) < 4:
-        log.debug((
+        logger.debug((
             "Plugin path is too short to automatically"
             " extract settings category. {}"
         ).format(filepath))
@@ -397,7 +399,7 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
     return {}
 
 
-def apply_plugin_settings_automatically(plugin, settings, logger=None):
+def apply_plugin_settings(plugin, settings, logger=None):
     """Automatically apply plugin settings to a plugin object.
 
     Note:
@@ -431,10 +433,10 @@ def filter_pyblish_plugins(plugins):
             are applied settings.
     """
 
-    log = Logger.get_logger("filter_pyblish_plugins")
+    logger = Logger.get_logger("filter_pyblish_plugins")
 
     # TODO: Don't use host from 'pyblish.api' but from defined host by us.
-    #   - kept becau on farm is probably used host 'shell' which propably
+    #   - kept because on farm is probably used host 'shell' which probably
     #       affect how settings are applied there
     host_name = pyblish.api.current_host()
     project_name = os.environ.get("AVALON_PROJECT")
@@ -444,7 +446,14 @@ def filter_pyblish_plugins(plugins):
 
     # iterate over plugins
     for plugin in plugins[:]:
-        # Apply settings to plugins
+        # Apply settings to plugin
+
+        # First settings from OP settings
+        plugin_settings = get_publish_plugin_settings(
+            plugin, project_settings, host_name, logger)
+        apply_plugin_settings(plugin, plugin_settings, logger)
+
+        # Then (if defined) calling the class method
 
         apply_settings_func = getattr(plugin, "apply_settings", None)
         if apply_settings_func is not None:
@@ -466,19 +475,13 @@ def filter_pyblish_plugins(plugins):
                 else:
                     plugin.apply_settings(project_settings, system_settings)
 
-            except Exception:
-                log.warning(
+            except Exception:  # noqa
+                logger.warning(
                     (
                         "Failed to apply settings on plugin {}"
                     ).format(plugin.__name__),
                     exc_info=True
                 )
-        else:
-            # Automated
-            plugin_settins = get_plugin_settings(
-                plugin, project_settings, log, host_name
-            )
-            apply_plugin_settings_automatically(plugin, plugin_settins, log)
 
         # Remove disabled plugins
         if getattr(plugin, "enabled", True) is False:
