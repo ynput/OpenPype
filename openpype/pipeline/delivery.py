@@ -6,7 +6,7 @@ import glob
 import clique
 import collections
 
-from openpype.lib import create_hard_link
+from openpype.lib import create_hardlink
 
 
 def _copy_file(src_path, dst_path):
@@ -19,7 +19,7 @@ def _copy_file(src_path, dst_path):
     if os.path.exists(dst_path):
         return
     try:
-        create_hard_link(
+        create_hardlink(
             src_path,
             dst_path
         )

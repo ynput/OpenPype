@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import sys
 import copy
@@ -281,8 +282,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 instance)
 
             for src, dst in prepared["transfers"]:
-                # todo: add support for hardlink transfers
-                file_transactions.add(src, dst)
+                file_transaction_mode = self.get_file_transaction_mode(instance, src)
+                file_transactions.add(src, dst, mode=file_transaction_mode)
 
             prepared_representations.append(prepared)
 
@@ -294,7 +295,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         file_copy_modes = [
             ("transfers", FileTransaction.MODE_COPY),
-            ("hardlinks", FileTransaction.MODE_HARDLINK)
+            ("hardlinks", FileTransaction.MODE_HARDLINK),
+            ("symlinks", FileTransaction.MODE_SYMLINK)
         ]
         for files_type, copy_mode in file_copy_modes:
             for src, dst in instance.data.get(files_type, []):
@@ -403,6 +405,26 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                           for p in prepared_representations)
             )
         )
+
+    @staticmethod
+    def get_file_transaction_mode(instance, src):
+        transaction_mode = FileTransaction.MODE_COPY
+
+        is_symlink_requested = False
+        hierarchy_data = instance.data.get("hierarchyData")
+        if hierarchy_data and hierarchy_data.get("symlink") == "True":
+            is_symlink_requested = True
+
+        if not is_symlink_requested:
+            return transaction_mode
+
+        pattern = instance.context.data["project_settings"]["global"]["tools"]["publish"]["symlink"][
+            "file_regex_pattern"]
+
+        if not pattern or bool(re.match(pattern, src)):
+            transaction_mode = FileTransaction.MODE_SYMLINK
+
+        return transaction_mode
 
     def prepare_subset(self, instance, op_session, project_name):
         asset_doc = instance.data["assetEntity"]

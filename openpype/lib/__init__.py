@@ -149,7 +149,8 @@ from .plugin_tools import (
 from .path_tools import (
     format_file_size,
     collect_frames,
-    create_hard_link,
+    create_hardlink,
+    create_symlink,
     version_up,
     get_version_from_path,
     get_last_version_from_path,
@@ -265,7 +266,8 @@ __all__ = [
 
     "format_file_size",
     "collect_frames",
-    "create_hard_link",
+    "create_hardlink",
+    "create_symlink",
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",
