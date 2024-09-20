@@ -143,7 +143,7 @@ class ExtractCameraMayaScene(publish.Extractor,
         # get cameras
         members = set(cmds.ls(instance.data['setMembers'], leaf=True,
                       shapes=True, long=True, dag=True))
-        cameras = set(cmds.ls(members, leaf=True, shapes=True, long=True,
+        cameras = set(cmds.ls(members, shapes=True, long=True,
                       dag=True, type="camera"))
 
         # validate required settings
