@@ -43,10 +43,8 @@ class CollectSequenceFrameData(
             instance.data[key] = value
             self.log.debug(f"Collected Frame range data '{key}':{value} ")
 
-
     def get_frame_data_from_repre_sequence(self, instance):
         repres = instance.data.get("representations")
-        asset_data = instance.data["assetEntity"]["data"]
 
         if repres:
             first_repre = repres[0]
@@ -67,10 +65,22 @@ class CollectSequenceFrameData(
             collection = collections[0]
             repres_frames = list(collection.indexes)
 
+            fps = None
+            # Try to retrieve the FPS value from the asset else the project
+            if "assetEntity" in instance.context.data:
+                fps = instance.data["assetEntity"]["data"].get("fps", None)
+            if not fps and "projectEntity" in instance.context.data:
+                fps = instance.context.data["projectEntity"]["data"].get("fps", None)
+
+            if fps is None:
+                self.log.warning("Cannot properly retrieve the FPS value."
+                                 " Skipping to avoid crash later in the process.")
+                return
+
             return {
                 "frameStart": repres_frames[0],
                 "frameEnd": repres_frames[-1],
                 "handleStart": 0,
                 "handleEnd": 0,
-                "fps": asset_data["fps"]
+                "fps": fps
             }
