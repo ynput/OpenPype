@@ -34,6 +34,7 @@ from openpype.client import (
     get_asset_name_identifier,
 )
 from openpype.pipeline.version_start import get_versioning_start
+from openpype.pipeline.latest_tracked_version_number import get_latest_tracked_version_number
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -211,10 +212,29 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             if version_number is None:
                 version_number = instance.data.get("version")
 
-            # use latest version (+1) if already any exist
             if version_number is None:
+                # Try using the latest version data
                 latest_version = instance.data["latestVersion"]
+
+                if version_number is None:
+                    # Last attempt to get the correct version number
+                    # using the data on the tracker
+
+                    # Firstly, get the task name
+                    task_name = instance.data.get("task")
+                    if not task_name:
+                        task_data = anatomy_data.get("task") or {}
+                        task_name = task_data.get("name")
+
+                    # Try getting the latest version
+                    version_number = get_latest_tracked_version_number(
+                        instance,
+                        task_name
+                    )
+
                 if latest_version is not None:
+                    # We found the latest version
+                    # Increment the value
                     version_number = int(latest_version) + 1
 
             # If version is not specified for instance or context

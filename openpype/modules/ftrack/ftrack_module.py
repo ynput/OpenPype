@@ -62,6 +62,24 @@ class FtrackModule(
         self.timers_manager_connector = None
         self._timers_manager_module = None
 
+    def get_asset_latest_version_number(self, asset_ftrack_id, task_name, asset_name):
+        try:
+            session = self.create_ftrack_session()
+        except Exception:  # noqa
+            self.log.warning("Couldn't create ftrack session.", exc_info=True)
+            return
+
+        asset = session.query(
+            f"Asset where parent.id is '{asset_ftrack_id}'"
+            f" and latest_version.task.name is '{task_name}'"
+            f" and name like '%{asset_name}%'"
+        ).first()
+
+        if asset:
+            return asset["latest_version"]["version"]
+
+        return None
+
     def get_ftrack_url(self):
         """Resolved ftrack url.
 
