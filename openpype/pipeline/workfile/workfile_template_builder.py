@@ -25,6 +25,7 @@ from openpype.client import (
     get_linked_assets,
     get_representations,
 )
+from openpype.client.entities import get_projects
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -1262,6 +1263,14 @@ class PlaceholderLoadMixin(object):
         ]
 
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
+        libraries_project_items = [
+            {
+                "label": "From Library : {}".format(project_name),
+                "value": project_name
+            }
+            for project_name in get_library_project_names()
+        ]
+
         options = options or {}
 
         # Get families from all loaders excluding "*"
@@ -1297,6 +1306,8 @@ class PlaceholderLoadMixin(object):
                 {"label": "Linked assets", "value": "linked_asset"},
                 {"label": "All assets", "value": "all_assets"},
             ]
+            # Add project libraries
+            builder_type_enum_items.extend(libraries_project_items)
             build_type_label = "Asset Builder Type"
             build_type_help = (
                 "Asset Builder Type\n"
@@ -1308,6 +1319,10 @@ class PlaceholderLoadMixin(object):
                 " linked to current context asset."
                 "\nLinked asset are looked in database under"
                 " field \"inputLinks\""
+                "\nFrom All Assets : Template loader will look for all assets"
+                " in database."
+                "\nProject Library Assets : Template loader will look for assets"
+                "in given project library."
             )
 
         attr_defs = [
@@ -2047,3 +2062,13 @@ class CreatePlaceholderItem(PlaceholderItem):
 
     def create_failed(self, creator_data):
         self._failed_created_publish_instances.append(creator_data)
+
+
+def get_library_project_names():
+    libraries = list()
+
+    for project in get_projects(fields=["name", "data.library_project"]):
+        if project.get("data", {}).get("library_project", False):
+            libraries.append(project["name"])
+
+    return libraries
