@@ -13,7 +13,7 @@ import ftrack_api
 from openpype_modules.ftrack import ftrack_server
 
 
-class MissingPermision(Exception):
+class MissingPermission(Exception):
     def __init__(self, message=None):
         if message is None:
             message = 'Ftrack'
@@ -101,7 +101,7 @@ class BaseHandler(object):
                 self.log.info((
                     '{} "{}" - Registered successfully ({:.4f}sec)'
                 ).format(self.type, label, run_time))
-            except MissingPermision as MPE:
+            except MissingPermission as MPE:
                 self.log.info((
                     '!{} "{}" - You\'re missing required {} permissions'
                 ).format(self.type, label, str(MPE)))
