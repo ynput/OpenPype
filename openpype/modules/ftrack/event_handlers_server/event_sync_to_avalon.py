@@ -2526,7 +2526,8 @@ class SyncToAvalonEvent(BaseEvent):
             "type": "label",
             "value": (
                 "<p><i>NOTE: It is not allowed to use the same name"
-                " for multiple entities in the same project</i></p>"
+                " for multiple entities in the same project. Please"
+                " delete or rename the newly created item.</i></p>"
             )
         })
 
