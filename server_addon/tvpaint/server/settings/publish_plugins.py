@@ -115,7 +115,8 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ValidateStartFrame": {
         "enabled": False,
         "optional": True,
-        "active": True
+        "active": True,
+        "start_frame": 0
     },
     "ValidateAssetName": {
         "enabled": True,
