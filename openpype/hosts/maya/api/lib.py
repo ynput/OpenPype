@@ -18,6 +18,7 @@ from six import string_types
 
 from maya import cmds, mel
 from maya.api import OpenMaya
+from maya.plugin.evaluator.cache_preferences import CachePreferenceEnabled
 
 from openpype.client import (
     get_project,
@@ -180,10 +181,26 @@ def render_capture_preset(preset):
         str: Output path of `capture.capture`
     """
 
+    # Bugfix: to avoid playblast generation issues with sequence image plane,
+    # cached playblack need to be enabled
+    # Firstly, save and switch the anim evaluation mode to parallel
+    # (needed for the cached playback option)
+    prev_evaluation_mode_info = cmds.evaluationManager(query=True, mode=True)
+    # Switch to parallel
+    cmds.evaluationManager(mode="parallel")
+    # Then, save the current cachedPlayback value to be able to apply it again after playblast capture
+    prev_cached_playblast_status = cmds.optionVar(query="cachedPlaybackEnable")
+    # Force the value cachedPlayback value to ON
+    cmds.optionVar(intValue=("cachedPlaybackEnable", 1))
+
     # Force a refresh at the start of the timeline
     # TODO (Question): Why do we need to do this? What bug does it solve?
     #   Is this for simulations?
     cmds.refresh(force=True)
+
+    # Update the engine with the set value
+    CachePreferenceEnabled().set_state_from_preference()
+
     refresh_frame_int = int(cmds.playbackOptions(query=True, minTime=True))
     cmds.currentTime(refresh_frame_int - 1, edit=True)
     cmds.currentTime(refresh_frame_int, edit=True)
@@ -207,6 +224,16 @@ def render_capture_preset(preset):
             # Regenerate all UDIM tiles previews
             reload_all_udim_tile_previews()
         path = capture.capture(log=self.log, **preset)
+
+    # Restoring the cached playback option value
+    cmds.optionVar(intValue=("cachedPlaybackEnable", int(prev_cached_playblast_status)))
+
+    # Restore anim evaluation mode
+    # (directly access index 0 sice it should be a list with a least one value)
+    cmds.evaluationManager(mode=prev_evaluation_mode_info[0])
+
+    # Update the engine internal value for the cached playback option
+    CachePreferenceEnabled().set_state_from_preference()
 
     return path
 
