@@ -1860,7 +1860,7 @@ class PlaceholderCreateMixin(object):
                 default=options.get("create_variant"),
                 placeholder='Main',
                 tooltip=(
-                    "Creator"
+                    "Variant"
                     "\nDefines variant name which will be use for "
                     "\ncompiling of subset name."
                 )

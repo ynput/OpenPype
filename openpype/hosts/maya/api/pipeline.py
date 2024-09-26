@@ -47,7 +47,10 @@ from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
-from .workfile_template_builder import MayaPlaceholderLoadPlugin
+from .workfile_template_builder import (
+    MayaPlaceholderLoadPlugin,
+    MayaPlaceholderCreatePlugin
+)
 from .workio import (
     open_file,
     save_file,
@@ -147,7 +150,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def get_workfile_build_placeholder_plugins(self):
         return [
-            MayaPlaceholderLoadPlugin
+            MayaPlaceholderLoadPlugin,
+            MayaPlaceholderCreatePlugin
         ]
 
     @contextlib.contextmanager
