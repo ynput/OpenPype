@@ -573,6 +573,10 @@ def _process_arguments() -> tuple:
         commands.append("print_versions")
         sys.argv.remove("--list-versions")
 
+    if "--disable-validity-check" in sys.argv:
+        commands.append("disable_validity_check")
+        sys.argv.remove("--disable-validity-check")
+
     # handle igniter
     # this is helper to run igniter before anything else
     if "igniter" in sys.argv:
@@ -1114,6 +1118,9 @@ def boot():
         pass
     except KeyError:
         pass
+
+    # Do the program display popups to the users regarding updates or incompatibilities
+    os.environ["OPENPYPE_VALIDITY_CHECK_ENABLED"] = "False" if "disable_validity_check" in commands else "True"
 
     _print(">>> loading environments ...")
     # Avalon environments must be set before avalon module is imported
