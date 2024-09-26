@@ -84,14 +84,44 @@ class CreateProjectFolders(BaseAction):
                 }
 
             # Invoking OpenPype API to create the project folders
-            create_project_folders(project_name, basic_paths)
+            case_sensitivity_issues = create_project_folders(project_name, basic_paths)
+            # Even if there are case sensitivity issues, the folders have been created,
+            # so we still need to create the entities and trigger the event normally
             self.create_ftrack_entities(basic_paths, project_entity)
 
             self.trigger_event(
                 "openpype.project.structure.created",
                 {"project_name": project_name}
             )
+            # Inform the user of the issues (if any)
+            if case_sensitivity_issues:
+                # Prepare the list of pair paths that coexist
+                path_list_str = ""
+                for issue in case_sensitivity_issues:
+                    path_list_str = path_list_str + "\n{}\n{}\n".format(issue[0], issue[1])
 
+                # Return the issue message form
+                return {
+                    "type": "form",
+                    "items": [
+                        {
+                            "type": "label",
+                            "value": "#Warning: Case sensitivity issue(s)!"
+                        },
+                        {
+                            "type": "label",
+                            "value": "The following pair of paths coexist in the same parent directory "
+                                     "and its probably an issue (only the first folder path of every pair "
+                                     "should exists):\n{}".format(path_list_str)
+                        },
+                        {
+                            "type": "label",
+                            "value": "Please move content and delete duplicate folders."
+                        }
+                    ],
+                    "title": "Create Project Structure",
+                    "submit_button_label": "I will do the changes"
+                }
         except Exception as exc:
             self.log.warning("Creating of structure crashed.", exc_info=True)
             session.rollback()
