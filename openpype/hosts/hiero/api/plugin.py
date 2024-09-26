@@ -695,6 +695,10 @@ class PublishClip:
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
 
+        # Get symlink status
+        project_settings = get_current_project_settings()
+        self.symlink = project_settings["hiero"]["create"]["CreateShotClip"]["symlink"]  # noqa
+
         # populate default data before we get other attributes
         self._populate_track_item_default_data()
 
@@ -757,7 +761,8 @@ class PublishClip:
             "_track_": self.track_name,
             "_clip_": self.ti_name,
             "_trackIndex_": self.track_index,
-            "_clipIndex_": self.ti_index
+            "_clipIndex_": self.ti_index,
+            "_symlink_": self.symlink
         }
 
     def _populate_attributes(self):
@@ -781,6 +786,9 @@ class PublishClip:
         self.hierarchy_data = self.ui_inputs.get(
             "hierarchyData", {}).get("value") or \
             self.track_item_default_data.copy()
+        ui_symlink = self.ui_inputs.get(
+            "hierarchyData", {}).get("value").get("symlink").get("value")
+        self.hierarchy_data["symlink"].update({"value": str(ui_symlink)})
         self.count_from = self.ui_inputs.get(
             "countFrom", {}).get("value") or self.count_from_default
         self.count_steps = self.ui_inputs.get(
