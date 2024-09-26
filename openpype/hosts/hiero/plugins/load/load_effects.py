@@ -30,7 +30,7 @@ class LoadEffects(load.LoaderPlugin):
 
     log = Logger.get_logger(__name__)
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name=None, namespace=None, options=None):
         """
         Loading function to get the soft effects to particular read node
 
@@ -38,7 +38,7 @@ class LoadEffects(load.LoaderPlugin):
             context (dict): context of version
             name (str): name of the version
             namespace (str): asset name
-            data (dict): compulsory attribute > not used
+            options (dict): compulsory attribute > not used
 
         Returns:
             nuke node: containerised nuke node object

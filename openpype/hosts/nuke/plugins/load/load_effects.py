@@ -32,8 +32,7 @@ class LoadEffects(load.LoaderPlugin):
     color = "white"
     ignore_attr = ["useLifetime"]
 
-
-    def load(self, context, name, namespace, data):
+    def load(self, context, name=None, namespace=None, options=None):
         """
         Loading function to get the soft effects to particular read node
 
@@ -41,12 +40,12 @@ class LoadEffects(load.LoaderPlugin):
             context (dict): context of version
             name (str): name of the version
             namespace (str): asset name
-            data (dict): compulsory attribute > not used
+            options (dict): compulsory attribute > not used
 
         Returns:
             nuke node: containerised nuke node object
         """
-        # get main variables
+        # Get the main variables
         version = context['version']
         version_data = version.get("data", {})
         vname = version.get("name", None)
@@ -56,6 +55,7 @@ class LoadEffects(load.LoaderPlugin):
         namespace = namespace or context['asset']['name']
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
+        selected_nodes = nuke.selectedNodes()
 
         # prepare data for imprinting
         # add additional metadata from the version to imprint to Avalon knob
@@ -80,7 +80,7 @@ class LoadEffects(load.LoaderPlugin):
             json_f = {self.byteify(key): self.byteify(value)
                       for key, value in json.load(f).items()}
 
-        # get correct order of nodes by positions on track and subtrack
+        # get the correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
@@ -132,7 +132,7 @@ class LoadEffects(load.LoaderPlugin):
             output.setInput(0, pre_node)
 
         # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
+        self.connect_read_node(GN, selected_nodes)
 
         GN["tile_color"].setValue(int("0x3469ffff", 16))
 
@@ -163,15 +163,13 @@ class LoadEffects(load.LoaderPlugin):
         GN = container["node"]
 
         file = get_representation_path(representation).replace("\\", "/")
-        name = container['name']
         version_data = version_doc.get("data", {})
         vname = version_doc.get("name", None)
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
         workfile_first_frame = int(nuke.root()["first_frame"].getValue())
-        namespace = container['namespace']
         colorspace = version_data.get("colorspace", None)
-        object_name = "{}_{}".format(name, namespace)
+        selected_nodes = nuke.selectedNodes()
 
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
@@ -198,7 +196,7 @@ class LoadEffects(load.LoaderPlugin):
             json_f = {self.byteify(key): self.byteify(value)
                       for key, value in json.load(f).items()}
 
-        # get correct order of nodes by positions on track and subtrack
+        # get the correct order of nodes by positions on track and subtrack
         nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
@@ -249,7 +247,7 @@ class LoadEffects(load.LoaderPlugin):
             output.setInput(0, pre_node)
 
         # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
+        self.connect_read_node(GN, selected_nodes)
 
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]
@@ -265,25 +263,21 @@ class LoadEffects(load.LoaderPlugin):
 
         self.log.info("updated to version: {}".format(version_doc.get("name")))
 
-    def connect_read_node(self, group_node, asset, subset):
+    @staticmethod
+    def connect_read_node(group_node, selected_nodes):
         """
         Finds read node and selects it
 
         Arguments:
-            asset (str): asset name
+            group_node:
+            selected_nodes(list):
 
         Returns:
             nuke node: node is selected
             None: if nothing found
         """
-        search_name = "{0}_{1}".format(asset, subset)
-
-        node = [
-            n for n in nuke.allNodes(filter="Read")
-            if search_name in n["file"].value()
-        ]
-        if len(node) > 0:
-            rn = node[0]
+        if len(selected_nodes) > 0:
+            rn = selected_nodes[0]
         else:
             rn = None
 
